@@ -54,7 +54,7 @@ Below are the full config options:
 |`control_media`|Automatically turn media devices off on presence state clear            |`True`             |
 |`automatic_lights`|List of lights `entity_id`s that will turn on when presence is detected in the area            |`empty` (All lights in the area)            |
 |`include_entities`|List of `entity_id`s that will be considered from this area. Useful for non-discovery MQTT and Template entities.            |`empty` (Area registry-tied entities only)            |
-|`include_entities`|List of `entity_id`s that will __NOT__ be considered from this area. Useful for excluding entities brought in by the Area Registry.            |`empty` (None)            |
+|`exclude_entities`|List of `entity_id`s that will __NOT__ be considered from this area. Useful for excluding entities brought in by the Area Registry.            |`empty` (None)            |
 |`presence_sensor_device_class`|List of `device_class` of `binary_sensors` that will be considered as presence sensors. This override the default, does not adds on top. Make sure to list __ALL__ the `device_class` needed.            | `['motion','occupancy','presence']`            |
 |`clear_timeout`|Seconds the area should wait since the last presence sensor goes `off` until changing state to `clear`.            |`60`             |
 |`update_interval`|How often to check on the presence sensors (if `event_state_change` callback was missed).            |`15`             |
