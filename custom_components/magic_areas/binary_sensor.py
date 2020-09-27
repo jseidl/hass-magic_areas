@@ -9,6 +9,7 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     DEVICE_CLASS_MOTION,
     DEVICE_CLASS_DOOR,
+    DEVICE_CLASS_WINDOW,
     DEVICE_CLASS_OCCUPANCY,
     DEVICE_CLASS_PROBLEM,
     DEVICE_CLASS_SMOKE, 
@@ -67,7 +68,7 @@ async def async_setup_platform(
             continue
 
         for sensor in area.entities[BINARY_SENSOR_DOMAIN]:
-            if sensor.device_class not in [DEVICE_CLASS_DOOR, DEVICE_CLASS_MOTION]:
+            if sensor.device_class not in [DEVICE_CLASS_WINDOW, DEVICE_CLASS_DOOR, DEVICE_CLASS_MOTION, DEVICE_CLASS_MOISTURE]:
                 continue
             available_device_classes.append(sensor.device_class)
 
