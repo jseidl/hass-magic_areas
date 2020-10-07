@@ -1,7 +1,7 @@
 # Magic Areas custom_component for Home Assistant
-Tired of writing the same automations, over and over, for each of your rooms? Annoyed that some entities can't be tied to `Areas` in the `Area Registry`? Would like to have a single `motion` sensor that is grouped to all your other motion sensors in that area? 
+Tired of writing the same automations, over and over, for each of your rooms? Annoyed that some entities can't be tied to `Areas` in the `Area Registry`? Would like to have a single `motion` sensor that is grouped to all your other motion sensors in that area? What if all (most) of your `sensor` and `binary_sensor` entities had aggregates (grouping/average), PER AREA?
 
-**Magic Areas** is here for you!
+If you think all of the above features are freaking awesome, **Magic Areas** is here for you!
 
 ## Features
 * Uses multiple type of sensors for determining presence on an area.
@@ -9,18 +9,26 @@ Tired of writing the same automations, over and over, for each of your rooms? An
 * Loads areas from `Area Registry` -- _No need of handling them elsewhere!_.
 * Support inclusion of non-device-tied entities (non-discovery MQTT/Template sensors).
 * Support exclusion of entities.
-* Automatic turn lights on! (All or user-defined).
-* Automatic turn of lights, climate and media devices.
+* Automatic turn climates and lights on! (All or user-defined).
+  * Specify a `disable_entity` for when lights *shouldn't* turn on (e.g. daytime, high luminance etc)
+  * Specify a `sleep_entity` and `sleep_lights` to have only your accent lights turn on late in night
+* Automatic turn off lights, climate and media devices.
 * Creates a `Health` sensor (triggered by `binary_sensors` with `problem`,`smoke`,`moisture`,`safety` and `gas` device classes) for each area
 * Creates a `Presence Hold` switch to manually override area presence
-* Creates aggregation sensors for:
+* Creates aggregation sensors for your `binary_sensor`:
 	* Motion sensors
 	* Door sensors
 	* Window sensors
 	* Leak sensors
+* Creates average sensors for all your `sensor`
 
 ## Installation
 
+### HACS
+
+This repository currently isn't on HACS official list. Manually add this repository by going to `HACS > Settings > Custom Repositories` and adding this repo's URL.
+
+### Manual mode
 Copy `custom_components/magic_areas` folder into your Home Assistant's `custom_component` folder, then include the following into your `configuration.yaml` file (or in a `package`):
 ```
 magic_areas:
@@ -52,7 +60,7 @@ Below are the full config options:
 |`control_lights`|Automatically turn lights on/off on presence state change            |`True`             |
 |`control_climate`|Automatically turn climate on/off on presence state change            |`True`             |
 |`control_media`|Automatically turn media devices off on presence state clear            |`True`             |
-|`automatic_lights`|List of lights `entity_id`s that will turn on when presence is detected in the area            |`empty` (All lights in the area)            |
+|`automatic_lights`|(see `autolights` configuration options section)                     |(see `autolights` configuration options section)            |
 |`include_entities`|List of `entity_id`s that will be considered from this area. Useful for non-discovery MQTT and Template entities.            |`empty` (Area registry-tied entities only)            |
 |`exclude_entities`|List of `entity_id`s that will __NOT__ be considered from this area. Useful for excluding entities brought in by the Area Registry.            |`empty` (None)            |
 |`presence_sensor_device_class`|List of `device_class` of `binary_sensors` that will be considered as presence sensors. This override the default, does not adds on top. Make sure to list __ALL__ the `device_class` needed.            | `['motion','occupancy','presence']`            |
@@ -61,7 +69,19 @@ Below are the full config options:
 |`on_states`|Which states are considered `on`.            |`['on','playing','home','open']`             |
 |`icon`|Area presence `binary_sensor` icon.            |`mdi:texture-box"`             |
 
-## Problems/bugs, questions?
+
+`autolights` configuration:
+
+| Option         |Description                    |Default value                |
+|----------------|-------------------------------|-----------------------------|
+|`entities`|List of entity_ids of lights to turn on 					 |`empty` (All)             |
+|`disable_entity`|Entity ID to disable automatic light control				 |`None`                   |
+|`disable_state`|Entity state to disable automatic light control				 |`on`             |
+|`sleep_entity`|Entity ID to enable sleep-mode for automatic light control				 |`None`                   |
+|`sleep_state`|Entity state to enablle sleep-mode for automatic light control				 |`on`             |
+|`sleep_entities`|List of entity_ids of lights to turn on when on sleep-mode		 |`empty` (Required if `sleep_entity` is defined)             |
+
+## Problems/bugs, questions, feature requests?
 
 Open up a ticket!
 
