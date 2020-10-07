@@ -21,6 +21,7 @@ If you think all of the above features are freaking awesome, **Magic Areas** is 
 	* Window sensors
 	* Leak sensors
 * Creates average sensors for all your `sensor`
+* Creates global (interior/exterior) aggregate and average sensors 
 
 ## Installation
 
