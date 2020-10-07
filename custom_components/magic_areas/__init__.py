@@ -13,7 +13,9 @@ from homeassistant.setup import async_setup_component
 from homeassistant.helpers import config_validation as cv
 from homeassistant.const import (STATE_ON, STATE_HOME, STATE_OPEN, STATE_PLAYING)
 #from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.helpers.entity import Entity
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.group import DOMAIN as GROUP_DOMAIN
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
@@ -32,6 +34,7 @@ MODULE_DATA = f"{DOMAIN}_data"
 MAGIC_AREAS_COMPONENTS = [
     BINARY_SENSOR_DOMAIN,
     SWITCH_DOMAIN,
+    SENSOR_DOMAIN,
 ]
 
 # Configuration parameters
@@ -41,23 +44,51 @@ CONF_CONTROL_MEDIA = "control_media" # cv.boolean
 CONF_AUTO_LIGHTS = "automatic_lights" # cv.entity_ids
 CONF_INCLUDE_ENTITIES = "include_entities" # cv.entity_ids
 CONF_EXCLUDE_ENTITIES = "exclude_entities" # cv.entity_ids
+CONF_EXTERIOR = "exterior" # cv.boolean
 CONF_PRESENCE_SENSOR_DEVICE_CLASS = "presence_sensor_device_class"
 CONF_ON_STATES  = "on_states" # cv.list
 CONF_CLEAR_TIMEOUT  = "clear_timeout" # cv.positive_int
 CONF_UPDATE_INTERVAL  = "update_interval" # cv.positive_int
 CONF_ICON = "icon" # cv.string
+CONF_PASSIVE_START = "passive_start" # cv.boolean
+# automatic_lights options
+CONF_AL_DISABLE_ENTITY = "disable_entity"
+CONF_AL_DISABLE_STATE = "disable_state"
+CONF_AL_SLEEP_ENTITY = "sleep_entity"
+CONF_AL_SLEEP_STATE = "sleep_state"
+CONF_AL_SLEEP_LIGHTS = "sleep_lights"
+CONF_AL_ENTITIES = "entities"
 
 # Defaults
 DEFAULT_CONTROL_CLIMATE = True
 DEFAULT_CONTROL_LIGHTS = True
 DEFAULT_CONTROL_MEDIA = True
+DEFAULT_PASSIVE_START = True
+DEFAULT_EXTERIOR = False
 DEFAULT_CLEAR_TIMEOUT = 60
 DEFAULT_UPDATE_INTERVAL = 15
 DEFAULT_ICON = "mdi:texture-box"
 DEFAULT_ON_STATES = [STATE_ON, STATE_HOME, STATE_PLAYING, STATE_OPEN]
 DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS = [DEVICE_CLASS_MOTION, DEVICE_CLASS_OCCUPANCY, DEVICE_CLASS_PRESENCE]
 
+DEFAULT_AL_DISABLE_STATE = STATE_ON
+DEFAULT_AL_SLEEP_STATE = STATE_ON
+
+EMPTY_STRING = ""
+
 # Config Schema
+# Auto Lights setting
+CONFIG_AL_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_AL_DISABLE_ENTITY): cv.entity_id,
+        vol.Optional(CONF_AL_DISABLE_STATE, default=DEFAULT_AL_DISABLE_STATE): cv.string,
+        vol.Optional(CONF_AL_SLEEP_ENTITY): cv.entity_id,
+        vol.Optional(CONF_AL_SLEEP_STATE, default=DEFAULT_AL_SLEEP_STATE): cv.string,
+        vol.Optional(CONF_AL_SLEEP_LIGHTS, default=[]): cv.entity_ids,
+        vol.Optional(CONF_AL_ENTITIES, default=[]): cv.entity_ids,
+    }
+)
+# Magic Areas
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
@@ -67,14 +98,16 @@ CONFIG_SCHEMA = vol.Schema(
                         vol.Optional(CONF_CONTROL_CLIMATE, default=DEFAULT_CONTROL_CLIMATE): cv.boolean,
                         vol.Optional(CONF_CONTROL_LIGHTS, default=DEFAULT_CONTROL_LIGHTS): cv.boolean,
                         vol.Optional(CONF_CONTROL_MEDIA, default=DEFAULT_CONTROL_MEDIA): cv.boolean,
-                        vol.Optional(CONF_AUTO_LIGHTS, default=[]): cv.entity_ids,
+                        vol.Optional(CONF_AUTO_LIGHTS): CONFIG_AL_SCHEMA,
                         vol.Optional(CONF_PRESENCE_SENSOR_DEVICE_CLASS, default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS): cv.ensure_list,
                         vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
                         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+                        vol.Optional(CONF_EXTERIOR, default=DEFAULT_EXTERIOR): cv.boolean,
                         vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list,
                         vol.Optional(CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT): cv.positive_int,
                         vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): cv.positive_int,
                         vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
+                        vol.Optional(CONF_PASSIVE_START, default=DEFAULT_PASSIVE_START): cv.boolean,
                     },
                     None,
                 )
@@ -166,12 +199,22 @@ async def async_setup(hass, config):
 
     return True
 
+# Classes
+# StandaloneEntity mock class
+class StandaloneEntity(Entity):
+
+    def __init__(self, hass, entity_id):
+
+        self.hass = hass
+        self.entity_id = entity_id
+
 class MagicArea(object):
 
     def __init__(self, hass, id, name, entities, config, standalone_entities):
 
         self.hass               = hass
         self.name               = name
+        self.id                 = id
         self.slug               = slugify(name)
         self.config             = config
 
@@ -181,13 +224,24 @@ class MagicArea(object):
 
         self.presence_device_class = DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS
 
-        self.automatic_lights   = []
+        self.automatic_lights   = {
+            CONF_AL_DISABLE_ENTITY: None,
+            CONF_AL_DISABLE_STATE: DEFAULT_AL_DISABLE_STATE,
+            CONF_AL_SLEEP_ENTITY: None,
+            CONF_AL_SLEEP_STATE: DEFAULT_AL_SLEEP_STATE,
+            CONF_AL_SLEEP_LIGHTS: [],
+            CONF_AL_ENTITIES: []
+        }
+        
         self.include_entities   = []
         self.exclude_entities   = []
         self.clear_timeout      = DEFAULT_CLEAR_TIMEOUT
         self.update_interval    = DEFAULT_UPDATE_INTERVAL
         self.icon               = DEFAULT_ICON
         self.on_states          = DEFAULT_ON_STATES
+
+        self.passive_start      = DEFAULT_PASSIVE_START
+        self.exterior           = DEFAULT_EXTERIOR
 
         self.entities           = {}
 
@@ -213,13 +267,14 @@ class MagicArea(object):
     def load_config(self):
 
         if self.slug in self.config.keys():
-            _LOGGER.info(f"Config override founnd for {self.slug}")
+            _LOGGER.info(f"Config override found for {self.slug}")
             area_config = self.config[self.slug]
 
             self.control_lights         = area_config.get(CONF_CONTROL_LIGHTS)
             self.control_climate        = area_config.get(CONF_CONTROL_CLIMATE)
             self.control_media          = area_config.get(CONF_CONTROL_MEDIA)
-            self.automatic_lights       = area_config.get(CONF_AUTO_LIGHTS)
+            self.passive_start          = area_config.get(CONF_PASSIVE_START)
+            self.exterior               = area_config.get(CONF_EXTERIOR)
             self.presence_device_class  = area_config.get(CONF_PRESENCE_SENSOR_DEVICE_CLASS)
             self.exclude_entities       = area_config.get(CONF_EXCLUDE_ENTITIES)
             self.include_entities       = area_config.get(CONF_INCLUDE_ENTITIES)
@@ -227,6 +282,19 @@ class MagicArea(object):
             self.clear_timeout          = area_config.get(CONF_CLEAR_TIMEOUT)
             self.on_states              = area_config.get(CONF_ON_STATES)
             self.icon                   = area_config.get(CONF_ICON)
+
+            # Configure autolights
+            autolights_config = area_config.get(CONF_AUTO_LIGHTS)
+
+            if autolights_config:
+                self.automatic_lights   = {
+                    CONF_AL_DISABLE_ENTITY: autolights_config.get(CONF_AL_DISABLE_ENTITY),
+                    CONF_AL_DISABLE_STATE: autolights_config.get(CONF_AL_DISABLE_STATE),
+                    CONF_AL_SLEEP_ENTITY: autolights_config.get(CONF_AL_SLEEP_ENTITY),
+                    CONF_AL_SLEEP_STATE: autolights_config.get(CONF_AL_SLEEP_STATE),
+                    CONF_AL_SLEEP_LIGHTS: autolights_config.get(CONF_AL_SLEEP_LIGHTS),
+                    CONF_AL_ENTITIES: autolights_config.get(CONF_AL_ENTITIES)
+                }
 
     # Filter (include/exclude) entities
     def filter_entities(self, area_entities, standalone_entities):
@@ -249,6 +317,10 @@ class MagicArea(object):
             for entity_id in self.include_entities:
                 if entity_id in standalone_entities.keys():
                     filtered_entities.append(standalone_entities[entity_id])
+                else:
+                    # Entity not in registry, call hass
+                    standalone_entity = StandaloneEntity(self.hass, entity_id)
+                    filtered_entities.append(standalone_entity)
 
         return filtered_entities
             
