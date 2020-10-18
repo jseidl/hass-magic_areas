@@ -241,7 +241,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
             return
 
         if to_state.state == STATE_OFF:
-            self._lights_on()
+            if self._state:
+                self._lights_on()
         else:
             self._lights_off()
 
