@@ -164,7 +164,11 @@ async def async_setup(hass, config):
 
     for entity_id, entity_object in entity_registry.entities.items():
 
-        # Skip devices without areas, add them to a standalone map
+        # Skip disabled entities
+        if entity_object.disabled:
+            continue
+
+        # Skip entities without devices, add them to a standalone map
         if entity_object.device_id not in device_area_map.keys():
             standalone_entities[entity_object.entity_id] = entity_object
             continue
