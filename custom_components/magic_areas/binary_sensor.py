@@ -428,7 +428,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
             entity = self.hass.states.get(sensor)
 
             if not entity:
-                _LOGGER.warn(f"{sensor} entity not found")
+                _LOGGER.info(
+                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                )
                 continue
 
             if entity.state in self.area.on_states:
@@ -520,7 +522,9 @@ class AreaDistressBinarySensor(BinarySensorEntity):
             entity = self.hass.states.get(sensor)
 
             if not entity:
-                _LOGGER.warn(f"{sensor} entity not found")
+                _LOGGER.info(
+                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                )
                 continue
 
             if entity.state in DISTRESS_STATES:
@@ -602,7 +606,9 @@ class AreaSensorGroupBinarySensor(BinarySensorEntity):
             entity = self.hass.states.get(sensor)
 
             if not entity:
-                _LOGGER.warn(f"{sensor} entity not found")
+                _LOGGER.info(
+                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                )
                 continue
 
             if entity.state in STATE_ON:
@@ -689,7 +695,9 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
             entity = self.hass.states.get(sensor)
 
             if not entity:
-                _LOGGER.warn(f"{sensor} entity not found")
+                _LOGGER.info(
+                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                )
                 continue
 
             if entity.state in STATE_ON:
