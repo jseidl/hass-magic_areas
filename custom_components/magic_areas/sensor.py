@@ -1,24 +1,37 @@
-DEPENDENCIES = ['magic_areas']
+DEPENDENCIES = ["magic_areas"]
 
 import logging
-
-from datetime import timedelta, datetime
-from time import sleep
+from datetime import datetime, timedelta
 from statistics import mean
+from time import sleep
 
-from homeassistant.components.sensor import (
-    DOMAIN as SENSOR_DOMAIN,
-)
-from homeassistant.helpers.entity import Entity
-
+from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-
-from homeassistant.helpers.event import async_track_state_change, async_track_time_interval 
 from homeassistant.const import (
-    STATE_ON, 
+    DEVICE_CLASS_CURRENT,
+    DEVICE_CLASS_ENERGY,
+    DEVICE_CLASS_HUMIDITY,
+    DEVICE_CLASS_ILLUMINANCE,
+    DEVICE_CLASS_POWER,
+    DEVICE_CLASS_TEMPERATURE,
+    STATE_ON,
+)
+from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.event import (
+    async_track_state_change,
+    async_track_time_interval,
+)
+
+from . import MODULE_DATA
+
+_LOGGER = logging.getLogger(__name__)
+
+SLEEP_TIME = 0.3  # seconds
+
+AGGREGATE_SENSOR_CLASSES = (
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
     DEVICE_CLASS_HUMIDITY,
@@ -27,25 +40,11 @@ from homeassistant.const import (
     DEVICE_CLASS_TEMPERATURE,
 )
 
-from . import MODULE_DATA
-
-_LOGGER = logging.getLogger(__name__)
-
-SLEEP_TIME = .3 # seconds
-
-AGGREGATE_SENSOR_CLASSES = (
-    DEVICE_CLASS_CURRENT,
-    DEVICE_CLASS_ENERGY,
-    DEVICE_CLASS_HUMIDITY,
-    DEVICE_CLASS_ILLUMINANCE,
-    DEVICE_CLASS_POWER,
-    DEVICE_CLASS_TEMPERATURE, 
-)
 
 async def async_setup_platform(
     hass, config, async_add_entities, discovery_info=None
 ):  # pylint: disable=unused-argument
-    
+
     areas = hass.data.get(MODULE_DATA)
 
     entities = []
@@ -59,7 +58,7 @@ async def async_setup_platform(
         # sensor Aggregates
         if SENSOR_DOMAIN not in area.entities.keys():
             continue
-    
+
         for sensor in area.entities[SENSOR_DOMAIN]:
             if sensor.device_class not in AGGREGATE_SENSOR_CLASSES:
                 continue
@@ -68,9 +67,9 @@ async def async_setup_platform(
         for device_class in set(available_device_classes):
 
             if device_class not in device_class_area_map.keys():
-                device_class_area_map[device_class] = {'exterior': [], 'interior': []}
+                device_class_area_map[device_class] = {"exterior": [], "interior": []}
 
-            area_location = 'exterior' if area.exterior else 'interior'
+            area_location = "exterior" if area.exterior else "interior"
             device_class_area_map[device_class][area_location].append(area)
 
             _LOGGER.info(f"Creating aggregate sensor for {area.name}/{device_class}")
@@ -84,20 +83,24 @@ async def async_setup_platform(
     for device_class, locations in device_class_area_map.items():
         for location_name, areas in locations.items():
             if areas:
-                global_aggregates.append(GlobalSensorGroupSensor(hass, areas, device_class, location_name))
-    
+                global_aggregates.append(
+                    GlobalSensorGroupSensor(hass, areas, device_class, location_name)
+                )
+
     if global_aggregates:
         async_add_entities(global_aggregates)
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Demo config entry."""
     await async_setup_platform(hass, {}, async_add_entities)
 
+
 class AreaSensorGroupSensor(Entity):
     def __init__(self, hass, area, device_class):
         """Initialize an area sensor group sensor."""
 
-        self.area = area      
+        self.area = area
         self.hass = hass
         self._device_class = device_class
         self._state = 0
@@ -107,21 +110,19 @@ class AreaSensorGroupSensor(Entity):
 
         # Fetch sensors
         self.sensors = []
-        uom_candidates = [] # candidates for unit_of_measurement
+        uom_candidates = []  # candidates for unit_of_measurement
         for entity in self.area.entities[SENSOR_DOMAIN]:
 
-            if (entity.device_class != self._device_class):
+            if entity.device_class != self._device_class:
                 continue
 
             self.sensors.append(entity.entity_id)
             uom_candidates.append(entity.unit_of_measurement)
 
         # Elect unit_of_measurement
-        self._unit_of_measurement = max(set(uom_candidates), key = uom_candidates.count)
+        self._unit_of_measurement = max(set(uom_candidates), key=uom_candidates.count)
 
-        self._attributes = {
-            'sensors': self.sensors
-        }
+        self._attributes = {"sensors": self.sensors}
 
         # Track presence sensors
         async_track_state_change(hass, self.sensors, self.sensor_state_change)
@@ -183,13 +184,16 @@ class AreaSensorGroupSensor(Entity):
                 sensor_values.append(float(entity.state))
             except ValueError as e:
                 err_str = str(e)
-                _LOGGER.warn(f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}")
+                _LOGGER.warn(
+                    f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}"
+                )
                 continue
 
         if sensor_values:
             return round(mean(sensor_values), 2)
-        else: 
+        else:
             return 0
+
 
 class GlobalSensorGroupSensor(Entity):
     def __init__(self, hass, areas, device_class, location_name):
@@ -210,7 +214,7 @@ class GlobalSensorGroupSensor(Entity):
         for area in areas:
             for entity in area.entities[SENSOR_DOMAIN]:
 
-                if (entity.device_class != self._device_class):
+                if entity.device_class != self._device_class:
                     continue
 
                 self.sensors.append(entity.entity_id)
@@ -220,11 +224,9 @@ class GlobalSensorGroupSensor(Entity):
                     self.update_interval = area.update_interval
 
         # Elect unit_of_measurement
-        self._unit_of_measurement = max(set(uom_candidates), key = uom_candidates.count)
+        self._unit_of_measurement = max(set(uom_candidates), key=uom_candidates.count)
 
-        self._attributes = {
-            'sensors': self.sensors
-        }
+        self._attributes = {"sensors": self.sensors}
 
         # Track presence sensors
         async_track_state_change(hass, self.sensors, self.sensor_state_change)
@@ -286,10 +288,12 @@ class GlobalSensorGroupSensor(Entity):
                 sensor_values.append(float(entity.state))
             except ValueError as e:
                 err_str = str(e)
-                _LOGGER.warn(f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}")
+                _LOGGER.warn(
+                    f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}"
+                )
                 continue
 
         if sensor_values:
             return round(mean(sensor_values), 2)
-        else: 
+        else:
             return 0
