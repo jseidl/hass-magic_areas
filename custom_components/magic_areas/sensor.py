@@ -177,15 +177,17 @@ class AreaSensorGroupSensor(Entity):
             entity = self.hass.states.get(sensor)
 
             if not entity:
-                _LOGGER.warn(f"{sensor} entity not found")
+                _LOGGER.info(
+                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                )
                 continue
 
             try:
                 sensor_values.append(float(entity.state))
             except ValueError as e:
                 err_str = str(e)
-                _LOGGER.warn(
-                    f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}"
+                _LOGGER.info(
+                    f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}, skipping"
                 )
                 continue
 
@@ -281,15 +283,17 @@ class GlobalSensorGroupSensor(Entity):
             entity = self.hass.states.get(sensor)
 
             if not entity:
-                _LOGGER.warn(f"{sensor} entity not found")
+                _LOGGER.info(
+                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                )
                 continue
 
             try:
                 sensor_values.append(float(entity.state))
             except ValueError as e:
                 err_str = str(e)
-                _LOGGER.warn(
-                    f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}"
+                _LOGGER.info(
+                    f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}, skipping"
                 )
                 continue
 

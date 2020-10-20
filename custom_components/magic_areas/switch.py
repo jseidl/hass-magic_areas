@@ -37,7 +37,7 @@ class AreaPresenceHoldSwitch(SwitchEntity):
         self._name = f"Area Presence Hold ({self.area.name})"
         self._state = False
 
-        _LOGGER.warn(f"Area {self.area.slug} presence hold switch initializing.")
+        _LOGGER.debug(f"Area {self.area.slug} presence hold switch initializing.")
 
         # Set attributes
         self._attributes = {}
