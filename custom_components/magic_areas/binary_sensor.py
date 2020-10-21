@@ -4,16 +4,8 @@ import logging
 from datetime import datetime, timedelta
 
 from homeassistant.components.binary_sensor import (
-    DEVICE_CLASS_DOOR,
-    DEVICE_CLASS_GAS,
-    DEVICE_CLASS_LIGHT,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_MOTION,
     DEVICE_CLASS_OCCUPANCY,
     DEVICE_CLASS_PROBLEM,
-    DEVICE_CLASS_SAFETY,
-    DEVICE_CLASS_SMOKE,
-    DEVICE_CLASS_WINDOW,
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.binary_sensor import BinarySensorEntity
@@ -23,52 +15,42 @@ from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
-    EVENT_HOMEASSISTANT_START,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
-    STATE_ALARM_TRIGGERED,
-    STATE_HOME,
     STATE_OFF,
     STATE_ON,
-    STATE_PROBLEM,
 )
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
 )
 
-from . import (
+from .const import (
+    AGGREGATE_SENSOR_CLASSES,
     CONF_AL_DISABLE_ENTITY,
     CONF_AL_DISABLE_STATE,
     CONF_AL_ENTITIES,
     CONF_AL_SLEEP_ENTITY,
     CONF_AL_SLEEP_LIGHTS,
     CONF_AL_SLEEP_STATE,
+    CONF_AUTO_LIGHTS,
+    CONF_CLEAR_TIMEOUT,
+    CONF_CONTROL_CLIMATE,
+    CONF_CONTROL_LIGHTS,
+    CONF_CONTROL_MEDIA,
+    CONF_EXTERIOR,
+    CONF_ICON,
+    CONF_ON_STATES,
+    CONF_PASSIVE_START,
+    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_UPDATE_INTERVAL,
+    DISTRESS_SENSOR_CLASSES,
+    DISTRESS_STATES,
     MODULE_DATA,
+    PRESENCE_DEVICE_COMPONENTS,
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-PRESENCE_DEVICE_COMPONENTS = [
-    MEDIA_PLAYER_DOMAIN,
-    BINARY_SENSOR_DOMAIN,
-]  # @todo make configurable
-AGGREGATE_SENSOR_CLASSES = [
-    DEVICE_CLASS_WINDOW,
-    DEVICE_CLASS_DOOR,
-    DEVICE_CLASS_MOTION,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_LIGHT,
-]
-
-DISTRESS_SENSOR_CLASSES = [
-    DEVICE_CLASS_PROBLEM,
-    DEVICE_CLASS_SMOKE,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_SAFETY,
-    DEVICE_CLASS_GAS,
-]  # @todo make configurable
-DISTRESS_STATES = [STATE_ALARM_TRIGGERED, STATE_ON, STATE_PROBLEM]
 
 
 async def async_setup_platform(
@@ -163,7 +145,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         self._state = None
         self.last_off_time = datetime.utcnow()
 
-        self._passive = self.area.passive_start  # Prevent acting until all is loaded
+        self._passive = self.area.config.get(
+            CONF_PASSIVE_START
+        )  # Prevent acting until all is loaded
 
         _LOGGER.info(f"Area {self.area.slug} presence sensor initializing.")
 
@@ -178,7 +162,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
 
                 if (
                     component == BINARY_SENSOR_DOMAIN
-                    and entity.device_class not in self.area.presence_device_class
+                    and entity.device_class
+                    not in self.area.config.get(CONF_PRESENCE_SENSOR_DEVICE_CLASS)
                 ):
                     continue
 
@@ -205,25 +190,26 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
             "active_sensors": [],
             "lights": area_lights,
             "climate": area_climate,
-            "clear_timeout": self.area.clear_timeout,
-            "update_interval": self.area.update_interval,
-            "on_states": self.area.on_states,
-            "exterior": self.area.exterior,
+            "clear_timeout": self.area.config.get(CONF_CLEAR_TIMEOUT),
+            "update_interval": self.area.config.get(CONF_UPDATE_INTERVAL),
+            "on_states": self.area.config.get(CONF_ON_STATES),
+            "exterior": self.area.config.get(CONF_EXTERIOR),
         }
 
         # Track presence sensors
         async_track_state_change(hass, self.presence_sensors, self.sensor_state_change)
 
         # Track autolight_disable sensor if available
-        if self.area.automatic_lights[CONF_AL_DISABLE_ENTITY]:
+        autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
+        if autolights_config.get(CONF_AL_DISABLE_ENTITY):
             async_track_state_change(
                 hass,
-                self.area.automatic_lights[CONF_AL_DISABLE_ENTITY],
+                autolights_config.get(CONF_AL_DISABLE_ENTITY),
                 self.autolight_disable_state_change,
             )
 
         # Timed self update
-        delta = timedelta(seconds=self.area.update_interval)
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
         async_track_time_interval(self.hass, self.update_area, delta)
 
         _LOGGER.info(f"Area {self.area.slug} presence sensor initialized.")
@@ -251,8 +237,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
     @property
     def icon(self):
         """Return the icon to be used for this entity."""
-        if self.area.icon is not None:
-            return self.area.icon
+        if self.area.config.get(CONF_ICON):
+            return self.area.config.get(CONF_ICON)
         return None
 
     @property
@@ -272,7 +258,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
             self._lights_off()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
-        if to_state.state not in self.area.on_states:
+        if to_state.state not in self.area.config.get(CONF_ON_STATES):
             self.last_off_time = datetime.utcnow()  # Update last_off_time
 
         return self._update_state()
@@ -282,23 +268,25 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
 
     def _autolights(self):
 
+        autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
+
         # All lights affected by default
         affected_lights = [
             entity.entity_id for entity in self.area.entities[LIGHT_DOMAIN]
         ]
 
         # Regular operation
-        if self.area.automatic_lights[CONF_AL_ENTITIES]:
-            affected_lights = self.area.automatic_lights[CONF_AL_ENTITIES]
+        if autolights_config.get(CONF_AL_ENTITIES):
+            affected_lights = autolights_config.get(CONF_AL_ENTITIES)
 
         # Check if disabled
-        if self.area.automatic_lights[CONF_AL_DISABLE_ENTITY]:
+        if autolights_config.get(CONF_AL_DISABLE_ENTITY):
             disable_entity = self.hass.states.get(
-                self.area.automatic_lights[CONF_AL_DISABLE_ENTITY]
+                autolights_config.get(CONF_AL_DISABLE_ENTITY)
             )
             if (
                 disable_entity.state.lower()
-                == self.area.automatic_lights[CONF_AL_DISABLE_STATE].lower()
+                == autolights_config.get(CONF_AL_DISABLE_STATE).lower()
             ):
                 _LOGGER.info(
                     f"Disable entity '{disable_entity.entity_id}' on disable state '{disable_entity.state}'"
@@ -306,24 +294,24 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
                 return False
 
         # Check if in sleep mode
-        if self.area.automatic_lights[CONF_AL_SLEEP_ENTITY]:
-            if not self.area.automatic_lights[CONF_AL_SLEEP_LIGHTS]:
+        if autolights_config.get(CONF_AL_SLEEP_ENTITY):
+            if not autolights_config.get(CONF_AL_SLEEP_LIGHTS):
                 # If user fails to set CONF_AL_SLEEP_LIGHTS, sleep mode will be ignored
                 _LOGGER.error(
                     f"'{CONF_AL_SLEEP_LIGHTS}' not defined. Please review your configuration."
                 )
             else:
                 sleep_entity = self.hass.states.get(
-                    self.area.automatic_lights[CONF_AL_SLEEP_ENTITY]
+                    autolights_config.get(CONF_AL_SLEEP_ENTITY)
                 )
                 if (
                     sleep_entity.state.lower()
-                    == self.area.automatic_lights[CONF_AL_SLEEP_STATE].lower()
+                    == autolights_config.get(CONF_AL_SLEEP_STATE).lower()
                 ):
                     _LOGGER.info(
                         f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
                     )
-                    affected_lights = self.area.automatic_lights[CONF_AL_SLEEP_LIGHTS]
+                    affected_lights = autolights_config.get(CONF_AL_SLEEP_LIGHTS)
 
         # Call service to turn_on the lights
         service_data = {ATTR_ENTITY_ID: affected_lights}
@@ -339,7 +327,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         if area_state:
             self._state = True
         else:
-            clear_delta = timedelta(seconds=self.area.clear_timeout)
+            clear_delta = timedelta(seconds=self.area.config.get(CONF_CLEAR_TIMEOUT))
             last_clear = self.last_off_time
             clear_time = last_clear + clear_delta
             time_now = datetime.utcnow()
@@ -369,7 +357,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
 
     def _lights_on(self):
         # Turn on lights, if configured
-        if self.area.control_lights and self._has_entities(LIGHT_DOMAIN):
+        if self.area.config.get(CONF_CONTROL_LIGHTS) and self._has_entities(
+            LIGHT_DOMAIN
+        ):
             self._autolights()
 
     def _state_on(self):
@@ -377,7 +367,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         self._lights_on()
 
         # Turn on climate, if configured
-        if self.area.control_climate and self._has_entities(CLIMATE_DOMAIN):
+        if self.area.config.get(CONF_CONTROL_CLIMATE) and self._has_entities(
+            CLIMATE_DOMAIN
+        ):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity.entity_id for entity in self.area.entities[CLIMATE_DOMAIN]
@@ -387,7 +379,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
 
     def _lights_off(self):
         # Turn off lights, if configured
-        if self.area.control_lights and self._has_entities(LIGHT_DOMAIN):
+        if self.area.config.get(CONF_CONTROL_LIGHTS) and self._has_entities(
+            LIGHT_DOMAIN
+        ):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity.entity_id for entity in self.area.entities[LIGHT_DOMAIN]
@@ -400,7 +394,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         self._lights_off()
 
         # Turn off climate, if configured
-        if self.area.control_climate and self._has_entities(CLIMATE_DOMAIN):
+        if self.area.config.get(CONF_CONTROL_CLIMATE) and self._has_entities(
+            CLIMATE_DOMAIN
+        ):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity.entity_id for entity in self.area.entities[CLIMATE_DOMAIN]
@@ -409,7 +405,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
             self.hass.services.call(CLIMATE_DOMAIN, SERVICE_TURN_OFF, service_data)
 
         # Turn off media, if configured
-        if self.area.control_media and self._has_entities(MEDIA_PLAYER_DOMAIN):
+        if self.area.config.get(CONF_CONTROL_MEDIA) and self._has_entities(
+            MEDIA_PLAYER_DOMAIN
+        ):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity.entity_id
@@ -433,7 +431,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
                 )
                 continue
 
-            if entity.state in self.area.on_states:
+            if entity.state in self.area.config.get(CONF_ON_STATES):
                 active_sensors.append(sensor)
 
         self._attributes["active_sensors"] = active_sensors
@@ -471,7 +469,7 @@ class AreaDistressBinarySensor(BinarySensorEntity):
 
         # Track presence sensors
         async_track_state_change(hass, self.distress_sensors, self.sensor_state_change)
-        delta = timedelta(seconds=self.area.update_interval)
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
 
         # Timed self update
         async_track_time_interval(self.hass, self.update_area, delta)
@@ -560,7 +558,7 @@ class AreaSensorGroupBinarySensor(BinarySensorEntity):
 
         # Track presence sensors
         async_track_state_change(hass, self.sensors, self.sensor_state_change)
-        delta = timedelta(seconds=self.area.update_interval)
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
 
         # Timed self update
         async_track_time_interval(self.hass, self.update_group, delta)

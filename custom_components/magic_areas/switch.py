@@ -5,7 +5,7 @@ import logging
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch import SwitchEntity
 
-from . import MODULE_DATA
+from .const import MODULE_DATA
 
 _LOGGER = logging.getLogger(__name__)
 
