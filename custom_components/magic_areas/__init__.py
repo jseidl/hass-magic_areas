@@ -57,6 +57,7 @@ CONF_AL_DISABLE_STATE = "disable_state"
 CONF_AL_SLEEP_ENTITY = "sleep_entity"
 CONF_AL_SLEEP_STATE = "sleep_state"
 CONF_AL_SLEEP_LIGHTS = "sleep_lights"
+CONF_AL_SLEEP_TIMEOUT = "sleep_timeout"
 CONF_AL_ENTITIES = "entities"
 
 # Defaults
@@ -77,6 +78,7 @@ DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS = [
 
 DEFAULT_AL_DISABLE_STATE = STATE_ON
 DEFAULT_AL_SLEEP_STATE = STATE_ON
+DEFAULT_AL_SLEEP_TIMEOUT = 60
 
 EMPTY_STRING = ""
 
@@ -92,6 +94,7 @@ CONFIG_AL_SCHEMA = vol.Schema(
         vol.Optional(CONF_AL_SLEEP_STATE, default=DEFAULT_AL_SLEEP_STATE): cv.string,
         vol.Optional(CONF_AL_SLEEP_LIGHTS, default=[]): cv.entity_ids,
         vol.Optional(CONF_AL_ENTITIES, default=[]): cv.entity_ids,
+        vol.Optional(CONF_AL_SLEEP_TIMEOUT, default=DEFAULT_AL_SLEEP_TIMEOUT): cv.positive_int,
     }
 )
 # Magic Areas
@@ -271,6 +274,7 @@ class MagicArea(object):
             CONF_AL_SLEEP_ENTITY: None,
             CONF_AL_SLEEP_STATE: DEFAULT_AL_SLEEP_STATE,
             CONF_AL_SLEEP_LIGHTS: [],
+            CONF_AL_SLEEP_TIMEOUT: None,
             CONF_AL_ENTITIES: [],
         }
 
@@ -338,6 +342,7 @@ class MagicArea(object):
                     CONF_AL_SLEEP_ENTITY: autolights_config.get(CONF_AL_SLEEP_ENTITY),
                     CONF_AL_SLEEP_STATE: autolights_config.get(CONF_AL_SLEEP_STATE),
                     CONF_AL_SLEEP_LIGHTS: autolights_config.get(CONF_AL_SLEEP_LIGHTS),
+                    CONF_AL_SLEEP_TIMEOUT: autolights_config.get(CONF_AL_SLEEP_TIMEOUT),
                     CONF_AL_ENTITIES: autolights_config.get(CONF_AL_ENTITIES),
                 }
 

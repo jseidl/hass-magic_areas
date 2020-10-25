@@ -44,6 +44,7 @@ from . import (
     CONF_AL_SLEEP_ENTITY,
     CONF_AL_SLEEP_LIGHTS,
     CONF_AL_SLEEP_STATE,
+    CONF_AL_SLEEP_TIMEOUT,
     MODULE_DATA,
 )
 
@@ -211,6 +212,10 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
             "exterior": self.area.exterior,
         }
 
+        # Set attribute sleep_timeout if defined
+        if self.area.automatic_lights[CONF_AL_SLEEP_TIMEOUT]:
+            self._attributes["sleep_timeout"] = self.area.automatic_lights[CONF_AL_SLEEP_TIMEOUT]
+
         # Track presence sensors
         async_track_state_change(hass, self.presence_sensors, self.sensor_state_change)
 
@@ -280,6 +285,29 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
     def update_area(self, next_interval):
         return self._update_state()
 
+    def _is_sleep_on(self):
+        sleep_state = False
+        if self.area.automatic_lights[CONF_AL_SLEEP_ENTITY]:
+            if not self.area.automatic_lights[CONF_AL_SLEEP_LIGHTS]:
+                # If user fails to set CONF_AL_SLEEP_LIGHTS, sleep mode will be ignored
+                _LOGGER.error(
+                    f"'{CONF_AL_SLEEP_LIGHTS}' not defined. Please review your configuration."
+                )
+            else:
+                sleep_entity = self.hass.states.get(
+                    self.area.automatic_lights[CONF_AL_SLEEP_ENTITY]
+                )
+                if (
+                    sleep_entity.state.lower()
+                    == self.area.automatic_lights[CONF_AL_SLEEP_STATE].lower()
+                ):
+                    _LOGGER.info(
+                        f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
+                    )
+                    sleep_state = True
+        
+        return sleep_state
+            
     def _autolights(self):
 
         # All lights affected by default
@@ -306,24 +334,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
                 return False
 
         # Check if in sleep mode
-        if self.area.automatic_lights[CONF_AL_SLEEP_ENTITY]:
-            if not self.area.automatic_lights[CONF_AL_SLEEP_LIGHTS]:
-                # If user fails to set CONF_AL_SLEEP_LIGHTS, sleep mode will be ignored
-                _LOGGER.error(
-                    f"'{CONF_AL_SLEEP_LIGHTS}' not defined. Please review your configuration."
-                )
-            else:
-                sleep_entity = self.hass.states.get(
-                    self.area.automatic_lights[CONF_AL_SLEEP_ENTITY]
-                )
-                if (
-                    sleep_entity.state.lower()
-                    == self.area.automatic_lights[CONF_AL_SLEEP_STATE].lower()
-                ):
-                    _LOGGER.info(
-                        f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
-                    )
-                    affected_lights = self.area.automatic_lights[CONF_AL_SLEEP_LIGHTS]
+        if self._is_sleep_on():
+            affected_lights = self.area.automatic_lights[CONF_AL_SLEEP_LIGHTS]
 
         # Call service to turn_on the lights
         service_data = {ATTR_ENTITY_ID: affected_lights}
@@ -336,10 +348,25 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         area_state = self._get_area_state()
         last_state = self._state
 
+        sleep_timeout = False
+
         if area_state:
             self._state = True
         else:
-            clear_delta = timedelta(seconds=self.area.clear_timeout)
+            # if in sleep mode and sleep timeout is set, use it...
+            if self._is_sleep_on():
+                if self.area.automatic_lights[CONF_AL_SLEEP_TIMEOUT]:
+                    _LOGGER.debug(
+                        f"Area {self.area.slug} sleep mode is active. Timeout: {str(self.area.automatic_lights[CONF_AL_SLEEP_TIMEOUT])}")
+                    clear_delta = timedelta(
+                        seconds=self.area.automatic_lights[CONF_AL_SLEEP_TIMEOUT])
+                    sleep_timeout = True
+            
+            if not sleep_timeout:
+                # ..use clear timeout
+                _LOGGER.debug(f"Area {self.area.slug} ... Timeout: {str(self.area.clear_timeout)}")
+                clear_delta = timedelta(seconds=self.area.clear_timeout)
+
             last_clear = self.last_off_time
             clear_time = last_clear + clear_delta
             time_now = datetime.utcnow()
