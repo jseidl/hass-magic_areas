@@ -75,6 +75,7 @@ CONF_AL_DISABLE_STATE, DEFAULT_AL_DISABLE_STATE = "disable_state", STATE_ON
 CONF_AL_SLEEP_ENTITY = "sleep_entity"
 CONF_AL_SLEEP_STATE, DEFAULT_AL_SLEEP_STATE = "sleep_state", STATE_ON
 CONF_AL_SLEEP_LIGHTS = "sleep_lights"
+CONF_AL_SLEEP_TIMEOUT = "sleep_timeout"
 CONF_AL_ENTITIES = "entities"
 
 # Health related
@@ -120,6 +121,7 @@ CONFIG_AL_SCHEMA = vol.Any(
         vol.Optional(CONF_AL_SLEEP_ENTITY): cv.entity_id,
         vol.Optional(CONF_AL_SLEEP_STATE, default=DEFAULT_AL_SLEEP_STATE): cv.string,
         vol.Optional(CONF_AL_SLEEP_LIGHTS, default=[]): cv.entity_ids,
+        vol.Optional(CONF_AL_SLEEP_TIMEOUT): cv.positive_int,
         vol.Optional(CONF_AL_ENTITIES, default=[]): cv.entity_ids,
     }
 )
