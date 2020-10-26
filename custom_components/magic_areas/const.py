@@ -67,7 +67,6 @@ CONF_ON_STATES, DEFAULT_ON_STATES = "on_states", [
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 15  # cv.positive_int
 CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
-CONF_PASSIVE_START, DEFAULT_PASSIVE_START = "passive_start", True  # cv.boolean
 
 # automatic_lights options
 CONF_AL_DISABLE_ENTITY = "disable_entity"
@@ -155,9 +154,6 @@ _DOMAIN_SCHEMA = vol.Schema(
                     CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
                 ): cv.positive_int,
                 vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
-                vol.Optional(
-                    CONF_PASSIVE_START, default=DEFAULT_PASSIVE_START
-                ): cv.boolean,
             },
             None,
         )
