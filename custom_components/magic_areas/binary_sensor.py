@@ -212,8 +212,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         # Set attribute sleep_timeout if defined
         if autolights_config.get(CONF_AL_SLEEP_TIMEOUT):
             self._attributes["sleep_timeout"] = autolights_config.get(
-                CONF_AL_SLEEP_TIMEOUT)
-
+                CONF_AL_SLEEP_TIMEOUT
+            )
 
         # Timed self update
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
@@ -339,7 +339,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
 
         area_state = self._get_area_state()
         last_state = self._state
-        sleep_timeout = self.area.config.get(CONF_AUTO_LIGHTS).get(CONF_AL_SLEEP_TIMEOUT)
+        sleep_timeout = self.area.config.get(CONF_AUTO_LIGHTS).get(
+            CONF_AL_SLEEP_TIMEOUT
+        )
 
         if area_state:
             self._state = True
@@ -347,14 +349,18 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
             if sleep_timeout and self._is_sleep_on():
                 # if in sleep mode and sleep_timeout is set, use it...
                 _LOGGER.debug(
-                    f"Area {self.area.slug} sleep mode is active. Timeout: {str(sleep_timeout)}")
-                clear_delta=timedelta(seconds=sleep_timeout)
+                    f"Area {self.area.slug} sleep mode is active. Timeout: {str(sleep_timeout)}"
+                )
+                clear_delta = timedelta(seconds=sleep_timeout)
             else:
                 # ..else, use clear_timeout
                 _LOGGER.debug(
-                    f"Area {self.area.slug} ... Timeout: {str(self.area.config.get(CONF_CLEAR_TIMEOUT))}")
-                clear_delta = timedelta(seconds=self.area.config.get(CONF_CLEAR_TIMEOUT))
-            
+                    f"Area {self.area.slug} ... Timeout: {str(self.area.config.get(CONF_CLEAR_TIMEOUT))}"
+                )
+                clear_delta = timedelta(
+                    seconds=self.area.config.get(CONF_CLEAR_TIMEOUT)
+                )
+
             last_clear = self.last_off_time
             clear_time = last_clear + clear_delta
             time_now = datetime.utcnow()

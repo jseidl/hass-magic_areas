@@ -146,7 +146,13 @@ class MagicArea(object):
         self.name = name
         self.id = id
         self.slug = slugify(name)
-        self.config = config[self.slug]
+
+        # Check if area is defined on YAML, if not, generate default config
+        if self.slug not in config.keys():
+            default_config = {f"{self.slug}": {}}
+            self.config = _DOMAIN_SCHEMA(default_config)[self.slug]
+        else:
+            self.config = config[self.slug]
 
         self.entities = {}
 
