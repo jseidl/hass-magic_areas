@@ -1,7 +1,12 @@
 name: "Validation And Formatting"
 on:
   push:
+    - 'hotfix/**'
+    - 'feature/**'
+    - 'release/**'
   pull_request:
+    - master
+    - develop
   schedule:
     - cron: '0 0 * * *'
 jobs:
