@@ -250,7 +250,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
         is_new_entry = last_state is None  # newly added to HA
 
         if is_new_entry:
-            _LOGGER.debug(f"New area detected: {self.slug}")
+            _LOGGER.debug(f"New area detected: {self.area.slug}")
+
             self._update_state()
         else:
             _LOGGER.debug(f"Area restored: {self.slug}")
