@@ -16,6 +16,7 @@ from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
+    EVENT_HOMEASSISTANT_STARTED,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
     EVENT_HOMEASSISTANT_STARTED,
@@ -26,6 +27,7 @@ from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
 )
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
     AGGREGATE_SENSOR_CLASSES,
@@ -200,7 +202,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
         autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
         if autolights_config.get(CONF_AL_SLEEP_TIMEOUT):
             self._attributes["sleep_timeout"] = autolights_config.get(
-                CONF_AL_SLEEP_TIMEOUT)
+                CONF_AL_SLEEP_TIMEOUT
+            )
 
         _LOGGER.info(f"Area {self.area.slug} presence sensor initialized.")
 
@@ -249,16 +252,17 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
         is_new_entry = last_state is None  # newly added to HA
 
         if is_new_entry:
-            _LOGGER.debug(f"New area detected: {self.slug}")
+            _LOGGER.debug(f"New area detected: {self.area.slug}")
             self._update_state()
         else:
-            _LOGGER.debug(f"Area restored: {self.slug}")
+            _LOGGER.debug(f"Area restored: {self.area.slug}")
             self._state = last_state
 
     async def async_will_remove_from_hass(self):
         """Remove the listeners upon removing the component."""
         self._remove_listeners()
 
+>>>>>>> ca658255b1d193977725a03f48050a3e65a006f7
     async def _setup_listeners(self, _=None) -> None:
         _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
         if not self.hass.is_running:
@@ -266,7 +270,13 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             return
 
         # Track presence sensors
+<<<<<<< HEAD
         remove_presence = async_track_state_change(self.hass, self.presence_sensors, self.sensor_state_change)
+=======
+        remove_presence = async_track_state_change(
+            self.hass, self.presence_sensors, self.sensor_state_change
+        )
+>>>>>>> ca658255b1d193977725a03f48050a3e65a006f7
 
         # Track autolight_disable sensor if available
         autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
