@@ -5,9 +5,10 @@ If you think all of the above features are freaking awesome, **Magic Areas** is 
 
 ## Features
 * Uses multiple type of sensors for determining presence on an area.
-	* `media_player`,  `binary_sensors` (`motion`,`presence`,`occupancy`and `door`) are supported.
+	* `media_player`,  `binary_sensors` ([all listed types](https://www.home-assistant.io/integrations/binary_sensor/)) are supported
 * Loads areas from `Area Registry` -- _No need of handling them elsewhere!_.
 * Support inclusion of non-device-tied entities (non-discovery MQTT/Template sensors).
+    * It's necessary to specify a `unique_id` / `device_id` for these sensors if they are defined in yaml configuration.
 * Support exclusion of entities.
 * Automatic turn climates and lights on! (All or user-defined).
   * Specify a `disable_entity` for when lights *shouldn't* turn on (e.g. daytime, high luminance etc)
