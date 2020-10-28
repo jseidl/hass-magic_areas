@@ -10,7 +10,10 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from homeassistant.const import STATE_ON, EVENT_HOMEASSISTANT_STARTED,
+from homeassistant.const import (
+    STATE_ON,
+    EVENT_HOMEASSISTANT_STARTED
+)
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -161,7 +164,7 @@ class AreaSensorGroupSensor(Entity):
             return
 
         # Track presence sensors
-        remove_state_tracker = async_track_state_change(hass, self.sensors, self.sensor_state_change)
+        remove_state_tracker = async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
 
         # Timed self update
@@ -297,8 +300,8 @@ class GlobalSensorGroupSensor(Entity):
             return
 
         # Track presence sensors
-        remove_state_tracker = async_track_state_change(hass, self.sensors, self.sensor_state_change)
-        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+        remove_state_tracker = async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
+        delta = timedelta(seconds=self.update_interval)
 
         # Timed self update
         remove_interval = async_track_time_interval(self.hass, self.update_group, delta)
