@@ -9,7 +9,6 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
@@ -19,7 +18,6 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_STARTED,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
-    EVENT_HOMEASSISTANT_STARTED,
     STATE_OFF,
     STATE_ON,
 )
@@ -262,7 +260,6 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
         """Remove the listeners upon removing the component."""
         self._remove_listeners()
 
->>>>>>> ca658255b1d193977725a03f48050a3e65a006f7
     async def _setup_listeners(self, _=None) -> None:
         _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
         if not self.hass.is_running:
@@ -270,13 +267,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             return
 
         # Track presence sensors
-<<<<<<< HEAD
-        remove_presence = async_track_state_change(self.hass, self.presence_sensors, self.sensor_state_change)
-=======
         remove_presence = async_track_state_change(
             self.hass, self.presence_sensors, self.sensor_state_change
         )
->>>>>>> ca658255b1d193977725a03f48050a3e65a006f7
 
         # Track autolight_disable sensor if available
         autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
@@ -382,7 +375,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
 
         area_state = self._get_area_state()
         last_state = self._state
-        sleep_timeout = self.area.config.get(CONF_AUTO_LIGHTS).get(CONF_AL_SLEEP_TIMEOUT)
+        sleep_timeout = self.area.config.get(CONF_AUTO_LIGHTS).get(
+            CONF_AL_SLEEP_TIMEOUT
+        )
 
         if area_state:
             self._state = True
@@ -390,14 +385,18 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             if sleep_timeout and self._is_sleep_on():
                 # if in sleep mode and sleep_timeout is set, use it...
                 _LOGGER.debug(
-                    f"Area {self.area.slug} sleep mode is active. Timeout: {str(sleep_timeout)}")
-                clear_delta=timedelta(seconds=sleep_timeout)
+                    f"Area {self.area.slug} sleep mode is active. Timeout: {str(sleep_timeout)}"
+                )
+                clear_delta = timedelta(seconds=sleep_timeout)
             else:
                 # ..else, use clear_timeout
                 _LOGGER.debug(
-                    f"Area {self.area.slug} ... Timeout: {str(self.area.config.get(CONF_CLEAR_TIMEOUT))}")
-                clear_delta = timedelta(seconds=self.area.config.get(CONF_CLEAR_TIMEOUT))
-            
+                    f"Area {self.area.slug} ... Timeout: {str(self.area.config.get(CONF_CLEAR_TIMEOUT))}"
+                )
+                clear_delta = timedelta(
+                    seconds=self.area.config.get(CONF_CLEAR_TIMEOUT)
+                )
+
             last_clear = self.last_off_time
             clear_time = last_clear + clear_delta
             time_now = datetime.utcnow()
