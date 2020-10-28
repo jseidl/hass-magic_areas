@@ -254,7 +254,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
 
             self._update_state()
         else:
-            _LOGGER.debug(f"Area restored: {self.slug}")
+            _LOGGER.debug(f"Area restored: {self.area.slug}")
+
             self._state = last_state
 
     async def async_will_remove_from_hass(self):
