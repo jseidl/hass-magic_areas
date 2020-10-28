@@ -512,6 +512,7 @@ class AreaDistressBinarySensor(BinarySensorEntity):
         self._state = False
 
         self.distress_sensors = []
+        self.tracking_listeners = []
 
         # Check if there are binary sensors
         if BINARY_SENSOR_DOMAIN not in self.area.entities.keys():
@@ -529,13 +530,6 @@ class AreaDistressBinarySensor(BinarySensorEntity):
             "distress_sensors": self.distress_sensors,
             "active_sensors": [],
         }
-
-        # Track presence sensors
-        async_track_state_change(hass, self.distress_sensors, self.sensor_state_change)
-        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
-
-        # Timed self update
-        async_track_time_interval(self.hass, self.update_area, delta)
 
     @property
     def name(self):
@@ -561,6 +555,41 @@ class AreaDistressBinarySensor(BinarySensorEntity):
     def device_class(self):
         """Return the class of this binary_sensor."""
         return DEVICE_CLASS_PROBLEM
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+        if self.hass.is_running:
+            await self._setup_listeners()
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, self._setup_listeners
+            )
+
+        self._update_state()
+
+    async def async_will_remove_from_hass(self):
+        """Remove the listeners upon removing the component."""
+        self._remove_listeners()
+
+    async def _setup_listeners(self, _=None) -> None:
+        _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
+        if not self.hass.is_running:
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self._name)
+            return
+
+        # Track presence sensors
+        remove_state_tracker = async_track_state_change(hass, self.distress_sensors, self.sensor_state_change)
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+
+        # Timed self update
+        remove_interval = async_track_time_interval(self.hass, self.update_area, delta)
+
+        self.tracking_listeners.extend([remove_state_tracker, remove_interval])
+        
+    def _remove_listeners(self):
+        while self.tracking_listeners:
+            remove_listener = self.tracking_listeners.pop()
+            remove_listener()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
         self._update_state()
@@ -608,6 +637,8 @@ class AreaSensorGroupBinarySensor(BinarySensorEntity):
         device_class_name = device_class.capitalize()
         self._name = f"Area {device_class_name} ({self.area.name})"
 
+        self.tracking_listeners = []
+
         # Fetch sensors
         self.sensors = []
         for entity in self.area.entities[BINARY_SENSOR_DOMAIN]:
@@ -618,13 +649,6 @@ class AreaSensorGroupBinarySensor(BinarySensorEntity):
             self.sensors.append(entity.entity_id)
 
         self._attributes = {"sensors": self.sensors, "active_sensors": []}
-
-        # Track presence sensors
-        async_track_state_change(hass, self.sensors, self.sensor_state_change)
-        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
-
-        # Timed self update
-        async_track_time_interval(self.hass, self.update_group, delta)
 
     @property
     def name(self):
@@ -645,6 +669,41 @@ class AreaSensorGroupBinarySensor(BinarySensorEntity):
     def device_class(self):
         """Return the class of this binary_sensor."""
         return self._device_class
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+        if self.hass.is_running:
+            await self._setup_listeners()
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, self._setup_listeners
+            )
+
+        self._update_state()
+
+    async def async_will_remove_from_hass(self):
+        """Remove the listeners upon removing the component."""
+        self._remove_listeners()
+
+    async def _setup_listeners(self, _=None) -> None:
+        _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
+        if not self.hass.is_running:
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self._name)
+            return
+
+        # Track presence sensors
+        remove_state_tracker = async_track_state_change(hass, self.sensors, self.sensor_state_change)
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+
+        # Timed self update
+        remove_interval = async_track_time_interval(self.hass, self.update_group, delta)
+
+        self.tracking_listeners.extend([remove_state_tracker, remove_interval])
+        
+    def _remove_listeners(self):
+        while self.tracking_listeners:
+            remove_listener = self.tracking_listeners.pop()
+            remove_listener()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
         self._update_state()
@@ -692,6 +751,8 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
         location_title = location_name.capitalize()
         self._name = f"{location_title} {device_class_name}"
 
+        self.tracking_listeners = []
+
         self.update_interval = 0
 
         # Fetch sensors
@@ -707,13 +768,6 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
                     self.update_interval = area.update_interval
 
         self._attributes = {"sensors": self.sensors, "active_sensors": []}
-
-        # Track presence sensors
-        async_track_state_change(hass, self.sensors, self.sensor_state_change)
-        delta = timedelta(seconds=self.update_interval)
-
-        # Timed self update
-        async_track_time_interval(self.hass, self.update_group, delta)
 
     @property
     def name(self):
@@ -734,6 +788,41 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
     def device_class(self):
         """Return the class of this binary_sensor."""
         return self._device_class
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+        if self.hass.is_running:
+            await self._setup_listeners()
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, self._setup_listeners
+            )
+
+        self._update_state()
+
+    async def async_will_remove_from_hass(self):
+        """Remove the listeners upon removing the component."""
+        self._remove_listeners()
+
+    async def _setup_listeners(self, _=None) -> None:
+        _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
+        if not self.hass.is_running:
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self._name)
+            return
+
+        # Track presence sensors
+        remove_state_tracker = async_track_state_change(hass, self.sensors, self.sensor_state_change)
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+
+        # Timed self update
+        remove_interval = async_track_time_interval(self.hass, self.update_group, delta)
+
+        self.tracking_listeners.extend([remove_state_tracker, remove_interval])
+        
+    def _remove_listeners(self):
+        while self.tracking_listeners:
+            remove_listener = self.tracking_listeners.pop()
+            remove_listener()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
         self._update_state()
