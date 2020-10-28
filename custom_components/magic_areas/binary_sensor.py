@@ -262,7 +262,6 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
         """Remove the listeners upon removing the component."""
         self._remove_listeners()
 
->>>>>>> ca658255b1d193977725a03f48050a3e65a006f7
     async def _setup_listeners(self, _=None) -> None:
         _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
         if not self.hass.is_running:
@@ -270,13 +269,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             return
 
         # Track presence sensors
-<<<<<<< HEAD
-        remove_presence = async_track_state_change(self.hass, self.presence_sensors, self.sensor_state_change)
-=======
         remove_presence = async_track_state_change(
             self.hass, self.presence_sensors, self.sensor_state_change
         )
->>>>>>> ca658255b1d193977725a03f48050a3e65a006f7
 
         # Track autolight_disable sensor if available
         autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
