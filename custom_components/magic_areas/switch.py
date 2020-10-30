@@ -4,6 +4,7 @@ import logging
 
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import STATE_ON
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.const import STATE_ON
 
@@ -72,11 +73,15 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            _LOGGER.debug(f"Presence hold switch restored: {self.area.slug} [{last_state.state}]")
-            self._state = (last_state.state == STATE_ON)
+            _LOGGER.debug(
+                f"Presence hold switch restored: {self.area.slug} [{last_state.state}]"
+            )
+            self._state = last_state.state == STATE_ON
         else:
             self._state = False
             
+        self.schedule_update_ha_state()
+
         self.schedule_update_ha_state()
 
     def turn_on(self, **kwargs):
