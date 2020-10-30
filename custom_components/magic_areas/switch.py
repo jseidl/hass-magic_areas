@@ -6,7 +6,6 @@ from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import STATE_ON
 from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.const import STATE_ON
 
 from .const import MODULE_DATA
 
@@ -79,7 +78,7 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
             self._state = last_state.state == STATE_ON
         else:
             self._state = False
-            
+
         self.schedule_update_ha_state()
 
         self.schedule_update_ha_state()

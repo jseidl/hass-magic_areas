@@ -822,7 +822,9 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
             return
 
         # Track presence sensors
-        remove_state_tracker = async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
+        remove_state_tracker = async_track_state_change(
+            self.hass, self.sensors, self.sensor_state_change
+        )
         delta = timedelta(seconds=self.update_interval)
 
         # Timed self update
