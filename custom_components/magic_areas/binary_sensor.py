@@ -254,7 +254,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             self._update_state()
         else:
             _LOGGER.debug(f"Area restored: {self.area.slug} [{last_state.state}]")
-            self._state = (last_state.state == STATE_ON)
+            self._state = last_state.state == STATE_ON
             self.schedule_update_ha_state()
 
     async def async_will_remove_from_hass(self):
@@ -303,7 +303,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
 
     def sensor_state_change(self, entity_id, from_state, to_state):
 
-        _LOGGER.debug(f"Area {self.area.slug}: sensor '{entity_id}' changed to {to_state.state}")
+        _LOGGER.debug(
+            f"Area {self.area.slug}: sensor '{entity_id}' changed to {to_state.state}"
+        )
 
         if to_state.state not in self.area.config.get(CONF_ON_STATES):
             self.last_off_time = datetime.utcnow()  # Update last_off_time
@@ -583,14 +585,16 @@ class AreaDistressBinarySensor(BinarySensorEntity):
             return
 
         # Track presence sensors
-        remove_state_tracker = async_track_state_change(self.hass, self.distress_sensors, self.sensor_state_change)
+        remove_state_tracker = async_track_state_change(
+            self.hass, self.distress_sensors, self.sensor_state_change
+        )
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
 
         # Timed self update
         remove_interval = async_track_time_interval(self.hass, self.update_area, delta)
 
         self.tracking_listeners.extend([remove_state_tracker, remove_interval])
-        
+
     def _remove_listeners(self):
         while self.tracking_listeners:
             remove_listener = self.tracking_listeners.pop()
@@ -697,14 +701,16 @@ class AreaSensorGroupBinarySensor(BinarySensorEntity):
             return
 
         # Track presence sensors
-        remove_state_tracker = async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
+        remove_state_tracker = async_track_state_change(
+            self.hass, self.sensors, self.sensor_state_change
+        )
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
 
         # Timed self update
         remove_interval = async_track_time_interval(self.hass, self.update_group, delta)
 
         self.tracking_listeners.extend([remove_state_tracker, remove_interval])
-        
+
     def _remove_listeners(self):
         while self.tracking_listeners:
             remove_listener = self.tracking_listeners.pop()
@@ -816,14 +822,16 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
             return
 
         # Track presence sensors
-        remove_state_tracker = async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
+        remove_state_tracker = async_track_state_change(
+            self.hass, self.sensors, self.sensor_state_change
+        )
         delta = timedelta(seconds=self.update_interval)
 
         # Timed self update
         remove_interval = async_track_time_interval(self.hass, self.update_group, delta)
 
         self.tracking_listeners.extend([remove_state_tracker, remove_interval])
-        
+
     def _remove_listeners(self):
         while self.tracking_listeners:
             remove_listener = self.tracking_listeners.pop()
