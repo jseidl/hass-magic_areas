@@ -28,7 +28,7 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
-    AGGREGATE_SENSOR_CLASSES,
+    AGGREGATE_BINARY_SENSOR_CLASSES,
     CONF_AL_DISABLE_ENTITY,
     CONF_AL_DISABLE_STATE,
     CONF_AL_ENTITIES,
@@ -92,7 +92,7 @@ async def async_setup_platform(
 
         for sensor in area.entities[BINARY_SENSOR_DOMAIN]:
 
-            if sensor.device_class not in AGGREGATE_SENSOR_CLASSES:
+            if sensor.device_class not in AGGREGATE_BINARY_SENSOR_CLASSES:
                 continue
 
             available_device_classes.append(sensor.device_class)
@@ -102,7 +102,7 @@ async def async_setup_platform(
             if device_class not in device_class_area_map.keys():
                 device_class_area_map[device_class] = {"exterior": [], "interior": []}
 
-            area_location = "exterior" if area.exterior else "interior"
+            area_location = "exterior" if area.config.get(CONF_EXTERIOR) else "interior"
             device_class_area_map[device_class][area_location].append(area)
 
             _LOGGER.info(
@@ -357,7 +357,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             disable_entity = self.hass.states.get(
                 autolights_config.get(CONF_AL_DISABLE_ENTITY)
             )
-            if (
+            if disable_entity and (
                 disable_entity.state.lower()
                 == autolights_config.get(CONF_AL_DISABLE_STATE).lower()
             ):
@@ -769,8 +769,8 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
                     continue
 
                 self.sensors.append(entity.entity_id)
-                if area.update_interval > self.update_interval:
-                    self.update_interval = area.update_interval
+                if area.config.get(CONF_UPDATE_INTERVAL) > self.update_interval:
+                    self.update_interval = area.config.get(CONF_UPDATE_INTERVAL)
 
         self._attributes = {"sensors": self.sensors, "active_sensors": []}
 
@@ -817,7 +817,7 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
 
         # Track presence sensors
         remove_state_tracker = async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
-        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+        delta = timedelta(seconds=self.update_interval)
 
         # Timed self update
         remove_interval = async_track_time_interval(self.hass, self.update_group, delta)
