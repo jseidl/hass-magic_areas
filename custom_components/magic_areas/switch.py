@@ -4,6 +4,8 @@ import logging
 
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import STATE_ON
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import MODULE_DATA
 
@@ -28,7 +30,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     await async_setup_platform(hass, {}, async_add_entities)
 
 
-class AreaPresenceHoldSwitch(SwitchEntity):
+class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
     def __init__(self, hass, area):
         """Initialize the area presence hold switch."""
 
@@ -63,6 +65,23 @@ class AreaPresenceHoldSwitch(SwitchEntity):
     def icon(self):
         """Return the icon to be used for this entity."""
         return PRESENCE_HOLD_ICON
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+
+        last_state = await self.async_get_last_state()
+
+        if last_state:
+            _LOGGER.debug(
+                f"Presence hold switch restored: {self.area.slug} [{last_state.state}]"
+            )
+            self._state = last_state.state == STATE_ON
+        else:
+            self._state = False
+
+        self.schedule_update_ha_state()
+
+        self.schedule_update_ha_state()
 
     def turn_on(self, **kwargs):
         """Turn on presence hold."""
