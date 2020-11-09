@@ -2,11 +2,21 @@ name-template: v$NEXT_PATCH_VERSION
 tag-template: v$NEXT_PATCH_VERSION
 categories:
   - title: 🚀 Features
-    label: feature
+    labels:
+       - feature
+       - enhancement
   - title: 🐛 Bug Fixes
-    label: fix
+    labels:
+       - fix
+       - hotfix
+       - bug
   - title: 🧰 Maintenance
-    label: chore
+    labels:
+       - chore
+       - ci
+       - workflow
+       - tests
+       - maintenance
 tag-template: - $TITLE @$AUTHOR (#$NUMBER)
 template: |
   ## Changes
