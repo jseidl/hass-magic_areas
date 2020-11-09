@@ -265,7 +265,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         if self._passive:
             return
 
-        if to_state.state == STATE_OFF:
+        if to_state.state == self.area.automatic_lights[CONF_AL_DISABLE_STATE]:
             if self._state:
                 self._lights_on()
         else:
