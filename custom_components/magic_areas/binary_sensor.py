@@ -391,7 +391,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
                 )
                 return False
 
-        return true
+        return True
 
     def _autolights(self):
 
