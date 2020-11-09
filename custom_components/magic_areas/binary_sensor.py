@@ -50,6 +50,9 @@ from .const import (
     DISTRESS_STATES,
     MODULE_DATA,
     PRESENCE_DEVICE_COMPONENTS,
+    AUTOLIGHTS_STATE_SLEEP,
+    AUTOLIGHTS_STATE_NORMAL,
+    AUTOLIGHTS_STATE_DISABLED
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -194,6 +197,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             "update_interval": self.area.config.get(CONF_UPDATE_INTERVAL),
             "on_states": self.area.config.get(CONF_ON_STATES),
             "exterior": self.area.config.get(CONF_EXTERIOR),
+            "automatic_lights": self._get_autolights_state(),
         }
 
         # Set attribute sleep_timeout if defined
@@ -282,6 +286,16 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             )
             self.tracking_listeners.append(remove_disable)
 
+        # Track autolight_sleep sensor if available
+        autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
+        if autolights_config.get(CONF_AL_SLEEP_ENTITY):
+            remove_sleep = async_track_state_change(
+                self.hass,
+                autolights_config.get(CONF_AL_SLEEP_ENTITY),
+                self.autolight_sleep_state_change,
+            )
+            self.tracking_listeners.append(remove_sleep)
+
         # Timed self update
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
         remove_interval = async_track_time_interval(self.hass, self.update_area, delta)
@@ -293,7 +307,13 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             remove_listener = self.tracking_listeners.pop()
             remove_listener()
 
+    def autolight_sleep_state_change(self, entity_id, from_state, to_state):
+    
+        self._update_autolights_state()
+
     def autolight_disable_state_change(self, entity_id, from_state, to_state):
+
+        self._update_autolights_state()
 
         if to_state.state == self.area.config.get(CONF_AUTO_LIGHTS).get(CONF_AL_DISABLE_STATE):
             if self._state:
@@ -316,44 +336,47 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
         _LOGGER.debug(f"Area {self.area.slug}: Timed maintenance update")
         return self._update_state()
 
-    def _is_sleep_on(self):
+    def _update_autolights_state(self):
+
+        self.attributes['automatic_lights'] = self._get_autolights_state()
+
+    def _get_autolights_state(self):
+
+        if not self.area.config.get(CONF_CONTROL_LIGHTS) or self._is_autolights_disabled():
+            return AUTOLIGHTS_STATE_DISABLED
+
+        if self._is_autolights_sleep():
+            return AUTOLIGHTS_STATE_SLEEP
+
+        return AUTOLIGHTS_STATE_NORMAL
+
+    def _is_autolights_sleep(self):
+
         autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
 
-        sleep_state = False
         if autolights_config.get(CONF_AL_SLEEP_ENTITY):
             if not autolights_config.get(CONF_AL_SLEEP_LIGHTS):
                 # If user fails to set CONF_AL_SLEEP_LIGHTS, sleep mode will be ignored
                 _LOGGER.error(
                     f"'{CONF_AL_SLEEP_LIGHTS}' not defined. Please review your configuration."
                 )
-            else:
-                sleep_entity = self.hass.states.get(
-                    autolights_config.get(CONF_AL_SLEEP_ENTITY)
+                return False
+
+            sleep_entity = self.hass.states.get(
+                autolights_config.get(CONF_AL_SLEEP_ENTITY)
+            )
+            if (
+                sleep_entity.state.lower()
+                == autolights_config.get(CONF_AL_SLEEP_STATE).lower()
+            ):
+                _LOGGER.info(
+                    f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
                 )
-                if (
-                    sleep_entity.state.lower()
-                    == autolights_config.get(CONF_AL_SLEEP_STATE).lower()
-                ):
-                    _LOGGER.info(
-                        f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
-                    )
-                    sleep_state = True
+                return True
 
-        return sleep_state
+        return False
 
-    def _autolights(self):
-
-        autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
-
-        # All lights affected by default
-        affected_lights = [
-            entity.entity_id for entity in self.area.entities[LIGHT_DOMAIN]
-        ]
-
-        # Regular operation
-        if autolights_config.get(CONF_AL_ENTITIES):
-            affected_lights = autolights_config.get(CONF_AL_ENTITIES)
-
+    def _is_autolights_disabled(self):
         # Check if disabled
         if autolights_config.get(CONF_AL_DISABLE_ENTITY):
             disable_entity = self.hass.states.get(
@@ -368,8 +391,27 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
                 )
                 return False
 
+        return true
+
+    def _autolights(self):
+
+        autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
+
+        # All lights affected by default
+        affected_lights = [
+            entity.entity_id for entity in self.area.entities[LIGHT_DOMAIN]
+        ]
+
+        # Regular operation
+        if autolights_config.get(CONF_AL_ENTITIES):
+            affected_lights = autolights_config.get(CONF_AL_ENTITIES)
+
+        # Check if in disable mode
+        if self._is_autolight_disabled():
+            return False
+
         # Check if in sleep mode
-        if self._is_sleep_on():
+        if self._is_autolights_sleep():
             affected_lights = autolights_config.get(CONF_AL_SLEEP_LIGHTS)
 
         # Call service to turn_on the lights
@@ -389,7 +431,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
         if area_state:
             self._state = True
         else:
-            if sleep_timeout and self._is_sleep_on():
+            if sleep_timeout and self._is_autolights_sleep():
                 # if in sleep mode and sleep_timeout is set, use it...
                 _LOGGER.debug(
                     f"Area {self.area.slug} sleep mode is active. Timeout: {str(sleep_timeout)}"

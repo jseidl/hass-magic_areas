@@ -160,3 +160,8 @@ _DOMAIN_SCHEMA = vol.Schema(
         )
     }
 )
+
+# Autolights States
+AUTOLIGHTS_STATE_SLEEP = "sleep"
+AUTOLIGHTS_STATE_NORMAL = "enabled"
+AUTOLIGHTS_STATE_DISABLED = "disabled"
