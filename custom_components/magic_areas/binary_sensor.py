@@ -295,7 +295,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
 
     def autolight_disable_state_change(self, entity_id, from_state, to_state):
 
-        if to_state.state == STATE_OFF:
+        if to_state.state == self.area.config.get(CONF_AUTO_LIGHTS).get(CONF_AL_DISABLE_STATE):
             if self._state:
                 self._lights_on()
         else:
