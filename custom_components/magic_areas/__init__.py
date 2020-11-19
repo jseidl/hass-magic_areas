@@ -142,16 +142,19 @@ class StandaloneEntity(Entity):
         # Try to fetch device_class from attributes
         try:
             entity_state = hass.states.get(self.entity_id)
-            if 'device_class' in entity_state.attributes.keys():
-                self._device_class = entity_state.attributes['device_class']
+            if "device_class" in entity_state.attributes.keys():
+                self._device_class = entity_state.attributes["device_class"]
         except Exception as e:
             str_err = str(e)
-            _LOGGER.warn(f"Error retrieving device_class for entity '{self.entity_id}': str_err")
+            _LOGGER.warn(
+                f"Error retrieving device_class for entity '{self.entity_id}': str_err"
+            )
 
     @property
     def device_class(self):
 
         return self._device_class
+
 
 class MagicArea(object):
     def __init__(self, hass, id, name, entities, config, standalone_entities):
