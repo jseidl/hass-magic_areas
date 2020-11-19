@@ -4,16 +4,8 @@ import logging
 from datetime import datetime, timedelta
 
 from homeassistant.components.binary_sensor import (
-    DEVICE_CLASS_DOOR,
-    DEVICE_CLASS_GAS,
-    DEVICE_CLASS_LIGHT,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_MOTION,
     DEVICE_CLASS_OCCUPANCY,
     DEVICE_CLASS_PROBLEM,
-    DEVICE_CLASS_SAFETY,
-    DEVICE_CLASS_SMOKE,
-    DEVICE_CLASS_WINDOW,
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.binary_sensor import BinarySensorEntity
@@ -23,52 +15,47 @@ from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
-    EVENT_HOMEASSISTANT_START,
+    EVENT_HOMEASSISTANT_STARTED,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
-    STATE_ALARM_TRIGGERED,
-    STATE_HOME,
     STATE_OFF,
     STATE_ON,
-    STATE_PROBLEM,
 )
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
 )
+from homeassistant.helpers.restore_state import RestoreEntity
 
-from . import (
+from .const import (
+    AGGREGATE_BINARY_SENSOR_CLASSES,
+    AUTOLIGHTS_STATE_DISABLED,
+    AUTOLIGHTS_STATE_NORMAL,
+    AUTOLIGHTS_STATE_SLEEP,
     CONF_AL_DISABLE_ENTITY,
     CONF_AL_DISABLE_STATE,
     CONF_AL_ENTITIES,
     CONF_AL_SLEEP_ENTITY,
     CONF_AL_SLEEP_LIGHTS,
     CONF_AL_SLEEP_STATE,
+    CONF_AL_SLEEP_TIMEOUT,
+    CONF_AUTO_LIGHTS,
+    CONF_CLEAR_TIMEOUT,
+    CONF_CONTROL_CLIMATE,
+    CONF_CONTROL_LIGHTS,
+    CONF_CONTROL_MEDIA,
+    CONF_EXTERIOR,
+    CONF_ICON,
+    CONF_ON_STATES,
+    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_UPDATE_INTERVAL,
+    DISTRESS_SENSOR_CLASSES,
+    DISTRESS_STATES,
     MODULE_DATA,
+    PRESENCE_DEVICE_COMPONENTS,
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-PRESENCE_DEVICE_COMPONENTS = [
-    MEDIA_PLAYER_DOMAIN,
-    BINARY_SENSOR_DOMAIN,
-]  # @todo make configurable
-AGGREGATE_SENSOR_CLASSES = [
-    DEVICE_CLASS_WINDOW,
-    DEVICE_CLASS_DOOR,
-    DEVICE_CLASS_MOTION,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_LIGHT,
-]
-
-DISTRESS_SENSOR_CLASSES = [
-    DEVICE_CLASS_PROBLEM,
-    DEVICE_CLASS_SMOKE,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_SAFETY,
-    DEVICE_CLASS_GAS,
-]  # @todo make configurable
-DISTRESS_STATES = [STATE_ALARM_TRIGGERED, STATE_ON, STATE_PROBLEM]
 
 
 async def async_setup_platform(
@@ -108,7 +95,7 @@ async def async_setup_platform(
 
         for sensor in area.entities[BINARY_SENSOR_DOMAIN]:
 
-            if sensor.device_class not in AGGREGATE_SENSOR_CLASSES:
+            if sensor.device_class not in AGGREGATE_BINARY_SENSOR_CLASSES:
                 continue
 
             available_device_classes.append(sensor.device_class)
@@ -118,7 +105,7 @@ async def async_setup_platform(
             if device_class not in device_class_area_map.keys():
                 device_class_area_map[device_class] = {"exterior": [], "interior": []}
 
-            area_location = "exterior" if area.exterior else "interior"
+            area_location = "exterior" if area.config.get(CONF_EXTERIOR) else "interior"
             device_class_area_map[device_class][area_location].append(area)
 
             _LOGGER.info(
@@ -153,7 +140,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     await async_setup_platform(hass, {}, async_add_entities)
 
 
-class AreaPresenceBinarySensor(BinarySensorEntity):
+class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
     def __init__(self, hass, area):
         """Initialize the area presence binary sensor."""
 
@@ -163,7 +150,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         self._state = None
         self.last_off_time = datetime.utcnow()
 
-        self._passive = self.area.passive_start  # Prevent acting until all is loaded
+        self.tracking_listeners = []
 
         _LOGGER.info(f"Area {self.area.slug} presence sensor initializing.")
 
@@ -178,7 +165,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
 
                 if (
                     component == BINARY_SENSOR_DOMAIN
-                    and entity.device_class not in self.area.presence_device_class
+                    and entity.device_class
+                    not in self.area.config.get(CONF_PRESENCE_SENSOR_DEVICE_CLASS)
                 ):
                     continue
 
@@ -205,26 +193,19 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
             "active_sensors": [],
             "lights": area_lights,
             "climate": area_climate,
-            "clear_timeout": self.area.clear_timeout,
-            "update_interval": self.area.update_interval,
-            "on_states": self.area.on_states,
-            "exterior": self.area.exterior,
+            "clear_timeout": self.area.config.get(CONF_CLEAR_TIMEOUT),
+            "update_interval": self.area.config.get(CONF_UPDATE_INTERVAL),
+            "on_states": self.area.config.get(CONF_ON_STATES),
+            "exterior": self.area.config.get(CONF_EXTERIOR),
+            "automatic_lights": self._get_autolights_state(),
         }
 
-        # Track presence sensors
-        async_track_state_change(hass, self.presence_sensors, self.sensor_state_change)
-
-        # Track autolight_disable sensor if available
-        if self.area.automatic_lights[CONF_AL_DISABLE_ENTITY]:
-            async_track_state_change(
-                hass,
-                self.area.automatic_lights[CONF_AL_DISABLE_ENTITY],
-                self.autolight_disable_state_change,
+        # Set attribute sleep_timeout if defined
+        autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
+        if autolights_config.get(CONF_AL_SLEEP_TIMEOUT):
+            self._attributes["sleep_timeout"] = autolights_config.get(
+                CONF_AL_SLEEP_TIMEOUT
             )
-
-        # Timed self update
-        delta = timedelta(seconds=self.area.update_interval)
-        async_track_time_interval(self.hass, self.update_area, delta)
 
         _LOGGER.info(f"Area {self.area.slug} presence sensor initialized.")
 
@@ -251,8 +232,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
     @property
     def icon(self):
         """Return the icon to be used for this entity."""
-        if self.area.icon is not None:
-            return self.area.icon
+        if self.area.config.get(CONF_ICON):
+            return self.area.config.get(CONF_ICON)
         return None
 
     @property
@@ -260,27 +241,170 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         """Return the class of this binary_sensor."""
         return DEVICE_CLASS_OCCUPANCY
 
-    def autolight_disable_state_change(self, entity_id, from_state, to_state):
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+        if self.hass.is_running:
+            await self._setup_listeners()
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, self._setup_listeners
+            )
 
-        if self._passive:
+        last_state = await self.async_get_last_state()
+        is_new_entry = last_state is None  # newly added to HA
+
+        if is_new_entry:
+            _LOGGER.debug(f"New area detected: {self.area.slug}")
+            self._update_state()
+        else:
+            _LOGGER.debug(f"Area restored: {self.area.slug} [{last_state.state}]")
+            self._state = last_state.state == STATE_ON
+            self.schedule_update_ha_state()
+
+    async def async_will_remove_from_hass(self):
+        """Remove the listeners upon removing the component."""
+        self._remove_listeners()
+
+    async def _setup_listeners(self, _=None) -> None:
+        _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
+        if not self.hass.is_running:
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self._name)
             return
 
-        if to_state.state == self.area.automatic_lights[CONF_AL_DISABLE_STATE]:
+        # Track presence sensors
+        remove_presence = async_track_state_change(
+            self.hass, self.presence_sensors, self.sensor_state_change
+        )
+
+        autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
+
+        # Track autolight_disable sensor if available
+        if autolights_config.get(CONF_AL_DISABLE_ENTITY):
+            remove_disable = async_track_state_change(
+                self.hass,
+                autolights_config.get(CONF_AL_DISABLE_ENTITY),
+                self.autolight_disable_state_change,
+            )
+            self.tracking_listeners.append(remove_disable)
+
+        # Track autolight_sleep sensor if available
+        if autolights_config.get(CONF_AL_SLEEP_ENTITY):
+            remove_sleep = async_track_state_change(
+                self.hass,
+                autolights_config.get(CONF_AL_SLEEP_ENTITY),
+                self.autolight_sleep_state_change,
+            )
+            self.tracking_listeners.append(remove_sleep)
+
+        # Timed self update
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+        remove_interval = async_track_time_interval(self.hass, self.update_area, delta)
+
+        self.tracking_listeners.extend([remove_presence, remove_interval])
+
+    def _remove_listeners(self):
+        while self.tracking_listeners:
+            remove_listener = self.tracking_listeners.pop()
+            remove_listener()
+
+    def autolight_sleep_state_change(self, entity_id, from_state, to_state):
+
+        self._update_autolights_state()
+
+    def autolight_disable_state_change(self, entity_id, from_state, to_state):
+
+        self._update_autolights_state()
+
+        if to_state.state == self.area.config.get(CONF_AUTO_LIGHTS).get(
+            CONF_AL_DISABLE_STATE
+        ):
             if self._state:
-                self._lights_on()
+                self._lights_off()
         else:
-            self._lights_off()
+            self._lights_on()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
-        if to_state.state not in self.area.on_states:
+
+        _LOGGER.debug(
+            f"Area {self.area.slug}: sensor '{entity_id}' changed to {to_state.state}"
+        )
+
+        if to_state.state not in self.area.config.get(CONF_ON_STATES):
             self.last_off_time = datetime.utcnow()  # Update last_off_time
 
         return self._update_state()
 
     def update_area(self, next_interval):
+        _LOGGER.debug(f"Area {self.area.slug}: Timed maintenance update")
         return self._update_state()
 
+    def _update_autolights_state(self):
+
+        self._attributes["automatic_lights"] = self._get_autolights_state()
+        self.schedule_update_ha_state()
+
+    def _get_autolights_state(self):
+
+        if (
+            not self.area.config.get(CONF_CONTROL_LIGHTS)
+            or self._is_autolights_disabled()
+        ):
+            return AUTOLIGHTS_STATE_DISABLED
+
+        if self._is_autolights_sleep():
+            return AUTOLIGHTS_STATE_SLEEP
+
+        return AUTOLIGHTS_STATE_NORMAL
+
+    def _is_autolights_sleep(self):
+
+        autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
+
+        if autolights_config.get(CONF_AL_SLEEP_ENTITY):
+            if not autolights_config.get(CONF_AL_SLEEP_LIGHTS):
+                # If user fails to set CONF_AL_SLEEP_LIGHTS, sleep mode will be ignored
+                _LOGGER.error(
+                    f"'{CONF_AL_SLEEP_LIGHTS}' not defined. Please review your configuration."
+                )
+                return False
+
+            sleep_entity = self.hass.states.get(
+                autolights_config.get(CONF_AL_SLEEP_ENTITY)
+            )
+            if (
+                sleep_entity.state.lower()
+                == autolights_config.get(CONF_AL_SLEEP_STATE).lower()
+            ):
+                _LOGGER.info(
+                    f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
+                )
+                return True
+
+        return False
+
+    def _is_autolights_disabled(self):
+
+        autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
+
+        # Check if disabled
+        if autolights_config.get(CONF_AL_DISABLE_ENTITY):
+            disable_entity = self.hass.states.get(
+                autolights_config.get(CONF_AL_DISABLE_ENTITY)
+            )
+            if disable_entity and (
+                disable_entity.state.lower()
+                == autolights_config.get(CONF_AL_DISABLE_STATE).lower()
+            ):
+                _LOGGER.info(
+                    f"Disable entity '{disable_entity.entity_id}' on disable state '{disable_entity.state}'"
+                )
+                return True
+
+        return False
+
     def _autolights(self):
+
+        autolights_config = self.area.config.get(CONF_AUTO_LIGHTS)
 
         # All lights affected by default
         affected_lights = [
@@ -288,42 +412,16 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         ]
 
         # Regular operation
-        if self.area.automatic_lights[CONF_AL_ENTITIES]:
-            affected_lights = self.area.automatic_lights[CONF_AL_ENTITIES]
+        if autolights_config.get(CONF_AL_ENTITIES):
+            affected_lights = autolights_config.get(CONF_AL_ENTITIES)
 
-        # Check if disabled
-        if self.area.automatic_lights[CONF_AL_DISABLE_ENTITY]:
-            disable_entity = self.hass.states.get(
-                self.area.automatic_lights[CONF_AL_DISABLE_ENTITY]
-            )
-            if (
-                disable_entity.state.lower()
-                == self.area.automatic_lights[CONF_AL_DISABLE_STATE].lower()
-            ):
-                _LOGGER.info(
-                    f"Disable entity '{disable_entity.entity_id}' on disable state '{disable_entity.state}'"
-                )
-                return False
+        # Check if in disable mode
+        if self._is_autolights_disabled():
+            return False
 
         # Check if in sleep mode
-        if self.area.automatic_lights[CONF_AL_SLEEP_ENTITY]:
-            if not self.area.automatic_lights[CONF_AL_SLEEP_LIGHTS]:
-                # If user fails to set CONF_AL_SLEEP_LIGHTS, sleep mode will be ignored
-                _LOGGER.error(
-                    f"'{CONF_AL_SLEEP_LIGHTS}' not defined. Please review your configuration."
-                )
-            else:
-                sleep_entity = self.hass.states.get(
-                    self.area.automatic_lights[CONF_AL_SLEEP_ENTITY]
-                )
-                if (
-                    sleep_entity.state.lower()
-                    == self.area.automatic_lights[CONF_AL_SLEEP_STATE].lower()
-                ):
-                    _LOGGER.info(
-                        f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
-                    )
-                    affected_lights = self.area.automatic_lights[CONF_AL_SLEEP_LIGHTS]
+        if self._is_autolights_sleep():
+            affected_lights = autolights_config.get(CONF_AL_SLEEP_LIGHTS)
 
         # Call service to turn_on the lights
         service_data = {ATTR_ENTITY_ID: affected_lights}
@@ -335,11 +433,28 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
 
         area_state = self._get_area_state()
         last_state = self._state
+        sleep_timeout = self.area.config.get(CONF_AUTO_LIGHTS).get(
+            CONF_AL_SLEEP_TIMEOUT
+        )
 
         if area_state:
             self._state = True
         else:
-            clear_delta = timedelta(seconds=self.area.clear_timeout)
+            if sleep_timeout and self._is_autolights_sleep():
+                # if in sleep mode and sleep_timeout is set, use it...
+                _LOGGER.debug(
+                    f"Area {self.area.slug} sleep mode is active. Timeout: {str(sleep_timeout)}"
+                )
+                clear_delta = timedelta(seconds=sleep_timeout)
+            else:
+                # ..else, use clear_timeout
+                _LOGGER.debug(
+                    f"Area {self.area.slug} ... Timeout: {str(self.area.config.get(CONF_CLEAR_TIMEOUT))}"
+                )
+                clear_delta = timedelta(
+                    seconds=self.area.config.get(CONF_CLEAR_TIMEOUT)
+                )
+
             last_clear = self.last_off_time
             clear_time = last_clear + clear_delta
             time_now = datetime.utcnow()
@@ -352,12 +467,6 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         # Check state change
         if last_state != self._state:
 
-            # Skip first state change to STATE_ON
-            if self._passive and self._state:
-                _LOGGER.info(f"{self.area.name} is on passive mode.")
-                self._passive = False
-                return
-
             if self._state:
                 self._state_on()
             else:
@@ -369,7 +478,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
 
     def _lights_on(self):
         # Turn on lights, if configured
-        if self.area.control_lights and self._has_entities(LIGHT_DOMAIN):
+        if self.area.config.get(CONF_CONTROL_LIGHTS) and self._has_entities(
+            LIGHT_DOMAIN
+        ):
             self._autolights()
 
     def _state_on(self):
@@ -377,7 +488,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         self._lights_on()
 
         # Turn on climate, if configured
-        if self.area.control_climate and self._has_entities(CLIMATE_DOMAIN):
+        if self.area.config.get(CONF_CONTROL_CLIMATE) and self._has_entities(
+            CLIMATE_DOMAIN
+        ):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity.entity_id for entity in self.area.entities[CLIMATE_DOMAIN]
@@ -387,7 +500,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
 
     def _lights_off(self):
         # Turn off lights, if configured
-        if self.area.control_lights and self._has_entities(LIGHT_DOMAIN):
+        if self.area.config.get(CONF_CONTROL_LIGHTS) and self._has_entities(
+            LIGHT_DOMAIN
+        ):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity.entity_id for entity in self.area.entities[LIGHT_DOMAIN]
@@ -400,7 +515,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
         self._lights_off()
 
         # Turn off climate, if configured
-        if self.area.control_climate and self._has_entities(CLIMATE_DOMAIN):
+        if self.area.config.get(CONF_CONTROL_CLIMATE) and self._has_entities(
+            CLIMATE_DOMAIN
+        ):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity.entity_id for entity in self.area.entities[CLIMATE_DOMAIN]
@@ -409,7 +526,9 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
             self.hass.services.call(CLIMATE_DOMAIN, SERVICE_TURN_OFF, service_data)
 
         # Turn off media, if configured
-        if self.area.control_media and self._has_entities(MEDIA_PLAYER_DOMAIN):
+        if self.area.config.get(CONF_CONTROL_MEDIA) and self._has_entities(
+            MEDIA_PLAYER_DOMAIN
+        ):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity.entity_id
@@ -433,7 +552,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity):
                 )
                 continue
 
-            if entity.state in self.area.on_states:
+            if entity.state in self.area.config.get(CONF_ON_STATES):
                 active_sensors.append(sensor)
 
         self._attributes["active_sensors"] = active_sensors
@@ -451,6 +570,7 @@ class AreaDistressBinarySensor(BinarySensorEntity):
         self._state = False
 
         self.distress_sensors = []
+        self.tracking_listeners = []
 
         # Check if there are binary sensors
         if BINARY_SENSOR_DOMAIN not in self.area.entities.keys():
@@ -468,13 +588,6 @@ class AreaDistressBinarySensor(BinarySensorEntity):
             "distress_sensors": self.distress_sensors,
             "active_sensors": [],
         }
-
-        # Track presence sensors
-        async_track_state_change(hass, self.distress_sensors, self.sensor_state_change)
-        delta = timedelta(seconds=self.area.update_interval)
-
-        # Timed self update
-        async_track_time_interval(self.hass, self.update_area, delta)
 
     @property
     def name(self):
@@ -500,6 +613,43 @@ class AreaDistressBinarySensor(BinarySensorEntity):
     def device_class(self):
         """Return the class of this binary_sensor."""
         return DEVICE_CLASS_PROBLEM
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+        if self.hass.is_running:
+            await self._setup_listeners()
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, self._setup_listeners
+            )
+
+        self._update_state()
+
+    async def async_will_remove_from_hass(self):
+        """Remove the listeners upon removing the component."""
+        self._remove_listeners()
+
+    async def _setup_listeners(self, _=None) -> None:
+        _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
+        if not self.hass.is_running:
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self._name)
+            return
+
+        # Track presence sensors
+        remove_state_tracker = async_track_state_change(
+            self.hass, self.distress_sensors, self.sensor_state_change
+        )
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+
+        # Timed self update
+        remove_interval = async_track_time_interval(self.hass, self.update_area, delta)
+
+        self.tracking_listeners.extend([remove_state_tracker, remove_interval])
+
+    def _remove_listeners(self):
+        while self.tracking_listeners:
+            remove_listener = self.tracking_listeners.pop()
+            remove_listener()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
         self._update_state()
@@ -547,6 +697,8 @@ class AreaSensorGroupBinarySensor(BinarySensorEntity):
         device_class_name = device_class.capitalize()
         self._name = f"Area {device_class_name} ({self.area.name})"
 
+        self.tracking_listeners = []
+
         # Fetch sensors
         self.sensors = []
         for entity in self.area.entities[BINARY_SENSOR_DOMAIN]:
@@ -557,13 +709,6 @@ class AreaSensorGroupBinarySensor(BinarySensorEntity):
             self.sensors.append(entity.entity_id)
 
         self._attributes = {"sensors": self.sensors, "active_sensors": []}
-
-        # Track presence sensors
-        async_track_state_change(hass, self.sensors, self.sensor_state_change)
-        delta = timedelta(seconds=self.area.update_interval)
-
-        # Timed self update
-        async_track_time_interval(self.hass, self.update_group, delta)
 
     @property
     def name(self):
@@ -584,6 +729,43 @@ class AreaSensorGroupBinarySensor(BinarySensorEntity):
     def device_class(self):
         """Return the class of this binary_sensor."""
         return self._device_class
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+        if self.hass.is_running:
+            await self._setup_listeners()
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, self._setup_listeners
+            )
+
+        self._update_state()
+
+    async def async_will_remove_from_hass(self):
+        """Remove the listeners upon removing the component."""
+        self._remove_listeners()
+
+    async def _setup_listeners(self, _=None) -> None:
+        _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
+        if not self.hass.is_running:
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self._name)
+            return
+
+        # Track presence sensors
+        remove_state_tracker = async_track_state_change(
+            self.hass, self.sensors, self.sensor_state_change
+        )
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+
+        # Timed self update
+        remove_interval = async_track_time_interval(self.hass, self.update_group, delta)
+
+        self.tracking_listeners.extend([remove_state_tracker, remove_interval])
+
+    def _remove_listeners(self):
+        while self.tracking_listeners:
+            remove_listener = self.tracking_listeners.pop()
+            remove_listener()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
         self._update_state()
@@ -631,6 +813,8 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
         location_title = location_name.capitalize()
         self._name = f"{location_title} {device_class_name}"
 
+        self.tracking_listeners = []
+
         self.update_interval = 0
 
         # Fetch sensors
@@ -642,17 +826,10 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
                     continue
 
                 self.sensors.append(entity.entity_id)
-                if area.update_interval > self.update_interval:
-                    self.update_interval = area.update_interval
+                if area.config.get(CONF_UPDATE_INTERVAL) > self.update_interval:
+                    self.update_interval = area.config.get(CONF_UPDATE_INTERVAL)
 
         self._attributes = {"sensors": self.sensors, "active_sensors": []}
-
-        # Track presence sensors
-        async_track_state_change(hass, self.sensors, self.sensor_state_change)
-        delta = timedelta(seconds=self.update_interval)
-
-        # Timed self update
-        async_track_time_interval(self.hass, self.update_group, delta)
 
     @property
     def name(self):
@@ -673,6 +850,43 @@ class GlobalSensorGroupBinarySensor(BinarySensorEntity):
     def device_class(self):
         """Return the class of this binary_sensor."""
         return self._device_class
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+        if self.hass.is_running:
+            await self._setup_listeners()
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, self._setup_listeners
+            )
+
+        self._update_state()
+
+    async def async_will_remove_from_hass(self):
+        """Remove the listeners upon removing the component."""
+        self._remove_listeners()
+
+    async def _setup_listeners(self, _=None) -> None:
+        _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
+        if not self.hass.is_running:
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self._name)
+            return
+
+        # Track presence sensors
+        remove_state_tracker = async_track_state_change(
+            self.hass, self.sensors, self.sensor_state_change
+        )
+        delta = timedelta(seconds=self.update_interval)
+
+        # Timed self update
+        remove_interval = async_track_time_interval(self.hass, self.update_group, delta)
+
+        self.tracking_listeners.extend([remove_state_tracker, remove_interval])
+
+    def _remove_listeners(self):
+        while self.tracking_listeners:
+            remove_listener = self.tracking_listeners.pop()
+            remove_listener()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
         self._update_state()
