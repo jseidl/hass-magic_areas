@@ -1,3 +1,4 @@
+from typing import Optional
 import voluptuous as vol
 from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_DOOR,
@@ -65,6 +66,7 @@ CONF_ON_STATES, DEFAULT_ON_STATES = "on_states", [
     STATE_OPEN,
 ]  # cv.list
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
+CONF_PRESENCE_HOLD_TIMEOUT = "presence_hold_timeout"  # cv.positive_int
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 15  # cv.positive_int
 CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
 
@@ -155,6 +157,7 @@ _DOMAIN_SCHEMA = vol.Schema(
                     CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
                 ): cv.positive_int,
                 vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
+                vol.Optional(CONF_PRESENCE_HOLD_TIMEOUT, default=None): cv.positive_int,
             },
             None,
         )

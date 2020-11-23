@@ -1,13 +1,24 @@
 DEPENDENCIES = ["magic_areas"]
 
 import logging
+from datetime import datetime, timedelta
 
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.const import STATE_ON
+from homeassistant.const import (
+    STATE_ON,
+    EVENT_HOMEASSISTANT_STARTED,
+)
+from homeassistant.helpers.event import (
+    async_track_state_change,
+    async_track_time_interval,
+)
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .const import MODULE_DATA
+from .const import (
+    MODULE_DATA,
+    CONF_PRESENCE_HOLD_TIMEOUT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +49,8 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
         self.hass = hass
         self._name = f"Area Presence Hold ({self.area.name})"
         self._state = False
+
+        self.tracking_listeners = []
 
         _LOGGER.debug(f"Area {self.area.slug} presence hold switch initializing.")
 
@@ -83,12 +96,39 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
 
         self.schedule_update_ha_state()
 
+    async def async_will_remove_from_hass(self):
+        """Remove the listeners upon removing the component."""
+        self._remove_listeners()
+
+    def _remove_listeners(self):
+        while self.tracking_listeners:
+            remove_listener = self.tracking_listeners.pop()
+            remove_listener()
+
+    def turn_off_switch(self, next_interval):
+        _LOGGER.debug(f"Reset presence hold switch {self.entity_id}")
+        return self.turn_off()
+
+    def reset_hold(self):
+        reset_timeout = self.area.config.get(CONF_PRESENCE_HOLD_TIMEOUT)
+        if reset_timeout:
+            _LOGGER.debug(
+                f"Will reset hold for {self.entity_id=} after {reset_timeout}s"
+            )
+            delta = timedelta(seconds=reset_timeout)
+            self.tracking_listeners.append(
+                async_track_time_interval(self.hass, self.turn_off_switch, delta)
+            )
+
     def turn_on(self, **kwargs):
         """Turn on presence hold."""
         self._state = True
         self.schedule_update_ha_state()
 
+        self.reset_hold()
+
     def turn_off(self, **kwargs):
         """Turn off presence hold."""
         self._state = False
         self.schedule_update_ha_state()
+        self._remove_listeners()
