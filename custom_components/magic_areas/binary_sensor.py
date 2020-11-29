@@ -321,7 +321,8 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             if self._state:
                 self._lights_off()
         else:
-            self._lights_on()
+            if self._state:
+                self._lights_on()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
 
