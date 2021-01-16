@@ -1,7 +1,6 @@
 DEPENDENCIES = ["magic_areas"]
 
 import logging
-from datetime import datetime, timedelta
 
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch import SwitchEntity
@@ -9,10 +8,7 @@ from homeassistant.const import (
     STATE_ON,
     EVENT_HOMEASSISTANT_STARTED,
 )
-from homeassistant.helpers.event import (
-    async_track_state_change,
-    async_track_time_interval,
-)
+from homeassistant.helpers.event import call_later
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
@@ -115,9 +111,8 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
             _LOGGER.debug(
                 f"Will reset hold for {self.entity_id=} after {reset_timeout}s"
             )
-            delta = timedelta(seconds=reset_timeout)
             self.tracking_listeners.append(
-                async_track_time_interval(self.hass, self.turn_off_switch, delta)
+                call_later(self.hass, reset_timeout, self.turn_off_switch)
             )
 
     def turn_on(self, **kwargs):
