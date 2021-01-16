@@ -313,16 +313,20 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
 
     def autolight_disable_state_change(self, entity_id, from_state, to_state):
 
+        last_state = self._attributes["automatic_lights"]
         self._update_autolights_state()
 
-        if to_state.state == self.area.config.get(CONF_AUTO_LIGHTS).get(
-            CONF_AL_DISABLE_STATE
-        ):
-            if self._state:
-                self._lights_off()
-        else:
-            if self._state:
-                self._lights_on()
+        # Check state change
+        if self._attributes["automatic_lights"] != last_state:
+
+            if to_state.state == self.area.config.get(CONF_AUTO_LIGHTS).get(
+                CONF_AL_DISABLE_STATE
+            ):
+                if self._state:
+                    self._lights_off()
+            else:
+                if self._state:
+                    self._lights_on()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
 
