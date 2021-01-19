@@ -13,6 +13,7 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_WINDOW,
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
@@ -40,6 +41,7 @@ MAGIC_AREAS_COMPONENTS = [
     BINARY_SENSOR_DOMAIN,
     SWITCH_DOMAIN,
     SENSOR_DOMAIN,
+    LIGHT_DOMAIN,
 ]
 
 # Configuration parameters
