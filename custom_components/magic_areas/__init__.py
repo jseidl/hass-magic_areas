@@ -57,12 +57,19 @@ async def async_setup(hass, config):
         if entity_object.disabled:
             continue
 
+        # Check if entity has `area_id` support
+        area_id = None
+        if hasattr(entity_object, 'area_id'):
+            area_id = entity_object.area_id
+
         # Skip entities without devices, add them to a standalone map
-        if entity_object.device_id not in device_area_map.keys():
+        if not area_id and (entity_object.device_id not in device_area_map.keys()):
             standalone_entities[entity_object.entity_id] = entity_object
             continue
 
-        area_id = device_area_map[entity_object.device_id]
+        # User area_id or area_id from device id
+        if not area_id:
+            area_id = device_area_map[entity_object.device_id]
 
         _LOGGER.info(f"Area {area_id} entity {entity_object.entity_id}")
 
