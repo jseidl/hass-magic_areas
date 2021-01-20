@@ -23,7 +23,8 @@ from homeassistant.const import (
 _LOGGER = logging.getLogger(__name__)
 
 from .const import (
-    MODULE_DATA
+    MODULE_DATA,
+    CONF_NOTIFICATION_DEVICES,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -125,7 +126,18 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
         # Gather media_player entities
         _media_players = []
         for area in self._attributes['active_areas']:
-            _media_players.extend(self._device_area_mapping[area])
+            notification_devices = area.config.get(CONF_NOTIFICATION_DEVICES)
+            if not notification_devices:
+                _LOGGER.debug("No notification_devices set, using all media devices")
+                _media_players.extend(self._device_area_mapping[area])
+            else:
+                for device in notification_devices:
+
+                    if device not in self._device_area_mapping[area]:
+                        _LOGGER.warn(f"Device {device} not in area {area}")
+                        continue
+
+                    _media_players.append(device)
 
         if not _media_players:
             _LOGGER.info("No media_player entities to forward. Ignoring.")

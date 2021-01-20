@@ -68,6 +68,7 @@ CONF_ON_STATES, DEFAULT_ON_STATES = "on_states", [
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 15  # cv.positive_int
 CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
+CONF_NOTIFICATION_DEVICES = "notification_devices" # cv.entity_ids
 
 # automatic_lights options
 CONF_AL_DISABLE_ENTITY = "disable_entity"
@@ -147,6 +148,7 @@ _DOMAIN_SCHEMA = vol.Schema(
                 ): cv.ensure_list,
                 vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
                 vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+                vol.Optional(CONF_NOTIFICATION_DEVICES, default=[]): cv.entity_ids,
                 vol.Optional(CONF_EXTERIOR, default=DEFAULT_EXTERIOR): cv.boolean,
                 vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list,
                 vol.Optional(
