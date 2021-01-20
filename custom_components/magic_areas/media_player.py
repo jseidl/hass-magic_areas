@@ -61,7 +61,7 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
         self._device_area_mapping = {}
 
         for area in areas:
-            
+
             _entity_ids = []
             _area_binary_sensor_id = f"binary_sensor.area_{area.slug}"
             self._tracked_areas.append(_area_binary_sensor_id)

@@ -59,7 +59,7 @@ async def async_setup(hass, config):
 
         # Check if entity has `area_id` support
         area_id = None
-        if hasattr(entity_object, 'area_id'):
+        if hasattr(entity_object, "area_id"):
             area_id = entity_object.area_id
 
         # Skip entities without devices, add them to a standalone map
