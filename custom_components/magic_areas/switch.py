@@ -72,9 +72,7 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            _LOGGER.debug(
-                f"Switch {self.name} restored [state={last_state.state}]"
-            )
+            _LOGGER.debug(f"Switch {self.name} restored [state={last_state.state}]")
             self._state = last_state.state == STATE_ON
         else:
             self._state = False

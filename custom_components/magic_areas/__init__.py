@@ -4,19 +4,17 @@ import asyncio
 import logging
 
 import voluptuous as vol
-
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 
-from .const import (
-    MODULE_DATA,
-    DOMAIN,
-    _DOMAIN_SCHEMA,
-    MAGIC_AREAS_COMPONENTS,
-    EVENT_MAGICAREAS_READY,
-    EVENT_MAGICAREAS_AREA_READY
-)
-
 from .base import MagicArea
+from .const import (
+    _DOMAIN_SCHEMA,
+    DOMAIN,
+    EVENT_MAGICAREAS_AREA_READY,
+    EVENT_MAGICAREAS_READY,
+    MAGIC_AREAS_COMPONENTS,
+    MODULE_DATA,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,6 +22,7 @@ CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: _DOMAIN_SCHEMA},
     extra=vol.ALLOW_EXTRA,
 )
+
 
 async def async_setup(hass, config):
     """Set up areas."""
@@ -39,9 +38,7 @@ async def async_setup(hass, config):
 
     for area in areas:
 
-        _LOGGER.debug(
-            f"Creating Magic Area '{area.name}' (#{area.id})."
-        )
+        _LOGGER.debug(f"Creating Magic Area '{area.name}' (#{area.id}).")
         magic_area = MagicArea(
             hass,
             area,
@@ -52,15 +49,12 @@ async def async_setup(hass, config):
     hass.data[MODULE_DATA] = magic_areas
 
     # Checks whenever an area is ready
-    hass.bus.async_listen_once(
-                EVENT_MAGICAREAS_AREA_READY, check_all_ready(hass)
-            )
+    hass.bus.async_listen_once(EVENT_MAGICAREAS_AREA_READY, check_all_ready(hass))
     # Load platforms when ready
-    hass.bus.async_listen_once(
-                EVENT_MAGICAREAS_READY, load_platforms(hass, config)
-            )
+    hass.bus.async_listen_once(EVENT_MAGICAREAS_READY, load_platforms(hass, config))
 
     return True
+
 
 async def check_all_ready(hass) -> bool:
 
@@ -74,6 +68,7 @@ async def check_all_ready(hass) -> bool:
     hass.bus.async_fire(EVENT_MAGICAREAS_READY)
 
     return True
+
 
 async def load_platforms(hass, config):
 
