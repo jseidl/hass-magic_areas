@@ -1,9 +1,19 @@
 import logging
 import voluptuous as vol
 
+from statistics import mean
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 
+from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.entity import Entity
+
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.helpers.event import (
+    async_track_state_change,
+    async_track_time_interval,
+)
 from homeassistant.setup import async_setup_component
 from homeassistant.util import slugify
 from homeassistant.const import (
@@ -17,6 +27,7 @@ from .const import (
     CONF_INCLUDE_ENTITIES,
     CONF_EXCLUDE_ENTITIES,
     CONF_ENABLED_FEATURES,
+    CONF_UPDATE_INTERVAL,
     DEVICE_CLASS_DOMAINS,
     _DOMAIN_SCHEMA,
     DOMAIN,
@@ -31,7 +42,7 @@ CONFIG_SCHEMA = vol.Schema(
 
 _LOGGER = logging.getLogger(__name__)
 
-class SensorBase:
+class MagicSensorBase:
 
     name = None
     hass = None
@@ -82,7 +93,62 @@ class SensorBase:
         """Remove the listeners upon removing the component."""
         await self._shutdown()
 
-class BinarySensorBase(SensorBase):
+class SensorBase(MagicSensorBase, RestoreEntity, Entity):
+
+    _mode = 'mean'
+
+    @property
+    def state(self):
+        """Return true if the area is occupied."""
+        return self._state
+
+    def sensor_state_change(self, entity_id, from_state, to_state):
+        
+        _LOGGER.debug(
+            f"{self.name}: sensor '{entity_id}' changed to {to_state.state}"
+        )
+
+        return self._update_state()
+
+    def _get_sensors_state(self):
+
+        sensor_values = []
+
+        # Loop over all entities and check their state
+        for sensor in self.sensors:
+
+            entity = self.hass.states.get(sensor)
+
+            if not entity:
+                _LOGGER.info(
+                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                )
+                continue
+
+            # Skip unavailable entities
+            if entity.state == STATE_UNAVAILABLE:
+                continue
+
+            try:
+                sensor_values.append(float(entity.state))
+            except ValueError as e:
+                err_str = str(e)
+                _LOGGER.info(
+                    f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}, skipping"
+                )
+                continue
+
+        ret = 0.0
+
+        if sensor_values:
+            if self._mode == 'sum':
+                ret = sum(sensor_values)
+            else:
+                ret = mean(sensor_values)
+        
+        return round(ret, 2)
+
+class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
     _device_class = None
 
@@ -133,9 +199,60 @@ class BinarySensorBase(SensorBase):
 
         return len(active_sensors) > 0
 
-class AggregateBase(SensorBase):
+class AggregateBase(MagicSensorBase):
 
-    name = None
+    def load_sensors(self, domain, unit_of_measurement=None):
+
+        # Fetch sensors
+        self.sensors = []
+        for entity in self.area.entities[domain]:
+
+            if 'device_class' not in entity.keys():
+                continue
+
+            if entity['device_class'] != self._device_class:
+                continue
+
+            if unit_of_measurement:
+                if 'unit_of_measurement' not in entity.keys():
+                    continue
+                if entity['unit_of_measurement'] != unit_of_measurement:
+                    continue
+
+            self.sensors.append(entity['entity_id'])
+
+        if unit_of_measurement:
+            self._attributes = {"sensors": self.sensors, "unit_of_measurement": unit_of_measurement}
+        else:
+            self._attributes = {"sensors": self.sensors, "active_sensors": []}
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+        if self.hass.is_running:
+            await self._initialize()
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, self._initialize
+            )
+
+        self._update_state()
+
+    async def _setup_listeners(self, _=None) -> None:
+        _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
+        if not self.hass.is_running:
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self._name)
+            return
+
+        # Track presence sensors
+        remove_state_tracker = async_track_state_change(
+            self.hass, self.sensors, self.sensor_state_change
+        )
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+
+        # Timed self update
+        remove_interval = async_track_time_interval(self.hass, self.refresh_states, delta)
+
+        self.tracking_listeners.extend([remove_state_tracker, remove_interval])
 
 class MagicArea(object):
 

@@ -39,12 +39,12 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
         self._name = f"Area Presence Hold ({self.area.name})"
         self._state = False
 
-        _LOGGER.debug(f"Area {self.area.slug} presence hold switch initializing.")
+        _LOGGER.debug(f"{self.name} Switch initializing.")
 
         # Set attributes
         self._attributes = {}
 
-        _LOGGER.info(f"Area {self.area.slug} presence hold switch initialized.")
+        _LOGGER.info(f"{self.name} Switch initialized.")
 
     @property
     def name(self):
@@ -73,7 +73,7 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
 
         if last_state:
             _LOGGER.debug(
-                f"Presence hold switch restored: {self.area.slug} [{last_state.state}]"
+                f"Switch {self.name} restored [state={last_state.state}]"
             )
             self._state = last_state.state == STATE_ON
         else:

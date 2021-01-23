@@ -8,7 +8,6 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_PROBLEM,
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
@@ -26,9 +25,8 @@ from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
 )
-from homeassistant.helpers.restore_state import RestoreEntity
 
-from .base import BinarySensorBase
+from .base import BinarySensorBase, AggregateBase
 from .const import (
     AGGREGATE_BINARY_SENSOR_CLASSES,
     AUTOLIGHTS_STATE_DISABLED,
@@ -47,10 +45,8 @@ from .const import (
     CONF_FEATURE_LIGHT_CONTROL,
     CONF_FEATURE_MEDIA_CONTROL,
     CONF_FEATURE_AGGREGATION,
+    CONF_FEATURE_HEALTH,
     CONF_EXTERIOR,
-    CONF_FEATURE_AGGREGATION,
-    CONF_FEATURE_CLIMATE_CONTROL,
-    CONF_FEATURE_LIGHT_CONTROL,
     CONF_ICON,
     CONF_ON_STATES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -59,7 +55,6 @@ from .const import (
     DISTRESS_STATES,
     MODULE_DATA,
     PRESENCE_DEVICE_COMPONENTS,
-    CONF_FeATURE_MEDIA_CONTROL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -82,40 +77,82 @@ async def load_sensors(hass, async_add_entities):
     # Create basic presence sensors
     async_add_entities([AreaPresenceBinarySensor(hass, area) for area in areas])
     
+    # Create extra sensors
+
     for area in areas:
-        # Create aggregates
-        if not area.has_feature(CONF_FEATURE_AGGREGATION):
-            return
 
-        # Check BINARY_SENSOR_DOMAIN entities, count by device_class
-        if BINARY_SENSOR_DOMAIN not in area.entities.keys():
-            return
+        if area.has_feature(CONF_FEATURE_AGGREGATION):
+            await create_aggregate_sensors(hass, area, async_add_entities)
 
-        device_class_count = {}
+        if area.has_feature(CONF_FEATURE_HEALTH):
+            await create_health_sensors(hass, area, async_add_entities)
 
-        for entity in area.entities[BINARY_SENSOR_DOMAIN]:
-            if not 'device_class' in entity.keys():
-                continue
+async def create_health_sensors(hass, area, async_add_entities):
 
-            if entity['device_class'] not in device_class_count.keys():
-                device_class_count[entity['device_class']] = 0
+    if not area.has_feature(CONF_FEATURE_HEALTH):
+        return
 
-            device_class_count[entity['device_class']] += 1
+    if BINARY_SENSOR_DOMAIN not in area.entities.keys():
+        return
 
-        for device_class, entity_count in device_class_count.items():
-            if entity_count < 2:
-                continue
+    distress_entities = []
 
-            _LOGGER.debug(f"Creating aggregate sensor for device_class '{device_class}' with {entity_count} entities ({area.slug})")
+    for entity in area.entities[BINARY_SENSOR_DOMAIN]:
 
-class AreaPresenceBinarySensor(BinarySensorEntity, BinarySensorBase, RestoreEntity):
+        if 'device_class' not in entity.keys():
+            continue
+
+        if entity['device_class'] not in DISTRESS_SENSOR_CLASSES:
+            continue
+
+        distress_entities.append(entity)
+
+    if len(distress_entities) < 2:
+        return
+
+    _LOGGER.debug(f"Creating helth sensor for area ({area.slug})")
+    async_add_entities([AreaDistressBinarySensor(hass, area)])
+
+async def create_aggregate_sensors(hass, area, async_add_entities):
+    
+    # Create aggregates
+    if not area.has_feature(CONF_FEATURE_AGGREGATION):
+        return
+
+    aggregates = []
+
+    # Check BINARY_SENSOR_DOMAIN entities, count by device_class
+    if BINARY_SENSOR_DOMAIN not in area.entities.keys():
+        return
+
+    device_class_count = {}
+
+    for entity in area.entities[BINARY_SENSOR_DOMAIN]:
+        if not 'device_class' in entity.keys():
+            continue
+
+        if entity['device_class'] not in device_class_count.keys():
+            device_class_count[entity['device_class']] = 0
+
+        device_class_count[entity['device_class']] += 1
+
+    for device_class, entity_count in device_class_count.items():
+        if entity_count < 2:
+            continue
+
+        _LOGGER.debug(f"Creating aggregate sensor for device_class '{device_class}' with {entity_count} entities ({area.slug})")
+        aggregates.append(AreaSensorGroupBinarySensor(hass, area, device_class))
+
+    async_add_entities(aggregates)
+
+class AreaPresenceBinarySensor(BinarySensorBase):
     def __init__(self, hass, area):
         """Initialize the area presence binary sensor."""
 
         self.area = area
         self.hass = hass
         self._name = f"Area ({self.area.name})"
-        self._state = None
+        self._state = False
         self.last_off_time = datetime.utcnow()
 
         self._device_class = DEVICE_CLASS_OCCUPANCY
@@ -197,16 +234,16 @@ class AreaPresenceBinarySensor(BinarySensorEntity, BinarySensorBase, RestoreEnti
         is_new_entry = last_state is None  # newly added to HA
 
         if is_new_entry:
-            _LOGGER.debug(f"New area detected: {self.area.slug}")
+            _LOGGER.debug(f"New sensor created: {self.name}")
             self._update_state()
         else:
-            _LOGGER.debug(f"Area restored: {self.area.slug} [{last_state.state}]")
+            _LOGGER.debug(f"Sensor {self.name} restored [state={last_state.state}]")
             self._state = last_state.state == STATE_ON
             self.schedule_update_ha_state()
 
     async def _initialize(self, _=None) -> None:
 
-        _LOGGER.debug(f"Area {self.area.slug} presence sensor initializing.")
+        _LOGGER.debug(f"{self.name} Sensor initializing.")
 
         self.load_presence_sensors()
         self.load_attributes()
@@ -214,12 +251,12 @@ class AreaPresenceBinarySensor(BinarySensorEntity, BinarySensorBase, RestoreEnti
         # Setup the listeners
         await self._setup_listeners()
 
-        _LOGGER.debug(f"Area {self.area.slug} presence sensor initialized.")
+        _LOGGER.debug(f"{self.name} Sensor initialized.")
 
     async def _setup_listeners(self, _=None) -> None:
-        _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
+        _LOGGER.debug("%s: Called '_setup_listeners'", self.name)
         if not self.hass.is_running:
-            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self._name)
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self.name)
             return
 
         # Track presence sensors
@@ -472,3 +509,67 @@ class AreaPresenceBinarySensor(BinarySensorEntity, BinarySensorBase, RestoreEnti
                 ]
             }
             self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_TURN_OFF, service_data)
+
+class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
+
+    def __init__(self, hass, area, device_class):
+        """Initialize an area sensor group binary sensor."""
+
+        self.area = area
+        self.hass = hass
+        self._device_class = device_class
+        self._state = False
+
+        device_class_name = device_class.capitalize()
+        self._name = f"Area {device_class_name} ({self.area.name})"
+
+    async def _initialize(self, _=None) -> None:
+
+        _LOGGER.debug(f"{self.name} Sensor initializing.")
+
+        self.load_sensors(BINARY_SENSOR_DOMAIN)
+
+        # Setup the listeners
+        await self._setup_listeners()
+
+        _LOGGER.debug(f"{self.name} Sensor initialized.")
+
+class AreaDistressBinarySensor(BinarySensorBase, AggregateBase):
+
+    def __init__(self, hass, area):
+        """Initialize an area sensor group binary sensor."""
+
+        self.area = area
+        self.hass = hass
+        self._device_class = DEVICE_CLASS_PROBLEM
+        self._state = False
+
+        self._name = f"Area Health ({self.area.name})"
+
+    async def _initialize(self, _=None) -> None:
+
+        _LOGGER.debug(f"{self.name} Sensor initializing.")
+
+        self.load_sensors()
+
+        # Setup the listeners
+        await self._setup_listeners()
+
+        _LOGGER.debug(f"{self.name} Sensor initialized.")
+
+    def load_sensors(self):
+
+        # Fetch sensors
+        self.sensors = []
+        
+        for entity in self.area.entities[BINARY_SENSOR_DOMAIN]:
+
+            if 'device_class' not in entity.keys():
+                continue
+
+            if entity['device_class'] not in DISTRESS_SENSOR_CLASSES:
+                continue
+
+            self.sensors.append(entity['entity_id'])
+
+        self._attributes = {"sensors": self.sensors, "active_sensors": []}
