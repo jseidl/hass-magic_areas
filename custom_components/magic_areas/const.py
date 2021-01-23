@@ -35,17 +35,25 @@ from homeassistant.helpers import config_validation as cv
 DOMAIN = "magic_areas"
 MODULE_DATA = f"{DOMAIN}_data"
 
+# Magic Areas Events
+EVENT_MAGICAREAS_STARTED = "magicareas_start"
+EVENT_MAGICAREAS_READY = "magicareas_ready"
+EVENT_MAGICAREAS_AREA_READY = "magicareas_area_ready"
+
+DEVICE_CLASS_DOMAINS = (
+    BINARY_SENSOR_DOMAIN,
+    SENSOR_DOMAIN
+)
+
 # MagicAreas Components
 MAGIC_AREAS_COMPONENTS = [
     BINARY_SENSOR_DOMAIN,
     SWITCH_DOMAIN,
-    SENSOR_DOMAIN,
+    #SENSOR_DOMAIN,
 ]
 
 # Configuration parameters
-CONF_CONTROL_CLIMATE, DEFAULT_CONTROL_CLIMATE = "control_climate", True  # cv.boolean
-CONF_CONTROL_LIGHTS, DEFAULT_CONTROL_LIGHTS = "control_lights", True  # cv.boolean
-CONF_CONTROL_MEDIA, DEFAULT_CONTROL_MEDIA = "control_media", True  # cv.boolean
+CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES = "features", [] # cv.list
 CONF_AUTO_LIGHTS = "automatic_lights"  # cv.entity_ids
 CONF_INCLUDE_ENTITIES = "include_entities"  # cv.entity_ids
 CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
@@ -65,8 +73,25 @@ CONF_ON_STATES, DEFAULT_ON_STATES = "on_states", [
     STATE_OPEN,
 ]  # cv.list
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
-CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 15  # cv.positive_int
+CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
 CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
+
+# features
+CONF_FEATURE_CLIMATE_CONTROL = "control_climate"
+CONF_FEATURE_LIGHT_CONTROL = "control_lights"
+CONF_FEATURE_MEDIA_CONTROL = "control_media"
+CONF_FEATURE_LIGHT_GROUPS = "light_groups"
+CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER = "area_aware_media_player"
+CONF_FEATURE_AGGREGATION = "aggregates"
+
+CONF_FEATURE_LIST = [
+    CONF_FEATURE_CLIMATE_CONTROL,
+    CONF_FEATURE_LIGHT_CONTROL,
+    CONF_FEATURE_MEDIA_CONTROL,
+    CONF_FEATURE_LIGHT_GROUPS,
+    CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
+    CONF_FEATURE_AGGREGATION
+]
 
 # automatic_lights options
 CONF_AL_DISABLE_ENTITY = "disable_entity"
@@ -131,14 +156,8 @@ _DOMAIN_SCHEMA = vol.Schema(
         cv.slug: vol.Any(
             {
                 vol.Optional(
-                    CONF_CONTROL_CLIMATE, default=DEFAULT_CONTROL_CLIMATE
-                ): cv.boolean,
-                vol.Optional(
-                    CONF_CONTROL_LIGHTS, default=DEFAULT_CONTROL_LIGHTS
-                ): cv.boolean,
-                vol.Optional(
-                    CONF_CONTROL_MEDIA, default=DEFAULT_CONTROL_MEDIA
-                ): cv.boolean,
+                    CONF_ENABLED_FEATURES, default=[]
+                ): cv.ensure_list,
                 vol.Optional(CONF_AUTO_LIGHTS, default=dict): CONFIG_AL_SCHEMA,
                 vol.Optional(
                     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
