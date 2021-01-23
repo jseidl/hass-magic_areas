@@ -5,7 +5,12 @@ import logging
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 
 from .base import AggregateBase, SensorBase
-from .const import AGGREGATE_MODE_SUM, CONF_FEATURE_AGGREGATION, MODULE_DATA
+from .const import (
+    AGGREGATE_MODE_SUM,
+    CONF_AGGREGATES_MIN_ENTITIES,
+    CONF_FEATURE_AGGREGATION,
+    MODULE_DATA,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
