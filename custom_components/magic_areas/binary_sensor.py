@@ -499,7 +499,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self.hass.services.call(CLIMATE_DOMAIN, SERVICE_TURN_OFF, service_data)
 
         # Turn off media, if configured
-        if self.area.has_feature(CONF_FeATURE_MEDIA_CONTROL) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_MEDIA_CONTROL) and self._has_entities(
             MEDIA_PLAYER_DOMAIN
         ):
             service_data = {
