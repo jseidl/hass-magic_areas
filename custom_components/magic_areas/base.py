@@ -58,6 +58,12 @@ class MagicSensorBase:
         """Return the name of the device if any."""
         return self._name
 
+
+    @property
+    def device_class(self):
+        """Return the class of this binary_sensor."""
+        return self._device_class
+
     @property
     def should_poll(self):
         """If entity should be polled."""
@@ -151,11 +157,6 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
 class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
     _device_class = None
-
-    @property
-    def device_class(self):
-        """Return the class of this binary_sensor."""
-        return self._device_class
 
     @property
     def is_on(self):
