@@ -32,6 +32,7 @@ from .const import (
     AUTOLIGHTS_STATE_DISABLED,
     AUTOLIGHTS_STATE_NORMAL,
     AUTOLIGHTS_STATE_SLEEP,
+    CONF_AGGREGATES_MIN_ENTITIES,
     CONF_AL_DISABLE_ENTITY,
     CONF_AL_DISABLE_STATE,
     CONF_AL_ENTITIES,
@@ -107,7 +108,7 @@ async def create_health_sensors(hass, area, async_add_entities):
 
         distress_entities.append(entity)
 
-    if len(distress_entities) < 2:
+    if len(distress_entities) < area.config.get(CONF_AGGREGATES_MIN_ENTITIES):
         return
 
     _LOGGER.debug(f"Creating helth sensor for area ({area.slug})")
@@ -137,7 +138,7 @@ async def create_aggregate_sensors(hass, area, async_add_entities):
         device_class_count[entity['device_class']] += 1
 
     for device_class, entity_count in device_class_count.items():
-        if entity_count < 2:
+        if entity_count < area.config.get(CONF_AGGREGATES_MIN_ENTITIES):
             continue
 
         _LOGGER.debug(f"Creating aggregate sensor for device_class '{device_class}' with {entity_count} entities ({area.slug})")
@@ -349,7 +350,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 == autolights_config.get(CONF_AL_SLEEP_STATE).lower()
             ):
                 _LOGGER.info(
-                    f"Sleep entity '{sleep_entity['entity_id']}' on sleep state '{sleep_entity.state}'"
+                    f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
                 )
                 return True
 
@@ -369,7 +370,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 == autolights_config.get(CONF_AL_DISABLE_STATE).lower()
             ):
                 _LOGGER.info(
-                    f"Disable entity '{disable_entity['entity_id']}' on disable state '{disable_entity.state}'"
+                    f"Disable entity '{disable_entity.entity_id}' on disable state '{disable_entity.state}'"
                 )
                 return True
 

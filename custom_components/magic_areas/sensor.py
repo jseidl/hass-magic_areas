@@ -8,6 +8,7 @@ from .base import AggregateBase, SensorBase
 from .const import (
     MODULE_DATA,
     CONF_FEATURE_AGGREGATION,
+    CONF_AGGREGATES_MIN_ENTITIES,
     AGGREGATE_MODE_SUM,
 )
 
@@ -53,7 +54,7 @@ async def load_sensors(hass, async_add_entities):
             device_class_count[map_key] += 1
 
         for map_key, entity_count in device_class_count.items():
-            if entity_count < 2:
+            if entity_count < area.config.get(CONF_AGGREGATES_MIN_ENTITIES):
                 continue
 
             device_class, unit_of_measurement = map_key.split('/')
