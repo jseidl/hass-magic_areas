@@ -40,10 +40,7 @@ EVENT_MAGICAREAS_STARTED = "magicareas_start"
 EVENT_MAGICAREAS_READY = "magicareas_ready"
 EVENT_MAGICAREAS_AREA_READY = "magicareas_area_ready"
 
-DEVICE_CLASS_DOMAINS = (
-    BINARY_SENSOR_DOMAIN,
-    SENSOR_DOMAIN
-)
+DEVICE_CLASS_DOMAINS = (BINARY_SENSOR_DOMAIN, SENSOR_DOMAIN)
 
 # MagicAreas Components
 MAGIC_AREAS_COMPONENTS = [
@@ -53,7 +50,7 @@ MAGIC_AREAS_COMPONENTS = [
 ]
 
 # Configuration parameters
-CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES = "features", [] # cv.list
+CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES = "features", []  # cv.list
 CONF_AUTO_LIGHTS = "automatic_lights"  # cv.entity_ids
 CONF_INCLUDE_ENTITIES = "include_entities"  # cv.entity_ids
 CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
@@ -91,7 +88,7 @@ CONF_FEATURE_LIST = [
     CONF_FEATURE_MEDIA_CONTROL,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
-    CONF_FEATURE_AGGREGATION
+    CONF_FEATURE_AGGREGATION,
 ]
 
 # automatic_lights options
@@ -158,9 +155,7 @@ _DOMAIN_SCHEMA = vol.Schema(
     {
         cv.slug: vol.Any(
             {
-                vol.Optional(
-                    CONF_ENABLED_FEATURES, default=[]
-                ): cv.ensure_list,
+                vol.Optional(CONF_ENABLED_FEATURES, default=[]): cv.ensure_list,
                 vol.Optional(CONF_AUTO_LIGHTS, default=dict): CONFIG_AL_SCHEMA,
                 vol.Optional(
                     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
