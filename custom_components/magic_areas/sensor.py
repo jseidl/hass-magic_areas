@@ -20,6 +20,7 @@ from homeassistant.helpers.event import (
 from .const import (
     AGGREGATE_SENSOR_CLASSES,
     CONF_EXTERIOR,
+    CONF_FEATURE_AGGREGATION,
     CONF_UPDATE_INTERVAL,
     MODULE_DATA,
 )
@@ -41,6 +42,11 @@ async def async_setup_platform(
     aggregate_sensors = []
     device_class_area_map = {}
     for area in areas:
+
+        # Check feature availability
+        if not area.has_feature(CONF_FEATURE_AGGREGATION):
+            continue
+
         available_device_classes = []
 
         # sensor Aggregates

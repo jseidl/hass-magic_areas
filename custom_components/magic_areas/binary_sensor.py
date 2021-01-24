@@ -41,10 +41,10 @@ from .const import (
     CONF_AL_SLEEP_TIMEOUT,
     CONF_AUTO_LIGHTS,
     CONF_CLEAR_TIMEOUT,
-    CONF_CONTROL_CLIMATE,
-    CONF_CONTROL_LIGHTS,
-    CONF_CONTROL_MEDIA,
     CONF_EXTERIOR,
+    CONF_FEATURE_AGGREGATION,
+    CONF_FEATURE_CLIMATE_CONTROL,
+    CONF_FEATURE_LIGHT_CONTROL,
     CONF_ICON,
     CONF_ON_STATES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -53,6 +53,7 @@ from .const import (
     DISTRESS_STATES,
     MODULE_DATA,
     PRESENCE_DEVICE_COMPONENTS,
+    CONF_FeATURE_MEDIA_CONTROL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,6 +75,10 @@ async def async_setup_platform(
 
     # Create distress sensors
     for area in areas:
+
+        # Check feature availability
+        if not area.has_feature(CONF_FEATURE_AGGREGATION):
+            continue
 
         if BINARY_SENSOR_DOMAIN not in area.entities.keys():
             continue
@@ -351,7 +356,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
     def _get_autolights_state(self):
 
         if (
-            not self.area.config.get(CONF_CONTROL_LIGHTS)
+            not self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL)
             or self._is_autolights_disabled()
         ):
             return AUTOLIGHTS_STATE_DISABLED
@@ -483,7 +488,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
 
     def _lights_on(self):
         # Turn on lights, if configured
-        if self.area.config.get(CONF_CONTROL_LIGHTS) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self._has_entities(
             LIGHT_DOMAIN
         ):
             self._autolights()
@@ -493,7 +498,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
         self._lights_on()
 
         # Turn on climate, if configured
-        if self.area.config.get(CONF_CONTROL_CLIMATE) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_CLIMATE_CONTROL) and self._has_entities(
             CLIMATE_DOMAIN
         ):
             service_data = {
@@ -505,7 +510,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
 
     def _lights_off(self):
         # Turn off lights, if configured
-        if self.area.config.get(CONF_CONTROL_LIGHTS) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self._has_entities(
             LIGHT_DOMAIN
         ):
             service_data = {
@@ -520,7 +525,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
         self._lights_off()
 
         # Turn off climate, if configured
-        if self.area.config.get(CONF_CONTROL_CLIMATE) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_CLIMATE_CONTROL) and self._has_entities(
             CLIMATE_DOMAIN
         ):
             service_data = {
@@ -531,7 +536,7 @@ class AreaPresenceBinarySensor(BinarySensorEntity, RestoreEntity):
             self.hass.services.call(CLIMATE_DOMAIN, SERVICE_TURN_OFF, service_data)
 
         # Turn off media, if configured
-        if self.area.config.get(CONF_CONTROL_MEDIA) and self._has_entities(
+        if self.area.has_feature(CONF_FeATURE_MEDIA_CONTROL) and self._has_entities(
             MEDIA_PLAYER_DOMAIN
         ):
             service_data = {

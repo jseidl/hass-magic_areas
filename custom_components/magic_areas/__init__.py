@@ -17,6 +17,7 @@ from homeassistant.util import slugify
 
 from .const import (
     _DOMAIN_SCHEMA,
+    CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_INCLUDE_ENTITIES,
     DOMAIN,
@@ -57,12 +58,19 @@ async def async_setup(hass, config):
         if entity_object.disabled:
             continue
 
+        # Check if entity has `area_id` support
+        area_id = None
+        if hasattr(entity_object, "area_id"):
+            area_id = entity_object.area_id
+
         # Skip entities without devices, add them to a standalone map
-        if entity_object.device_id not in device_area_map.keys():
+        if not area_id and (entity_object.device_id not in device_area_map.keys()):
             standalone_entities[entity_object.entity_id] = entity_object
             continue
 
-        area_id = device_area_map[entity_object.device_id]
+        # User area_id or area_id from device id
+        if not area_id:
+            area_id = device_area_map[entity_object.device_id]
 
         _LOGGER.info(f"Area {area_id} entity {entity_object.entity_id}")
 
@@ -188,6 +196,10 @@ class MagicArea(object):
             _LOGGER.info(f"> {platform}: {ec}")
             for entity in entities:
                 _LOGGER.info(f"  - {entity.entity_id}")
+
+    def has_feature(self, feature):
+
+        return feature in self.config.get(CONF_ENABLED_FEATURES)
 
     # Filter (include/exclude) entities
     def filter_entities(self, area_entities, standalone_entities):
