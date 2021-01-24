@@ -40,7 +40,28 @@ EVENT_MAGICAREAS_STARTED = "magicareas_start"
 EVENT_MAGICAREAS_READY = "magicareas_ready"
 EVENT_MAGICAREAS_AREA_READY = "magicareas_area_ready"
 
-DEVICE_CLASS_DOMAINS = (BINARY_SENSOR_DOMAIN, SENSOR_DOMAIN)
+DEVICE_CLASS_DOMAINS = (
+    BINARY_SENSOR_DOMAIN,
+    SENSOR_DOMAIN
+)
+
+ALL_BINARY_SENSOR_DEVICE_CLASSES = (
+    DEVICE_CLASS_DOOR,
+    DEVICE_CLASS_GAS,
+    DEVICE_CLASS_LIGHT,
+    DEVICE_CLASS_MOISTURE,
+    DEVICE_CLASS_MOTION,
+    DEVICE_CLASS_OCCUPANCY,
+    DEVICE_CLASS_PRESENCE,
+    DEVICE_CLASS_PROBLEM,
+    DEVICE_CLASS_SAFETY,
+    DEVICE_CLASS_SMOKE,
+    DEVICE_CLASS_WINDOW,
+)
+
+# Data Items
+DATA_AREA_OBJECT = "area_object"
+DATA_UNDO_UPDATE_LISTENER = "undo_update_listener"
 
 # MagicAreas Components
 MAGIC_AREAS_COMPONENTS = [
@@ -50,8 +71,9 @@ MAGIC_AREAS_COMPONENTS = [
 ]
 
 # Configuration parameters
-CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES = "features", []  # cv.list
-CONF_AUTO_LIGHTS = "automatic_lights"  # cv.entity_ids
+CONF_ID = "id"
+CONF_NAME, DEFAULT_NAME = "name", "" # cv.string
+CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES = "features", [] # cv.list
 CONF_INCLUDE_ENTITIES = "include_entities"  # cv.entity_ids
 CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
 CONF_EXTERIOR, DEFAULT_EXTERIOR = "exterior", False  # cv.boolean
@@ -69,10 +91,7 @@ CONF_ON_STATES, DEFAULT_ON_STATES = "on_states", [
     STATE_PLAYING,
     STATE_OPEN,
 ]  # cv.list
-CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
-    "aggregates_min_entities",
-    2,
-)  # cv.positive_int
+CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = "aggregates_min_entities", 2 # cv.positive_int
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
 CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
@@ -92,17 +111,17 @@ CONF_FEATURE_LIST = [
     CONF_FEATURE_MEDIA_CONTROL,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
-    CONF_FEATURE_AGGREGATION,
+    CONF_FEATURE_AGGREGATION
 ]
 
 # automatic_lights options
-CONF_AL_DISABLE_ENTITY = "disable_entity"
-CONF_AL_DISABLE_STATE, DEFAULT_AL_DISABLE_STATE = "disable_state", STATE_ON
-CONF_AL_SLEEP_ENTITY = "sleep_entity"
-CONF_AL_SLEEP_STATE, DEFAULT_AL_SLEEP_STATE = "sleep_state", STATE_ON
-CONF_AL_SLEEP_LIGHTS = "sleep_lights"
-CONF_AL_SLEEP_TIMEOUT = "sleep_timeout"
-CONF_AL_ENTITIES = "entities"
+CONF_NIGHT_ENTITY = "night_entity"
+CONF_NIGHT_STATE, DEFAULT_NIGHT_STATE = "night_state", STATE_ON
+CONF_MAIN_LIGHTS = "main_lights" # cv.entity_ids
+CONF_SLEEP_LIGHTS = "sleep_lights"
+CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT = "sleep_timeout", 0 # int
+CONF_SLEEP_ENTITY = "sleep_entity"
+CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE = "sleep_state", STATE_ON
 
 # Health related
 PRESENCE_DEVICE_COMPONENTS = [
@@ -140,27 +159,13 @@ AGGREGATE_SENSOR_CLASSES = (
 AGGREGATE_MODE_SUM = [DEVICE_CLASS_POWER, DEVICE_CLASS_CURRENT, DEVICE_CLASS_ENERGY]
 
 # Config Schema
-# Auto Lights setting
-CONFIG_AL_SCHEMA = vol.Any(
-    {
-        vol.Optional(CONF_AL_DISABLE_ENTITY): cv.entity_id,
-        vol.Optional(
-            CONF_AL_DISABLE_STATE, default=DEFAULT_AL_DISABLE_STATE
-        ): cv.string,
-        vol.Optional(CONF_AL_SLEEP_ENTITY): cv.entity_id,
-        vol.Optional(CONF_AL_SLEEP_STATE, default=DEFAULT_AL_SLEEP_STATE): cv.string,
-        vol.Optional(CONF_AL_SLEEP_LIGHTS, default=[]): cv.entity_ids,
-        vol.Optional(CONF_AL_SLEEP_TIMEOUT): cv.positive_int,
-        vol.Optional(CONF_AL_ENTITIES, default=[]): cv.entity_ids,
-    }
-)
+
 # Magic Areas
-_DOMAIN_SCHEMA = vol.Schema(
-    {
-        cv.slug: vol.Any(
-            {
-                vol.Optional(CONF_ENABLED_FEATURES, default=[]): cv.ensure_list,
-                vol.Optional(CONF_AUTO_LIGHTS, default=dict): CONFIG_AL_SCHEMA,
+_AREA_SCHEMA = {
+                #vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+                vol.Optional(
+                    CONF_ENABLED_FEATURES, default=[]
+                ): cv.ensure_list,
                 vol.Optional(
                     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
                     default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
@@ -170,8 +175,7 @@ _DOMAIN_SCHEMA = vol.Schema(
                 vol.Optional(CONF_EXTERIOR, default=DEFAULT_EXTERIOR): cv.boolean,
                 vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list,
                 vol.Optional(
-                    CONF_AGGREGATES_MIN_ENTITIES,
-                    default=DEFAULT_AGGREGATES_MIN_ENTITIES,
+                    CONF_AGGREGATES_MIN_ENTITIES, default=DEFAULT_AGGREGATES_MIN_ENTITIES
                 ): cv.positive_int,
                 vol.Optional(
                     CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
@@ -180,13 +184,42 @@ _DOMAIN_SCHEMA = vol.Schema(
                     CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
                 ): cv.positive_int,
                 vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
-            },
-            None,
-        )
+                vol.Optional(CONF_NIGHT_ENTITY): cv.entity_id,
+                vol.Optional(CONF_NIGHT_STATE, default=DEFAULT_NIGHT_STATE): str,
+                vol.Optional(CONF_SLEEP_ENTITY): cv.entity_id,
+                vol.Optional(CONF_SLEEP_STATE, default=DEFAULT_SLEEP_STATE): str,
+                vol.Optional(
+                    CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT
+                ): cv.positive_int,
+                vol.Optional(CONF_MAIN_LIGHTS, default=[]): cv.entity_ids,
+                vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
+            }
+
+_DOMAIN_SCHEMA = vol.Schema(
+    {
+        cv.slug: vol.Any(_AREA_SCHEMA, None)
     }
 )
-
 # Autolights States
 AUTOLIGHTS_STATE_SLEEP = "sleep"
 AUTOLIGHTS_STATE_NORMAL = "enabled"
 AUTOLIGHTS_STATE_DISABLED = "disabled"
+
+# VALIDATION_TUPLES
+VALIDATION_TUPLES = [
+    (CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES, cv.ensure_list),
+    (CONF_INCLUDE_ENTITIES, [], cv.entity_ids),
+    (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
+    (CONF_PRESENCE_SENSOR_DEVICE_CLASS, DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS, cv.ensure_list),
+    (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
+    (CONF_ICON, DEFAULT_ICON, str),
+    (CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES, int),
+    (CONF_NIGHT_ENTITY, "", cv.entity_id),
+    (CONF_NIGHT_STATE, DEFAULT_NIGHT_STATE, str),    
+    (CONF_MAIN_LIGHTS, [], cv.entity_ids),
+    (CONF_SLEEP_LIGHTS, [], cv.entity_ids),
+    (CONF_SLEEP_ENTITY, "", cv.entity_id,),
+    (CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE, str),
+    (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
+    (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
+]
