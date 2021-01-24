@@ -10,6 +10,7 @@ from .const import (
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
     MODULE_DATA,
+    DATA_AREA_OBJECT,
 )
 
 _LOGGER = logging.getLogger(__name__)
