@@ -9,6 +9,7 @@ from .const import (
     AGGREGATE_MODE_SUM,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
+    DATA_AREA_OBJECT,
     MODULE_DATA,
 )
 
@@ -23,7 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Demo config entry."""
-    #await async_setup_platform(hass, {}, async_add_entities)
+    # await async_setup_platform(hass, {}, async_add_entities)
 
     area_data = hass.data[MODULE_DATA][config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
@@ -46,8 +47,8 @@ async def load_sensors(hass, async_add_entities, area):
     device_class_count = {}
 
     for entity in area.entities[SENSOR_DOMAIN]:
-    
-        if not 'device_class' in entity.keys():
+
+        if not "device_class" in entity.keys():
             continue
 
         map_key = f"{entity['device_class']}/{entity['unit_of_measurement']}"
@@ -60,10 +61,14 @@ async def load_sensors(hass, async_add_entities, area):
         if entity_count < area.config.get(CONF_AGGREGATES_MIN_ENTITIES):
             continue
 
-        device_class, unit_of_measurement = map_key.split('/')
+        device_class, unit_of_measurement = map_key.split("/")
 
-        _LOGGER.debug(f"Creating aggregate sensor for device_class '{device_class}' ({unit_of_measurement}) with {entity_count} entities ({area.slug})")
-        aggregates.append(AreaSensorGroupSensor(hass, area, device_class, unit_of_measurement))
+        _LOGGER.debug(
+            f"Creating aggregate sensor for device_class '{device_class}' ({unit_of_measurement}) with {entity_count} entities ({area.slug})"
+        )
+        aggregates.append(
+            AreaSensorGroupSensor(hass, area, device_class, unit_of_measurement)
+        )
 
     async_add_entities(aggregates)
 

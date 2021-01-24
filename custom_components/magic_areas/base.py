@@ -1,42 +1,35 @@
 import logging
-import voluptuous as vol
-
-from statistics import mean
 from copy import deepcopy
 from datetime import datetime, timedelta
+from statistics import mean
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.helpers.entity import Entity
-
+import voluptuous as vol
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON, STATE_UNAVAILABLE
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
 )
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.setup import async_setup_component
 from homeassistant.util import slugify
-from homeassistant.const import (
-    EVENT_HOMEASSISTANT_STARTED,
-    STATE_UNAVAILABLE,
-    STATE_ON
-)
 
 from .const import (
+    _DOMAIN_SCHEMA,
+    CONF_ENABLED_FEATURES,
+    CONF_EXCLUDE_ENTITIES,
     CONF_ID,
+    CONF_INCLUDE_ENTITIES,
     CONF_NAME,
     CONF_ON_STATES,
-    CONF_INCLUDE_ENTITIES,
-    CONF_EXCLUDE_ENTITIES,
-    CONF_ENABLED_FEATURES,
     CONF_UPDATE_INTERVAL,
     DEVICE_CLASS_DOMAINS,
-    _DOMAIN_SCHEMA,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
-    MAGIC_AREAS_COMPONENTS
+    MAGIC_AREAS_COMPONENTS,
 )
-
 
 CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: _DOMAIN_SCHEMA},
@@ -44,6 +37,7 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class MagicSensorBase:
 
@@ -60,7 +54,6 @@ class MagicSensorBase:
     def name(self):
         """Return the name of the device if any."""
         return self._name
-
 
     @property
     def device_class(self):
@@ -82,7 +75,7 @@ class MagicSensorBase:
         return self._update_state()
 
     def _update_state(self):
-        
+
         self._state = self._get_sensors_state()
         self.schedule_update_ha_state()
 
@@ -102,9 +95,10 @@ class MagicSensorBase:
         """Remove the listeners upon removing the component."""
         await self._shutdown()
 
+
 class SensorBase(MagicSensorBase, RestoreEntity, Entity):
 
-    _mode = 'mean'
+    _mode = "mean"
 
     @property
     def state(self):
@@ -112,10 +106,8 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
         return self._state
 
     def sensor_state_change(self, entity_id, from_state, to_state):
-        
-        _LOGGER.debug(
-            f"{self.name}: sensor '{entity_id}' changed to {to_state.state}"
-        )
+
+        _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
 
         return self._update_state()
 
@@ -150,12 +142,13 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
         ret = 0.0
 
         if sensor_values:
-            if self._mode == 'sum':
+            if self._mode == "sum":
                 ret = sum(sensor_values)
             else:
                 ret = mean(sensor_values)
-        
+
         return round(ret, 2)
+
 
 class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
@@ -167,10 +160,8 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
         return self._state
 
     def sensor_state_change(self, entity_id, from_state, to_state):
-        
-        _LOGGER.debug(
-            f"{self.name}: sensor '{entity_id}' changed to {to_state.state}"
-        )
+
+        _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
 
         if to_state.state not in self.area.config.get(CONF_ON_STATES):
             self.last_off_time = datetime.utcnow()  # Update last_off_time
@@ -203,30 +194,33 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
         return len(active_sensors) > 0
 
-class AggregateBase(MagicSensorBase):
 
+class AggregateBase(MagicSensorBase):
     def load_sensors(self, domain, unit_of_measurement=None):
 
         # Fetch sensors
         self.sensors = []
         for entity in self.area.entities[domain]:
 
-            if 'device_class' not in entity.keys():
+            if "device_class" not in entity.keys():
                 continue
 
-            if entity['device_class'] != self._device_class:
+            if entity["device_class"] != self._device_class:
                 continue
 
             if unit_of_measurement:
-                if 'unit_of_measurement' not in entity.keys():
+                if "unit_of_measurement" not in entity.keys():
                     continue
-                if entity['unit_of_measurement'] != unit_of_measurement:
+                if entity["unit_of_measurement"] != unit_of_measurement:
                     continue
 
-            self.sensors.append(entity['entity_id'])
+            self.sensors.append(entity["entity_id"])
 
         if unit_of_measurement:
-            self._attributes = {"sensors": self.sensors, "unit_of_measurement": unit_of_measurement}
+            self._attributes = {
+                "sensors": self.sensors,
+                "unit_of_measurement": unit_of_measurement,
+            }
         else:
             self._attributes = {"sensors": self.sensors, "active_sensors": []}
 
@@ -254,12 +248,14 @@ class AggregateBase(MagicSensorBase):
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
 
         # Timed self update
-        remove_interval = async_track_time_interval(self.hass, self.refresh_states, delta)
+        remove_interval = async_track_time_interval(
+            self.hass, self.refresh_states, delta
+        )
 
         self.tracking_listeners.extend([remove_state_tracker, remove_interval])
 
-class MagicArea(object):
 
+class MagicArea(object):
     def __init__(self, hass, area, config) -> None:
 
         self.hass = hass
@@ -272,7 +268,7 @@ class MagicArea(object):
         self.entities = {}
 
         # Check if area is defined on YAML
-        
+
         if config.options:
             merged_dicts = dict(config.data)
             merged_dicts.update(config.options)
@@ -282,13 +278,11 @@ class MagicArea(object):
 
         # Add callback for initialization
         if self.hass.is_running:
-            self.hass.async_create_task(
-                self.initialize()
-            )
+            self.hass.async_create_task(self.initialize())
         else:
             self.hass.bus.async_listen_once(
-                    EVENT_HOMEASSISTANT_STARTED, self.initialize
-                )
+                EVENT_HOMEASSISTANT_STARTED, self.initialize
+            )
 
     def has_feature(self, feature) -> bool:
 
@@ -298,7 +292,7 @@ class MagicArea(object):
 
         if entity_object.disabled:
             return False
-        
+
         if entity_object.entity_id in self.config.get(CONF_EXCLUDE_ENTITIES):
             return False
 
@@ -313,7 +307,9 @@ class MagicArea(object):
         # Check device's area id, if available
         if entity_object.device_id:
 
-            device_registry = await self.hass.helpers.device_registry.async_get_registry()
+            device_registry = (
+                await self.hass.helpers.device_registry.async_get_registry()
+            )
             if entity_object.device_id in device_registry.devices.keys():
                 device_object = device_registry.devices[entity_object.device_id]
                 if device_object.area_id == self.id:
@@ -351,14 +347,12 @@ class MagicArea(object):
 
         for entity_id in entity_list:
 
-            entity_component, entity_name = entity_id.split('.')
+            entity_component, entity_name = entity_id.split(".")
 
             # Get latest state and create object
             latest_state = self.hass.states.get(entity_id)
-            updated_entity = {
-                'entity_id': entity_id
-            }
-            
+            updated_entity = {"entity_id": entity_id}
+
             if latest_state:
                 updated_entity.update(latest_state.attributes)
 
@@ -366,23 +360,25 @@ class MagicArea(object):
                 self.entities[entity_component] = []
 
             self.entities[entity_component].append(updated_entity)
-            
+
         _LOGGER.debug(f"Loaded entities for area {self.slug}: {self.entities}")
 
     async def initialize(self, _=None) -> None:
         _LOGGER.debug(f"Initializing area {self.slug}...")
-        
+
         await self.load_entities()
 
         self.initialized = True
 
-        #self.hass.bus.async_fire(EVENT_MAGICAREAS_AREA_READY, {CONF_ID: self.id})
+        # self.hass.bus.async_fire(EVENT_MAGICAREAS_AREA_READY, {CONF_ID: self.id})
 
         _LOGGER.debug(f"Area {self.name}: Loading platforms...")
         for platform in MAGIC_AREAS_COMPONENTS:
             _LOGGER.debug(f"> Loading platform '{platform}'...")
             self.hass.async_create_task(
-                self.hass.config_entries.async_forward_entry_setup(self.hass_config, platform)
+                self.hass.config_entries.async_forward_entry_setup(
+                    self.hass_config, platform
+                )
             )
 
         _LOGGER.debug(f"Area {self.slug} initialized.")

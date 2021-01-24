@@ -1,34 +1,31 @@
 import logging
 
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-
 from homeassistant import config_entries
+from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-
-import homeassistant.helpers.config_validation as cv
-
 from .const import (
-    MODULE_DATA, 
-    DATA_AREA_OBJECT, 
-    DOMAIN, 
-    _AREA_SCHEMA, 
-    VALIDATION_TUPLES, 
-    CONF_INCLUDE_ENTITIES, 
-    CONF_EXCLUDE_ENTITIES, 
-    CONF_PRESENCE_SENSOR_DEVICE_CLASS, 
-    CONF_ENABLED_FEATURES, 
-    CONF_FEATURE_LIST, 
+    _AREA_SCHEMA,
+    ALL_BINARY_SENSOR_DEVICE_CLASSES,
+    CONF_ENABLED_FEATURES,
+    CONF_EXCLUDE_ENTITIES,
+    CONF_FEATURE_LIST,
+    CONF_INCLUDE_ENTITIES,
     CONF_MAIN_LIGHTS,
-    CONF_SLEEP_LIGHTS,
-    CONF_SLEEP_ENTITY,
-    CONF_SLEEP_STATE,
-    CONF_SLEEP_TIMEOUT,
     CONF_NIGHT_ENTITY,
     CONF_NIGHT_STATE,
-    ALL_BINARY_SENSOR_DEVICE_CLASSES
+    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_SLEEP_ENTITY,
+    CONF_SLEEP_LIGHTS,
+    CONF_SLEEP_STATE,
+    CONF_SLEEP_TIMEOUT,
+    DATA_AREA_OBJECT,
+    DOMAIN,
+    MODULE_DATA,
+    VALIDATION_TUPLES,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,7 +53,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({vol.Required(CONF_NAME): vol.In(area_names)}),
-            #data_schema=_AREA_SCHEMA,
+            # data_schema=_AREA_SCHEMA,
             errors=errors,
         )
 
@@ -92,7 +89,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         errors = {}
 
         if user_input is not None:
-            #validate_options(user_input, errors)
+            # validate_options(user_input, errors)
             if not errors:
                 return self.async_create_entry(title="", data=user_input)
 
@@ -100,32 +97,32 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         data = self.hass.data[MODULE_DATA][self.config_entry.entry_id]
         area = data[DATA_AREA_OBJECT]
 
-        all_lights = [
-            light['entity_id']
-            for light in area.entities[LIGHT_DOMAIN]
-        ] if LIGHT_DOMAIN in area.entities.keys() else []
-        all_entities = [
-            entity
-            for entity in self.hass.states.async_entity_ids()
-        ]
+        all_lights = (
+            [light["entity_id"] for light in area.entities[LIGHT_DOMAIN]]
+            if LIGHT_DOMAIN in area.entities.keys()
+            else []
+        )
+        all_entities = [entity for entity in self.hass.states.async_entity_ids()]
         entity_list = cv.multi_select(sorted(all_entities))
         empty_entry = [""]
         to_replace = {
             CONF_INCLUDE_ENTITIES: entity_list,
             CONF_EXCLUDE_ENTITIES: entity_list,
             CONF_ENABLED_FEATURES: cv.multi_select(sorted(CONF_FEATURE_LIST)),
-            CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)),
+            CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(
+                sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
+            ),
             CONF_MAIN_LIGHTS: cv.multi_select(sorted(all_lights)),
             CONF_SLEEP_LIGHTS: cv.multi_select(sorted(all_lights)),
-            CONF_NIGHT_ENTITY: vol.In(sorted(empty_entry+all_entities)),
-            CONF_SLEEP_ENTITY: vol.In(sorted(empty_entry+all_entities))
-            }
+            CONF_NIGHT_ENTITY: vol.In(sorted(empty_entry + all_entities)),
+            CONF_SLEEP_ENTITY: vol.In(sorted(empty_entry + all_entities)),
+        }
 
         options_schema = {}
         for name, default, validation in VALIDATION_TUPLES:
             key = vol.Optional(name, default=conf.options.get(name, default))
             value = to_replace.get(name, validation)
-            options_schema[key] = value 
+            options_schema[key] = value
 
         return self.async_show_form(
             step_id="init", data_schema=vol.Schema(options_schema), errors=errors

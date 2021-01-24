@@ -4,27 +4,23 @@ import asyncio
 import logging
 
 import voluptuous as vol
-
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER, ConfigEntry
-from homeassistant.const import CONF_SOURCE
+from homeassistant.const import CONF_SOURCE, EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant
 
-
+from .base import MagicArea
 from .const import (
-    MODULE_DATA,
+    _DOMAIN_SCHEMA,
     CONF_ID,
     CONF_NAME,
-    DOMAIN,
-    _DOMAIN_SCHEMA,
-    MAGIC_AREAS_COMPONENTS,
-    EVENT_MAGICAREAS_READY,
-    EVENT_MAGICAREAS_AREA_READY,
     DATA_AREA_OBJECT,
     DATA_UNDO_UPDATE_LISTENER,
+    DOMAIN,
+    EVENT_MAGICAREAS_AREA_READY,
+    EVENT_MAGICAREAS_READY,
+    MAGIC_AREAS_COMPONENTS,
+    MODULE_DATA,
 )
-
-from .base import MagicArea
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,6 +28,7 @@ CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: _DOMAIN_SCHEMA},
     extra=vol.ALLOW_EXTRA,
 )
+
 
 async def async_setup(hass, config):
     """Set up areas."""
@@ -57,10 +54,12 @@ async def async_setup(hass, config):
             config_entry = magic_areas_config[area.id]
             source = SOURCE_IMPORT
 
-        config_entry.update({
-            CONF_NAME: area.name,
-            CONF_ID: area.id,
-            })
+        config_entry.update(
+            {
+                CONF_NAME: area.name,
+                CONF_ID: area.id,
+            }
+        )
 
         hass.async_create_task(
             hass.config_entries.flow.async_init(
@@ -91,6 +90,7 @@ async def async_setup(hass, config):
 
     return True
 
+
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Set up the component."""
     data = hass.data.setdefault(MODULE_DATA, {})
@@ -100,10 +100,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     area = area_registry.async_get_area(config_entry.data[CONF_ID])
     _LOGGER.debug(f"AREA {area.id} {area.name}: {config_entry.data}")
     magic_area = MagicArea(
-            hass,
-            area,
-            config_entry,
-        )
+        hass,
+        area,
+        config_entry,
+    )
 
     undo_listener = config_entry.add_update_listener(async_update_options)
 
@@ -114,9 +114,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     return True
 
+
 async def async_update_options(hass, config_entry: ConfigEntry):
     """Update options."""
     await hass.config_entries.async_reload(config_entry.entry_id)
+
 
 async def async_unload_entry(hass, config_entry: ConfigEntry) -> bool:
     """Unload a config entry."""
@@ -140,6 +142,7 @@ async def async_unload_entry(hass, config_entry: ConfigEntry) -> bool:
 
     return all_unloaded
 
+
 async def check_all_ready(hass) -> bool:
 
     areas = hass.data[MODULE_DATA]
@@ -152,6 +155,7 @@ async def check_all_ready(hass) -> bool:
     hass.bus.async_fire(EVENT_MAGICAREAS_READY)
 
     return True
+
 
 async def load_platforms(hass, config):
 
