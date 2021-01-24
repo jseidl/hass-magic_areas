@@ -17,7 +17,7 @@ categories:
        - workflow
        - tests
        - maintenance
-tag-template: - $TITLE @$AUTHOR (#$NUMBER)
+change-template: - $TITLE @$AUTHOR (#$NUMBER)
 template: |
   ## Changes
 
