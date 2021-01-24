@@ -31,7 +31,9 @@ If you think all of the above features are freaking awesome, **Magic Areas** is 
 Go to HACS > Integrations > + button > search magic areas > click on it > click add repository.
 
 ### Manual mode
-Copy `custom_components/magic_areas` folder into your Home Assistant's `custom_component` folder, then include the following into your `configuration.yaml` file (or in a `package`):
+Copy `custom_components/magic_areas` folder into your Home Assistant's `custom_component` folder.  
+  
+Then include the following into your `configuration.yaml` file (or in a `package`):
 ```
 magic_areas:
 ```
