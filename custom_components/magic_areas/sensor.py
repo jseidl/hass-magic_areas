@@ -6,13 +6,14 @@ from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 
 from .base import AggregateBase, SensorBase
 from .const import (
-    MODULE_DATA,
-    CONF_FEATURE_AGGREGATION,
-    CONF_AGGREGATES_MIN_ENTITIES,
     AGGREGATE_MODE_SUM,
+    CONF_AGGREGATES_MIN_ENTITIES,
+    CONF_FEATURE_AGGREGATION,
+    MODULE_DATA,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_platform(
     hass, config, async_add_entities, discovery_info=None
@@ -20,9 +21,11 @@ async def async_setup_platform(
 
     await load_sensors(hass, async_add_entities)
 
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Demo config entry."""
     await async_setup_platform(hass, {}, async_add_entities)
+
 
 async def load_sensors(hass, async_add_entities):
 
@@ -44,7 +47,7 @@ async def load_sensors(hass, async_add_entities):
 
         for entity in area.entities[SENSOR_DOMAIN]:
 
-            if not 'device_class' in entity.keys():
+            if not "device_class" in entity.keys():
                 continue
 
             map_key = f"{entity['device_class']}/{entity['unit_of_measurement']}"
@@ -57,28 +60,34 @@ async def load_sensors(hass, async_add_entities):
             if entity_count < area.config.get(CONF_AGGREGATES_MIN_ENTITIES):
                 continue
 
-            device_class, unit_of_measurement = map_key.split('/')
+            device_class, unit_of_measurement = map_key.split("/")
 
-            _LOGGER.debug(f"Creating aggregate sensor for device_class '{device_class}' ({unit_of_measurement}) with {entity_count} entities ({area.slug})")
-            aggregates.append(AreaSensorGroupSensor(hass, area, device_class, unit_of_measurement))
+            _LOGGER.debug(
+                f"Creating aggregate sensor for device_class '{device_class}' ({unit_of_measurement}) with {entity_count} entities ({area.slug})"
+            )
+            aggregates.append(
+                AreaSensorGroupSensor(hass, area, device_class, unit_of_measurement)
+            )
 
         async_add_entities(aggregates)
 
-class AreaSensorGroupSensor(AggregateBase, SensorBase):
 
+class AreaSensorGroupSensor(AggregateBase, SensorBase):
     def __init__(self, hass, area, device_class, unit_of_measurement):
 
         """Initialize an area sensor group sensor."""
 
         self.area = area
         self.hass = hass
-        self._mode = 'sum' if device_class in AGGREGATE_MODE_SUM else 'mean'
+        self._mode = "sum" if device_class in AGGREGATE_MODE_SUM else "mean"
         self._device_class = device_class
         self._unit_of_measurement = unit_of_measurement
         self._state = 0
 
         device_class_name = device_class.capitalize()
-        self._name = f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
+        self._name = (
+            f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
+        )
 
     async def _initialize(self, _=None) -> None:
 
