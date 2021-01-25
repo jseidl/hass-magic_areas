@@ -18,25 +18,25 @@ from homeassistant.util import slugify
 
 from .const import (
     _DOMAIN_SCHEMA,
+    AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
     CONF_NAME,
     CONF_ON_STATES,
-    CONF_UPDATE_INTERVAL,
     CONF_TYPE,
-    META_AREA_GLOBAL,
-    AREA_TYPE_META,
+    CONF_UPDATE_INTERVAL,
     DATA_AREA_OBJECT,
-    MODULE_DATA,
     DEVICE_CLASS_DOMAINS,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
+    MAGIC_AREAS_COMPONENTS_GLOBAL,
     MAGIC_AREAS_COMPONENTS_META,
-    MAGIC_AREAS_COMPONENTS_GLOBAL
+    META_AREA_GLOBAL,
+    MODULE_DATA,
 )
 
 CONFIG_SCHEMA = vol.Schema(
@@ -355,7 +355,7 @@ class MagicArea(object):
 
         self.load_entity_list(entity_list)
 
-        #_LOGGER.debug(f"Loaded entities for area {self.slug}: {self.entities}")
+        # _LOGGER.debug(f"Loaded entities for area {self.slug}: {self.entities}")
 
     def load_entity_list(self, entity_list):
 
@@ -374,7 +374,6 @@ class MagicArea(object):
                 self.entities[entity_component] = []
 
             self.entities[entity_component].append(updated_entity)
-
 
     async def initialize(self, _=None) -> None:
         _LOGGER.debug(f"Initializing area {self.slug}...")
@@ -421,9 +420,7 @@ class MagicMetaArea(MagicArea):
         if self.hass.is_running and self.areas_loaded():
             self.hass.async_create_task(self.initialize())
         else:
-            self.hass.bus.async_listen_once(
-                EVENT_MAGICAREAS_READY, self.initialize
-            )
+            self.hass.bus.async_listen_once(EVENT_MAGICAREAS_READY, self.initialize)
 
     def areas_loaded(self):
 
@@ -434,7 +431,6 @@ class MagicMetaArea(MagicArea):
         for config_entry_id, area_info in data.items():
             area = area_info[DATA_AREA_OBJECT]
             if area.config.get(CONF_TYPE) != AREA_TYPE_META:
-                
                 if not area.initialized:
                     _LOGGER.warn(f"Area {area.id} not initialized")
                     return False
@@ -449,7 +445,11 @@ class MagicMetaArea(MagicArea):
         _LOGGER.warn(f"{self.name}: {self.entities}")
 
         self.initialized = True
-        components_to_load = MAGIC_AREAS_COMPONENTS_GLOBAL if self.id == META_AREA_GLOBAL.lower() else MAGIC_AREAS_COMPONENTS_META
+        components_to_load = (
+            MAGIC_AREAS_COMPONENTS_GLOBAL
+            if self.id == META_AREA_GLOBAL.lower()
+            else MAGIC_AREAS_COMPONENTS_META
+        )
 
         _LOGGER.debug(f"Area {self.name}: Loading platforms...")
         for platform in components_to_load:
@@ -469,10 +469,13 @@ class MagicMetaArea(MagicArea):
         data = self.hass.data[MODULE_DATA]
         for config_entry_id, area_info in data.items():
             area = area_info[DATA_AREA_OBJECT]
-            if self.id == META_AREA_GLOBAL.lower() or area.config.get(CONF_TYPE) == self.id:
+            if (
+                self.id == META_AREA_GLOBAL.lower()
+                or area.config.get(CONF_TYPE) == self.id
+            ):
                 for entities in area.entities.values():
                     for entity in entities:
-                        entity_list.append(entity['entity_id'])
+                        entity_list.append(entity["entity_id"])
 
         self.load_entity_list(entity_list)
 

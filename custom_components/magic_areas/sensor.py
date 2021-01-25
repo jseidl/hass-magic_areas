@@ -11,7 +11,6 @@ from .const import (
     CONF_FEATURE_AGGREGATION,
     DATA_AREA_OBJECT,
     MODULE_DATA,
-    DATA_AREA_OBJECT,
 )
 
 _LOGGER = logging.getLogger(__name__)

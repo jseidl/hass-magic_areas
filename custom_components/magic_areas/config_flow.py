@@ -10,11 +10,19 @@ from homeassistant.core import callback
 from .const import (
     _AREA_SCHEMA,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
+    AREA_TYPE_EXTERIOR,
+    AREA_TYPE_INTERIOR,
+    AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_FEATURE_LIST,
+<<<<<<< HEAD
     CONF_FEATURE_LIST_META,
     CONF_FEATURE_LIST_GLOBAL,
+=======
+    CONF_FEATURE_LIST_GLOBAL,
+    CONF_FEATURE_LIST_META,
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
     CONF_INCLUDE_ENTITIES,
     CONF_MAIN_LIGHTS,
     CONF_NIGHT_ENTITY,
@@ -25,12 +33,16 @@ from .const import (
     CONF_SLEEP_STATE,
     CONF_SLEEP_TIMEOUT,
     CONF_TYPE,
+<<<<<<< HEAD
     AREA_TYPE_EXTERIOR,
     AREA_TYPE_INTERIOR,
     AREA_TYPE_META,
     META_AREA_GLOBAL,
+=======
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
     DATA_AREA_OBJECT,
     DOMAIN,
+    META_AREA_GLOBAL,
     MODULE_DATA,
     VALIDATION_TUPLES,
     VALIDATION_TUPLES_META,
@@ -109,7 +121,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         feature_list = CONF_FEATURE_LIST
 
         _VALIDATION_TUPLES = VALIDATION_TUPLES
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
         if area_type == AREA_TYPE_META:
             _VALIDATION_TUPLES = VALIDATION_TUPLES_META
             feature_list = CONF_FEATURE_LIST_META
@@ -136,7 +152,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             CONF_SLEEP_LIGHTS: cv.multi_select(sorted(all_lights)),
             CONF_NIGHT_ENTITY: vol.In(sorted(empty_entry + all_entities)),
             CONF_SLEEP_ENTITY: vol.In(sorted(empty_entry + all_entities)),
+<<<<<<< HEAD
             CONF_TYPE: vol.In(sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR]))
+=======
+            CONF_TYPE: vol.In(sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])),
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
         }
 
         options_schema = {}

@@ -12,17 +12,22 @@ from homeassistant.helpers.area_registry import AreaEntry
 from .base import MagicArea, MagicMetaArea
 from .const import (
     _DOMAIN_SCHEMA,
+    AREA_TYPE_META,
     CONF_ID,
     CONF_NAME,
     CONF_TYPE,
+<<<<<<< HEAD
     AREA_TYPE_META,
     META_AREAS,
+=======
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
     DATA_AREA_OBJECT,
     DATA_UNDO_UPDATE_LISTENER,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
+    META_AREAS,
     MODULE_DATA,
 )
 
@@ -50,12 +55,22 @@ async def async_setup(hass, config):
     reserved_ids = [meta_area.lower() for meta_area in META_AREAS]
     for area in areas:
         if area.id in reserved_ids:
+<<<<<<< HEAD
             _LOGGER.error(f"Area uses reserved name {area.id}. Please rename your area and restart.")
+=======
+            _LOGGER.error(
+                f"Area uses reserved name {area.id}. Please rename your area and restart."
+            )
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
             return
 
     # Add Meta Areas to area list
     for meta_area in META_AREAS:
+<<<<<<< HEAD
             areas.append(AreaEntry(name=meta_area, id=meta_area.lower()))
+=======
+        areas.append(AreaEntry(name=meta_area, id=meta_area.lower()))
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
 
     for area in areas:
 
@@ -106,9 +121,13 @@ async def async_setup(hass, config):
         return True
 
     # Checks whenever an area is ready
+<<<<<<< HEAD
     hass.bus.async_listen(
         EVENT_MAGICAREAS_AREA_READY, async_check_all_ready
     )
+=======
+    hass.bus.async_listen(EVENT_MAGICAREAS_AREA_READY, async_check_all_ready)
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
 
     return True
 
@@ -131,11 +150,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         )
     else:
         _LOGGER.warn(f"___>>>>>>>> HERE")
+<<<<<<< HEAD
         magic_area = MagicMetaArea(
             hass,
             area_name,
             config_entry
         )
+=======
+        magic_area = MagicMetaArea(hass, area_name, config_entry)
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
 
     _LOGGER.debug(f"AREA {area_id} {area_name}: {config_entry.data}")
 
@@ -174,4 +197,8 @@ async def async_unload_entry(hass, config_entry: ConfigEntry) -> bool:
     if not data:
         hass.data.pop(MODULE_DATA)
 
+<<<<<<< HEAD
     return all_unloaded
+=======
+    return all_unloaded
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b

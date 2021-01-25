@@ -29,13 +29,17 @@ from homeassistant.helpers.event import (
 from .base import AggregateBase, BinarySensorBase
 from .const import (
     AGGREGATE_BINARY_SENSOR_CLASSES,
+    AREA_TYPE_META,
     AUTOLIGHTS_STATE_DISABLED,
     AUTOLIGHTS_STATE_NORMAL,
     AUTOLIGHTS_STATE_SLEEP,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,
+<<<<<<< HEAD
     CONF_TYPE,
+=======
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_HEALTH,
@@ -51,6 +55,7 @@ from .const import (
     CONF_SLEEP_LIGHTS,
     CONF_SLEEP_STATE,
     CONF_SLEEP_TIMEOUT,
+    CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     AREA_TYPE_META,
     DATA_AREA_OBJECT,
@@ -193,7 +198,13 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         if self.area.config.get(CONF_TYPE) != AREA_TYPE_META:
             # Append presence_hold switch as a presence_sensor
+<<<<<<< HEAD
             presence_hold_switch_id = f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
+=======
+            presence_hold_switch_id = (
+                f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
+            )
+>>>>>>> 961f8960eb7f85df546fbaaf8a3fbd0cbe38e14b
             self.sensors.append(presence_hold_switch_id)
 
     def load_attributes(self) -> None:
