@@ -7,18 +7,22 @@ import voluptuous as vol
 from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER, ConfigEntry
 from homeassistant.const import CONF_SOURCE, EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.area_registry import AreaEntry
 
-from .base import MagicArea
+from .base import MagicArea, MagicMetaArea
 from .const import (
     _DOMAIN_SCHEMA,
+    AREA_TYPE_META,
     CONF_ID,
     CONF_NAME,
+    CONF_TYPE,
     DATA_AREA_OBJECT,
     DATA_UNDO_UPDATE_LISTENER,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
+    META_AREAS,
     MODULE_DATA,
 )
 
@@ -38,9 +42,22 @@ async def async_setup(hass, config):
 
     # Populate MagicAreas
     magic_areas = []
-    areas = area_registry.async_list_areas()
+    areas = list(area_registry.async_list_areas())
 
     magic_areas_config = config[DOMAIN]
+
+    # Check reserved names
+    reserved_ids = [meta_area.lower() for meta_area in META_AREAS]
+    for area in areas:
+        if area.id in reserved_ids:
+            _LOGGER.error(
+                f"Area uses reserved name {area.id}. Please rename your area and restart."
+            )
+            return
+
+    # Add Meta Areas to area list
+    for meta_area in META_AREAS:
+        areas.append(AreaEntry(name=meta_area, id=meta_area.lower()))
 
     for area in areas:
 
@@ -53,6 +70,9 @@ async def async_setup(hass, config):
         else:
             config_entry = magic_areas_config[area.id]
             source = SOURCE_IMPORT
+
+        if area.id in reserved_ids:
+            config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
         config_entry.update(
             {
@@ -67,26 +87,28 @@ async def async_setup(hass, config):
             )
         )
 
-    #     _LOGGER.debug(
-    #         f"Creating Magic Area '{area.name}' (#{area.id})."
-    #     )
-    #     magic_area = MagicArea(
-    #         hass,
-    #         area,
-    #         magic_areas_config,
-    #     )
-    #     magic_areas.append(magic_area)
+    async def async_check_all_ready(event) -> bool:
 
-    # hass.data[MODULE_DATA] = magic_areas
+        if MODULE_DATA not in hass.data.keys():
+            return False
 
-    # # Checks whenever an area is ready
-    # hass.bus.async_listen_once(
-    #             EVENT_MAGICAREAS_AREA_READY, check_all_ready(hass)
-    #         )
-    # # Load platforms when ready
-    # hass.bus.async_listen_once(
-    #             EVENT_MAGICAREAS_READY, load_platforms(hass, config)
-    #         )
+        data = hass.data[MODULE_DATA]
+        areas = [area_data[DATA_AREA_OBJECT] for area_data in data.values()]
+
+        for area in areas:
+            if area.config.get(CONF_TYPE) == AREA_TYPE_META:
+                continue
+            if not area.initialized:
+                _LOGGER.info(f"Area {area.id} not ready")
+                return False
+
+        _LOGGER.debug(f"All areas ready.")
+        hass.bus.async_fire(EVENT_MAGICAREAS_READY)
+
+        return True
+
+    # Checks whenever an area is ready
+    hass.bus.async_listen(EVENT_MAGICAREAS_AREA_READY, async_check_all_ready)
 
     return True
 
@@ -94,16 +116,24 @@ async def async_setup(hass, config):
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Set up the component."""
     data = hass.data.setdefault(MODULE_DATA, {})
+    area_id = config_entry.data[CONF_ID]
+    area_name = config_entry.data[CONF_NAME]
+    meta_ids = [meta_area.lower() for meta_area in META_AREAS]
 
-    area_registry = await hass.helpers.area_registry.async_get_registry()
+    if area_id not in meta_ids:
+        area_registry = await hass.helpers.area_registry.async_get_registry()
+        area = area_registry.async_get_area(area_id)
 
-    area = area_registry.async_get_area(config_entry.data[CONF_ID])
-    _LOGGER.debug(f"AREA {area.id} {area.name}: {config_entry.data}")
-    magic_area = MagicArea(
-        hass,
-        area,
-        config_entry,
-    )
+        magic_area = MagicArea(
+            hass,
+            area,
+            config_entry,
+        )
+    else:
+        _LOGGER.warn(f"___>>>>>>>> HERE")
+        magic_area = MagicMetaArea(hass, area_name, config_entry)
+
+    _LOGGER.debug(f"AREA {area_id} {area_name}: {config_entry.data}")
 
     undo_listener = config_entry.add_update_listener(async_update_options)
 
@@ -141,27 +171,3 @@ async def async_unload_entry(hass, config_entry: ConfigEntry) -> bool:
         hass.data.pop(MODULE_DATA)
 
     return all_unloaded
-
-
-async def check_all_ready(hass) -> bool:
-
-    areas = hass.data[MODULE_DATA]
-
-    for area in areas:
-        if not area.initialized:
-            return False
-
-    _LOGGER.debug(f"All areas ready.")
-    hass.bus.async_fire(EVENT_MAGICAREAS_READY)
-
-    return True
-
-
-async def load_platforms(hass, config):
-
-    # Load platforms
-    for component in MAGIC_AREAS_COMPONENTS:
-        _LOGGER.debug(f"Loading platform '{component}'...")
-        hass.async_create_task(
-            hass.helpers.discovery.async_load_platform(component, DOMAIN, {}, config)
-        )

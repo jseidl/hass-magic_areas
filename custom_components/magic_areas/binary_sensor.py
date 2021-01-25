@@ -29,13 +29,13 @@ from homeassistant.helpers.event import (
 from .base import AggregateBase, BinarySensorBase
 from .const import (
     AGGREGATE_BINARY_SENSOR_CLASSES,
+    AREA_TYPE_META,
     AUTOLIGHTS_STATE_DISABLED,
     AUTOLIGHTS_STATE_NORMAL,
     AUTOLIGHTS_STATE_SLEEP,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,
-    CONF_EXTERIOR,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_HEALTH,
@@ -51,6 +51,7 @@ from .const import (
     CONF_SLEEP_LIGHTS,
     CONF_SLEEP_STATE,
     CONF_SLEEP_TIMEOUT,
+    CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     DATA_AREA_OBJECT,
     DISTRESS_SENSOR_CLASSES,
@@ -74,9 +75,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     # await async_setup_platform(hass, {}, async_add_entities)
     area_data = hass.data[MODULE_DATA][config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
-    _LOGGER.warn(
-        f"Config {config_entry.entry_id} ({area.name}): {config_entry.options}"
-    )
 
     await load_sensors(hass, async_add_entities, area)
 
@@ -173,8 +171,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def load_presence_sensors(self) -> None:
 
-        _LOGGER.info(f"{self.area.name}: {self.area.config}")
-
         for component, entities in self.area.entities.items():
 
             if component not in PRESENCE_DEVICE_COMPONENTS:
@@ -195,9 +191,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
                 self.sensors.append(entity["entity_id"])
 
-        # Append presence_hold switch as a presence_sensor
-        presence_hold_switch_id = f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
-        self.sensors.append(presence_hold_switch_id)
+        if self.area.config.get(CONF_TYPE) != AREA_TYPE_META:
+            # Append presence_hold switch as a presence_sensor
+            presence_hold_switch_id = (
+                f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
+            )
+            self.sensors.append(presence_hold_switch_id)
 
     def load_attributes(self) -> None:
 
@@ -223,7 +222,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             "clear_timeout": self.area.config.get(CONF_CLEAR_TIMEOUT),
             "update_interval": self.area.config.get(CONF_UPDATE_INTERVAL),
             "on_states": self.area.config.get(CONF_ON_STATES),
-            "exterior": self.area.config.get(CONF_EXTERIOR),
+            "type": self.area.config.get(CONF_TYPE),
             "automatic_lights": self._get_autolights_state(),
         }
 

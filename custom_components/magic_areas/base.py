@@ -18,17 +18,25 @@ from homeassistant.util import slugify
 
 from .const import (
     _DOMAIN_SCHEMA,
+    AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
     CONF_NAME,
     CONF_ON_STATES,
+    CONF_TYPE,
     CONF_UPDATE_INTERVAL,
+    DATA_AREA_OBJECT,
     DEVICE_CLASS_DOMAINS,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
+    EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
+    MAGIC_AREAS_COMPONENTS_GLOBAL,
+    MAGIC_AREAS_COMPONENTS_META,
+    META_AREA_GLOBAL,
+    MODULE_DATA,
 )
 
 CONFIG_SCHEMA = vol.Schema(
@@ -345,6 +353,12 @@ class MagicArea(object):
         if include_entities:
             entity_list.extend(include_entities)
 
+        self.load_entity_list(entity_list)
+
+        # _LOGGER.debug(f"Loaded entities for area {self.slug}: {self.entities}")
+
+    def load_entity_list(self, entity_list):
+
         for entity_id in entity_list:
 
             entity_component, entity_name = entity_id.split(".")
@@ -361,8 +375,6 @@ class MagicArea(object):
 
             self.entities[entity_component].append(updated_entity)
 
-        _LOGGER.debug(f"Loaded entities for area {self.slug}: {self.entities}")
-
     async def initialize(self, _=None) -> None:
         _LOGGER.debug(f"Initializing area {self.slug}...")
 
@@ -370,7 +382,7 @@ class MagicArea(object):
 
         self.initialized = True
 
-        # self.hass.bus.async_fire(EVENT_MAGICAREAS_AREA_READY, {CONF_ID: self.id})
+        self.hass.bus.async_fire(EVENT_MAGICAREAS_AREA_READY)
 
         _LOGGER.debug(f"Area {self.name}: Loading platforms...")
         for platform in MAGIC_AREAS_COMPONENTS:
@@ -382,3 +394,91 @@ class MagicArea(object):
             )
 
         _LOGGER.debug(f"Area {self.slug} initialized.")
+
+
+class MagicMetaArea(MagicArea):
+    def __init__(self, hass, area_name, config) -> None:
+
+        self.hass = hass
+        self.name = area_name
+        self.id = slugify(self.name)
+        self.slug = slugify(self.name)
+        self.hass_config = config
+        self.initialized = False
+
+        self.entities = {}
+
+        # Check if area is defined on YAML
+
+        if config.options:
+            merged_dicts = dict(config.data)
+            merged_dicts.update(config.options)
+            self.config = merged_dicts
+        else:
+            self.config = config.data
+
+        # Add callback for initialization
+        if self.hass.is_running and self.areas_loaded():
+            self.hass.async_create_task(self.initialize())
+        else:
+            self.hass.bus.async_listen_once(EVENT_MAGICAREAS_READY, self.initialize)
+
+    def areas_loaded(self):
+
+        if MODULE_DATA not in self.hass.data.keys():
+            return False
+
+        data = self.hass.data[MODULE_DATA]
+        for config_entry_id, area_info in data.items():
+            area = area_info[DATA_AREA_OBJECT]
+            if area.config.get(CONF_TYPE) != AREA_TYPE_META:
+
+                if not area.initialized:
+                    _LOGGER.warn(f"Area {area.id} not initialized")
+                    return False
+
+        return True
+
+    async def initialize(self, _=None) -> None:
+        _LOGGER.debug(f"Initializing meta area {self.slug}...")
+
+        await self.load_entities()
+
+        _LOGGER.warn(f"{self.name}: {self.entities}")
+
+        self.initialized = True
+        components_to_load = (
+            MAGIC_AREAS_COMPONENTS_GLOBAL
+            if self.id == META_AREA_GLOBAL.lower()
+            else MAGIC_AREAS_COMPONENTS_META
+        )
+
+        _LOGGER.debug(f"Area {self.name}: Loading platforms...")
+        for platform in components_to_load:
+            _LOGGER.debug(f"> Loading platform '{platform}'...")
+            self.hass.async_create_task(
+                self.hass.config_entries.async_forward_entry_setup(
+                    self.hass_config, platform
+                )
+            )
+
+        _LOGGER.debug(f"Meta Area {self.slug} initialized.")
+
+    async def load_entities(self) -> None:
+
+        entity_list = []
+
+        data = self.hass.data[MODULE_DATA]
+        for config_entry_id, area_info in data.items():
+            area = area_info[DATA_AREA_OBJECT]
+            if (
+                self.id == META_AREA_GLOBAL.lower()
+                or area.config.get(CONF_TYPE) == self.id
+            ):
+                for entities in area.entities.values():
+                    for entity in entities:
+                        entity_list.append(entity["entity_id"])
+
+        self.load_entity_list(entity_list)
+
+        _LOGGER.debug(f"Loaded entities for meta area {self.slug}: {self.entities}")
