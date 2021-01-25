@@ -29,13 +29,13 @@ from homeassistant.helpers.event import (
 from .base import AggregateBase, BinarySensorBase
 from .const import (
     AGGREGATE_BINARY_SENSOR_CLASSES,
+    AREA_TYPE_META,
     AUTOLIGHTS_STATE_DISABLED,
     AUTOLIGHTS_STATE_NORMAL,
     AUTOLIGHTS_STATE_SLEEP,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,
-    CONF_TYPE,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_HEALTH,
@@ -51,8 +51,8 @@ from .const import (
     CONF_SLEEP_LIGHTS,
     CONF_SLEEP_STATE,
     CONF_SLEEP_TIMEOUT,
+    CONF_TYPE,
     CONF_UPDATE_INTERVAL,
-    AREA_TYPE_META,
     DATA_AREA_OBJECT,
     DISTRESS_SENSOR_CLASSES,
     DISTRESS_STATES,
@@ -193,7 +193,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         if not self.area.is_meta():
             # Append presence_hold switch as a presence_sensor
-            presence_hold_switch_id = f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
+            presence_hold_switch_id = (
+                f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
+            )
             self.sensors.append(presence_hold_switch_id)
 
     def load_attributes(self) -> None:
@@ -225,11 +227,13 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             return
 
         # Add non-meta attributes
-        self._attributes.update({
-            "climate": area_climate,
-            "on_states": self.area.config.get(CONF_ON_STATES),
-            "automatic_lights": self._get_autolights_state(),
-        })
+        self._attributes.update(
+            {
+                "climate": area_climate,
+                "on_states": self.area.config.get(CONF_ON_STATES),
+                "automatic_lights": self._get_autolights_state(),
+            }
+        )
 
         # Set attribute sleep_timeout if defined
         if self.area.config.get(CONF_SLEEP_TIMEOUT):

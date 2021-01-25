@@ -12,17 +12,17 @@ from homeassistant.helpers.area_registry import AreaEntry
 from .base import MagicArea, MagicMetaArea
 from .const import (
     _DOMAIN_SCHEMA,
+    AREA_TYPE_META,
     CONF_ID,
     CONF_NAME,
     CONF_TYPE,
-    AREA_TYPE_META,
-    META_AREAS,
     DATA_AREA_OBJECT,
     DATA_UNDO_UPDATE_LISTENER,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
+    META_AREAS,
     MODULE_DATA,
 )
 
@@ -50,12 +50,14 @@ async def async_setup(hass, config):
     reserved_ids = [meta_area.lower() for meta_area in META_AREAS]
     for area in areas:
         if area.id in reserved_ids:
-            _LOGGER.error(f"Area uses reserved name {area.id}. Please rename your area and restart.")
+            _LOGGER.error(
+                f"Area uses reserved name {area.id}. Please rename your area and restart."
+            )
             return
 
     # Add Meta Areas to area list
     for meta_area in META_AREAS:
-            areas.append(AreaEntry(name=meta_area, id=meta_area.lower()))
+        areas.append(AreaEntry(name=meta_area, id=meta_area.lower()))
 
     for area in areas:
 
@@ -106,9 +108,7 @@ async def async_setup(hass, config):
         return True
 
     # Checks whenever an area is ready
-    hass.bus.async_listen(
-        EVENT_MAGICAREAS_AREA_READY, async_check_all_ready
-    )
+    hass.bus.async_listen(EVENT_MAGICAREAS_AREA_READY, async_check_all_ready)
 
     return True
 
@@ -131,11 +131,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         )
     else:
         _LOGGER.warn(f"___>>>>>>>> HERE")
-        magic_area = MagicMetaArea(
-            hass,
-            area_name,
-            config_entry
-        )
+        magic_area = MagicMetaArea(hass, area_name, config_entry)
 
     _LOGGER.debug(f"AREA {area_id} {area_name}: {config_entry.data}")
 
@@ -169,9 +165,10 @@ async def async_update_options(hass, config_entry: ConfigEntry):
             await hass.config_entries.async_reload(entry_id)
         _LOGGER.debug(f"Meta areas reloaded.")
 
+
 async def async_unload_entry(hass, config_entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    
+
     platforms_unloaded = []
     data = hass.data[MODULE_DATA]
     area_data = data[config_entry.entry_id]
