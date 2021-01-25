@@ -13,6 +13,8 @@ from .const import (
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_FEATURE_LIST,
+    CONF_FEATURE_LIST_META,
+    CONF_FEATURE_LIST_GLOBAL,
     CONF_INCLUDE_ENTITIES,
     CONF_MAIN_LIGHTS,
     CONF_NIGHT_ENTITY,
@@ -22,10 +24,16 @@ from .const import (
     CONF_SLEEP_LIGHTS,
     CONF_SLEEP_STATE,
     CONF_SLEEP_TIMEOUT,
+    CONF_TYPE,
+    AREA_TYPE_EXTERIOR,
+    AREA_TYPE_INTERIOR,
+    AREA_TYPE_META,
+    META_AREA_GLOBAL,
     DATA_AREA_OBJECT,
     DOMAIN,
     MODULE_DATA,
     VALIDATION_TUPLES,
+    VALIDATION_TUPLES_META,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -96,6 +104,18 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         # Fetch area entities
         data = self.hass.data[MODULE_DATA][self.config_entry.entry_id]
         area = data[DATA_AREA_OBJECT]
+        area_type = area.config.get(CONF_TYPE)
+
+        feature_list = CONF_FEATURE_LIST
+
+        _VALIDATION_TUPLES = VALIDATION_TUPLES
+        
+        if area_type == AREA_TYPE_META:
+            _VALIDATION_TUPLES = VALIDATION_TUPLES_META
+            feature_list = CONF_FEATURE_LIST_META
+
+        if area.id == META_AREA_GLOBAL.lower():
+            feature_list = CONF_FEATURE_LIST_GLOBAL
 
         all_lights = (
             [light["entity_id"] for light in area.entities[LIGHT_DOMAIN]]
@@ -108,7 +128,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         to_replace = {
             CONF_INCLUDE_ENTITIES: entity_list,
             CONF_EXCLUDE_ENTITIES: entity_list,
-            CONF_ENABLED_FEATURES: cv.multi_select(sorted(CONF_FEATURE_LIST)),
+            CONF_ENABLED_FEATURES: cv.multi_select(sorted(feature_list)),
             CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(
                 sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
             ),
@@ -116,10 +136,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             CONF_SLEEP_LIGHTS: cv.multi_select(sorted(all_lights)),
             CONF_NIGHT_ENTITY: vol.In(sorted(empty_entry + all_entities)),
             CONF_SLEEP_ENTITY: vol.In(sorted(empty_entry + all_entities)),
+            CONF_TYPE: vol.In(sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR]))
         }
 
         options_schema = {}
-        for name, default, validation in VALIDATION_TUPLES:
+        for name, default, validation in _VALIDATION_TUPLES:
             key = vol.Optional(name, default=conf.options.get(name, default))
             value = to_replace.get(name, validation)
             options_schema[key] = value

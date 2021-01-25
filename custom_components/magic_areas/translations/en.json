@@ -20,7 +20,8 @@
           "sleep_state": "State of sleep entity",
           "sleep_timeout": "How long since last presence event should it wait before clearing the area when on sleep mode",
           "main_lights": "Main lights (Leave blank for all area lights)",
-          "sleep_lights": "Sleep lights"
+          "sleep_lights": "Sleep lights",
+          "type": "Area type (interior/exterior)"
         }
       }
     },
