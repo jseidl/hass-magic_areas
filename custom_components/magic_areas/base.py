@@ -32,11 +32,6 @@ from .const import (
     CONF_SLEEP_STATE,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
-    CONF_NIGHT_ENTITY,
-    CONF_NIGHT_STATE,
-    CONF_SLEEP_ENTITY,
-    CONF_SLEEP_LIGHTS,
-    CONF_SLEEP_STATE,
     DATA_AREA_OBJECT,
     DEVICE_CLASS_DOMAINS,
     DOMAIN,
@@ -446,6 +441,7 @@ class MagicArea(object):
                 return True
 
         return False
+
 
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area_name, config) -> None:
