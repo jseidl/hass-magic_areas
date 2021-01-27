@@ -31,6 +31,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
 
     ma_data = hass.data[MODULE_DATA]
@@ -67,6 +68,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     async_add_entities([AreaAwareMediaPlayer(hass, areas_with_media_players)])
 
+
 class AreaAwareMediaPlayer(MediaPlayerEntity):
     def __init__(self, hass, areas):
 
@@ -98,7 +100,8 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
         ]
         self._attributes["entities"] = self._tracked_entities
         self._attributes["last_active_areas"] = [
-            f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}" for area in self._get_active_areas()
+            f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}"
+            for area in self._get_active_areas()
         ]
 
     def get_media_players_for_area(self, area):
