@@ -38,7 +38,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     area = area_data[DATA_AREA_OBJECT]
 
     # Check if we are the Global Meta Area
-    if not area.is_meta() or area.id != META_AREA_GLOBAL.lower():
+    if not area.is_meta() and area.id != META_AREA_GLOBAL.lower():
         _LOGGER.warn(f"This feature is only available for the Global Meta-Area")
         return
 
@@ -64,8 +64,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             f"No areas with {MEDIA_PLAYER_DOMAIN} entities. Skipping creation of area-aware-media-player"
         )
         return
-
-    async_add_entities([AreaAwareMediaPlayer(hass, areas_with_media_players)])
 
     async_add_entities([AreaAwareMediaPlayer(hass, areas_with_media_players)])
 
