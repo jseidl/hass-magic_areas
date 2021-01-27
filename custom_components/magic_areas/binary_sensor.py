@@ -342,6 +342,13 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._attributes["automatic_lights"] = self._get_autolights_state()
         self.schedule_update_ha_state()
 
+    def _is_autolights_disabled(self):
+
+        if not self.area.config.get(CONF_NIGHT_ENTITY):
+            return False
+
+        return (not self.area.is_night())
+
     def _get_autolights_state(self):
 
         if (
@@ -350,56 +357,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         ):
             return AUTOLIGHTS_STATE_DISABLED
 
-        if self._is_autolights_sleep():
+        if self.area.is_sleeping():
             return AUTOLIGHTS_STATE_SLEEP
 
         return AUTOLIGHTS_STATE_NORMAL
 
-    def _is_autolights_sleep(self):
-
-        autolights_config = self.area.config
-
-        if self.area.config.get(CONF_SLEEP_ENTITY):
-            if not self.area.config.get(CONF_SLEEP_LIGHTS):
-                # If user fails to set CONF_SLEEP_LIGHTS, sleep mode will be ignored
-                _LOGGER.error(
-                    f"'{CONF_SLEEP_LIGHTS}' not defined. Please review your configuration."
-                )
-                return False
-
-            sleep_entity = self.hass.states.get(self.area.config.get(CONF_SLEEP_ENTITY))
-            if (
-                sleep_entity.state.lower()
-                == self.area.config.get(CONF_SLEEP_STATE).lower()
-            ):
-                _LOGGER.info(
-                    f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
-                )
-                return True
-
-        return False
-
-    def _is_autolights_disabled(self):
-
-        autolights_config = self.area.config
-
-        # Check if disabled
-        if self.area.config.get(CONF_NIGHT_ENTITY):
-            night_entity = self.hass.states.get(self.area.config.get(CONF_NIGHT_ENTITY))
-            if night_entity and (
-                night_entity.state.lower()
-                != self.area.config.get(CONF_NIGHT_STATE).lower()
-            ):
-                _LOGGER.info(
-                    f"Disable entity '{night_entity.entity_id}' on disable state '{night_entity.state}'"
-                )
-                return True
-
-        return False
-
     def _autolights(self):
-
-        autolights_config = self.area.config
 
         # All lights affected by default
         affected_lights = [
@@ -415,7 +378,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             return False
 
         # Check if in sleep mode
-        if self._is_autolights_sleep():
+        if self.area.is_sleeping():
             affected_lights = self.area.config.get(CONF_SLEEP_LIGHTS)
 
         # Call service to turn_on the lights
@@ -433,7 +396,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         if area_state:
             self._state = True
         else:
-            if sleep_timeout and self._is_autolights_sleep():
+            if sleep_timeout and self.area.is_sleeping():
                 # if in sleep mode and sleep_timeout is set, use it...
                 _LOGGER.debug(
                     f"Area {self.area.slug} sleep mode is active. Timeout: {str(sleep_timeout)}"

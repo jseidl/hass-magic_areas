@@ -11,6 +11,8 @@
           "exclude_entities": "Exclude entities from being analyzed",
           "presence_sensor_device_class": "Device classes of sensors to be considered presence sensors",
           "icon": "Icon",
+          "notification_devices": "Media Player devices used for broadcasting through Area-Aware Media Player",
+          "notify_on_sleep": "Allow notification devices in this area to play notifications when on sleep mode",
           "update_interval": "Interval for checking missed events",
           "clear_timeout": "How long since last presence event should it wait before clearing the area",
           "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates.",

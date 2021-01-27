@@ -27,6 +27,11 @@ from .const import (
     CONF_ON_STATES,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
+    CONF_NIGHT_ENTITY,
+    CONF_NIGHT_STATE,
+    CONF_SLEEP_ENTITY,
+    CONF_SLEEP_LIGHTS,
+    CONF_SLEEP_STATE,
     DATA_AREA_OBJECT,
     DEVICE_CLASS_DOMAINS,
     DOMAIN,
@@ -404,6 +409,44 @@ class MagicArea(object):
 
         _LOGGER.debug(f"Area {self.slug} initialized.")
 
+    def is_sleeping(self):
+    
+        if self.config.get(CONF_SLEEP_ENTITY):
+            if not self.config.get(CONF_SLEEP_LIGHTS):
+                # If user fails to set CONF_SLEEP_LIGHTS, sleep mode will be ignored
+                _LOGGER.error(
+                    f"'{CONF_SLEEP_LIGHTS}' not defined. Please review your configuration."
+                )
+                return False
+
+            sleep_entity = self.hass.states.get(self.config.get(CONF_SLEEP_ENTITY))
+            if (
+                sleep_entity.state.lower()
+                == self.config.get(CONF_SLEEP_STATE).lower()
+            ):
+                _LOGGER.info(
+                    f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
+                )
+                return True
+
+        return False
+
+
+    def is_night(self):
+
+        # Check if has night entity
+        if self.config.get(CONF_NIGHT_ENTITY):
+            night_entity = self.hass.states.get(self.config.get(CONF_NIGHT_ENTITY))
+            if night_entity and (
+                night_entity.state.lower()
+                == self.config.get(CONF_NIGHT_STATE).lower()
+            ):
+                _LOGGER.info(
+                    f"Night entity '{night_entity.entity_id}' on night state '{night_entity.state}'"
+                )
+                return True
+
+        return False
 
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area_name, config) -> None:
