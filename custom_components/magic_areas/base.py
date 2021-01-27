@@ -365,7 +365,9 @@ class MagicArea(object):
 
     def load_entity_list(self, entity_list):
 
-        for entity_id in entity_list:
+        unique_entities = set(entity_list)
+
+        for entity_id in unique_entities:
 
             entity_component, entity_name = entity_id.split(".")
 

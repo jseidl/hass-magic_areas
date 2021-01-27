@@ -327,6 +327,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         # Check state change
         if self._attributes["automatic_lights"] != last_state:
 
+            if not to_state:
+                return
+
             if to_state.state != self.area.config.get(CONF_NIGHT_STATE):
                 if self._state:
                     self._lights_off()
