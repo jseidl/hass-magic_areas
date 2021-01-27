@@ -51,6 +51,11 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
         _LOGGER.info(f"{self.name} Switch initialized.")
 
     @property
+    def unique_id(self):
+        """Return a unique ID."""
+        return f"{SWITCH_DOMAIN}_area_presence_hold_{self.area.name}"
+
+    @property
     def name(self):
         """Return the name of the device if any."""
         return self._name
