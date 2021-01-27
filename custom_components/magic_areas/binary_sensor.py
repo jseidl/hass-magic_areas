@@ -347,7 +347,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         if not self.area.config.get(CONF_NIGHT_ENTITY):
             return False
 
-        return (not self.area.is_night())
+        return not self.area.is_night()
 
     def _get_autolights_state(self):
 

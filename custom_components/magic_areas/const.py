@@ -120,7 +120,7 @@ CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_i
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
 CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
 CONF_NOTIFICATION_DEVICES = "notification_devices"  # cv.entity_ids
-CONF_NOTIFY_ON_SLEEP, DEFAULT_NOTIFY_ON_SLEEP = "notify_on_sleep", False # cv.bool
+CONF_NOTIFY_ON_SLEEP, DEFAULT_NOTIFY_ON_SLEEP = "notify_on_sleep", False  # cv.bool
 # features
 CONF_FEATURE_CLIMATE_CONTROL = "control_climate"
 CONF_FEATURE_LIGHT_CONTROL = "control_lights"
