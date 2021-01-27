@@ -455,8 +455,6 @@ class MagicMetaArea(MagicArea):
 
         await self.load_entities()
 
-        _LOGGER.warn(f"{self.name}: {self.entities}")
-
         self.initialized = True
         components_to_load = (
             MAGIC_AREAS_COMPONENTS_GLOBAL
