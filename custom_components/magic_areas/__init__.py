@@ -130,7 +130,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             config_entry,
         )
     else:
-        _LOGGER.warn(f"___>>>>>>>> HERE")
         magic_area = MagicMetaArea(hass, area_name, config_entry)
 
     _LOGGER.debug(f"AREA {area_id} {area_name}: {config_entry.data}")
