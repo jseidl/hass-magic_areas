@@ -23,12 +23,12 @@ from .const import (
     CONF_MAIN_LIGHTS,
     CONF_NIGHT_ENTITY,
     CONF_NIGHT_STATE,
+    CONF_NOTIFICATION_DEVICES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
     CONF_SLEEP_STATE,
     CONF_SLEEP_TIMEOUT,
-    CONF_NOTIFICATION_DEVICES,
     CONF_TYPE,
     DATA_AREA_OBJECT,
     DOMAIN,
@@ -125,7 +125,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             else []
         )
         all_media_players = (
-            [media_player["entity_id"] for media_player in area.entities[MEDIA_PLAYER_DOMAIN]]
+            [
+                media_player["entity_id"]
+                for media_player in area.entities[MEDIA_PLAYER_DOMAIN]
+            ]
             if MEDIA_PLAYER_DOMAIN in area.entities.keys()
             else []
         )

@@ -120,7 +120,7 @@ CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_i
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
 CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
 CONF_NOTIFICATION_DEVICES = "notification_devices"  # cv.entity_ids
-
+CONF_NOTIFY_ON_SLEEP, DEFAULT_NOTIFY_ON_SLEEP = "notify_on_sleep", False  # cv.bool
 # features
 CONF_FEATURE_CLIMATE_CONTROL = "control_climate"
 CONF_FEATURE_LIGHT_CONTROL = "control_lights"
@@ -216,6 +216,7 @@ _AREA_SCHEMA = {
     ): cv.positive_int,
     vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
     vol.Optional(CONF_NOTIFICATION_DEVICES, default=[]): cv.entity_ids,
+    vol.Optional(CONF_NOTIFY_ON_SLEEP, default=DEFAULT_NOTIFY_ON_SLEEP): bool,
     vol.Optional(CONF_NIGHT_ENTITY): cv.entity_id,
     vol.Optional(CONF_NIGHT_STATE, default=DEFAULT_NIGHT_STATE): str,
     vol.Optional(CONF_SLEEP_ENTITY): cv.entity_id,
@@ -245,6 +246,7 @@ VALIDATION_TUPLES = [
     (CONF_ICON, DEFAULT_ICON, str),
     (CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES, int),
     (CONF_NOTIFICATION_DEVICES, [], cv.entity_ids),
+    (CONF_NOTIFY_ON_SLEEP, DEFAULT_NOTIFY_ON_SLEEP, bool),
     (CONF_NIGHT_ENTITY, "", cv.entity_id),
     (CONF_NIGHT_STATE, DEFAULT_NIGHT_STATE, str),
     (CONF_MAIN_LIGHTS, [], cv.entity_ids),

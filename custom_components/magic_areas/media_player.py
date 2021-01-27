@@ -2,6 +2,7 @@ DEPENDENCIES = ["magic_areas"]
 
 import logging
 
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.media_player import SUPPORT_PLAY_MEDIA, MediaPlayerEntity
 from homeassistant.components.media_player.const import (
@@ -19,12 +20,20 @@ from homeassistant.const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-from .const import CONF_NOTIFICATION_DEVICES, MODULE_DATA, CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER, META_AREA_GLOBAL, DATA_AREA_OBJECT
+from .const import (
+    CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
+    CONF_NOTIFICATION_DEVICES,
+    CONF_NOTIFY_ON_SLEEP,
+    DATA_AREA_OBJECT,
+    META_AREA_GLOBAL,
+    MODULE_DATA,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    
+
     ma_data = hass.data[MODULE_DATA]
     area_data = ma_data[config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
@@ -42,7 +51,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     areas_with_media_players = []
 
     for entry in ma_data.values():
-        
         area = entry[DATA_AREA_OBJECT]
 
         # Skip meta areas
@@ -53,10 +61,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             areas_with_media_players.append(area)
 
     if not areas_with_media_players:
-        _LOGGER.warn(f"No areas with {MEDIA_PLAYER_DOMAIN} entities. Skipping creation of area-aware-media-player")
+        _LOGGER.warn(
+            f"No areas with {MEDIA_PLAYER_DOMAIN} entities. Skipping creation of area-aware-media-player"
+        )
         return
 
     async_add_entities([AreaAwareMediaPlayer(hass, areas_with_media_players)])
+
+    async_add_entities([AreaAwareMediaPlayer(hass, areas_with_media_players)])
+
 
 class AreaAwareMediaPlayer(MediaPlayerEntity):
     def __init__(self, hass, areas):
@@ -64,7 +77,6 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
         self.hass = hass
 
         self._name = "Area-Aware Media Player"
-        
         self.entity_id = f"{MEDIA_PLAYER_DOMAIN}.area_aware_media_player"
 
         self._attributes = {}
@@ -76,7 +88,7 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
         for area in self.areas:
 
             entity_list = self.get_media_players_for_area(area)
-            
+
             self._tracked_entities.extend(entity_list)
 
         self._update_state()
@@ -85,9 +97,14 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
 
     def _update_attributes(self):
 
-        self._attributes["areas"] = [f"binary_sensor.area_{area.slug}" for area in self.areas]
+        self._attributes["areas"] = [
+            f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}" for area in self.areas
+        ]
         self._attributes["entities"] = self._tracked_entities
-        self._attributes["last_active_areas"] = [f"binary_sensor.area_{area.slug}" for area in self._get_active_areas()]
+        self._attributes["last_active_areas"] = [
+            f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}"
+            for area in self._get_active_areas()
+        ]
 
     def get_media_players_for_area(self, area):
 
@@ -96,11 +113,13 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
         notification_devices = area.config.get(CONF_NOTIFICATION_DEVICES)
 
         for entity in area.entities[MEDIA_PLAYER_DOMAIN]:
-                entity_ids.append(entity['entity_id'])
+            entity_ids.append(entity["entity_id"])
 
         # Return the notification_devices if defined and all valid
         if notification_devices:
-            all_valid_devices = all([device in entity_ids for device in notification_devices])
+            all_valid_devices = all(
+                [device in entity_ids for device in notification_devices]
+            )
             if all_valid_devices:
                 return set(notification_devices)
 
@@ -110,7 +129,7 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
     @property
     def unique_id(self):
         """Return a unique ID."""
-        return "{MEDIA_PLAYER_DOMAIN}_area_aware_media_player"
+        return f"{MEDIA_PLAYER_DOMAIN}_area_aware_media_player"
 
     @property
     def name(self):
@@ -137,18 +156,22 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
         active_areas = []
 
         for area in self.areas:
-            area_binary_sensor_name = f"binary_sensor.area_{area.slug}"
+            area_binary_sensor_name = f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}"
             area_binary_sensor_state = self.hass.states.get(area_binary_sensor_name)
 
             if not area_binary_sensor_state:
                 _LOGGER.debug(f"No state found for entity {area_binary_sensor_name}")
                 continue
 
+            # Check NOTIFY_ON_SLEEP
+            if area.is_sleeping() and not area.config.get(CONF_NOTIFY_ON_SLEEP):
+                _LOGGER.debug(f"Area {area.name} is sleeping, skipping")
+                continue
+
             if area_binary_sensor_state.state == STATE_ON:
                 active_areas.append(area)
 
         return active_areas
-
 
     def _update_state(self):
 
