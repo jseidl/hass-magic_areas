@@ -1,9 +1,10 @@
-DEPENDENCIES = ["magic_areas"]
+DEPENDENCIES = ["media_player"]
 
 import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.media_player import SUPPORT_PLAY_MEDIA, MediaPlayerEntity
 from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_ID,
@@ -33,12 +34,14 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
 
+    
+
     ma_data = hass.data[MODULE_DATA]
     area_data = ma_data[config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
 
     # Check if we are the Global Meta Area
-    if not area.is_meta() and area.id != META_AREA_GLOBAL.lower():
+    if not area.is_meta() or area.id != META_AREA_GLOBAL.lower():
         _LOGGER.warn(f"This feature is only available for the Global Meta-Area")
         return
 
@@ -50,14 +53,14 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     areas_with_media_players = []
 
     for entry in ma_data.values():
-        area = entry[DATA_AREA_OBJECT]
+        current_area = entry[DATA_AREA_OBJECT]
 
         # Skip meta areas
-        if area.is_meta():
+        if current_area.is_meta():
             continue
 
-        if MEDIA_PLAYER_DOMAIN in area.entities.keys():
-            areas_with_media_players.append(area)
+        if MEDIA_PLAYER_DOMAIN in current_area.entities.keys():
+            areas_with_media_players.append(current_area)
 
     if not areas_with_media_players:
         _LOGGER.warn(
@@ -68,13 +71,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([AreaAwareMediaPlayer(hass, areas_with_media_players)])
 
 
-class AreaAwareMediaPlayer(MediaPlayerEntity):
+class AreaAwareMediaPlayer(MediaPlayerEntity, RestoreEntity):
+    
     def __init__(self, hass, areas):
 
         self.hass = hass
 
         self._name = "Area-Aware Media Player"
-        self.entity_id = f"{MEDIA_PLAYER_DOMAIN}.area_aware_media_player"
 
         self._attributes = {}
         self._state = STATE_IDLE
@@ -88,8 +91,6 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
 
             self._tracked_entities.extend(entity_list)
 
-        self._update_state()
-
         _LOGGER.info(f"AreaAwareMediaPlayer loaded.")
 
     def _update_attributes(self):
@@ -98,7 +99,7 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
             f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}" for area in self.areas
         ]
         self._attributes["entities"] = self._tracked_entities
-        self._attributes["last_active_areas"] = [
+        self._attributes["active_areas"] = [
             f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}"
             for area in self._get_active_areas()
         ]
@@ -122,6 +123,19 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
 
         # Return all media_player entities
         return set(entity_ids)
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+
+        last_state = await self.async_get_last_state()
+
+        if last_state:
+            _LOGGER.debug(f"Nedia Player {self.name} restored [state={last_state.state}]")
+            self._state = last_state.state
+        else:
+            self._state = STATE_IDLE
+
+        self.set_state()
 
     @property
     def unique_id(self):
@@ -175,8 +189,15 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
         self._update_attributes()
         self.schedule_update_ha_state()
 
+    def set_state(self, state=None):
+        if state:
+            self._state = state
+        self._update_state()
+
     def play_media(self, media_type, media_id, **kwargs):
         """Forwards a piece of media to media players in active areas."""
+
+        self.set_state(STATE_PLAYING)
 
         # Read active areas
         active_areas = self._get_active_areas()
@@ -201,5 +222,5 @@ class AreaAwareMediaPlayer(MediaPlayerEntity):
             ATTR_ENTITY_ID: media_players,
         }
 
-        self._update_state()
         self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA, data)
+        self.set_state(STATE_IDLE)

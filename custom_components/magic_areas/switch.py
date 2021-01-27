@@ -83,8 +83,6 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
 
         self.schedule_update_ha_state()
 
-        self.schedule_update_ha_state()
-
     def turn_on(self, **kwargs):
         """Turn on presence hold."""
         self._state = True
