@@ -99,7 +99,7 @@ class AreaAwareMediaPlayer(MediaPlayerEntity, RestoreEntity):
             f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}" for area in self.areas
         ]
         self._attributes["entities"] = self._tracked_entities
-        self._attributes["active_areas"] = [
+        self._attributes["last_notified_areas"] = [
             f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}"
             for area in self._get_active_areas()
         ]
