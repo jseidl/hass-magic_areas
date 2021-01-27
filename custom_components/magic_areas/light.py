@@ -2,14 +2,13 @@ DEPENDENCIES = ["magic_areas"]
 
 import logging
 
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.group.light import LightGroup
+from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 
-from .const import (
-    MODULE_DATA
-)
+from .const import MODULE_DATA
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_platform(
     hass, config, async_add_entities, discovery_info=None
@@ -35,6 +34,7 @@ async def async_setup_platform(
 
     if light_groups:
         async_add_entities(light_groups)
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Demo config entry."""

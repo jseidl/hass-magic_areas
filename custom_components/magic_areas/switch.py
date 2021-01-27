@@ -7,27 +7,31 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import STATE_ON
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .const import MODULE_DATA
+from .const import DATA_AREA_OBJECT, MODULE_DATA
 
 _LOGGER = logging.getLogger(__name__)
 
 PRESENCE_HOLD_ICON = "mdi:car-brake-hold"
 
 
-async def async_setup_platform(
-    hass, config, async_add_entities, discovery_info=None
-):  # pylint: disable=unused-argument
+# async def async_setup_platform(
+#     hass, config, async_add_entities, discovery_info=None
+# ):  # pylint: disable=unused-argument
 
-    areas = hass.data.get(MODULE_DATA)
+#     areas = hass.data.get(MODULE_DATA)
 
-    entities = []
+#     entities = []
 
-    async_add_entities([AreaPresenceHoldSwitch(hass, area) for area in areas])
+#     async_add_entities([AreaPresenceHoldSwitch(hass, area) for area in areas])
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up the Demo config entry."""
-    await async_setup_platform(hass, {}, async_add_entities)
+    """Set up the Area config entry."""
+    # await async_setup_platform(hass, {}, async_add_entities)
+    area_data = hass.data[MODULE_DATA][config_entry.entry_id]
+    area = area_data[DATA_AREA_OBJECT]
+
+    async_add_entities([AreaPresenceHoldSwitch(hass, area)])
 
 
 class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
@@ -39,12 +43,12 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
         self._name = f"Area Presence Hold ({self.area.name})"
         self._state = False
 
-        _LOGGER.debug(f"Area {self.area.slug} presence hold switch initializing.")
+        _LOGGER.debug(f"{self.name} Switch initializing.")
 
         # Set attributes
         self._attributes = {}
 
-        _LOGGER.info(f"Area {self.area.slug} presence hold switch initialized.")
+        _LOGGER.info(f"{self.name} Switch initialized.")
 
     @property
     def name(self):
@@ -72,9 +76,7 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            _LOGGER.debug(
-                f"Presence hold switch restored: {self.area.slug} [{last_state.state}]"
-            )
+            _LOGGER.debug(f"Switch {self.name} restored [state={last_state.state}]")
             self._state = last_state.state == STATE_ON
         else:
             self._state = False
