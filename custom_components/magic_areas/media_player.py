@@ -4,7 +4,6 @@ import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.media_player import SUPPORT_PLAY_MEDIA, MediaPlayerEntity
 from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_ID,
@@ -18,6 +17,7 @@ from homeassistant.const import (
     STATE_ON,
     STATE_PLAYING,
 )
+from homeassistant.helpers.restore_state import RestoreEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,8 +33,6 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-
-    
 
     ma_data = hass.data[MODULE_DATA]
     area_data = ma_data[config_entry.entry_id]
@@ -72,7 +70,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class AreaAwareMediaPlayer(MediaPlayerEntity, RestoreEntity):
-    
     def __init__(self, hass, areas):
 
         self.hass = hass
@@ -130,7 +127,9 @@ class AreaAwareMediaPlayer(MediaPlayerEntity, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            _LOGGER.debug(f"Nedia Player {self.name} restored [state={last_state.state}]")
+            _LOGGER.debug(
+                f"Nedia Player {self.name} restored [state={last_state.state}]"
+            )
             self._state = last_state.state
         else:
             self._state = STATE_IDLE
