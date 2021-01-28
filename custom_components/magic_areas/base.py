@@ -442,6 +442,7 @@ class MagicArea(object):
 
         return False
 
+
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area_name, config) -> None:
 

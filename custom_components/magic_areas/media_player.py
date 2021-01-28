@@ -32,6 +32,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
 
     ma_data = hass.data[MODULE_DATA]

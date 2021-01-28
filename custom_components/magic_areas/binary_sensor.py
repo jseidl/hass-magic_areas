@@ -391,8 +391,8 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def _update_attributes(self):
 
-        self._attributes['night'] = self.area.is_night()
-        self._attributes['sleep'] = self.area.is_sleeping()
+        self._attributes["night"] = self.area.is_night()
+        self._attributes["sleep"] = self.area.is_sleeping()
         self._attributes["automatic_lights"] = self._get_autolights_state()
 
     def _update_state(self):
