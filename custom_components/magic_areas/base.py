@@ -24,7 +24,12 @@ from .const import (
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
     CONF_NAME,
+    CONF_NIGHT_ENTITY,
+    CONF_NIGHT_STATE,
     CONF_ON_STATES,
+    CONF_SLEEP_ENTITY,
+    CONF_SLEEP_LIGHTS,
+    CONF_SLEEP_STATE,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     DATA_AREA_OBJECT,
@@ -57,6 +62,12 @@ class MagicSensorBase:
     sensors = []
 
     tracking_listeners = []
+
+    @property
+    def unique_id(self):
+        """Return a unique ID."""
+        name_slug = slugify(self._name)
+        return f"magic_areas_entity_{name_slug}"
 
     @property
     def name(self):
@@ -403,6 +414,33 @@ class MagicArea(object):
             self.loaded_platforms.append(platform)
 
         _LOGGER.debug(f"Area {self.slug} initialized.")
+
+    def is_sleeping(self):
+        if self.config.get(CONF_SLEEP_ENTITY):
+
+            sleep_entity = self.hass.states.get(self.config.get(CONF_SLEEP_ENTITY))
+            if sleep_entity.state.lower() == self.config.get(CONF_SLEEP_STATE).lower():
+                _LOGGER.info(
+                    f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
+                )
+                return True
+
+        return False
+
+    def is_night(self):
+
+        # Check if has night entity
+        if self.config.get(CONF_NIGHT_ENTITY):
+            night_entity = self.hass.states.get(self.config.get(CONF_NIGHT_ENTITY))
+            if night_entity and (
+                night_entity.state.lower() == self.config.get(CONF_NIGHT_STATE).lower()
+            ):
+                _LOGGER.info(
+                    f"Night entity '{night_entity.entity_id}' on night state '{night_entity.state}'"
+                )
+                return True
+
+        return False
 
 
 class MagicMetaArea(MagicArea):

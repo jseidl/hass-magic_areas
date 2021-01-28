@@ -4,6 +4,7 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 
@@ -22,6 +23,7 @@ from .const import (
     CONF_MAIN_LIGHTS,
     CONF_NIGHT_ENTITY,
     CONF_NIGHT_STATE,
+    CONF_NOTIFICATION_DEVICES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
@@ -122,6 +124,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if LIGHT_DOMAIN in area.entities.keys()
             else []
         )
+        all_media_players = (
+            [
+                media_player["entity_id"]
+                for media_player in area.entities[MEDIA_PLAYER_DOMAIN]
+            ]
+            if MEDIA_PLAYER_DOMAIN in area.entities.keys()
+            else []
+        )
         all_entities = [entity for entity in self.hass.states.async_entity_ids()]
         entity_list = cv.multi_select(sorted(all_entities))
         empty_entry = [""]
@@ -132,6 +142,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(
                 sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
             ),
+            CONF_NOTIFICATION_DEVICES: cv.multi_select(sorted(all_media_players)),
             CONF_MAIN_LIGHTS: cv.multi_select(sorted(all_lights)),
             CONF_SLEEP_LIGHTS: cv.multi_select(sorted(all_lights)),
             CONF_NIGHT_ENTITY: vol.In(sorted(empty_entry + all_entities)),
