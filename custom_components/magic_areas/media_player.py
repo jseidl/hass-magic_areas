@@ -13,14 +13,13 @@ from homeassistant.components.media_player.const import (
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     STATE_IDLE,
-    STATE_OFF,
     STATE_ON,
-    STATE_PLAYING,
 )
 from homeassistant.helpers.restore_state import RestoreEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+from .base import MagicEntity
 from .const import (
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_NOTIFICATION_DEVICES,
@@ -41,7 +40,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     # Check if we are the Global Meta Area
     if not area.is_meta() or area.id != META_AREA_GLOBAL.lower():
-        _LOGGER.warn(f"This feature is only available for the Global Meta-Area")
+        _LOGGER.warning("This feature is only available for the Global Meta-Area")
         return
 
     # Check if feature is enabled
@@ -62,7 +61,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             areas_with_media_players.append(current_area)
 
     if not areas_with_media_players:
-        _LOGGER.warn(
+        _LOGGER.warning(
             f"No areas with {MEDIA_PLAYER_DOMAIN} entities. Skipping creation of area-aware-media-player"
         )
         return
@@ -70,7 +69,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([AreaAwareMediaPlayer(hass, areas_with_media_players)])
 
 
-class AreaAwareMediaPlayer(MediaPlayerEntity, RestoreEntity):
+class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
     def __init__(self, hass, areas):
 
         self.hass = hass
@@ -132,22 +131,7 @@ class AreaAwareMediaPlayer(MediaPlayerEntity, RestoreEntity):
             self._state = STATE_IDLE
 
         self.set_state()
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return f"{MEDIA_PLAYER_DOMAIN}_area_aware_media_player"
-
-    @property
-    def name(self):
-        """Return the name of the device if any."""
-        return self._name
-
-    @property
-    def device_state_attributes(self):
-        """Return the attributes of the media player."""
-        return self._attributes
-
+        
     @property
     def state(self):
         """Return the state of the media player"""
@@ -217,3 +201,5 @@ class AreaAwareMediaPlayer(MediaPlayerEntity, RestoreEntity):
         }
 
         self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA, data)
+
+        return True

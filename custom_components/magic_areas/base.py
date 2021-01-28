@@ -1,10 +1,8 @@
 import logging
-from copy import deepcopy
 from datetime import datetime, timedelta
 from statistics import mean
 
 import voluptuous as vol
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON, STATE_UNAVAILABLE
 from homeassistant.helpers.entity import Entity
@@ -13,7 +11,6 @@ from homeassistant.helpers.event import (
     async_track_time_interval,
 )
 from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.setup import async_setup_component
 from homeassistant.util import slugify
 
 from .const import (
@@ -21,19 +18,15 @@ from .const import (
     AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
-    CONF_ID,
     CONF_INCLUDE_ENTITIES,
-    CONF_NAME,
     CONF_NIGHT_ENTITY,
     CONF_NIGHT_STATE,
     CONF_ON_STATES,
     CONF_SLEEP_ENTITY,
-    CONF_SLEEP_LIGHTS,
     CONF_SLEEP_STATE,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     DATA_AREA_OBJECT,
-    DEVICE_CLASS_DOMAINS,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
@@ -51,17 +44,11 @@ CONFIG_SCHEMA = vol.Schema(
 
 _LOGGER = logging.getLogger(__name__)
 
+class MagicEntity:
 
-class MagicSensorBase:
-
-    name = None
+    _name = None
     hass = None
     _attributes = {}
-    area = None
-
-    sensors = []
-
-    tracking_listeners = []
 
     @property
     def unique_id(self):
@@ -75,19 +62,27 @@ class MagicSensorBase:
         return self._name
 
     @property
-    def device_class(self):
-        """Return the class of this binary_sensor."""
-        return self._device_class
-
-    @property
     def should_poll(self):
         """If entity should be polled."""
         return False
 
     @property
     def device_state_attributes(self):
-        """Return the attributes of the area."""
+        """Return the attributes of the entity."""
         return self._attributes
+
+class MagicSensorBase(MagicEntity):
+
+    area = None
+
+    sensors = []
+    _device_class = None
+    tracking_listeners = []
+
+    @property
+    def device_class(self):
+        """Return the class of this binary_sensor."""
+        return self._device_class
 
     def refresh_states(self, next_interval):
         _LOGGER.debug(f"Refreshing sensor states {self.name}")
@@ -121,7 +116,7 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
 
     @property
     def state(self):
-        """Return true if the area is occupied."""
+        """Return the state of the entity"""
         return self._state
 
     def sensor_state_change(self, entity_id, from_state, to_state):
@@ -172,6 +167,7 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
 class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
     _device_class = None
+    last_off_time = None
 
     @property
     def is_on(self):
@@ -182,7 +178,7 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
         _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
 
-        if to_state.state not in self.area.config.get(CONF_ON_STATES):
+        if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
             self.last_off_time = datetime.utcnow()  # Update last_off_time
 
         return self._update_state()
@@ -478,12 +474,12 @@ class MagicMetaArea(MagicArea):
             return False
 
         data = self.hass.data[MODULE_DATA]
-        for config_entry_id, area_info in data.items():
+        for area_info in data.values():
             area = area_info[DATA_AREA_OBJECT]
             if area.config.get(CONF_TYPE) != AREA_TYPE_META:
 
                 if not area.initialized:
-                    _LOGGER.warn(f"Area {area.id} not initialized")
+                    _LOGGER.warning(f"Area {area.id} not initialized")
                     return False
 
         return True
@@ -517,7 +513,7 @@ class MagicMetaArea(MagicArea):
         entity_list = []
 
         data = self.hass.data[MODULE_DATA]
-        for config_entry_id, area_info in data.items():
+        for area_info in data.values():
             area = area_info[DATA_AREA_OBJECT]
             if (
                 self.id == META_AREA_GLOBAL.lower()
