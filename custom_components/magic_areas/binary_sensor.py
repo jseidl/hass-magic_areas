@@ -232,6 +232,8 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 "climate": area_climate,
                 "on_states": self.area.config.get(CONF_ON_STATES),
                 "automatic_lights": self._get_autolights_state(),
+                "night": self.area.is_night(),
+                "sleep": self.area.is_sleeping(),
             }
         )
 
@@ -339,7 +341,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def _update_autolights_state(self):
 
-        self._attributes["automatic_lights"] = self._get_autolights_state()
+        self._update_attributes()
         self.schedule_update_ha_state()
 
     def _is_autolights_disabled(self):
@@ -357,7 +359,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         ):
             return AUTOLIGHTS_STATE_DISABLED
 
-        if self.area.is_sleeping():
+        if self.area.is_sleeping() and self.area.config.get(CONF_SLEEP_LIGHTS):
             return AUTOLIGHTS_STATE_SLEEP
 
         return AUTOLIGHTS_STATE_NORMAL
@@ -378,7 +380,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             return False
 
         # Check if in sleep mode
-        if self.area.is_sleeping():
+        if self.area.is_sleeping() and self.area.config.get(CONF_SLEEP_LIGHTS):
             affected_lights = self.area.config.get(CONF_SLEEP_LIGHTS)
 
         # Call service to turn_on the lights
@@ -386,6 +388,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
 
         return True
+
+    def _update_attributes(self):
+
+        self._attributes['night'] = self.area.is_night()
+        self._attributes['sleep'] = self.area.is_sleeping()
+        self._attributes["automatic_lights"] = self._get_autolights_state()
 
     def _update_state(self):
 
@@ -418,6 +426,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             if time_now >= clear_time:
                 self._state = False
 
+        self._update_attributes()
         self.schedule_update_ha_state()
 
         # Check state change
