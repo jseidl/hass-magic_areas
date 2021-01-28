@@ -417,12 +417,6 @@ class MagicArea(object):
 
     def is_sleeping(self):
         if self.config.get(CONF_SLEEP_ENTITY):
-            if not self.config.get(CONF_SLEEP_LIGHTS):
-                # If user fails to set CONF_SLEEP_LIGHTS, sleep mode will be ignored
-                _LOGGER.error(
-                    f"'{CONF_SLEEP_LIGHTS}' not defined. Please review your configuration."
-                )
-                return False
 
             sleep_entity = self.hass.states.get(self.config.get(CONF_SLEEP_ENTITY))
             if sleep_entity.state.lower() == self.config.get(CONF_SLEEP_STATE).lower():
@@ -447,6 +441,7 @@ class MagicArea(object):
                 return True
 
         return False
+
 
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area_name, config) -> None:

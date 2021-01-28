@@ -32,6 +32,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
 
     ma_data = hass.data[MODULE_DATA]
@@ -96,10 +97,6 @@ class AreaAwareMediaPlayer(MediaPlayerEntity, RestoreEntity):
             f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}" for area in self.areas
         ]
         self._attributes["entities"] = self._tracked_entities
-        self._attributes["last_notified_areas"] = [
-            f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}"
-            for area in self._get_active_areas()
-        ]
 
     def get_media_players_for_area(self, area):
 
@@ -196,8 +193,6 @@ class AreaAwareMediaPlayer(MediaPlayerEntity, RestoreEntity):
     def play_media(self, media_type, media_id, **kwargs):
         """Forwards a piece of media to media players in active areas."""
 
-        self.set_state(STATE_PLAYING)
-
         # Read active areas
         active_areas = self._get_active_areas()
 
@@ -222,4 +217,3 @@ class AreaAwareMediaPlayer(MediaPlayerEntity, RestoreEntity):
         }
 
         self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA, data)
-        self.set_state(STATE_IDLE)
