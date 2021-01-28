@@ -17,9 +17,7 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_STARTED,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
-    STATE_OFF,
     STATE_ON,
-    STATE_UNAVAILABLE,
 )
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -28,8 +26,6 @@ from homeassistant.helpers.event import (
 
 from .base import AggregateBase, BinarySensorBase
 from .const import (
-    AGGREGATE_BINARY_SENSOR_CLASSES,
-    AREA_TYPE_META,
     AUTOLIGHTS_STATE_DISABLED,
     AUTOLIGHTS_STATE_NORMAL,
     AUTOLIGHTS_STATE_SLEEP,
@@ -49,25 +45,16 @@ from .const import (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
-    CONF_SLEEP_STATE,
     CONF_SLEEP_TIMEOUT,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     DATA_AREA_OBJECT,
     DISTRESS_SENSOR_CLASSES,
-    DISTRESS_STATES,
     MODULE_DATA,
     PRESENCE_DEVICE_COMPONENTS,
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-
-async def async_setup_platform(
-    hass, config, async_add_entities, discovery_info=None
-):  # pylint: disable=unused-argument
-
-    await load_sensors(hass, async_add_entities)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):

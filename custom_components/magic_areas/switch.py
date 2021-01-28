@@ -2,27 +2,16 @@ DEPENDENCIES = ["magic_areas"]
 
 import logging
 
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import STATE_ON
 from homeassistant.helpers.restore_state import RestoreEntity
 
+from .base import MagicEntity
 from .const import DATA_AREA_OBJECT, MODULE_DATA
 
 _LOGGER = logging.getLogger(__name__)
 
 PRESENCE_HOLD_ICON = "mdi:car-brake-hold"
-
-
-# async def async_setup_platform(
-#     hass, config, async_add_entities, discovery_info=None
-# ):  # pylint: disable=unused-argument
-
-#     areas = hass.data.get(MODULE_DATA)
-
-#     entities = []
-
-#     async_add_entities([AreaPresenceHoldSwitch(hass, area) for area in areas])
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -34,7 +23,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([AreaPresenceHoldSwitch(hass, area)])
 
 
-class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
+class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     def __init__(self, hass, area):
         """Initialize the area presence hold switch."""
 
@@ -49,21 +38,6 @@ class AreaPresenceHoldSwitch(SwitchEntity, RestoreEntity):
         self._attributes = {}
 
         _LOGGER.info(f"{self.name} Switch initialized.")
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return f"{SWITCH_DOMAIN}_area_presence_hold_{self.area.name}"
-
-    @property
-    def name(self):
-        """Return the name of the device if any."""
-        return self._name
-
-    @property
-    def device_state_attributes(self):
-        """Return the attributes of the area."""
-        return self._attributes
 
     @property
     def is_on(self):
