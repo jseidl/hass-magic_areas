@@ -1,26 +1,28 @@
 """Magic Areas component for Homme Assistant."""
 
-# @todo presence hold switch
-# @todo light groups
-
 import asyncio
 import logging
-from copy import deepcopy
 
 import voluptuous as vol
+from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER, ConfigEntry
+from homeassistant.const import CONF_SOURCE, EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.area_registry import AreaEntry
 
-# from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-# from homeassistant.components.group import DOMAIN as GROUP_DOMAIN
-from homeassistant.helpers.entity import Entity
-from homeassistant.setup import async_setup_component
-from homeassistant.util import slugify
-
+from .base import MagicArea, MagicMetaArea
 from .const import (
     _DOMAIN_SCHEMA,
-    CONF_EXCLUDE_ENTITIES,
-    CONF_INCLUDE_ENTITIES,
+    AREA_TYPE_META,
+    CONF_ID,
+    CONF_NAME,
+    CONF_TYPE,
+    DATA_AREA_OBJECT,
+    DATA_UNDO_UPDATE_LISTENER,
     DOMAIN,
+    EVENT_MAGICAREAS_AREA_READY,
+    EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
+    META_AREAS,
     MODULE_DATA,
 )
 
@@ -37,196 +39,153 @@ async def async_setup(hass, config):
 
     # Load registries
     area_registry = await hass.helpers.area_registry.async_get_registry()
-    device_registry = await hass.helpers.device_registry.async_get_registry()
-    entity_registry = await hass.helpers.entity_registry.async_get_registry()
-
-    # Create device_id -> area_id map
-    device_area_map = {}
-
-    for device_id, device_object in device_registry.devices.items():
-        if device_object.area_id:
-            device_area_map[device_id] = device_object.area_id
-
-    # Load entities and group by area
-    area_entity_map = {}
-    standalone_entities = {}
-
-    for entity_id, entity_object in entity_registry.entities.items():
-
-        # Skip disabled entities
-        if entity_object.disabled:
-            continue
-
-        # Skip entities without devices, add them to a standalone map
-        if entity_object.device_id not in device_area_map.keys():
-            standalone_entities[entity_object.entity_id] = entity_object
-            continue
-
-        area_id = device_area_map[entity_object.device_id]
-
-        _LOGGER.info(f"Area {area_id} entity {entity_object.entity_id}")
-
-        copied_object = deepcopy(entity_object)
-
-        if area_id not in area_entity_map.keys():
-            area_entity_map[area_id] = []
-
-        area_entity_map[area_id].append(copied_object)
 
     # Populate MagicAreas
-    magic_areas = []
-    areas = area_registry.async_list_areas()
+    areas = list(area_registry.async_list_areas())
 
     magic_areas_config = config[DOMAIN]
 
+    # Check reserved names
+    reserved_ids = [meta_area.lower() for meta_area in META_AREAS]
+    for area in areas:
+        if area.id in reserved_ids:
+            _LOGGER.error(
+                f"Area uses reserved name {area.id}. Please rename your area and restart."
+            )
+            return
+
+    # Add Meta Areas to area list
+    for meta_area in META_AREAS:
+        areas.append(AreaEntry(name=meta_area, id=meta_area.lower()))
+
     for area in areas:
 
-        area_entities = (
-            area_entity_map[area.id] if area.id in area_entity_map.keys() else []
+        config_entry = {}
+        source = SOURCE_USER
+
+        if area.id not in magic_areas_config.keys():
+            default_config = {f"{area.id}": {}}
+            config_entry = _DOMAIN_SCHEMA(default_config)[area.id]
+        else:
+            config_entry = magic_areas_config[area.id]
+            source = SOURCE_IMPORT
+
+        if area.id in reserved_ids:
+            config_entry.update({CONF_TYPE: AREA_TYPE_META})
+
+        config_entry.update(
+            {
+                CONF_NAME: area.name,
+                CONF_ID: area.id,
+            }
         )
 
-        entity_count = len(area_entities)
-        _LOGGER.info(
-            f"Creating area '{area.name}' (#{area.id}) with {entity_count} entities."
-        )
-        magic_area = MagicArea(
-            hass,
-            area.id,
-            area.name,
-            area_entities,
-            magic_areas_config,
-            standalone_entities,
-        )
-        magic_areas.append(magic_area)
-
-        # Never got this to work... @jseidl
-        # # Create Light Groups
-        # if LIGHT_DOMAIN in magic_area.entities.keys():
-        #     light_entities = [e.entity_id for e in magic_area.entities[LIGHT_DOMAIN]]
-
-        #     le_txt = ", ".join(light_entities)
-        #     _LOGGER.info(f"Light groups for {magic_area.name}: {le_txt}")
-
-        #     await async_setup_component(
-        #         hass,
-        #         LIGHT_DOMAIN,
-        #         {
-        #             LIGHT_DOMAIN: {
-        #                 "platform": GROUP_DOMAIN,
-        #                 "entities": light_entities,
-        #                 "name": f"{area.name} Lights"
-        #             }
-        #         },
-        #     )
-
-    hass.data[MODULE_DATA] = magic_areas
-
-    # Load platforms
-    for component in MAGIC_AREAS_COMPONENTS:
         hass.async_create_task(
-            hass.helpers.discovery.async_load_platform(component, DOMAIN, {}, config)
+            hass.config_entries.flow.async_init(
+                DOMAIN, context={CONF_SOURCE: source}, data=config_entry
+            )
         )
+
+    async def async_check_all_ready(event) -> bool:
+
+        if MODULE_DATA not in hass.data.keys():
+            return False
+
+        data = hass.data[MODULE_DATA]
+        areas = [area_data[DATA_AREA_OBJECT] for area_data in data.values()]
+
+        for area in areas:
+            if area.config.get(CONF_TYPE) == AREA_TYPE_META:
+                continue
+            if not area.initialized:
+                _LOGGER.info(f"Area {area.id} not ready")
+                return False
+
+        _LOGGER.debug(f"All areas ready.")
+        hass.bus.async_fire(EVENT_MAGICAREAS_READY)
+
+        return True
+
+    # Checks whenever an area is ready
+    hass.bus.async_listen(EVENT_MAGICAREAS_AREA_READY, async_check_all_ready)
 
     return True
 
 
-# Classes
-# StandaloneEntity mock class
-class StandaloneEntity(Entity):
-    def __init__(self, hass, entity_id):
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+    """Set up the component."""
+    data = hass.data.setdefault(MODULE_DATA, {})
+    area_id = config_entry.data[CONF_ID]
+    area_name = config_entry.data[CONF_NAME]
+    meta_ids = [meta_area.lower() for meta_area in META_AREAS]
 
-        self.hass = hass
-        self.entity_id = entity_id
-        self._device_class = None
+    if area_id not in meta_ids:
+        area_registry = await hass.helpers.area_registry.async_get_registry()
+        area = area_registry.async_get_area(area_id)
 
-        # Try to fetch device_class from attributes
-        try:
-            entity_state = hass.states.get(self.entity_id)
-            if "device_class" in entity_state.attributes.keys():
-                self._device_class = entity_state.attributes["device_class"]
-        except Exception as e:
-            str_err = str(e)
-            _LOGGER.warn(
-                f"Error retrieving device_class for entity '{self.entity_id}': str_err"
-            )
+        magic_area = MagicArea(
+            hass,
+            area,
+            config_entry,
+        )
+    else:
+        magic_area = MagicMetaArea(hass, area_name, config_entry)
 
-    @property
-    def device_class(self):
+    _LOGGER.debug(f"AREA {area_id} {area_name}: {config_entry.data}")
 
-        return self._device_class
+    undo_listener = config_entry.add_update_listener(async_update_options)
+
+    data[config_entry.entry_id] = {
+        DATA_AREA_OBJECT: magic_area,
+        DATA_UNDO_UPDATE_LISTENER: undo_listener,
+    }
+
+    return True
 
 
-class MagicArea(object):
-    def __init__(self, hass, id, name, entities, config, standalone_entities):
+async def async_update_options(hass, config_entry: ConfigEntry):
+    """Update options."""
+    await hass.config_entries.async_reload(config_entry.entry_id)
 
-        self.hass = hass
-        self.name = name
-        self.id = id
-        self.slug = slugify(name)
+    # Check if we need to reload meta entities
+    data = hass.data[MODULE_DATA]
+    area = data[config_entry.entry_id][DATA_AREA_OBJECT]
 
-        # Check if area is defined on YAML, if not, generate default config
-        if self.slug not in config.keys():
-            default_config = {f"{self.slug}": {}}
-            self.config = _DOMAIN_SCHEMA(default_config)[self.slug]
-        else:
-            self.config = config[self.slug]
+    if not area.is_meta():
+        meta_ids = []
+        _LOGGER.debug(f"Area not meta, reloading meta areas.")
+        for entry_id, area_data in data.items():
+            area = area_data[DATA_AREA_OBJECT]
+            if area.is_meta():
+                meta_ids.append(entry_id)
 
-        self.entities = {}
+        for entry_id in meta_ids:
+            await hass.config_entries.async_reload(entry_id)
+        _LOGGER.debug(f"Meta areas reloaded.")
 
-        filtered_entities = self.filter_entities(entities, standalone_entities)
 
-        self.organize_entities(filtered_entities)
+async def async_unload_entry(hass, config_entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
 
-        self.debug_show()
+    platforms_unloaded = []
+    data = hass.data[MODULE_DATA]
+    area_data = data[config_entry.entry_id]
+    area = area_data[DATA_AREA_OBJECT]
 
-    def debug_show(self):
+    for platform in area.loaded_platforms:
+        unload_ok = await hass.config_entries.async_forward_entry_unload(
+            config_entry, platform
+        )
+        platforms_unloaded.append(unload_ok)
 
-        _LOGGER.info(f"{self.name} ({self.slug}) loaded")
+    area_data[DATA_UNDO_UPDATE_LISTENER]()
 
-        for platform, entities in self.entities.items():
-            ec = len(entities)
-            _LOGGER.info(f"> {platform}: {ec}")
-            for entity in entities:
-                _LOGGER.info(f"  - {entity.entity_id}")
+    all_unloaded = all(platforms_unloaded)
 
-    # Filter (include/exclude) entities
-    def filter_entities(self, area_entities, standalone_entities):
+    if all_unloaded:
+        data.pop(config_entry.entry_id)
 
-        filtered_entities = []
+    if not data:
+        hass.data.pop(MODULE_DATA)
 
-        for entity in area_entities:
-
-            # Exclude
-            if entity.entity_id in self.config.get(CONF_EXCLUDE_ENTITIES):
-                _LOGGER.info(
-                    f"Entity {entity.entity_id} excluded from {self.slug} area"
-                )
-                continue
-
-            filtered_entities.append(entity)
-
-        # Include entities not tied to devices (MQTT/Input*/Template)
-        standalone_entities_count = len(standalone_entities)
-
-        if standalone_entities_count:
-            for entity_id in self.config.get(CONF_INCLUDE_ENTITIES):
-                if entity_id in standalone_entities.keys():
-                    filtered_entities.append(standalone_entities[entity_id])
-                else:
-                    # Entity not in registry, call hass
-                    standalone_entity = StandaloneEntity(self.hass, entity_id)
-                    filtered_entities.append(standalone_entity)
-
-        return filtered_entities
-
-    # Organize entities into their platforms (media_player/light/sensor/binary_sensor etc)
-    def organize_entities(self, entities):
-
-        for entity in entities:
-
-            entity_component, entity_slug = entity.entity_id.split(".")
-
-            if entity_component not in self.entities.keys():
-                self.entities[entity_component] = []
-
-            self.entities[entity_component].append(entity)
+    return all_unloaded

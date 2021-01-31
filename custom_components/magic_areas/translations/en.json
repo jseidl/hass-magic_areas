@@ -1,0 +1,34 @@
+{
+  "title": "Magic Areas",
+  "options": {
+    "step": {
+      "init": {
+        "title": "Magic Areas options",
+        "description": "All settings for a Magic Areas component. The option names correspond with the YAML settings. No options are shown if you have this entry defined in YAML.",
+        "data": {
+          "features": "Enabled features",
+          "include_entities": "Include entities to this area",
+          "exclude_entities": "Exclude entities from being analyzed",
+          "presence_sensor_device_class": "Device classes of sensors to be considered presence sensors",
+          "icon": "Icon",
+          "notification_devices": "Media Player devices used for broadcasting through Area-Aware Media Player",
+          "notify_on_sleep": "Allow notification devices in this area to play notifications when on sleep mode",
+          "update_interval": "Interval for checking missed events",
+          "clear_timeout": "How long since last presence event should it wait before clearing the area",
+          "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates.",
+          "night_entity": "Entity used to track area night state",
+          "night_state": "State of night entity",
+          "sleep_entity": "Entity used to track area sleep state",
+          "sleep_state": "State of sleep entity",
+          "sleep_timeout": "How long since last presence event should it wait before clearing the area when on sleep mode",
+          "main_lights": "Main lights (Leave blank for all area lights)",
+          "sleep_lights": "Sleep lights",
+          "type": "Area type (interior/exterior)"
+        }
+      }
+    },
+    "error": {
+      "option_error": "Invalid option"
+    }
+  }
+} 
