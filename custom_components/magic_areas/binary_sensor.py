@@ -18,6 +18,7 @@ from homeassistant.const import (
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
     STATE_ON,
+    STATE_UNAVAILABLE
 )
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -423,6 +424,33 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 self._state_on()
             else:
                 self._state_off()
+
+
+    def _get_sensors_state(self):
+
+        active_sensors = []
+
+        # Loop over all entities and check their state
+        for sensor in self.sensors:
+
+            entity = self.hass.states.get(sensor)
+
+            if not entity:
+                _LOGGER.info(
+                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                )
+                continue
+
+            # Skip unavailable entities
+            if entity.state == STATE_UNAVAILABLE:
+                continue
+
+            if entity.state in self.area.config.get(CONF_ON_STATES):
+                active_sensors.append(sensor)
+
+        self._attributes["active_sensors"] = active_sensors
+
+        return len(active_sensors) > 0
 
     def _lights_on(self):
         # Turn on lights, if configured
