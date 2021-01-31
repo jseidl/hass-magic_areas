@@ -46,7 +46,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class MagicEntity:
-    
+
     _name = None
     hass = None
     _attributes = {}
@@ -71,6 +71,7 @@ class MagicEntity:
     def device_state_attributes(self):
         """Return the attributes of the entity."""
         return self._attributes
+
 
 class MagicSensorBase(MagicEntity):
 

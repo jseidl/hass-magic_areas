@@ -13,6 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 
 PRESENCE_HOLD_ICON = "mdi:car-brake-hold"
 
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
     # await async_setup_platform(hass, {}, async_add_entities)
