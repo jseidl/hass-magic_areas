@@ -44,8 +44,9 @@ CONFIG_SCHEMA = vol.Schema(
 
 _LOGGER = logging.getLogger(__name__)
 
-class MagicEntity:
 
+class MagicEntity:
+    
     _name = None
     hass = None
     _attributes = {}
@@ -410,7 +411,6 @@ class MagicArea(object):
             self.loaded_platforms.append(platform)
 
         _LOGGER.debug(f"Area {self.slug} initialized.")
-
 
     def has_entities(self, domain):
 

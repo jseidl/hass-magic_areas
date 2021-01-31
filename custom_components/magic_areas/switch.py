@@ -8,7 +8,6 @@ from homeassistant.helpers.restore_state import RestoreEntity
 
 from .base import MagicEntity
 from .const import DATA_AREA_OBJECT, MODULE_DATA
-from .base import MagicEntity
 
 _LOGGER = logging.getLogger(__name__)
 
