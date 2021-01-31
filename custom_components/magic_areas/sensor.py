@@ -48,7 +48,12 @@ async def load_sensors(hass, async_add_entities, area):
 
     for entity in area.entities[SENSOR_DOMAIN]:
 
-        if not "device_class" in entity.keys():
+        if "device_class" not in entity.keys():
+            _LOGGER.warning(f"Entity {entity['entity_id']} does not have device_class defined")
+            continue
+
+        if "unit_of_measurement" not in entity.keys():
+            _LOGGER.warning(f"Entity {entity['entity_id']} does not have unit_of_measurement defined")
             continue
 
         map_key = f"{entity['device_class']}/{entity['unit_of_measurement']}"
