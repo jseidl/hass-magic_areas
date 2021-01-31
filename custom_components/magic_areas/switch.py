@@ -6,6 +6,7 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import STATE_ON
 from homeassistant.helpers.restore_state import RestoreEntity
 
+from .base import MagicEntity
 from .const import DATA_AREA_OBJECT, MODULE_DATA
 from .base import MagicEntity
 
