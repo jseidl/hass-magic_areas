@@ -41,7 +41,6 @@ async def async_setup(hass, config):
     area_registry = await hass.helpers.area_registry.async_get_registry()
 
     # Populate MagicAreas
-    magic_areas = []
     areas = list(area_registry.async_list_areas())
 
     magic_areas_config = config[DOMAIN]

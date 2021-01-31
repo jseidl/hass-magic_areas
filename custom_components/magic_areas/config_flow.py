@@ -9,7 +9,6 @@ from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 
 from .const import (
-    _AREA_SCHEMA,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     AREA_TYPE_EXTERIOR,
     AREA_TYPE_INTERIOR,
@@ -22,13 +21,10 @@ from .const import (
     CONF_INCLUDE_ENTITIES,
     CONF_MAIN_LIGHTS,
     CONF_NIGHT_ENTITY,
-    CONF_NIGHT_STATE,
     CONF_NOTIFICATION_DEVICES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
-    CONF_SLEEP_STATE,
-    CONF_SLEEP_TIMEOUT,
     CONF_TYPE,
     DATA_AREA_OBJECT,
     DOMAIN,

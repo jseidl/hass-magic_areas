@@ -17,9 +17,7 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_STARTED,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
-    STATE_OFF,
     STATE_ON,
-    STATE_UNAVAILABLE,
 )
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -28,8 +26,6 @@ from homeassistant.helpers.event import (
 
 from .base import AggregateBase, BinarySensorBase
 from .const import (
-    AGGREGATE_BINARY_SENSOR_CLASSES,
-    AREA_TYPE_META,
     AUTOLIGHTS_STATE_DISABLED,
     AUTOLIGHTS_STATE_NORMAL,
     AUTOLIGHTS_STATE_SLEEP,
@@ -49,25 +45,16 @@ from .const import (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
-    CONF_SLEEP_STATE,
     CONF_SLEEP_TIMEOUT,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     DATA_AREA_OBJECT,
     DISTRESS_SENSOR_CLASSES,
-    DISTRESS_STATES,
     MODULE_DATA,
     PRESENCE_DEVICE_COMPONENTS,
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-
-async def async_setup_platform(
-    hass, config, async_add_entities, discovery_info=None
-):  # pylint: disable=unused-argument
-
-    await load_sensors(hass, async_add_entities)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -202,13 +189,13 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         area_lights = (
             [entity["entity_id"] for entity in self.area.entities[LIGHT_DOMAIN]]
-            if LIGHT_DOMAIN in self.area.entities.keys()
+            if self.area.has_entities(LIGHT_DOMAIN)
             else []
         )
 
         area_climate = (
             [entity["entity_id"] for entity in self.area.entities[CLIMATE_DOMAIN]]
-            if CLIMATE_DOMAIN in self.area.entities.keys()
+            if self.area.has_entities(CLIMATE_DOMAIN)
             else []
         )
 
@@ -437,13 +424,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             else:
                 self._state_off()
 
-    def _has_entities(self, domain):
-
-        return domain in self.area.entities.keys()
-
     def _lights_on(self):
         # Turn on lights, if configured
-        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self.area.has_entities(
             LIGHT_DOMAIN
         ):
             self._autolights()
@@ -453,9 +436,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._lights_on()
 
         # Turn on climate, if configured
-        if self.area.has_feature(CONF_FEATURE_CLIMATE_CONTROL) and self._has_entities(
-            CLIMATE_DOMAIN
-        ):
+        if self.area.has_feature(
+            CONF_FEATURE_CLIMATE_CONTROL
+        ) and self.area.has_entities(CLIMATE_DOMAIN):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity["entity_id"] for entity in self.area.entities[CLIMATE_DOMAIN]
@@ -465,7 +448,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def _lights_off(self):
         # Turn off lights, if configured
-        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self.area.has_entities(
             LIGHT_DOMAIN
         ):
             service_data = {
@@ -480,9 +463,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._lights_off()
 
         # Turn off climate, if configured
-        if self.area.has_feature(CONF_FEATURE_CLIMATE_CONTROL) and self._has_entities(
-            CLIMATE_DOMAIN
-        ):
+        if self.area.has_feature(
+            CONF_FEATURE_CLIMATE_CONTROL
+        ) and self.area.has_entities(CLIMATE_DOMAIN):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity["entity_id"] for entity in self.area.entities[CLIMATE_DOMAIN]
@@ -491,7 +474,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self.hass.services.call(CLIMATE_DOMAIN, SERVICE_TURN_OFF, service_data)
 
         # Turn off media, if configured
-        if self.area.has_feature(CONF_FEATURE_MEDIA_CONTROL) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_MEDIA_CONTROL) and self.area.has_entities(
             MEDIA_PLAYER_DOMAIN
         ):
             service_data = {
