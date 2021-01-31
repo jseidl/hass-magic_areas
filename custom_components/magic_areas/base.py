@@ -527,6 +527,9 @@ class MagicMetaArea(MagicArea):
             ):
                 for entities in area.entities.values():
                     for entity in entities:
+                        if not isinstance(entity["entity_id"], str):
+                            _LOGGER.warning(f"Entity ID is not a string: {entity['entity_id']}")
+                            continue
                         entity_list.append(entity["entity_id"])
 
         self.load_entity_list(entity_list)
