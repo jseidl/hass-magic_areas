@@ -18,7 +18,7 @@ from homeassistant.const import (
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
     STATE_ON,
-    STATE_UNAVAILABLE
+    STATE_UNAVAILABLE,
 )
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -424,7 +424,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 self._state_on()
             else:
                 self._state_off()
-
 
     def _get_sensors_state(self):
 

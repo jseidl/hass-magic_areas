@@ -43,6 +43,10 @@ async def async_setup(hass, config):
     # Populate MagicAreas
     areas = list(area_registry.async_list_areas())
 
+    if DOMAIN not in config.keys():
+        _LOGGER.error(f"'magic_areas:' not defined on YAML. Aborting.")
+        return
+
     magic_areas_config = config[DOMAIN]
 
     # Check reserved names

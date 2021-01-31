@@ -1,5 +1,11 @@
 {
   "title": "Magic Areas",
+  "config": {
+    "step": {},
+    "abort": {
+      "not_supported": "This integration is automatically configured on load. You don't need to manually add the integration on this UI. Your Magic Areas should be already on the integrations page. Use Home Assistant's built-in areas to create new ones and manage entities."
+    }
+  },
   "options": {
     "step": {
       "init": {

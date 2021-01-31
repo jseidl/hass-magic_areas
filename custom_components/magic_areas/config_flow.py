@@ -44,29 +44,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
-        errors = {}
-
-        area_registry = await self.hass.helpers.area_registry.async_get_registry()
-        areas = area_registry.async_list_areas()
-
-        area_names = [area.name for area in areas]
-
-        if user_input is not None:
-            await self.async_set_unique_id(user_input[CONF_NAME])
-            self._abort_if_unique_id_configured()
-            return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
-
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema({vol.Required(CONF_NAME): vol.In(area_names)}),
-            # data_schema=_AREA_SCHEMA,
-            errors=errors,
-        )
+        return self.async_abort(reason="not_supported")
 
     async def async_step_import(self, user_input=None):
         """Handle configuration by yaml file."""
         await self.async_set_unique_id(user_input[CONF_NAME])
-        _LOGGER.warning(f"-- MARK -- {self._async_current_entries()}")
         for entry in self._async_current_entries():
             if entry.unique_id == self.unique_id:
                 self.hass.config_entries.async_update_entry(entry, data=user_input)

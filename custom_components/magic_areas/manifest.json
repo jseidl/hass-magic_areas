@@ -1,6 +1,7 @@
 {
   "domain": "magic_areas",
   "name": "Magic Areas",
+  "version": "2.0.2",
   "documentation": "https://github.com/jseidl/magic-areas",
   "dependencies": [],
   "after_dependencies": ["template", "group", "binary_sensor", "sensor", "light", "media_player", "device_tracker", "discovery", "camera"],
