@@ -60,16 +60,16 @@ _Example configuration:_
 ```
 magic_areas:
 living_room:
-main_lights:
-- light.living_room_lamp
-include_entities:
-- binary_sensor.motion_sensor_lr_1
-- binary_sensor.motion_sensor_lr_2
-- light.living_room_ceiling
+    main_lights:
+    - light.living_room_lamp
+    include_entities:
+    - binary_sensor.motion_sensor_lr_1
+    - binary_sensor.motion_sensor_lr_2
+    - light.living_room_ceiling
 
 kitchen:
-include_entities:
-- binary_sensor.motion_sensor_kitchen
+    include_entities:
+    - binary_sensor.motion_sensor_kitchen
 ```
 
 Below are the full config options:
