@@ -127,6 +127,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             self._state = STATE_IDLE
 
         self.set_state()
+
     @property
     def state(self):
         """Return the state of the media player"""

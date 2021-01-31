@@ -56,6 +56,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
     # await async_setup_platform(hass, {}, async_add_entities)
@@ -435,9 +436,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._lights_on()
 
         # Turn on climate, if configured
-        if self.area.has_feature(CONF_FEATURE_CLIMATE_CONTROL) and self.area.has_entities(
-            CLIMATE_DOMAIN
-        ):
+        if self.area.has_feature(
+            CONF_FEATURE_CLIMATE_CONTROL
+        ) and self.area.has_entities(CLIMATE_DOMAIN):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity["entity_id"] for entity in self.area.entities[CLIMATE_DOMAIN]
@@ -462,9 +463,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._lights_off()
 
         # Turn off climate, if configured
-        if self.area.has_feature(CONF_FEATURE_CLIMATE_CONTROL) and self.area.has_entities(
-            CLIMATE_DOMAIN
-        ):
+        if self.area.has_feature(
+            CONF_FEATURE_CLIMATE_CONTROL
+        ) and self.area.has_entities(CLIMATE_DOMAIN):
             service_data = {
                 ATTR_ENTITY_ID: [
                     entity["entity_id"] for entity in self.area.entities[CLIMATE_DOMAIN]
