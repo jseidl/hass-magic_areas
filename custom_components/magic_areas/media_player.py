@@ -57,7 +57,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         if current_area.is_meta():
             continue
 
-        if MEDIA_PLAYER_DOMAIN in current_area.entities.keys():
+        if current_area.has_entities(MEDIA_PLAYER_DOMAIN):
             areas_with_media_players.append(current_area)
 
     if not areas_with_media_players:

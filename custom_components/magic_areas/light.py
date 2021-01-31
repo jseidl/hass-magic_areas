@@ -26,7 +26,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         return
 
     # Check if there are any lights
-    if LIGHT_DOMAIN not in area.entities.keys():
+    if not area.has_entities(LIGHT_DOMAIN):
         _LOGGER.debug(f"No {LIGHT_DOMAIN} entities for area {area.name} ")
         return
 

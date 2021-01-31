@@ -188,13 +188,13 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         area_lights = (
             [entity["entity_id"] for entity in self.area.entities[LIGHT_DOMAIN]]
-            if LIGHT_DOMAIN in self.area.entities.keys()
+            if self.area.has_entities(LIGHT_DOMAIN)
             else []
         )
 
         area_climate = (
             [entity["entity_id"] for entity in self.area.entities[CLIMATE_DOMAIN]]
-            if CLIMATE_DOMAIN in self.area.entities.keys()
+            if self.area.has_entities(CLIMATE_DOMAIN)
             else []
         )
 
@@ -423,13 +423,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             else:
                 self._state_off()
 
-    def _has_entities(self, domain):
-
-        return domain in self.area.entities.keys()
-
     def _lights_on(self):
         # Turn on lights, if configured
-        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self.area.has_entities(
             LIGHT_DOMAIN
         ):
             self._autolights()
@@ -439,7 +435,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._lights_on()
 
         # Turn on climate, if configured
-        if self.area.has_feature(CONF_FEATURE_CLIMATE_CONTROL) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_CLIMATE_CONTROL) and self.area.has_entities(
             CLIMATE_DOMAIN
         ):
             service_data = {
@@ -451,7 +447,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def _lights_off(self):
         # Turn off lights, if configured
-        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self.area.has_entities(
             LIGHT_DOMAIN
         ):
             service_data = {
@@ -466,7 +462,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._lights_off()
 
         # Turn off climate, if configured
-        if self.area.has_feature(CONF_FEATURE_CLIMATE_CONTROL) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_CLIMATE_CONTROL) and self.area.has_entities(
             CLIMATE_DOMAIN
         ):
             service_data = {
@@ -477,7 +473,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self.hass.services.call(CLIMATE_DOMAIN, SERVICE_TURN_OFF, service_data)
 
         # Turn off media, if configured
-        if self.area.has_feature(CONF_FEATURE_MEDIA_CONTROL) and self._has_entities(
+        if self.area.has_feature(CONF_FEATURE_MEDIA_CONTROL) and self.area.has_entities(
             MEDIA_PLAYER_DOMAIN
         ):
             service_data = {

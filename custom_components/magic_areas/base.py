@@ -411,6 +411,11 @@ class MagicArea(object):
 
         _LOGGER.debug(f"Area {self.slug} initialized.")
 
+
+    def has_entities(self, domain):
+
+        return domain in self.entities.keys()
+
     def is_sleeping(self):
         if self.config.get(CONF_SLEEP_ENTITY):
 

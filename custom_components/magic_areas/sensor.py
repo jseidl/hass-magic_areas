@@ -41,7 +41,7 @@ async def load_sensors(hass, async_add_entities, area):
     aggregates = []
 
     # Check SENSOR_DOMAIN entities, count by device_class
-    if SENSOR_DOMAIN not in area.entities.keys():
+    if not area.has_entities(SENSOR_DOMAIN):
         return
 
     device_class_count = {}
