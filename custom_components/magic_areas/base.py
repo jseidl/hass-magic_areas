@@ -44,6 +44,7 @@ CONFIG_SCHEMA = vol.Schema(
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class MagicEntity:
 
     _name = None
@@ -70,6 +71,7 @@ class MagicEntity:
     def device_state_attributes(self):
         """Return the attributes of the entity."""
         return self._attributes
+
 
 class MagicSensorBase(MagicEntity):
 
@@ -410,7 +412,6 @@ class MagicArea(object):
             self.loaded_platforms.append(platform)
 
         _LOGGER.debug(f"Area {self.slug} initialized.")
-
 
     def has_entities(self, domain):
 

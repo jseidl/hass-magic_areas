@@ -10,11 +10,7 @@ from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_TYPE,
     SERVICE_PLAY_MEDIA,
 )
-from homeassistant.const import (
-    ATTR_ENTITY_ID,
-    STATE_IDLE,
-    STATE_ON,
-)
+from homeassistant.const import ATTR_ENTITY_ID, STATE_IDLE, STATE_ON
 from homeassistant.helpers.restore_state import RestoreEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -131,7 +127,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             self._state = STATE_IDLE
 
         self.set_state()
-        
+
     @property
     def state(self):
         """Return the state of the media player"""

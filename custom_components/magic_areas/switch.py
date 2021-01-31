@@ -6,12 +6,13 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import STATE_ON
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .const import DATA_AREA_OBJECT, MODULE_DATA
 from .base import MagicEntity
+from .const import DATA_AREA_OBJECT, MODULE_DATA
 
 _LOGGER = logging.getLogger(__name__)
 
 PRESENCE_HOLD_ICON = "mdi:car-brake-hold"
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
