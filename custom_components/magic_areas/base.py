@@ -365,7 +365,7 @@ class MagicArea(object):
 
             entity_list.append(entity_id)
 
-        if include_entities:
+        if include_entities and isinstance(include_entities, list):
             entity_list.extend(include_entities)
 
         self.load_entity_list(entity_list)
