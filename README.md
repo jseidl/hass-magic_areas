@@ -36,7 +36,8 @@ Go to HACS > Integrations > Click the `+` button > Search `magic areas` > Click 
 
 Copy `custom_components/magic_areas` folder into your Home Assistant's `custom_component` folder.
 
-Then include the following into your `configuration.yaml` file (or in a `package`):
+### In both cases / Activating Magic Areas
+Include the following into your `configuration.yaml` file (or in a `package`):
 
 ```
 magic_areas:
