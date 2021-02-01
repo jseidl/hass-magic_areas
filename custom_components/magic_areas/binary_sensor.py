@@ -53,6 +53,7 @@ from .const import (
     DISTRESS_SENSOR_CLASSES,
     MODULE_DATA,
     PRESENCE_DEVICE_COMPONENTS,
+    META_AREAS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -428,6 +429,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     def _get_sensors_state(self):
 
         active_sensors = []
+        active_areas = set()
 
         # Loop over all entities and check their state
         for sensor in self.sensors:
@@ -446,8 +448,21 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
             if entity.state in self.area.config.get(CONF_ON_STATES):
                 active_sensors.append(sensor)
+                if self.area.is_meta():
+                    parent_area = self._get_parent_area(sensor)
+                    if parent_area is not None:
+                        active_areas.add(parent_area.name)
+
+                # for area_info in self.hass.data[MODULE_DATA].values():
+                #     area = area_info[DATA_AREA_OBJECT]
+                #     if area.id not in (meta_area.lower() for meta_area in META_AREAS):
+                #         for component, entities in area.entities.items():
+                #             if (component in PRESENCE_DEVICE_COMPONENTS and sensor in (e[ATTR_ENTITY_ID] for e in entities)):
+                #                 active_areas.add(area.name)
 
         self._attributes["active_sensors"] = active_sensors
+        if self.area.is_meta():
+            self._attributes["active_areas"] = list(active_areas)
 
         return len(active_sensors) > 0
 
@@ -537,6 +552,40 @@ class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
         await self._setup_listeners()
 
         _LOGGER.debug(f"{self.name} Sensor initialized.")
+
+    # def _get_sensors_state(self):
+    #     if self.area.id in (meta_area.lower() for meta_area in META_AREAS):
+    #         active_sensors = []
+    #         active_areas = set()
+
+    #         # Loop over all entities and check their state
+    #         for sensor in self.sensors:
+
+    #             entity = self.hass.states.get(sensor)
+
+    #             if not entity:
+    #                 _LOGGER.info(
+    #                     f"Could not get sensor state: {sensor} entity not found, skipping"
+    #                 )
+    #                 continue
+
+    #             # Skip unavailable entities
+    #             if entity.state == STATE_UNAVAILABLE:
+    #                 continue
+
+    #             if entity.state in STATE_ON:
+    #                 active_sensors.append(sensor)
+    #                 for area_info in self.hass.data[MODULE_DATA].values():
+    #                     area = area_info[DATA_AREA_OBJECT]
+    #                     if sensor in (e[ATTR_ENTITY_ID] for e in area.entities.get(BINARY_SENSOR_DOMAIN, [])):
+    #                         active_areas.add(area.name)
+
+    #         self._attributes["active_sensors"] = active_sensors
+    #         self._attributes["active_areas"] = list(active_areas)
+
+    #         return len(active_sensors) > 0
+    #     else:
+    #         return super()._get_sensors_state()
 
 
 class AreaDistressBinarySensor(BinarySensorBase, AggregateBase):
