@@ -39,7 +39,7 @@ from .const import (
     CONF_FEATURE_LIGHT_CONTROL,
     CONF_FEATURE_MEDIA_CONTROL,
     CONF_ICON,
-    CONF_MAIN_LIGHTS,
+    CONF_OVERHEAD_LIGHTS,
     CONF_NIGHT_ENTITY,
     CONF_NIGHT_STATE,
     CONF_ON_STATES,
@@ -360,8 +360,8 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         ]
 
         # Regular operation
-        if self.area.config.get(CONF_MAIN_LIGHTS):
-            affected_lights = self.area.config.get(CONF_MAIN_LIGHTS)
+        if self.area.config.get(CONF_OVERHEAD_LIGHTS):
+            affected_lights = self.area.config.get(CONF_OVERHEAD_LIGHTS)
 
         # Check if in disable mode
         if self._is_autolights_disabled():

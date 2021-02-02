@@ -151,11 +151,15 @@ CONF_FEATURE_LIST_GLOBAL = CONF_FEATURE_LIST_META + [
 # automatic_lights options
 CONF_NIGHT_ENTITY = "night_entity"
 CONF_NIGHT_STATE, DEFAULT_NIGHT_STATE = "night_state", STATE_ON
-CONF_MAIN_LIGHTS = "main_lights"  # cv.entity_ids
+CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
+CONF_ACCENT_LIGHTS = "accent_lights"  # cv.entity_ids
+CONF_TASK_LIGHTS = "task_lights"  # cv.entity_ids
 CONF_SLEEP_LIGHTS = "sleep_lights"
 CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT = "sleep_timeout", 0  # int
 CONF_SLEEP_ENTITY = "sleep_entity"
 CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE = "sleep_state", STATE_ON
+CONF_ACCENT_ENTITY = "accent_entity"
+CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE = "accent_state", STATE_ON
 
 # Health related
 PRESENCE_DEVICE_COMPONENTS = [
@@ -221,7 +225,11 @@ _AREA_SCHEMA = {
     vol.Optional(CONF_SLEEP_ENTITY): cv.entity_id,
     vol.Optional(CONF_SLEEP_STATE, default=DEFAULT_SLEEP_STATE): str,
     vol.Optional(CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT): cv.positive_int,
-    vol.Optional(CONF_MAIN_LIGHTS, default=[]): cv.entity_ids,
+    vol.Optional(CONF_ACCENT_ENTITY): cv.entity_id,
+    vol.Optional(CONF_ACCENT_STATE, default=DEFAULT_ACCENT_STATE): str,
+    vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
+    vol.Optional(CONF_ACCENT_LIGHTS, default=[]): cv.entity_ids,
+    vol.Optional(CONF_TASK_LIGHTS, default=[]): cv.entity_ids,
     vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
 }
 
@@ -248,8 +256,12 @@ VALIDATION_TUPLES = [
     (CONF_NOTIFY_ON_SLEEP, DEFAULT_NOTIFY_ON_SLEEP, bool),
     (CONF_NIGHT_ENTITY, "", cv.entity_id),
     (CONF_NIGHT_STATE, DEFAULT_NIGHT_STATE, str),
-    (CONF_MAIN_LIGHTS, [], cv.entity_ids),
+    (CONF_OVERHEAD_LIGHTS, [], cv.entity_ids),
+    (CONF_ACCENT_LIGHTS, [], cv.entity_ids),
+    (CONF_TASK_LIGHTS, [], cv.entity_ids),
     (CONF_SLEEP_LIGHTS, [], cv.entity_ids),
+    (CONF_ACCENT_ENTITY, "", cv.entity_id),
+    (CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE, str),
     (
         CONF_SLEEP_ENTITY,
         "",

@@ -24,6 +24,8 @@ from .const import (
     CONF_ON_STATES,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_STATE,
+    CONF_ACCENT_ENTITY,
+    CONF_ACCENT_STATE,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     DATA_AREA_OBJECT,
@@ -426,6 +428,18 @@ class MagicArea(object):
             if sleep_entity.state.lower() == self.config.get(CONF_SLEEP_STATE).lower():
                 _LOGGER.info(
                     f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
+                )
+                return True
+
+        return False
+
+    def is_accenting(self):
+        if self.config.get(CONF_ACCENT_ENTITY):
+
+            accent_entity = self.hass.states.get(self.config.get(CONF_ACCENT_ENTITY))
+            if accent_entity.state.lower() == self.config.get(CONF_ACCENT_STATE).lower():
+                _LOGGER.info(
+                    f"Accent entity '{accent_entity.entity_id}' on sleep state '{accent_entity.state}'"
                 )
                 return True
 
