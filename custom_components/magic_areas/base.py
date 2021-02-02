@@ -122,8 +122,9 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
         return self._state
 
     def sensor_state_change(self, entity_id, from_state, to_state):
+        new_state = to_state.state if to_state is not None else None
 
-        _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
+        _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {new_state}")
 
         return self._update_state()
 
@@ -177,10 +178,11 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
         return self._state
 
     def sensor_state_change(self, entity_id, from_state, to_state):
+        new_state = to_state.state if to_state is not None else None
 
-        _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
+        _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {new_state}")
 
-        if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
+        if new_state not in self.area.config.get(CONF_ON_STATES):
             self.last_off_time = datetime.utcnow()  # Update last_off_time
 
         return self._update_state()
