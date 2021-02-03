@@ -71,12 +71,12 @@ SUPPORT_GROUP_LIGHT = (
 )
 
 # Prevent funny behaviour when lights are assigned to multiple categories
-# key cannot be in any of the values
+# Light in category key cannot be in any of the categories listed by value
 LIGHT_PRECEDENCE = {
-    CONF_OVERHEAD_LIGHTS: [],
-    CONF_ACCENT_LIGHTS: [CONF_OVERHEAD_LIGHTS],
-    CONF_TASK_LIGHTS: [CONF_ACCENT_LIGHTS, CONF_OVERHEAD_LIGHTS],
     CONF_SLEEP_LIGHTS: [],
+    CONF_ACCENT_LIGHTS: [],
+    CONF_TASK_LIGHTS: [CONF_ACCENT_LIGHTS],
+    CONF_OVERHEAD_LIGHTS: [CONF_ACCENT_LIGHTS, CONF_TASK_LIGHTS],
 }
 
 
@@ -124,9 +124,9 @@ class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
         # Filter out redundant assignments of lights to the categories in order to prevent funny
         # behaviour. Precedence of the categories is determined by LIGHT_PRECEDENCE.
         # These assignments must happen in this order to enable redundancy filtering to work.
-        self._overhead_lights = self._get_non_redundant_lights(area.config, CONF_OVERHEAD_LIGHTS, default=lights_in_area)
         self._accent_lights = self._get_non_redundant_lights(area.config, CONF_ACCENT_LIGHTS)
         self._task_lights = self._get_non_redundant_lights(area.config, CONF_TASK_LIGHTS)
+        self._overhead_lights = self._get_non_redundant_lights(area.config, CONF_OVERHEAD_LIGHTS, default=lights_in_area)
         self._sleep_lights = self._get_non_redundant_lights(area.config, CONF_SLEEP_LIGHTS, default=self._accent_lights)
 
         self._all_lights = list(
@@ -154,12 +154,13 @@ class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
         config_lights = area_config.get(light_category, default.copy())
 
         def is_redundant(light):
-            _LOGGER.debug(f"Checking light precendence: {LIGHT_PRECEDENCE[light_category]}")
             for precedent_category in LIGHT_PRECEDENCE[light_category]:
-                _LOGGER.debug(f"Checking if {light} is in {precedent_category}")
-                _LOGGER.debug(self._attributes)
                 if light in self._attributes.get(precedent_category, []):
-                    _LOGGER.warn(f"{light} defined both in {light_category} and {precedent_category}. Dropping it from {light_category}.")
+                    if light_category == CONF_OVERHEAD_LIGHTS and not area_config.get(light_category):
+                        # Don't warn, just debug as this is intended behaviour
+                        _LOGGER.debug(f"{self.name}: Removing {light} from implicitly defined {light_category} because it is explicitly assigned to {precedent_category}")
+                    else:
+                        _LOGGER.warn(f"{self.name}: {light} defined both in {light_category} and {precedent_category}. Dropping it from {light_category}.")
                     return True
             return False
 
