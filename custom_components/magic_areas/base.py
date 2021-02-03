@@ -425,7 +425,9 @@ class MagicArea(object):
         if self.config.get(CONF_SLEEP_ENTITY):
 
             sleep_entity = self.hass.states.get(self.config.get(CONF_SLEEP_ENTITY))
-            if sleep_entity.state.lower() == self.config.get(CONF_SLEEP_STATE).lower():
+            if sleep_entity is not None and (
+                sleep_entity.state.lower() == self.config.get(CONF_SLEEP_STATE).lower()
+            ):
                 _LOGGER.info(
                     f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
                 )
@@ -437,7 +439,9 @@ class MagicArea(object):
         if self.config.get(CONF_ACCENT_ENTITY):
 
             accent_entity = self.hass.states.get(self.config.get(CONF_ACCENT_ENTITY))
-            if accent_entity.state.lower() == self.config.get(CONF_ACCENT_STATE).lower():
+            if accent_entity is not None and (
+                accent_entity.state.lower() == self.config.get(CONF_ACCENT_STATE).lower()
+            ):
                 _LOGGER.info(
                     f"Accent entity '{accent_entity.entity_id}' on sleep state '{accent_entity.state}'"
                 )
@@ -450,7 +454,7 @@ class MagicArea(object):
         # Check if has night entity
         if self.config.get(CONF_NIGHT_ENTITY):
             night_entity = self.hass.states.get(self.config.get(CONF_NIGHT_ENTITY))
-            if night_entity and (
+            if night_entity is not None and (
                 night_entity.state.lower() == self.config.get(CONF_NIGHT_STATE).lower()
             ):
                 _LOGGER.info(
