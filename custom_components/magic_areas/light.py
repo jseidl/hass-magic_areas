@@ -151,7 +151,7 @@ class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
         self._supported_features: int = 0
 
     def _get_non_redundant_lights(self, area_config, light_category, default=[]):
-        config_lights = area_config.get(light_category, default.copy())
+        config_lights = area_config.get(light_category) or default.copy()
 
         def is_redundant(light):
             for precedent_category in LIGHT_PRECEDENCE[light_category]:
