@@ -12,6 +12,7 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_SAFETY,
     DEVICE_CLASS_SMOKE,
     DEVICE_CLASS_WINDOW,
+    DEVICE_CLASS_VIBRATION,
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
@@ -56,6 +57,7 @@ ALL_BINARY_SENSOR_DEVICE_CLASSES = (
     DEVICE_CLASS_SMOKE,
     DEVICE_CLASS_WINDOW,
     DEVICE_CLASS_POWER,
+    DEVICE_CLASS_VIBRATION,
 )
 
 # Data Items
