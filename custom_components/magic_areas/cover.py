@@ -65,8 +65,9 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
             for e in area.entities[cover.DOMAIN]
             if e.get("device_class") == device_class
         ]
+        self._attributes["covers"] = [e["entity_id"] for e in self._entities]
 
-        CoverGroup.__init__(self, self._name, [e["entity_id"] for e in self._entities])
+        CoverGroup.__init__(self, self._name, self._attributes["covers"])
 
     @property
     def device_class(self):
