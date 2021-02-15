@@ -282,7 +282,7 @@ class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
 
         if not self._any_light_on:
             # No lights are already on, select based on sleep entity and accent entity states
-            if self.area.is_sleeping():
+            if self._sleep_lights and self.area.is_sleeping():
                 return self._sleep_lights
             elif self.area.is_accenting():
                 return self._overhead_lights + self._accent_lights
