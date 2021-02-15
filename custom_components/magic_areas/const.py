@@ -149,6 +149,7 @@ CONF_FEATURE_LIST_GLOBAL = CONF_FEATURE_LIST_META + [
 ]
 
 # automatic_lights options
+CONF_CREATE_SUB_LIGHT_GROUPS, DEFAULT_CREATE_SUB_LIGHT_GROUPS = "create_sub_light_groups", False
 CONF_NIGHT_ENTITY = "night_entity"
 CONF_NIGHT_STATE, DEFAULT_NIGHT_STATE = "night_state", STATE_ON
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
@@ -231,6 +232,7 @@ _AREA_SCHEMA = {
     vol.Optional(CONF_ACCENT_LIGHTS, default=[]): cv.entity_ids,
     vol.Optional(CONF_TASK_LIGHTS, default=[]): cv.entity_ids,
     vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
+    vol.Optional(CONF_CREATE_SUB_LIGHT_GROUPS, default=DEFAULT_CREATE_SUB_LIGHT_GROUPS): bool,
 }
 
 _DOMAIN_SCHEMA = vol.Schema({cv.slug: vol.Any(_AREA_SCHEMA, None)})
@@ -260,6 +262,7 @@ VALIDATION_TUPLES = [
     (CONF_ACCENT_LIGHTS, [], cv.entity_ids),
     (CONF_TASK_LIGHTS, [], cv.entity_ids),
     (CONF_SLEEP_LIGHTS, [], cv.entity_ids),
+    (CONF_CREATE_SUB_LIGHT_GROUPS, DEFAULT_CREATE_SUB_LIGHT_GROUPS, bool),
     (CONF_ACCENT_ENTITY, "", cv.entity_id),
     (CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE, str),
     (

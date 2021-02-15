@@ -35,6 +35,7 @@
           "sleep_timeout": "How long since last presence event should it wait before clearing the area when on sleep mode",
           "accent_entity": "Entity used to track when accent lights should be enabled",
           "accent_state": "State of accent entity",
+          "create_sub_light_groups": "Create sub-groups for different light categories (overhead, accent, task, sleep)",
           "overhead_lights": "Overhead lights (Leave blank for all area lights)",
           "accent_lights": "Accent lights",
           "task_lights": "Task lights",

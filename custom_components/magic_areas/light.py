@@ -7,6 +7,7 @@ import itertools
 from typing import Any, Callable, Iterator, List, Optional, Tuple, cast
 
 from homeassistant.components import light, group
+from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_COLOR_TEMP,
@@ -39,6 +40,7 @@ from homeassistant.core import CoreState, State
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.typing import ConfigType, HomeAssistantType
 from homeassistant.util import color as color_util
+from homeassistant.util import slugify
 
 # mypy: allow-incomplete-defs, allow-untyped-calls, allow-untyped-defs
 # mypy: no-check-untyped-defs
@@ -46,6 +48,7 @@ from homeassistant.util import color as color_util
 from .base import MagicEntity
 from .const import (
     CONF_AGGREGATES_MIN_ENTITIES,
+    CONF_CREATE_SUB_LIGHT_GROUPS,
     CONF_FEATURE_LIGHT_CONTROL,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_OVERHEAD_LIGHTS,
@@ -106,7 +109,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     _LOGGER.debug(
         f"Creating light group for area {area.name}"
     )
-    async_add_entities([AreaLightGroup(hass, area)])
+    area_light_group = AreaLightGroup(hass, area)
+    light_groups = [area_light_group]
+
+    # Create additional groups for different light categories in the area
+    if area.config.get(CONF_CREATE_SUB_LIGHT_GROUPS):
+        for light_category in LIGHT_PRECEDENCE.keys():
+            lights_in_category = area_light_group.device_state_attributes.get(light_category)
+            if lights_in_category:
+                light_groups.append(AreaSubLightGroup(f"{area.name} {light_category.split('_')[0].title()} Lights", lights_in_category))
+
+    async_add_entities(light_groups)
 
 
 class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
@@ -488,3 +501,14 @@ def _reduce_attribute(
         return attrs[0]
 
     return reduce(*attrs)
+
+
+class AreaSubLightGroup(LightGroup):
+    def __init__(self, name, entities):
+        super().__init__(name, entities)
+
+    @property
+    def unique_id(self):
+        """Return a unique ID."""
+        name_slug = slugify(self.name)
+        return f"magic_areas_entity_{name_slug}"
