@@ -448,17 +448,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
             if entity.state in self.area.config.get(CONF_ON_STATES):
                 active_sensors.append(sensor)
-                if self.area.is_meta():
-                    parent_area = self._get_parent_area(sensor)
-                    if parent_area is not None:
-                        active_areas.add(parent_area.name)
 
-                # for area_info in self.hass.data[MODULE_DATA].values():
-                #     area = area_info[DATA_AREA_OBJECT]
-                #     if area.id not in (meta_area.lower() for meta_area in META_AREAS):
-                #         for component, entities in area.entities.items():
-                #             if (component in PRESENCE_DEVICE_COMPONENTS and sensor in (e[ATTR_ENTITY_ID] for e in entities)):
-                #                 active_areas.add(area.name)
+                if self.area.is_meta():
+                    active_areas.update(self._get_parent_areas(sensor))
 
         self._attributes["active_sensors"] = active_sensors
         if self.area.is_meta():

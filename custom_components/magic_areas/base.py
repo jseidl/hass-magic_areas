@@ -214,9 +214,7 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
                 active_sensors.append(sensor)
 
                 if self.area.is_meta():
-                    parent_area = self._get_parent_area(sensor)
-                    if parent_area is not None:
-                        active_areas.add(parent_area.name)
+                    active_areas.update(self._get_parent_areas(sensor))
 
         self._attributes["active_sensors"] = active_sensors
 
@@ -225,14 +223,15 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
         return len(active_sensors) > 0
 
-    def _get_parent_area(self, entity_id):
+    def _get_parent_areas(self, entity_id):
+        parent_areas = []
         for area_info in self.hass.data[MODULE_DATA].values():
             area = area_info[DATA_AREA_OBJECT]
             if not area.is_meta():
                 for domain_entities in area.entities.values():
                     if entity_id in (e[ATTR_ENTITY_ID] for e in domain_entities):
-                        return area
-        return None
+                        parent_areas.append(area.name)
+        return parent_areas
 
 
 class AggregateBase(MagicSensorBase):
