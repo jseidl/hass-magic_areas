@@ -4,7 +4,7 @@ import asyncio
 import logging
 from collections import Counter
 import itertools
-from typing import Any, Callable, Iterator, List, Optional, Tuple, cast
+from typing import Any, Callable, Iterator, List, Optional, Tuple
 
 from homeassistant.components import light, group
 from homeassistant.components.group.light import LightGroup
@@ -19,7 +19,6 @@ from homeassistant.components.light import (
     ATTR_MIN_MIREDS,
     ATTR_TRANSITION,
     ATTR_WHITE_VALUE,
-    PLATFORM_SCHEMA,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
     SUPPORT_COLOR_TEMP,
@@ -31,14 +30,17 @@ from homeassistant.components.light import (
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
-    CONF_NAME,
+    EVENT_HOMEASSISTANT_STARTED,
     STATE_ON,
     STATE_OFF,
     STATE_UNAVAILABLE,
 )
 from homeassistant.core import CoreState, State
-from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.helpers.typing import ConfigType, HomeAssistantType
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.event import (
+    async_track_state_change,
+    async_track_state_change_event,
+)
 from homeassistant.util import color as color_util
 from homeassistant.util import slugify
 
@@ -47,16 +49,25 @@ from homeassistant.util import slugify
 
 from .base import MagicEntity
 from .const import (
+    AUTOLIGHTS_STATE_ACCENT,
+    AUTOLIGHTS_STATE_DISABLED,
+    AUTOLIGHTS_STATE_NORMAL,
+    AUTOLIGHTS_STATE_SLEEP,
+    CONF_ACCENT_ENTITY,
+    CONF_ACCENT_LIGHTS,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CREATE_SUB_LIGHT_GROUPS,
     CONF_FEATURE_LIGHT_CONTROL,
     CONF_FEATURE_LIGHT_GROUPS,
+    CONF_NIGHT_ENTITY,
     CONF_OVERHEAD_LIGHTS,
-    CONF_ACCENT_LIGHTS,
-    CONF_TASK_LIGHTS,
+    CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
+    CONF_TASK_LIGHTS,
     DATA_AREA_OBJECT,
     MODULE_DATA,
+    SIGNAL_AREA_ON,
+    SIGNAL_AREA_OFF,
 )
 
 
@@ -197,11 +208,107 @@ class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
             )
         )
 
+        if self.hass.is_running:
+            await self._initialize()
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, self._initialize
+            )
+
         if self.hass.state == CoreState.running:
             await self.async_update()
             return
 
         await super().async_added_to_hass()
+
+    async def _initialize(self, _=None) -> None:
+        _LOGGER.debug(f"{self.name} initializing.")
+
+        self._update_attributes()
+        await self._setup_listeners()
+
+        _LOGGER.debug(f"{self.name} initialized.")
+
+    async def _setup_listeners(self, _=None) -> None:
+        _LOGGER.debug("%s: Called '_setup_listeners'", self.name)
+        if not self.hass.is_running:
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self.name)
+            return
+
+        if self.area.config.get(CONF_ACCENT_ENTITY):
+            self.async_on_remove(
+                async_track_state_change(
+                    self.hass,
+                    self.area.config.get(CONF_ACCENT_ENTITY),
+                    self.async_autolights_accent_state_changed,
+                )
+            )
+
+        def autolight_state_change(entity_id, from_state, to_state):
+            self._update_autolights_state()
+
+        for entity in [CONF_NIGHT_ENTITY, CONF_SLEEP_ENTITY]:
+            if self.area.config.get(entity):
+                self.async_on_remove(
+                    async_track_state_change(
+                        self.hass,
+                        self.area.config.get(entity),
+                        autolight_state_change,
+                    )
+                )
+
+        def call_service(service):
+            async def async_autolights_turn_on(area_id):
+                if area_id != self.area.id:
+                    return
+                if self.autolights_state == AUTOLIGHTS_STATE_DISABLED:
+                    _LOGGER.debug(f"Autolights {self.name}: Disabled, ignoring call to {service}")
+                else:
+                    _LOGGER.debug(f"Autolights {self.name}: Calling service {service}")
+                    await self.hass.services.async_call(
+                        light.DOMAIN,
+                        service,
+                        {ATTR_ENTITY_ID: self.entity_id}
+                    )
+            return async_autolights_turn_on
+        async_dispatcher_connect(self.hass, SIGNAL_AREA_ON, call_service(light.SERVICE_TURN_ON))
+        async_dispatcher_connect(self.hass, SIGNAL_AREA_OFF, call_service(light.SERVICE_TURN_OFF))
+
+    async def async_autolights_accent_state_changed(self, entity_id, from_state, to_state):
+        self._update_autolights_state()
+
+        if (
+            from_state is None or to_state is None
+            or from_state.state == to_state.state
+            or not self._any_light_on
+        ):
+            _LOGGER.debug(f"Autolights {self.name}: Ignoring {CONF_ACCENT_ENTITY} state change")
+            return
+
+        if self.area.is_accenting() and not self._accent_lights_on:
+            _LOGGER.debug(f"Autolights {self.name}: Turning accent lights ON")
+            await self.hass.services.async_call(
+                light.DOMAIN,
+                light.SERVICE_TURN_ON,
+                {ATTR_ENTITY_ID: self._accent_lights}
+            )
+        elif not self.area.is_accenting() and self._accent_lights_on:
+            _LOGGER.debug(f"Autolights {self.name}: Turning accent lights OFF")
+            await self.hass.services.async_call(
+                light.DOMAIN,
+                light.SERVICE_TURN_OFF,
+                {ATTR_ENTITY_ID: self._accent_lights}
+            )
+
+    def _update_autolights_state(self):
+        self._update_attributes()
+        self.schedule_update_ha_state()
+
+    def _update_attributes(self):
+        self._attributes["night"] = self.area.is_night()
+        self._attributes["accent"] = self.area.is_accenting()
+        self._attributes["sleep"] = self.area.is_sleeping()
+        self._attributes["automatic_lights"] = self.autolights_state
 
     @property
     def state(self) -> str:
@@ -222,6 +329,22 @@ class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
             if self.area.is_sleeping()
             else self._overhead_lights_on
         )
+
+    @property
+    def autolights_state(self):
+        if (
+            not self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL)
+            or self.area.is_night()
+        ):
+            return AUTOLIGHTS_STATE_DISABLED
+
+        if self.area.is_sleeping() and self.area.config.get(CONF_SLEEP_LIGHTS):
+            return AUTOLIGHTS_STATE_SLEEP
+
+        if self.area.is_accenting() and self.area.config.get(CONF_ACCENT_LIGHTS):
+            return AUTOLIGHTS_STATE_ACCENT
+
+        return AUTOLIGHTS_STATE_NORMAL
 
     @property
     def available(self) -> bool:
@@ -295,6 +418,9 @@ class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
             # on additional lights.
             _LOGGER.debug(f"Only acting on already turned on lights because there are params given")
             return self._on_lights
+        elif self._sleep_lights and self.area.is_sleeping():
+            _LOGGER.debug("Giving priority to sleep lights")
+            return self._sleep_lights
         else:
             _LOGGER.debug("There are lights on but no params given. Assuming overhead lights shall be additionally turned on")
             if self._overhead_lights_on:

@@ -443,7 +443,7 @@ class MagicArea(object):
                 accent_entity.state.lower() == self.config.get(CONF_ACCENT_STATE).lower()
             ):
                 _LOGGER.info(
-                    f"Accent entity '{accent_entity.entity_id}' on sleep state '{accent_entity.state}'"
+                    f"Accent entity '{accent_entity.entity_id}' on accent state '{accent_entity.state}'"
                 )
                 return True
 
