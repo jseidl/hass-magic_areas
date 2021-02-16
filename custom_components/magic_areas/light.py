@@ -293,7 +293,8 @@ class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
                 light.SERVICE_TURN_ON,
                 {ATTR_ENTITY_ID: self._accent_lights}
             )
-        elif not self.area.is_accenting() and self._accent_lights_on:
+        elif not self.area.is_accenting() and self._accent_lights_on and self.is_on:
+            # Only turn off accent lights if they are not the only lights that are on
             _LOGGER.debug(f"Autolights {self.name}: Turning accent lights OFF")
             await self.hass.services.async_call(
                 light.DOMAIN,
