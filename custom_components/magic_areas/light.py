@@ -545,7 +545,23 @@ class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
         self._any_light_on = len(on_states) > 0
 
         for light_category in ("overhead", "accent", "task", "sleep"):
-            on_lights_in_category = [e for e in self._on_lights if e in getattr(self, f"_{light_category}_lights")]
+            lights_in_category = getattr(self, f"_{light_category}_lights")
+
+            # Handle special cases where sleep lights might be also part of other categories
+            if self._sleep_lights:
+                if self.area.is_sleeping() and light_category != "sleep":
+                    # When sleep mode is active we want to filter out sleep lights from other
+                    # categories, such that those categories only appear as on when there are
+                    # dedicated lights on that are not part of the sleep category.
+                    lights_in_category = set(lights_in_category).difference(self._sleep_lights)
+                elif not self.area.is_sleeping() and light_category == "sleep":
+                    # When sleep mode is off, we want to filter out lights from other categories
+                    # from the sleep lights, such that the sleep lights category only appears as
+                    # on if there are dedicated sleep lights turned on that are not present in
+                    # any other category.
+                    lights_in_category = set(self._sleep_lights).difference(lights_in_category)
+
+            on_lights_in_category = [e for e in self._on_lights if e in lights_in_category]
             setattr(self, f"_{light_category}_on_lights", on_lights_in_category)
             self._attributes[f"{light_category}_on_lights"] = on_lights_in_category
             setattr(self, f"_{light_category}_lights_on", any(on_lights_in_category))
