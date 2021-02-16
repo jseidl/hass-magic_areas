@@ -292,3 +292,4 @@ VALIDATION_TUPLES_META = [
 
 SIGNAL_AREA_ON = "magic_areas_area_on"
 SIGNAL_AREA_OFF = "magic_areas_area_off"
+SIGNAL_LIGHT_GROUP_STATE_CHANGED = "magic_areas_light_group_state_changed"

@@ -36,13 +36,15 @@ from homeassistant.const import (
     STATE_UNAVAILABLE,
 )
 from homeassistant.core import CoreState, State
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.dispatcher import (
+    async_dispatcher_connect,
+    dispatcher_send
+)
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_state_change_event,
 )
 from homeassistant.util import color as color_util
-from homeassistant.util import slugify
 
 # mypy: allow-incomplete-defs, allow-untyped-calls, allow-untyped-defs
 # mypy: no-check-untyped-defs
@@ -68,6 +70,7 @@ from .const import (
     MODULE_DATA,
     SIGNAL_AREA_ON,
     SIGNAL_AREA_OFF,
+    SIGNAL_LIGHT_GROUP_STATE_CHANGED,
 )
 
 
@@ -126,9 +129,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     # Create additional groups for different light categories in the area
     if area.config.get(CONF_CREATE_SUB_LIGHT_GROUPS):
         for light_category in LIGHT_PRECEDENCE.keys():
-            lights_in_category = area_light_group.device_state_attributes.get(light_category)
-            if lights_in_category:
-                light_groups.append(AreaSubLightGroup(f"{area.name} {light_category.split('_')[0].title()} Lights", lights_in_category))
+            if area_light_group.device_state_attributes.get(light_category):
+                light_groups.append(AreaSubLightGroup(hass, area_light_group, light_category))
 
     async_add_entities(light_groups)
 
@@ -304,6 +306,7 @@ class AreaLightGroup(MagicEntity, group.GroupEntity, light.LightEntity):
 
     def _update_autolights_state(self):
         self._update_attributes()
+        dispatcher_send(self.hass, SIGNAL_LIGHT_GROUP_STATE_CHANGED)
         self.schedule_update_ha_state()
 
     def _update_attributes(self):
@@ -649,12 +652,23 @@ def _reduce_attribute(
     return reduce(*attrs)
 
 
-class AreaSubLightGroup(LightGroup):
-    def __init__(self, name, entities):
-        super().__init__(name, entities)
+class AreaSubLightGroup(MagicEntity, LightGroup):
+    def __init__(self, hass, area_light_group, light_category):
+        self.hass = hass
+        self.area_light_group = area_light_group
+        self.light_category = light_category
+        self._name = f"{area_light_group.area.name} {light_category.split('_')[0].title()} Lights"
+        self._entities = area_light_group.device_state_attributes[light_category]
+
+        LightGroup.__init__(self, self._name, self._entities)
+
+    async def async_added_to_hass(self) -> None:
+        """Register callbacks."""
+        async_dispatcher_connect(self.hass, SIGNAL_LIGHT_GROUP_STATE_CHANGED, self.schedule_update_ha_state)
+
+        await super().async_added_to_hass()
 
     @property
-    def unique_id(self):
-        """Return a unique ID."""
-        name_slug = slugify(self.name)
-        return f"magic_areas_entity_{name_slug}"
+    def is_on(self) -> bool:
+        """Return the on/off state of the light group."""
+        return self.area_light_group.device_state_attributes[f"{self.light_category}_on"]
