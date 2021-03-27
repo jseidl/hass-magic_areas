@@ -16,6 +16,7 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_CONNECTIVITY,
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
@@ -69,6 +70,7 @@ DATA_UNDO_UPDATE_LISTENER = "undo_update_listener"
 # MagicAreas Components
 MAGIC_AREAS_COMPONENTS = [
     BINARY_SENSOR_DOMAIN,
+    COVER_DOMAIN,
     SWITCH_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
@@ -76,6 +78,7 @@ MAGIC_AREAS_COMPONENTS = [
 
 MAGIC_AREAS_COMPONENTS_META = [
     BINARY_SENSOR_DOMAIN,
+    COVER_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
 ]
@@ -129,6 +132,7 @@ CONF_FEATURE_CLIMATE_CONTROL = "control_climate"
 CONF_FEATURE_LIGHT_CONTROL = "control_lights"
 CONF_FEATURE_MEDIA_CONTROL = "control_media"
 CONF_FEATURE_LIGHT_GROUPS = "light_groups"
+CONF_FEATURE_COVER_GROUPS = "cover_groups"
 CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER = "area_aware_media_player"
 CONF_FEATURE_AGGREGATION = "aggregates"
 CONF_FEATURE_HEALTH = "health"
@@ -138,12 +142,14 @@ CONF_FEATURE_LIST = [
     CONF_FEATURE_LIGHT_CONTROL,
     CONF_FEATURE_MEDIA_CONTROL,
     CONF_FEATURE_LIGHT_GROUPS,
+    CONF_FEATURE_COVER_GROUPS,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
 ]
 
 CONF_FEATURE_LIST_META = [
     CONF_FEATURE_LIGHT_GROUPS,
+    CONF_FEATURE_COVER_GROUPS,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
 ]
