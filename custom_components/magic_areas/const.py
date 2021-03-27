@@ -159,13 +159,18 @@ CONF_FEATURE_LIST_GLOBAL = CONF_FEATURE_LIST_META + [
 ]
 
 # automatic_lights options
+CONF_CREATE_SUB_LIGHT_GROUPS, DEFAULT_CREATE_SUB_LIGHT_GROUPS = "create_sub_light_groups", False
 CONF_NIGHT_ENTITY = "night_entity"
 CONF_NIGHT_STATE, DEFAULT_NIGHT_STATE = "night_state", STATE_ON
-CONF_MAIN_LIGHTS = "main_lights"  # cv.entity_ids
+CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
+CONF_ACCENT_LIGHTS = "accent_lights"  # cv.entity_ids
+CONF_TASK_LIGHTS = "task_lights"  # cv.entity_ids
 CONF_SLEEP_LIGHTS = "sleep_lights"
 CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT = "sleep_timeout", 0  # int
 CONF_SLEEP_ENTITY = "sleep_entity"
 CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE = "sleep_state", STATE_ON
+CONF_ACCENT_ENTITY = "accent_entity"
+CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE = "accent_state", STATE_ON
 
 # Health related
 PRESENCE_DEVICE_COMPONENTS = [
@@ -231,8 +236,13 @@ _AREA_SCHEMA = {
     vol.Optional(CONF_SLEEP_ENTITY): cv.entity_id,
     vol.Optional(CONF_SLEEP_STATE, default=DEFAULT_SLEEP_STATE): str,
     vol.Optional(CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT): cv.positive_int,
-    vol.Optional(CONF_MAIN_LIGHTS, default=[]): cv.entity_ids,
+    vol.Optional(CONF_ACCENT_ENTITY): cv.entity_id,
+    vol.Optional(CONF_ACCENT_STATE, default=DEFAULT_ACCENT_STATE): str,
+    vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
+    vol.Optional(CONF_ACCENT_LIGHTS, default=[]): cv.entity_ids,
+    vol.Optional(CONF_TASK_LIGHTS, default=[]): cv.entity_ids,
     vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
+    vol.Optional(CONF_CREATE_SUB_LIGHT_GROUPS, default=DEFAULT_CREATE_SUB_LIGHT_GROUPS): bool,
 }
 
 _DOMAIN_SCHEMA = vol.Schema({cv.slug: vol.Any(_AREA_SCHEMA, None)})
@@ -240,6 +250,7 @@ _DOMAIN_SCHEMA = vol.Schema({cv.slug: vol.Any(_AREA_SCHEMA, None)})
 AUTOLIGHTS_STATE_SLEEP = "sleep"
 AUTOLIGHTS_STATE_NORMAL = "enabled"
 AUTOLIGHTS_STATE_DISABLED = "disabled"
+AUTOLIGHTS_STATE_ACCENT = "accented"
 
 # VALIDATION_TUPLES
 VALIDATION_TUPLES = [
@@ -258,8 +269,13 @@ VALIDATION_TUPLES = [
     (CONF_NOTIFY_ON_SLEEP, DEFAULT_NOTIFY_ON_SLEEP, bool),
     (CONF_NIGHT_ENTITY, "", cv.entity_id),
     (CONF_NIGHT_STATE, DEFAULT_NIGHT_STATE, str),
-    (CONF_MAIN_LIGHTS, [], cv.entity_ids),
+    (CONF_OVERHEAD_LIGHTS, [], cv.entity_ids),
+    (CONF_ACCENT_LIGHTS, [], cv.entity_ids),
+    (CONF_TASK_LIGHTS, [], cv.entity_ids),
     (CONF_SLEEP_LIGHTS, [], cv.entity_ids),
+    (CONF_CREATE_SUB_LIGHT_GROUPS, DEFAULT_CREATE_SUB_LIGHT_GROUPS, bool),
+    (CONF_ACCENT_ENTITY, "", cv.entity_id),
+    (CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE, str),
     (
         CONF_SLEEP_ENTITY,
         "",
@@ -279,3 +295,7 @@ VALIDATION_TUPLES_META = [
     (CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
 ]
+
+SIGNAL_AREA_ON = "magic_areas_area_on"
+SIGNAL_AREA_OFF = "magic_areas_area_off"
+SIGNAL_LIGHT_GROUP_STATE_CHANGED = "magic_areas_light_group_state_changed"

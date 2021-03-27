@@ -19,7 +19,10 @@ from .const import (
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
     CONF_INCLUDE_ENTITIES,
-    CONF_MAIN_LIGHTS,
+    CONF_OVERHEAD_LIGHTS,
+    CONF_ACCENT_ENTITY,
+    CONF_ACCENT_LIGHTS,
+    CONF_TASK_LIGHTS,
     CONF_NIGHT_ENTITY,
     CONF_NOTIFICATION_DEVICES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -127,10 +130,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
             ),
             CONF_NOTIFICATION_DEVICES: cv.multi_select(sorted(all_media_players)),
-            CONF_MAIN_LIGHTS: cv.multi_select(sorted(all_lights)),
+            CONF_OVERHEAD_LIGHTS: cv.multi_select(sorted(all_lights)),
+            CONF_ACCENT_LIGHTS: cv.multi_select(sorted(all_lights)),
+            CONF_TASK_LIGHTS: cv.multi_select(sorted(all_lights)),
             CONF_SLEEP_LIGHTS: cv.multi_select(sorted(all_lights)),
             CONF_NIGHT_ENTITY: vol.In(sorted(empty_entry + all_entities)),
             CONF_SLEEP_ENTITY: vol.In(sorted(empty_entry + all_entities)),
+            CONF_ACCENT_ENTITY: vol.In(sorted(empty_entry + all_entities)),
             CONF_TYPE: vol.In(sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])),
         }
 

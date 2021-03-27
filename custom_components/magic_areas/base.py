@@ -24,6 +24,8 @@ from .const import (
     CONF_ON_STATES,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_STATE,
+    CONF_ACCENT_ENTITY,
+    CONF_ACCENT_STATE,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     DATA_AREA_OBJECT,
@@ -122,8 +124,9 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
         return self._state
 
     def sensor_state_change(self, entity_id, from_state, to_state):
+        new_state = to_state.state if to_state is not None else None
 
-        _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
+        _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {new_state}")
 
         return self._update_state()
 
@@ -177,10 +180,11 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
         return self._state
 
     def sensor_state_change(self, entity_id, from_state, to_state):
+        new_state = to_state.state if to_state is not None else None
 
-        _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
+        _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {new_state}")
 
-        if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
+        if new_state not in self.area.config.get(CONF_ON_STATES):
             self.last_off_time = datetime.utcnow()  # Update last_off_time
 
         return self._update_state()
@@ -421,9 +425,25 @@ class MagicArea(object):
         if self.config.get(CONF_SLEEP_ENTITY):
 
             sleep_entity = self.hass.states.get(self.config.get(CONF_SLEEP_ENTITY))
-            if sleep_entity.state.lower() == self.config.get(CONF_SLEEP_STATE).lower():
+            if sleep_entity is not None and (
+                sleep_entity.state.lower() == self.config.get(CONF_SLEEP_STATE).lower()
+            ):
                 _LOGGER.info(
                     f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
+                )
+                return True
+
+        return False
+
+    def is_accenting(self):
+        if self.config.get(CONF_ACCENT_ENTITY):
+
+            accent_entity = self.hass.states.get(self.config.get(CONF_ACCENT_ENTITY))
+            if accent_entity is not None and (
+                accent_entity.state.lower() == self.config.get(CONF_ACCENT_STATE).lower()
+            ):
+                _LOGGER.info(
+                    f"Accent entity '{accent_entity.entity_id}' on accent state '{accent_entity.state}'"
                 )
                 return True
 
@@ -434,7 +454,7 @@ class MagicArea(object):
         # Check if has night entity
         if self.config.get(CONF_NIGHT_ENTITY):
             night_entity = self.hass.states.get(self.config.get(CONF_NIGHT_ENTITY))
-            if night_entity and (
+            if night_entity is not None and (
                 night_entity.state.lower() == self.config.get(CONF_NIGHT_STATE).lower()
             ):
                 _LOGGER.info(
