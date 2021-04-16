@@ -4,7 +4,12 @@ from statistics import mean
 
 import voluptuous as vol
 from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON, STATE_UNAVAILABLE
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    EVENT_HOMEASSISTANT_STARTED,
+    STATE_ON,
+    STATE_UNAVAILABLE,
+)
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -188,6 +193,7 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
     def _get_sensors_state(self):
 
         active_sensors = []
+        active_areas = set()
 
         # Loop over all entities and check their state
         for sensor in self.sensors:
@@ -207,9 +213,25 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
             if entity.state in STATE_ON:
                 active_sensors.append(sensor)
 
+                if self.area.is_meta():
+                    active_areas.update(self._get_parent_areas(sensor))
+
         self._attributes["active_sensors"] = active_sensors
 
+        if self.area.is_meta():
+            self._attributes["active_areas"] = list(active_areas)
+
         return len(active_sensors) > 0
+
+    def _get_parent_areas(self, entity_id):
+        parent_areas = []
+        for area_info in self.hass.data[MODULE_DATA].values():
+            area = area_info[DATA_AREA_OBJECT]
+            if not area.is_meta():
+                for domain_entities in area.entities.values():
+                    if entity_id in (e[ATTR_ENTITY_ID] for e in domain_entities):
+                        parent_areas.append(area.name)
+        return parent_areas
 
 
 class AggregateBase(MagicSensorBase):
