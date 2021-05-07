@@ -14,33 +14,66 @@
   },
   "options": {
     "step": {
-      "init": {
-        "title": "Magic Areas options",
-        "description": "All settings for a Magic Areas component. The option names correspond with the YAML settings. No options are shown if you have this entry defined in YAML.",
+      "select_features": {
+        "title": "Feature selection",
+        "description": "Select the features you want to enable for this area. Each feature will be configured in subsequent steps.",
         "data": {
-          "features": "Enabled features",
-          "include_entities": "Include entities to this area",
-          "exclude_entities": "Exclude entities from being analyzed",
-          "presence_sensor_device_class": "Device classes of sensors to be considered presence sensors",
-          "icon": "Icon",
-          "notification_devices": "Media Player devices used for broadcasting through Area-Aware Media Player",
-          "notify_on_sleep": "Allow notification devices in this area to play notifications when on sleep mode",
-          "update_interval": "Interval for checking missed events",
-          "clear_timeout": "How long since last presence event should it wait before clearing the area",
-          "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates.",
+          "control_climate": "Control climate devices",
+          "control_lights": "Automatic lights",
+          "control_media": "Control media devices",
+          "light_groups": "Create light groups",
+          "cover_groups": "Create cover groups",
+          "area_aware_media_player": "Area aware media player",
+          "aggregates": "Create aggregate sensors",
+          "health": "Create health sensors"
+        }
+      },
+      "feature_conf_light_groups": {
+        "title": "Light Groups",
+        "description": "Configure the Light Groups feature",
+        "data": {
           "night_entity": "Entity used to track area night state",
           "night_state": "State of night entity",
           "sleep_entity": "Entity used to track area sleep state",
           "sleep_state": "State of sleep entity",
-          "sleep_timeout": "How long since last presence event should it wait before clearing the area when on sleep mode",
           "main_lights": "Main lights (Leave blank for all area lights)",
-          "sleep_lights": "Sleep lights",
+          "sleep_lights": "Sleep lights"
+        }
+      },
+      "feature_conf_area_aware_media_player": {
+        "title": "Feature: Area aware media player",
+        "description": "Configure the area aware media player feature",
+        "data": {
+          "notification_devices": "Media Player devices used for broadcasting",
+          "notify_on_sleep": "Allow notification devices in this area to play notifications when on sleep mode"
+        }
+      },
+      "feature_conf_aggregates": {
+        "title": "Feature: Sensor aggregates",
+        "description": "Configure the sensor aggregates feature",
+        "data": {
+          "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates."
+        }
+      },
+      "area_config": {
+        "title": "Area options",
+        "description": "Configure basic options for the area.",
+        "data": {
+          "include_entities": "Include entities to this area",
+          "exclude_entities": "Exclude entities from being analyzed",
+          "presence_sensor_device_class": "Device classes of sensors to be considered presence sensors",
+          "on_states": "Sensor states that indicate presence",
+          "icon": "Icon",
+          "update_interval": "Interval for checking missed events",
+          "clear_timeout": "How long since last presence event should it wait before clearing the area",
+          "sleep_timeout": "How long since last presence event should it wait before clearing the area when on sleep mode",
           "type": "Area type (interior/exterior)"
         }
       }
     },
     "error": {
-      "option_error": "Invalid option"
+      "option_error": "Invalid option",
+      "malformed_input": "This field is invalid:"
     }
   }
 } 

@@ -60,7 +60,7 @@ async def async_setup(hass, config):
 
     # Add Meta Areas to area list
     for meta_area in META_AREAS:
-        areas.append(AreaEntry(name=meta_area, id=meta_area.lower()))
+        areas.append(AreaEntry(name=meta_area, normalized_name=meta_area, id=meta_area.lower()))
 
     for area in areas:
 
