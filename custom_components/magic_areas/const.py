@@ -1,4 +1,5 @@
 import voluptuous as vol
+from itertools import chain
 from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_DOOR,
     DEVICE_CLASS_GAS,
@@ -16,6 +17,7 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_CONNECTIVITY,
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
@@ -69,6 +71,7 @@ DATA_UNDO_UPDATE_LISTENER = "undo_update_listener"
 # MagicAreas Components
 MAGIC_AREAS_COMPONENTS = [
     BINARY_SENSOR_DOMAIN,
+    COVER_DOMAIN,
     SWITCH_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
@@ -76,6 +79,7 @@ MAGIC_AREAS_COMPONENTS = [
 
 MAGIC_AREAS_COMPONENTS_META = [
     BINARY_SENSOR_DOMAIN,
+    COVER_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
 ]
@@ -129,23 +133,22 @@ CONF_FEATURE_CLIMATE_CONTROL = "control_climate"
 CONF_FEATURE_LIGHT_CONTROL = "control_lights"
 CONF_FEATURE_MEDIA_CONTROL = "control_media"
 CONF_FEATURE_LIGHT_GROUPS = "light_groups"
+CONF_FEATURE_COVER_GROUPS = "cover_groups"
 CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER = "area_aware_media_player"
 CONF_FEATURE_AGGREGATION = "aggregates"
 CONF_FEATURE_HEALTH = "health"
 
-CONF_FEATURE_LIST = [
-    CONF_FEATURE_CLIMATE_CONTROL,
-    CONF_FEATURE_LIGHT_CONTROL,
-    CONF_FEATURE_MEDIA_CONTROL,
+CONF_FEATURE_LIST_META = [
     CONF_FEATURE_LIGHT_GROUPS,
+    CONF_FEATURE_COVER_GROUPS,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
 ]
 
-CONF_FEATURE_LIST_META = [
-    CONF_FEATURE_LIGHT_GROUPS,
-    CONF_FEATURE_AGGREGATION,
-    CONF_FEATURE_HEALTH,
+CONF_FEATURE_LIST = CONF_FEATURE_LIST_META + [
+    CONF_FEATURE_CLIMATE_CONTROL,
+    CONF_FEATURE_LIGHT_CONTROL,
+    CONF_FEATURE_MEDIA_CONTROL,
 ]
 
 CONF_FEATURE_LIST_GLOBAL = CONF_FEATURE_LIST_META + [
@@ -198,46 +201,88 @@ AGGREGATE_MODE_SUM = [DEVICE_CLASS_POWER, DEVICE_CLASS_CURRENT, DEVICE_CLASS_ENE
 
 # Config Schema
 
+AGGREGATE_FEATURE_SCHEMA = vol.Schema({
+    vol.Optional(
+        CONF_AGGREGATES_MIN_ENTITIES, default=DEFAULT_AGGREGATES_MIN_ENTITIES
+    ): cv.positive_int,
+})
+
+LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema({
+    vol.Optional(CONF_MAIN_LIGHTS, default=[]): cv.entity_ids,
+    vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
+    vol.Optional(CONF_SLEEP_ENTITY, default=""): vol.Any("", cv.entity_id),
+    vol.Optional(CONF_SLEEP_STATE, default=DEFAULT_SLEEP_STATE): str,
+    vol.Optional(CONF_NIGHT_ENTITY, default=""): vol.Any("", cv.entity_id),
+    vol.Optional(CONF_NIGHT_STATE, default=DEFAULT_NIGHT_STATE): str,
+})
+
+AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA = vol.Schema({
+    vol.Optional(CONF_NOTIFICATION_DEVICES, default=[]): cv.entity_ids,
+    vol.Optional(CONF_NOTIFY_ON_SLEEP, default=DEFAULT_NOTIFY_ON_SLEEP): bool,
+})
+
+ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
+
+CONFIGURABLE_FEATURES = {
+    CONF_FEATURE_LIGHT_GROUPS: LIGHT_GROUP_FEATURE_SCHEMA,
+    CONF_FEATURE_AGGREGATION: AGGREGATE_FEATURE_SCHEMA,
+    CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA,
+}
+
+NON_CONFIGURABLE_FEATURES = {
+    feature: {}
+    for feature in ALL_FEATURES
+    if feature not in CONFIGURABLE_FEATURES.keys()
+}
+
+FEATURES_SCHEMA = vol.Schema({
+    vol.Optional(feature): feature_schema
+    for feature, feature_schema
+    in chain(CONFIGURABLE_FEATURES.items(), NON_CONFIGURABLE_FEATURES.items())
+})
+
 # Magic Areas
-_AREA_SCHEMA = {
-    # vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_ENABLED_FEATURES, default=[]): cv.ensure_list,
+REGULAR_AREA_SCHEMA = vol.Schema({
+    vol.Optional(CONF_TYPE, default=DEFAULT_TYPE): vol.In([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR]),
+    vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
+    vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
     vol.Optional(
         CONF_PRESENCE_SENSOR_DEVICE_CLASS,
         default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
     ): cv.ensure_list,
-    vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
-    vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
-    vol.Optional(CONF_TYPE, default=DEFAULT_TYPE): str,
-    vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list,
+    vol.Optional(CONF_ON_STATES, default=[]): cv.ensure_list_csv,
+    vol.Optional(CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT): cv.positive_int,
+    vol.Optional(CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT): cv.positive_int,
     vol.Optional(
-        CONF_AGGREGATES_MIN_ENTITIES, default=DEFAULT_AGGREGATES_MIN_ENTITIES
+        CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
     ): cv.positive_int,
+    vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
+    vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
+})
+
+META_AREA_SCHEMA = vol.Schema({
+    vol.Optional(CONF_TYPE, default=AREA_TYPE_META): AREA_TYPE_META,
+    vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
+    vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+    vol.Optional(CONF_ON_STATES, default=[]): cv.ensure_list_csv,
     vol.Optional(CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT): cv.positive_int,
     vol.Optional(
         CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
     ): cv.positive_int,
     vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
-    vol.Optional(CONF_NOTIFICATION_DEVICES, default=[]): cv.entity_ids,
-    vol.Optional(CONF_NOTIFY_ON_SLEEP, default=DEFAULT_NOTIFY_ON_SLEEP): bool,
-    vol.Optional(CONF_NIGHT_ENTITY): cv.entity_id,
-    vol.Optional(CONF_NIGHT_STATE, default=DEFAULT_NIGHT_STATE): str,
-    vol.Optional(CONF_SLEEP_ENTITY): cv.entity_id,
-    vol.Optional(CONF_SLEEP_STATE, default=DEFAULT_SLEEP_STATE): str,
-    vol.Optional(CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT): cv.positive_int,
-    vol.Optional(CONF_MAIN_LIGHTS, default=[]): cv.entity_ids,
-    vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
-}
+})
 
-_DOMAIN_SCHEMA = vol.Schema({cv.slug: vol.Any(_AREA_SCHEMA, None)})
+AREA_SCHEMA = vol.Schema(vol.Any(REGULAR_AREA_SCHEMA, META_AREA_SCHEMA))
+
+_DOMAIN_SCHEMA = vol.Schema({cv.slug: vol.Any(AREA_SCHEMA, None)})
 # Autolights States
 AUTOLIGHTS_STATE_SLEEP = "sleep"
 AUTOLIGHTS_STATE_NORMAL = "enabled"
 AUTOLIGHTS_STATE_DISABLED = "disabled"
 
 # VALIDATION_TUPLES
-VALIDATION_TUPLES = [
-    (CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES, cv.ensure_list),
+OPTIONS_AREA = [
+    (CONF_TYPE, DEFAULT_TYPE, vol.In([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])),
     (CONF_INCLUDE_ENTITIES, [], cv.entity_ids),
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
     (
@@ -245,31 +290,34 @@ VALIDATION_TUPLES = [
         DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
         cv.ensure_list,
     ),
+    (CONF_ON_STATES, ",".join(DEFAULT_ON_STATES), str),  # this should actually be cv.ensure_list_csv, but voluptuous doesn't support serializing this validator, so we'll work around with str and mangling the default
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
-    (CONF_ICON, DEFAULT_ICON, str),
-    (CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES, int),
-    (CONF_NOTIFICATION_DEVICES, [], cv.entity_ids),
-    (CONF_NOTIFY_ON_SLEEP, DEFAULT_NOTIFY_ON_SLEEP, bool),
-    (CONF_NIGHT_ENTITY, "", cv.entity_id),
-    (CONF_NIGHT_STATE, DEFAULT_NIGHT_STATE, str),
-    (CONF_MAIN_LIGHTS, [], cv.entity_ids),
-    (CONF_SLEEP_LIGHTS, [], cv.entity_ids),
-    (
-        CONF_SLEEP_ENTITY,
-        "",
-        cv.entity_id,
-    ),
-    (CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE, str),
     (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
-    (CONF_TYPE, DEFAULT_TYPE, str),
+    (CONF_ICON, DEFAULT_ICON, str),
 ]
 
-VALIDATION_TUPLES_META = [
-    (CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES, cv.ensure_list),
+OPTIONS_AREA_META = [
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
-    (CONF_ICON, DEFAULT_ICON, str),
-    (CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
+    (CONF_ICON, DEFAULT_ICON, str),
+]
+
+OPTIONS_LIGHT_GROUP = [
+    (CONF_MAIN_LIGHTS, [], cv.entity_ids),
+    (CONF_SLEEP_LIGHTS, [], cv.entity_ids),
+    (CONF_SLEEP_ENTITY, "", cv.entity_id),
+    (CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE, str),
+    (CONF_NIGHT_ENTITY, "", cv.entity_id),
+    (CONF_NIGHT_STATE, DEFAULT_NIGHT_STATE, str),
+]
+
+OPTIONS_AGGREGATES = [
+    (CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES, int),
+]
+
+OPTIONS_AREA_AWARE_MEDIA_PLAYER = [
+    (CONF_NOTIFICATION_DEVICES, [], cv.entity_ids),
+    (CONF_NOTIFY_ON_SLEEP, DEFAULT_NOTIFY_ON_SLEEP, bool),
 ]
