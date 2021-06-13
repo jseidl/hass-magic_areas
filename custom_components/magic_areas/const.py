@@ -250,7 +250,7 @@ REGULAR_AREA_SCHEMA = vol.Schema({
         CONF_PRESENCE_SENSOR_DEVICE_CLASS,
         default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
     ): cv.ensure_list,
-    vol.Optional(CONF_ON_STATES, default=[]): cv.ensure_list_csv,
+    vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list_csv,
     vol.Optional(CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT): cv.positive_int,
     vol.Optional(CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT): cv.positive_int,
     vol.Optional(

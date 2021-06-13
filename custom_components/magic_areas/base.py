@@ -190,7 +190,11 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
         return self._update_state()
 
-    def _get_sensors_state(self):
+    def _get_sensors_state(self, valid_states=[STATE_ON]):
+
+        _LOGGER.debug(
+            f"[Area: {self.area.slug}] Updating state. (Valid states: {valid_states})"
+        )
 
         active_sensors = []
         active_areas = set()
@@ -200,39 +204,41 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
             entity = self.hass.states.get(sensor)
 
+            _LOGGER.debug(
+                f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
+            )
+
             if not entity:
                 _LOGGER.info(
-                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                    f"[Area: {self.area.slug}] Could not get sensor state: {sensor} entity not found, skipping"
                 )
                 continue
 
             # Skip unavailable entities
             if entity.state == STATE_UNAVAILABLE:
+                _LOGGER.debug(
+                    f"[Area: {self.area.slug}] Sensor '{sensor}' is unavailable, skipping..."
+                )
                 continue
 
-            if entity.state in STATE_ON:
+            if entity.state in valid_states:
+                _LOGGER.debug(
+                    f"[Area: {self.area.slug}] Valid presence sensor found: {sensor}."
+                )
                 active_sensors.append(sensor)
-
-                if self.area.is_meta():
-                    active_areas.update(self._get_parent_areas(sensor))
 
         self._attributes["active_sensors"] = active_sensors
 
+        _LOGGER.debug(
+            f"[Area: {self.area.slug}] Active sensors: {active_sensors}"
+        )
+
         if self.area.is_meta():
-            self._attributes["active_areas"] = list(active_areas)
+            active_areas = self.area.get_active_areas()
+            _LOGGER.debug("[Area: {self.area.slug}] Active areas: {active_areas}")
+            self._attributes["active_areas"] = active_areas
 
         return len(active_sensors) > 0
-
-    def _get_parent_areas(self, entity_id):
-        parent_areas = []
-        for area_info in self.hass.data[MODULE_DATA].values():
-            area = area_info[DATA_AREA_OBJECT]
-            if not area.is_meta():
-                for domain_entities in area.entities.values():
-                    if entity_id in (e[ATTR_ENTITY_ID] for e in domain_entities):
-                        parent_areas.append(area.name)
-        return parent_areas
-
 
 class AggregateBase(MagicSensorBase):
     def load_sensors(self, domain, unit_of_measurement=None):
@@ -511,6 +517,35 @@ class MagicMetaArea(MagicArea):
                     return False
 
         return True
+
+    def get_active_areas(self):
+
+        areas = self.get_child_areas()
+        active_areas = []
+
+        for area in areas:
+            entity_id = f"binary_sensor.area_{area}"
+            entity = self.hass.states.get(entity_id)
+
+            if entity.state == STATE_ON:
+                active_areas.append(area)
+
+        return active_areas
+
+    def get_child_areas(self):
+
+        data = self.hass.data[MODULE_DATA]
+        areas = []
+
+        for area_info in data.values():
+            area = area_info[DATA_AREA_OBJECT]
+            if (
+                self.id == META_AREA_GLOBAL.lower()
+                or area.config.get(CONF_TYPE) == self.id
+            ) and not area.is_meta():
+                areas.append(area.slug)
+
+        return areas
 
     async def initialize(self, _=None) -> None:
         _LOGGER.debug(f"Initializing meta area {self.slug}...")
