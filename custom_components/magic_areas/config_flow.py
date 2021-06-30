@@ -39,6 +39,7 @@ from .const import (
     OPTIONS_AGGREGATES,
     OPTIONS_AREA_AWARE_MEDIA_PLAYER,
     REGULAR_AREA_SCHEMA,
+    CONFIG_FLOW_ENTITY_FILTER_EXT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -86,6 +87,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.data = None
         self.area = None
         self.all_entities = []
+        self.area_entities = []
+        self.all_area_entities = []
         self.all_lights = []
         self.all_media_players = []
         self.selected_features = []
@@ -117,9 +120,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.area = self.data[DATA_AREA_OBJECT]
 
         _LOGGER.debug(f"Initializing options flow for area {self.area.name}")
-        _LOGGER.debug(f"Old options in config entry: {self.config_entry.options}")
+        _LOGGER.debug(f"Options in config entry: {self.config_entry.options}")
+        
+        # Return all relevant entities
+        self.all_entities = sorted(entity_id for entity_id in self.hass.states.async_entity_ids() if entity_id.split('.')[0] in CONFIG_FLOW_ENTITY_FILTER_EXT)
+        
+        # Return all relevant area entities
+        filtered_area_entities = []
+        for domain in CONFIG_FLOW_ENTITY_FILTER_EXT:
+            filtered_area_entities.extend([entity["entity_id"] for entity in self.area.entities.get(domain, [])])
 
-        self.all_entities = sorted(self.hass.states.async_entity_ids())
+        self.area_entities = sorted(filtered_area_entities)
+        self.all_area_entities = sorted(self.area_entities + self.config_entry.options.get(CONF_EXCLUDE_ENTITIES, []))
+
         self.all_lights = sorted(
             entity["entity_id"] for entity in self.area.entities.get(LIGHT_DOMAIN, [])
         )
@@ -145,6 +158,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
                 _LOGGER.debug(f"Found the following errors: {errors}")
+            except Exception as e:
+                _LOGGER.warning(f"Unexpected error caught: {str(e)}")
             else:
                 _LOGGER.debug(f"Saving area base config: {self.area_options}")
                 return await self.async_step_select_features()
@@ -159,7 +174,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 ),
                 dynamic_validators={
                     CONF_INCLUDE_ENTITIES: cv.multi_select(self.all_entities),
-                    CONF_EXCLUDE_ENTITIES: cv.multi_select(self.all_entities),
+                    CONF_EXCLUDE_ENTITIES: cv.multi_select(self.all_area_entities),
                     CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(
                         sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
                     ),
@@ -283,13 +298,22 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 self.area_options[CONF_ENABLED_FEATURES][name] = validated_input
                 return await self.async_route_feature_config()
 
+        _LOGGER.debug(f"Config entry options: {self.config_entry.options}")
+
+        old_options = self.config_entry.options.get(
+                    CONF_ENABLED_FEATURES, {}
+            )
+
+        # Handle legacy options somewhat-gracefully
+        # @REMOVEME on 4.x.x, users shall be updated by then
+        if type(old_options) is not dict:
+            old_options = {}
+
         return self.async_show_form(
             step_id=f"feature_conf_{name}",
             data_schema=self._build_options_schema(
                 options=options,
-                old_options=self.config_entry.options.get(
-                    CONF_ENABLED_FEATURES, {}
-                ).get(name, {}),
+                old_options=old_options.get(name, {}),
                 dynamic_validators=dynamic_validators,
             ),
             errors=errors,

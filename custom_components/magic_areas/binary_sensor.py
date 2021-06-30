@@ -522,7 +522,7 @@ class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
         self._device_class = device_class
         self._state = False
 
-        device_class_name = device_class.capitalize()
+        device_class_name = " ".join(device_class.split('_')).title()
         self._name = f"Area {device_class_name} ({self.area.name})"
 
         self.tracking_listeners = []

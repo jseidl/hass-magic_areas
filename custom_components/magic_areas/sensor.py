@@ -49,13 +49,13 @@ async def load_sensors(hass, async_add_entities, area):
     for entity in area.entities[SENSOR_DOMAIN]:
 
         if "device_class" not in entity.keys():
-            _LOGGER.warning(
+            _LOGGER.debug(
                 f"Entity {entity['entity_id']} does not have device_class defined"
             )
             continue
 
         if "unit_of_measurement" not in entity.keys():
-            _LOGGER.warning(
+            _LOGGER.debug(
                 f"Entity {entity['entity_id']} does not have unit_of_measurement defined"
             )
             continue
@@ -94,7 +94,7 @@ class AreaSensorGroupSensor(AggregateBase, SensorBase):
         self._unit_of_measurement = unit_of_measurement
         self._state = 0
 
-        device_class_name = device_class.capitalize()
+        device_class_name = " ".join(device_class.split('_')).title()
         self._name = (
             f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
         )

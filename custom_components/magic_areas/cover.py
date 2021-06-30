@@ -7,7 +7,6 @@ from homeassistant.components.group.cover import CoverGroup
 
 from .base import MagicEntity
 from .const import (
-    CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_COVER_GROUPS,
     DATA_AREA_OBJECT,
     MODULE_DATA,
@@ -54,10 +53,13 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
     def __init__(self, hass, area, device_class):
         self.area = area
         self.hass = hass
+
+        device_class_name = " ".join(device_class.split('_')).title()
+
         self._name = (
-            f"{area.name} {device_class.title()} Covers"
+            f"Area {device_class_name} Covers ({area.name})"
             if device_class
-            else f"{area.name} Covers"
+            else f"Area Covers ({area.name})"
         )
         self._device_class = device_class
         self._entities = [

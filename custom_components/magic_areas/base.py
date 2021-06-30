@@ -513,7 +513,7 @@ class MagicMetaArea(MagicArea):
             if area.config.get(CONF_TYPE) != AREA_TYPE_META:
 
                 if not area.initialized:
-                    _LOGGER.warning(f"Area {area.id} not initialized")
+                    _LOGGER.debug(f"Area {area.id} not initialized")
                     return False
 
         return True
@@ -585,7 +585,7 @@ class MagicMetaArea(MagicArea):
                 for entities in area.entities.values():
                     for entity in entities:
                         if not isinstance(entity["entity_id"], str):
-                            _LOGGER.warning(f"Entity ID is not a string: {entity['entity_id']}")
+                            _LOGGER.debug(f"Entity ID is not a string: {entity['entity_id']}")
                             continue
                         entity_list.append(entity["entity_id"])
 
