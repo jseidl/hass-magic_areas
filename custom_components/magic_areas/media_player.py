@@ -62,11 +62,11 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         )
         return
 
-    async_add_entities([AreaAwareMediaPlayer(hass, areas_with_media_players)])
+    async_add_entities([AreaAwareMediaPlayer(hass, area, areas_with_media_players)])
 
 
 class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
-    def __init__(self, hass, areas):
+    def __init__(self, hass, area, areas):
 
         self.hass = hass
 
@@ -76,6 +76,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
         self._state = STATE_IDLE
 
         self.areas = areas
+        self.area = area
         self._tracked_entities = []
 
         for area in self.areas:
@@ -97,20 +98,15 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
         entity_ids = []
 
-        notification_devices = area.feature_config(CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER).get(CONF_NOTIFICATION_DEVICES)
+        notification_devices = self.area.feature_config(CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER).get(CONF_NOTIFICATION_DEVICES)
 
-        for entity in area.entities[MEDIA_PLAYER_DOMAIN]:
-            entity_ids.append(entity["entity_id"])
+        area_media_players = [entity['entity_id'] for entity in area.entities[MEDIA_PLAYER_DOMAIN]]
 
-        # Return the notification_devices if defined and all valid
-        if notification_devices:
-            all_valid_devices = all(
-                [device in entity_ids for device in notification_devices]
-            )
-            if all_valid_devices:
-                return set(notification_devices)
+        # Check if media_player entities are notification devices
+        for mp in area_media_players:
+            if mp in notification_devices:
+                entity_ids.append(mp)        
 
-        # Return all media_player entities
         return set(entity_ids)
 
     async def async_added_to_hass(self):

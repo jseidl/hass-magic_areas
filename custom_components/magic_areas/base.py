@@ -334,13 +334,24 @@ class MagicArea(object):
 
     def has_feature(self, feature) -> bool:
 
-        return feature in self.config.get(CONF_ENABLED_FEATURES).keys()
+        enabled_features = self.config.get(CONF_ENABLED_FEATURES)
+
+        # Deal with legacy
+        if type(enabled_features) is list:
+            return feature in enabled_features
+
+        # Handle everything else
+        if type(enabled_features) is not dict:
+            _LOGGER.warning(f"{self.name}: Invalid configuration for {CONF_ENABLED_FEATURES}")
+            return False
+
+        return feature in enabled_features.keys()
 
     def feature_config(self, feature) -> dict:
 
         if not self.has_feature(feature):
             #@TODO reduce to info/debug when done testing
-            _LOGGER.warning(f"Feature {feature} not enabled")
+            _LOGGER.warning(f"{self.name}: Feature {feature} not enabled")
             return {}
         
         options = self.config.get(
