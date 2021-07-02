@@ -31,6 +31,7 @@ from .const import (
     CONF_SLEEP_STATE,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
+    CONF_FEATURE_LIGHT_GROUPS,
     DATA_AREA_OBJECT,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
@@ -333,7 +334,23 @@ class MagicArea(object):
 
     def has_feature(self, feature) -> bool:
 
-        return feature in self.config.get(CONF_ENABLED_FEATURES)
+        return feature in self.config.get(CONF_ENABLED_FEATURES).keys()
+
+    def feature_config(self, feature) -> dict:
+
+        if not self.has_feature(feature):
+            #@TODO reduce to info/debug when done testing
+            _LOGGER.warning(f"Feature {feature} not enabled")
+            return {}
+        
+        options = self.config.get(
+                    CONF_ENABLED_FEATURES, {}
+        )
+
+        if not options:
+            _LOGGER.warning(f"{self.name}: No feature config found for {feature}")
+
+        return options.get(feature, {})
 
     def is_meta(self) -> bool:
 
@@ -446,10 +463,10 @@ class MagicArea(object):
         return domain in self.entities.keys()
 
     def is_sleeping(self):
-        if self.config.get(CONF_SLEEP_ENTITY):
+        if self.has_feature(CONF_FEATURE_LIGHT_GROUPS) and self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_ENTITY):
 
-            sleep_entity = self.hass.states.get(self.config.get(CONF_SLEEP_ENTITY))
-            if sleep_entity.state.lower() == self.config.get(CONF_SLEEP_STATE).lower():
+            sleep_entity = self.hass.states.get(self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_ENTITY))
+            if sleep_entity.state.lower() == self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_STATE).lower():
                 _LOGGER.info(
                     f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
                 )
@@ -460,10 +477,10 @@ class MagicArea(object):
     def is_night(self):
 
         # Check if has night entity
-        if self.config.get(CONF_NIGHT_ENTITY):
-            night_entity = self.hass.states.get(self.config.get(CONF_NIGHT_ENTITY))
+        if self.has_feature(CONF_FEATURE_LIGHT_GROUPS) and self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_ENTITY):
+            night_entity = self.hass.states.get(self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_ENTITY))
             if night_entity and (
-                night_entity.state.lower() == self.config.get(CONF_NIGHT_STATE).lower()
+                night_entity.state.lower() == self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_STATE).lower()
             ):
                 _LOGGER.info(
                     f"Night entity '{night_entity.entity_id}' on night state '{night_entity.state}'"

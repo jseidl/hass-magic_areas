@@ -97,7 +97,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
         entity_ids = []
 
-        notification_devices = area.config.get(CONF_NOTIFICATION_DEVICES)
+        notification_devices = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NOTIFICATION_DEVICES)
 
         for entity in area.entities[MEDIA_PLAYER_DOMAIN]:
             entity_ids.append(entity["entity_id"])
@@ -151,7 +151,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
                 continue
 
             # Check NOTIFY_ON_SLEEP
-            if area.is_sleeping() and not area.config.get(CONF_NOTIFY_ON_SLEEP):
+            if area.is_sleeping() and not area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NOTIFY_ON_SLEEP):
                 _LOGGER.debug(f"Area {area.name} is sleeping, skipping")
                 continue
 
