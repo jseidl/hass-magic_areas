@@ -147,7 +147,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
                 continue
 
             # Check NOTIFY_ON_SLEEP
-            if area.is_sleeping() and not area.feature_config(CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER).get(CONF_NOTIFY_ON_SLEEP):
+            if area.is_sleeping() and not self.area.feature_config(CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER).get(CONF_NOTIFY_ON_SLEEP):
                 _LOGGER.debug(f"Area {area.name} is sleeping, skipping")
                 continue
 
