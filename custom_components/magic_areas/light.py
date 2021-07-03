@@ -8,6 +8,7 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from .const import (
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_LIGHT_GROUPS,
+    CONF_FEATURE_AGGREGATION,
     DATA_AREA_OBJECT,
     MODULE_DATA,
 )
@@ -34,7 +35,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     group_name = f"{area.name} Lights"
 
     # Check CONF_AGGREGATES_MIN_ENTITIES
-    if len(light_entities) < area.config.get(CONF_AGGREGATES_MIN_ENTITIES):
+    # @TODO add min_entities for the group instead of using from aggr
+    if len(light_entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(CONF_AGGREGATES_MIN_ENTITIES):
         _LOGGER.debug(f"Not enough entities for Light group for area {area.name}")
         return
 

@@ -37,6 +37,7 @@ from .const import (
     CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_HEALTH,
     CONF_FEATURE_LIGHT_CONTROL,
+    CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_MEDIA_CONTROL,
     CONF_ICON,
     CONF_MAIN_LIGHTS,
@@ -101,7 +102,7 @@ async def create_health_sensors(hass, area, async_add_entities):
 
         distress_entities.append(entity)
 
-    if len(distress_entities) < area.config.get(CONF_AGGREGATES_MIN_ENTITIES):
+    if len(distress_entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(CONF_AGGREGATES_MIN_ENTITIES):
         return
 
     _LOGGER.debug(f"Creating helth sensor for area ({area.slug})")
@@ -132,7 +133,7 @@ async def create_aggregate_sensors(hass, area, async_add_entities):
         device_class_count[entity["device_class"]] += 1
 
     for device_class, entity_count in device_class_count.items():
-        if entity_count < area.config.get(CONF_AGGREGATES_MIN_ENTITIES):
+        if entity_count < area.feature_config(CONF_FEATURE_AGGREGATION).get(CONF_AGGREGATES_MIN_ENTITIES):
             continue
 
         _LOGGER.debug(
@@ -159,6 +160,14 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.tracking_listeners = []
 
     def load_presence_sensors(self) -> None:
+        
+        if self.area.is_meta():
+            # MetaAreas track their children
+            child_areas = self.area.get_child_areas()
+            for child_area in child_areas:
+                entity_id = f"binary_sensor.area_{child_area}"
+                self.sensors.append(entity_id)
+            return
 
         for component, entities in self.area.entities.items():
 
@@ -180,12 +189,11 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
                 self.sensors.append(entity["entity_id"])
 
-        if not self.area.is_meta():
-            # Append presence_hold switch as a presence_sensor
-            presence_hold_switch_id = (
-                f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
-            )
-            self.sensors.append(presence_hold_switch_id)
+        # Append presence_hold switch as a presence_sensor
+        presence_hold_switch_id = (
+            f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
+        )
+        self.sensors.append(presence_hold_switch_id)
 
     def load_attributes(self) -> None:
 
@@ -213,6 +221,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         }
 
         if self.area.is_meta():
+            self._attributes.update(
+                {
+                    "areas": self.area.get_child_areas(),
+                    "active_areas": self.area.get_active_areas()
+                }
+            )
             return
 
         # Add non-meta attributes
@@ -281,16 +295,16 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
         # Track autolight_disable sensor if available
-        if self.area.config.get(CONF_NIGHT_ENTITY):
+        if self.area.has_feature(CONF_FEATURE_LIGHT_GROUPS) and self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_ENTITY):
             remove_disable = async_track_state_change(
                 self.hass,
-                self.area.config.get(CONF_NIGHT_ENTITY),
+                self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_ENTITY),
                 self.autolight_disable_state_change,
             )
             self.tracking_listeners.append(remove_disable)
 
         # Track autolight_sleep sensor if available
-        if self.area.config.get(CONF_SLEEP_ENTITY):
+        if self.area.has_feature(CONF_FEATURE_LIGHT_GROUPS) and self.area.config.get(CONF_SLEEP_ENTITY):
             remove_sleep = async_track_state_change(
                 self.hass,
                 self.area.config.get(CONF_SLEEP_ENTITY),
@@ -321,7 +335,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             if not to_state:
                 return
 
-            if to_state.state != self.area.config.get(CONF_NIGHT_STATE):
+            if to_state.state != self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_STATE):
                 if self._state:
                     self._lights_off()
             else:
@@ -335,7 +349,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def _is_autolights_disabled(self):
 
-        if not self.area.config.get(CONF_NIGHT_ENTITY):
+        if not self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_ENTITY):
             return False
 
         return not self.area.is_night()
@@ -348,7 +362,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         ):
             return AUTOLIGHTS_STATE_DISABLED
 
-        if self.area.is_sleeping() and self.area.config.get(CONF_SLEEP_LIGHTS):
+        if self.area.is_sleeping() and self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_LIGHTS):
             return AUTOLIGHTS_STATE_SLEEP
 
         return AUTOLIGHTS_STATE_NORMAL
@@ -361,16 +375,16 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         ]
 
         # Regular operation
-        if self.area.config.get(CONF_MAIN_LIGHTS):
-            affected_lights = self.area.config.get(CONF_MAIN_LIGHTS)
+        if self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_MAIN_LIGHTS):
+            affected_lights = self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_MAIN_LIGHTS)
 
         # Check if in disable mode
         if self._is_autolights_disabled():
             return False
 
         # Check if in sleep mode
-        if self.area.is_sleeping() and self.area.config.get(CONF_SLEEP_LIGHTS):
-            affected_lights = self.area.config.get(CONF_SLEEP_LIGHTS)
+        if self.area.is_sleeping() and self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_LIGHTS):
+            affected_lights = self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_LIGHTS)
 
         # Call service to turn_on the lights
         service_data = {ATTR_ENTITY_ID: affected_lights}
@@ -384,15 +398,24 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._attributes["sleep"] = self.area.is_sleeping()
         self._attributes["automatic_lights"] = self._get_autolights_state()
 
+        if self.area.is_meta():
+            self._attributes["active_areas"] = self.area.get_active_areas()
+
     def _update_state(self):
 
-        area_state = self._get_sensors_state()
+        area_state = self._get_sensors_state(valid_states=self.area.config.get(CONF_ON_STATES))
         last_state = self._state
         sleep_timeout = self.area.config.get(CONF_SLEEP_TIMEOUT)
 
         if area_state:
+            _LOGGER.debug(
+                f"Area {self.area.slug} state: Occupancy detected."
+            )
             self._state = True
         else:
+            _LOGGER.debug(
+                f"Area {self.area.slug} state: Occupancy not detected."
+            )
             if sleep_timeout and self.area.is_sleeping():
                 # if in sleep mode and sleep_timeout is set, use it...
                 _LOGGER.debug(
@@ -402,7 +425,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             else:
                 # ..else, use clear_timeout
                 _LOGGER.debug(
-                    f"Area {self.area.slug} ... Timeout: {str(self.area.config.get(CONF_CLEAR_TIMEOUT))}"
+                    f"Area {self.area.slug} not in sleep mode. Timeout: {str(self.area.config.get(CONF_CLEAR_TIMEOUT))}"
                 )
                 clear_delta = timedelta(
                     seconds=self.area.config.get(CONF_CLEAR_TIMEOUT)
@@ -413,6 +436,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             time_now = datetime.utcnow()
 
             if time_now >= clear_time:
+                _LOGGER.debug(
+                    f"Area {self.area.slug} timeout exceeded. Clearing occupancy state."
+                )
                 self._state = False
 
         self._update_attributes()
@@ -425,38 +451,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 self._state_on()
             else:
                 self._state_off()
-
-    def _get_sensors_state(self):
-
-        active_sensors = []
-        active_areas = set()
-
-        # Loop over all entities and check their state
-        for sensor in self.sensors:
-
-            entity = self.hass.states.get(sensor)
-
-            if not entity:
-                _LOGGER.info(
-                    f"Could not get sensor state: {sensor} entity not found, skipping"
-                )
-                continue
-
-            # Skip unavailable entities
-            if entity.state == STATE_UNAVAILABLE:
-                continue
-
-            if entity.state in self.area.config.get(CONF_ON_STATES):
-                active_sensors.append(sensor)
-
-                if self.area.is_meta():
-                    active_areas.update(self._get_parent_areas(sensor))
-
-        self._attributes["active_sensors"] = active_sensors
-        if self.area.is_meta():
-            self._attributes["active_areas"] = list(active_areas)
-
-        return len(active_sensors) > 0
 
     def _lights_on(self):
         # Turn on lights, if configured
@@ -529,7 +523,7 @@ class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
         self._device_class = device_class
         self._state = False
 
-        device_class_name = device_class.capitalize()
+        device_class_name = " ".join(device_class.split('_')).title()
         self._name = f"Area {device_class_name} ({self.area.name})"
 
         self.tracking_listeners = []
@@ -544,40 +538,6 @@ class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
         await self._setup_listeners()
 
         _LOGGER.debug(f"{self.name} Sensor initialized.")
-
-    # def _get_sensors_state(self):
-    #     if self.area.id in (meta_area.lower() for meta_area in META_AREAS):
-    #         active_sensors = []
-    #         active_areas = set()
-
-    #         # Loop over all entities and check their state
-    #         for sensor in self.sensors:
-
-    #             entity = self.hass.states.get(sensor)
-
-    #             if not entity:
-    #                 _LOGGER.info(
-    #                     f"Could not get sensor state: {sensor} entity not found, skipping"
-    #                 )
-    #                 continue
-
-    #             # Skip unavailable entities
-    #             if entity.state == STATE_UNAVAILABLE:
-    #                 continue
-
-    #             if entity.state in STATE_ON:
-    #                 active_sensors.append(sensor)
-    #                 for area_info in self.hass.data[MODULE_DATA].values():
-    #                     area = area_info[DATA_AREA_OBJECT]
-    #                     if sensor in (e[ATTR_ENTITY_ID] for e in area.entities.get(BINARY_SENSOR_DOMAIN, [])):
-    #                         active_areas.add(area.name)
-
-    #         self._attributes["active_sensors"] = active_sensors
-    #         self._attributes["active_areas"] = list(active_areas)
-
-    #         return len(active_sensors) > 0
-    #     else:
-    #         return super()._get_sensors_state()
 
 
 class AreaDistressBinarySensor(BinarySensorBase, AggregateBase):

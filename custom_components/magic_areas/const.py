@@ -18,7 +18,9 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
+from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
@@ -102,7 +104,7 @@ AREA_TYPES = [AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR, AREA_TYPE_META]
 CONF_ID = "id"
 CONF_NAME, DEFAULT_NAME = "name", ""  # cv.string
 CONF_TYPE, DEFAULT_TYPE = "type", AREA_TYPE_INTERIOR  # cv.string
-CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES = "features", []  # cv.list
+CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES = "features", {}  # cv.list
 CONF_INCLUDE_ENTITIES = "include_entities"  # cv.entity_ids
 CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
 (
@@ -250,7 +252,7 @@ REGULAR_AREA_SCHEMA = vol.Schema({
         CONF_PRESENCE_SENSOR_DEVICE_CLASS,
         default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
     ): cv.ensure_list,
-    vol.Optional(CONF_ON_STATES, default=[]): cv.ensure_list_csv,
+    vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list_csv,
     vol.Optional(CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT): cv.positive_int,
     vol.Optional(CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT): cv.positive_int,
     vol.Optional(
@@ -321,3 +323,7 @@ OPTIONS_AREA_AWARE_MEDIA_PLAYER = [
     (CONF_NOTIFICATION_DEVICES, [], cv.entity_ids),
     (CONF_NOTIFY_ON_SLEEP, DEFAULT_NOTIFY_ON_SLEEP, bool),
 ]
+
+# Config Flow filters
+CONFIG_FLOW_ENTITY_FILTER = [BINARY_SENSOR_DOMAIN, SENSOR_DOMAIN, SWITCH_DOMAIN, INPUT_BOOLEAN_DOMAIN]
+CONFIG_FLOW_ENTITY_FILTER_EXT = CONFIG_FLOW_ENTITY_FILTER + [LIGHT_DOMAIN, MEDIA_PLAYER_DOMAIN, CLIMATE_DOMAIN]
