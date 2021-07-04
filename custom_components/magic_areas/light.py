@@ -7,8 +7,8 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 
 from .const import (
     CONF_FEATURE_LIGHT_GROUPS,
-    LIGHT_GROUP_CATEGORIES,
     DATA_AREA_OBJECT,
+    LIGHT_GROUP_CATEGORIES,
     MODULE_DATA,
 )
 
@@ -49,9 +49,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         category_lights = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(category)
 
         if category_lights:
-            category_title = ' '.join(category.split('_')).title()
-            _LOGGER.debug(f"Creating {category_title} group for area {area.name} with lights: {category_lights}")
-            light_groups.append(LightGroup(f"{category_title} ({area.name})", category_lights))
+            category_title = " ".join(category.split("_")).title()
+            _LOGGER.debug(
+                f"Creating {category_title} group for area {area.name} with lights: {category_lights}"
+            )
+            light_groups.append(
+                LightGroup(f"{category_title} ({area.name})", category_lights)
+            )
 
     # Create all groups
     async_add_entities(light_groups)

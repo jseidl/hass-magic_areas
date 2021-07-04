@@ -1,6 +1,8 @@
-import voluptuous as vol
 from itertools import chain
+
+import voluptuous as vol
 from homeassistant.components.binary_sensor import (
+    DEVICE_CLASS_CONNECTIVITY,
     DEVICE_CLASS_DOOR,
     DEVICE_CLASS_GAS,
     DEVICE_CLASS_LIGHT,
@@ -12,15 +14,14 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_PROBLEM,
     DEVICE_CLASS_SAFETY,
     DEVICE_CLASS_SMOKE,
-    DEVICE_CLASS_WINDOW,
     DEVICE_CLASS_VIBRATION,
-    DEVICE_CLASS_CONNECTIVITY,
+    DEVICE_CLASS_WINDOW,
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
+from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
@@ -84,10 +85,10 @@ CONF_SLEEP_ENTITY = "sleep_entity"
 CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE = "sleep_state", STATE_ON
 
 AREA_STATE_OCCUPIED = "occupied"
-AREA_STATE_EXTENDED = 'extended'
-AREA_STATE_DARK = 'dark'
-AREA_STATE_SLEEP = 'sleep'
-AREA_STATE_ACCENT = 'accented'
+AREA_STATE_EXTENDED = "extended"
+AREA_STATE_DARK = "dark"
+AREA_STATE_SLEEP = "sleep"
+AREA_STATE_ACCENT = "accented"
 
 BUILTIN_AREA_STATES = [AREA_STATE_OCCUPIED, AREA_STATE_EXTENDED]
 CONFIGURABLE_AREA_STATES = [AREA_STATE_DARK, AREA_STATE_ACCENT, AREA_STATE_SLEEP]
@@ -188,7 +189,7 @@ CONF_FEATURE_LIST_GLOBAL = CONF_FEATURE_LIST_META + [
 
 # Light group options
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
-CONF_OVERHEAD_LIGHTS_STATES = "overhead_lights_states" # cv.ensure_list
+CONF_OVERHEAD_LIGHTS_STATES = "overhead_lights_states"  # cv.ensure_list
 CONF_SLEEP_LIGHTS = "sleep_lights"
 CONF_SLEEP_LIGHTS_STATES = "sleep_lights_states"
 CONF_ACCENT_LIGHTS = "accent_lights"
@@ -200,7 +201,7 @@ LIGHT_GROUP_CATEGORIES = [
     CONF_OVERHEAD_LIGHTS,
     CONF_SLEEP_LIGHTS,
     CONF_ACCENT_LIGHTS,
-    CONF_TASK_LIGHTS
+    CONF_TASK_LIGHTS,
 ]
 
 # Health related
@@ -240,27 +241,33 @@ AGGREGATE_MODE_SUM = [DEVICE_CLASS_POWER, DEVICE_CLASS_CURRENT, DEVICE_CLASS_ENE
 
 # Config Schema
 
-AGGREGATE_FEATURE_SCHEMA = vol.Schema({
-    vol.Optional(
-        CONF_AGGREGATES_MIN_ENTITIES, default=DEFAULT_AGGREGATES_MIN_ENTITIES
-    ): cv.positive_int,
-})
+AGGREGATE_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_AGGREGATES_MIN_ENTITIES, default=DEFAULT_AGGREGATES_MIN_ENTITIES
+        ): cv.positive_int,
+    }
+)
 
-LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema({
-    vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
-    vol.Optional(CONF_OVERHEAD_LIGHTS_STATES, default=[]): cv.ensure_list,
-    vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
-    vol.Optional(CONF_SLEEP_LIGHTS_STATES, default=[]): cv.ensure_list,
-    vol.Optional(CONF_ACCENT_LIGHTS, default=[]): cv.entity_ids,
-    vol.Optional(CONF_ACCENT_LIGHTS_STATES, default=[]): cv.ensure_list,
-    vol.Optional(CONF_TASK_LIGHTS, default=[]): cv.entity_ids,
-    vol.Optional(CONF_TASK_LIGHTS_STATES, default=[]): cv.ensure_list,
-})
+LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
+        vol.Optional(CONF_OVERHEAD_LIGHTS_STATES, default=[]): cv.ensure_list,
+        vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
+        vol.Optional(CONF_SLEEP_LIGHTS_STATES, default=[]): cv.ensure_list,
+        vol.Optional(CONF_ACCENT_LIGHTS, default=[]): cv.entity_ids,
+        vol.Optional(CONF_ACCENT_LIGHTS_STATES, default=[]): cv.ensure_list,
+        vol.Optional(CONF_TASK_LIGHTS, default=[]): cv.entity_ids,
+        vol.Optional(CONF_TASK_LIGHTS_STATES, default=[]): cv.ensure_list,
+    }
+)
 
-AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA = vol.Schema({
-    vol.Optional(CONF_NOTIFICATION_DEVICES, default=[]): cv.entity_ids,
-    vol.Optional(CONF_NOTIFY_ON_SLEEP, default=DEFAULT_NOTIFY_ON_SLEEP): bool,
-})
+AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_NOTIFICATION_DEVICES, default=[]): cv.entity_ids,
+        vol.Optional(CONF_NOTIFY_ON_SLEEP, default=DEFAULT_NOTIFY_ON_SLEEP): bool,
+    }
+)
 
 ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
 
@@ -276,52 +283,69 @@ NON_CONFIGURABLE_FEATURES = {
     if feature not in CONFIGURABLE_FEATURES.keys()
 }
 
-FEATURES_SCHEMA = vol.Schema({
-    vol.Optional(feature): feature_schema
-    for feature, feature_schema
-    in chain(CONFIGURABLE_FEATURES.items(), NON_CONFIGURABLE_FEATURES.items())
-})
+FEATURES_SCHEMA = vol.Schema(
+    {
+        vol.Optional(feature): feature_schema
+        for feature, feature_schema in chain(
+            CONFIGURABLE_FEATURES.items(), NON_CONFIGURABLE_FEATURES.items()
+        )
+    }
+)
 
-SECONDARY_STATES_SCHEMA = vol.Schema({
-    vol.Optional(CONF_SLEEP_ENTITY, default=""): vol.Any("", cv.entity_id),
-    vol.Optional(CONF_SLEEP_STATE, default=DEFAULT_SLEEP_STATE): str,
-    vol.Optional(CONF_DARK_ENTITY, default=""): vol.Any("", cv.entity_id),
-    vol.Optional(CONF_DARK_STATE, default=DEFAULT_DARK_STATE): str,
-    vol.Optional(CONF_ACCENT_ENTITY, default=""): vol.Any("", cv.entity_id),
-    vol.Optional(CONF_ACCENT_STATE, default=DEFAULT_ACCENT_STATE): str,
-})
+SECONDARY_STATES_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_SLEEP_ENTITY, default=""): vol.Any("", cv.entity_id),
+        vol.Optional(CONF_SLEEP_STATE, default=DEFAULT_SLEEP_STATE): str,
+        vol.Optional(CONF_DARK_ENTITY, default=""): vol.Any("", cv.entity_id),
+        vol.Optional(CONF_DARK_STATE, default=DEFAULT_DARK_STATE): str,
+        vol.Optional(CONF_ACCENT_ENTITY, default=""): vol.Any("", cv.entity_id),
+        vol.Optional(CONF_ACCENT_STATE, default=DEFAULT_ACCENT_STATE): str,
+    }
+)
 
 # Magic Areas
-REGULAR_AREA_SCHEMA = vol.Schema({
-    vol.Optional(CONF_TYPE, default=DEFAULT_TYPE): vol.In([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR]),
-    vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
-    vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
-    vol.Optional(
-        CONF_PRESENCE_SENSOR_DEVICE_CLASS,
-        default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
-    ): cv.ensure_list,
-    vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list_csv,
-    vol.Optional(CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT): cv.positive_int,
-    vol.Optional(CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT): cv.positive_int,
-    vol.Optional(
-        CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
-    ): cv.positive_int,
-    vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
-    vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
-    vol.Optional(CONF_SECONDARY_STATES, default={}): SECONDARY_STATES_SCHEMA,
-})
+REGULAR_AREA_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_TYPE, default=DEFAULT_TYPE): vol.In(
+            [AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR]
+        ),
+        vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
+        vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+        vol.Optional(
+            CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+            default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
+        ): cv.ensure_list,
+        vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list_csv,
+        vol.Optional(
+            CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
+        ): cv.positive_int,
+        vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
+        vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
+        vol.Optional(CONF_SECONDARY_STATES, default={}): SECONDARY_STATES_SCHEMA,
+    }
+)
 
-META_AREA_SCHEMA = vol.Schema({
-    vol.Optional(CONF_TYPE, default=AREA_TYPE_META): AREA_TYPE_META,
-    vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
-    vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
-    vol.Optional(CONF_ON_STATES, default=[]): cv.ensure_list_csv,
-    vol.Optional(CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT): cv.positive_int,
-    vol.Optional(
-        CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
-    ): cv.positive_int,
-    vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
-})
+META_AREA_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_TYPE, default=AREA_TYPE_META): AREA_TYPE_META,
+        vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
+        vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+        vol.Optional(CONF_ON_STATES, default=[]): cv.ensure_list_csv,
+        vol.Optional(
+            CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
+        ): cv.positive_int,
+        vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
+    }
+)
 
 AREA_SCHEMA = vol.Schema(vol.Any(REGULAR_AREA_SCHEMA, META_AREA_SCHEMA))
 
@@ -341,7 +365,11 @@ OPTIONS_AREA = [
         DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
         cv.ensure_list,
     ),
-    (CONF_ON_STATES, ",".join(DEFAULT_ON_STATES), str),  # this should actually be cv.ensure_list_csv, but voluptuous doesn't support serializing this validator, so we'll work around with str and mangling the default
+    (
+        CONF_ON_STATES,
+        ",".join(DEFAULT_ON_STATES),
+        str,
+    ),  # this should actually be cv.ensure_list_csv, but voluptuous doesn't support serializing this validator, so we'll work around with str and mangling the default
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
     (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
@@ -359,9 +387,9 @@ OPTIONS_SECONDARY_STATES = [
     (CONF_SLEEP_ENTITY, "", cv.entity_id),
     (CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE, str),
     (CONF_DARK_ENTITY, "", cv.entity_id),
-    (CONF_DARK_STATE, DEFAULT_DARK_STATE, str),    
+    (CONF_DARK_STATE, DEFAULT_DARK_STATE, str),
     (CONF_ACCENT_ENTITY, "", cv.entity_id),
-    (CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE, str),    
+    (CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE, str),
 ]
 
 OPTIONS_LIGHT_GROUP = [
@@ -385,5 +413,14 @@ OPTIONS_AREA_AWARE_MEDIA_PLAYER = [
 ]
 
 # Config Flow filters
-CONFIG_FLOW_ENTITY_FILTER = [BINARY_SENSOR_DOMAIN, SENSOR_DOMAIN, SWITCH_DOMAIN, INPUT_BOOLEAN_DOMAIN]
-CONFIG_FLOW_ENTITY_FILTER_EXT = CONFIG_FLOW_ENTITY_FILTER + [LIGHT_DOMAIN, MEDIA_PLAYER_DOMAIN, CLIMATE_DOMAIN]
+CONFIG_FLOW_ENTITY_FILTER = [
+    BINARY_SENSOR_DOMAIN,
+    SENSOR_DOMAIN,
+    SWITCH_DOMAIN,
+    INPUT_BOOLEAN_DOMAIN,
+]
+CONFIG_FLOW_ENTITY_FILTER_EXT = CONFIG_FLOW_ENTITY_FILTER + [
+    LIGHT_DOMAIN,
+    MEDIA_PLAYER_DOMAIN,
+    CLIMATE_DOMAIN,
+]
