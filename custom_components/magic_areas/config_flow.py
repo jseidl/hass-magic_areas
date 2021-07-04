@@ -13,6 +13,7 @@ from .const import (
     AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
+    CONF_SECONDARY_STATES,
     CONF_FEATURE_LIST,
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
@@ -20,26 +21,40 @@ from .const import (
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_AGGREGATION,
     CONF_INCLUDE_ENTITIES,
-    CONF_MAIN_LIGHTS,
-    CONF_NIGHT_ENTITY,
+    CONF_OVERHEAD_LIGHTS,
+    CONF_OVERHEAD_LIGHTS_STATES,
+    CONF_ACCENT_LIGHTS,
+    CONF_ACCENT_LIGHTS_STATES,
+    CONF_TASK_LIGHTS,
+    CONF_TASK_LIGHTS_STATES,
+    CONF_SLEEP_LIGHTS,
+    CONF_SLEEP_LIGHTS_STATES,
+    CONF_DARK_ENTITY,
+    CONF_SLEEP_ENTITY,
+    CONF_ACCENT_ENTITY,
     CONF_NOTIFICATION_DEVICES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
-    CONF_SLEEP_ENTITY,
-    CONF_SLEEP_LIGHTS,
     CONF_TYPE,
     CONFIGURABLE_FEATURES,
     DATA_AREA_OBJECT,
     DOMAIN,
     META_AREA_GLOBAL,
     META_AREA_SCHEMA,
+    SECONDARY_STATES_SCHEMA,
     MODULE_DATA,
     OPTIONS_AREA,
     OPTIONS_AREA_META,
+    OPTIONS_SECONDARY_STATES,
     OPTIONS_LIGHT_GROUP,
     OPTIONS_AGGREGATES,
     OPTIONS_AREA_AWARE_MEDIA_PLAYER,
     REGULAR_AREA_SCHEMA,
     CONFIG_FLOW_ENTITY_FILTER_EXT,
+    BUILTIN_AREA_STATES,
+    AREA_STATE_ACCENT, 
+    AREA_STATE_DARK, 
+    AREA_STATE_SLEEP,
+    CONFIGURABLE_AREA_STATE_MAP
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -94,18 +109,18 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.selected_features = []
         self.features_to_configure = None
 
-    def _build_options_schema(self, options, old_options=None, dynamic_validators={}):
+    def _build_options_schema(self, options, saved_options=None, dynamic_validators={}):
         _LOGGER.debug(
             f"Building schema from options: {options} - dynamic_validators: {dynamic_validators}"
         )
-        if old_options is None:
-            old_options = self.config_entry.options
-        _LOGGER.debug(f"Data for pre-populating fields: {old_options}")
+        if saved_options is None:
+            saved_options = self.config_entry.options
+        _LOGGER.debug(f"Data for pre-populating fields: {saved_options}")
         schema = vol.Schema(
             {
                 vol.Optional(
                     name,
-                    description={"suggested_value": old_options.get(name)},
+                    description={"suggested_value": saved_options.get(name)},
                     default=default,
                 ): dynamic_validators.get(name, validation)
                 for name, default, validation in options
@@ -150,7 +165,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             _LOGGER.debug(f"Validating area base config: {user_input}")
             area_schema = (
                 META_AREA_SCHEMA
-                if self.area.config.get(CONF_TYPE) == AREA_TYPE_META
+                if self.area.is_meta()
                 else REGULAR_AREA_SCHEMA
             )
             try:
@@ -162,14 +177,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 _LOGGER.warning(f"Unexpected error caught: {str(e)}")
             else:
                 _LOGGER.debug(f"Saving area base config: {self.area_options}")
-                return await self.async_step_select_features()
+                if self.area.is_meta():
+                    return await self.async_step_select_features()
+                else:
+                    return await self.async_step_secondary_states()
 
         return self.async_show_form(
             step_id="area_config",
             data_schema=self._build_options_schema(
                 options=(
                     OPTIONS_AREA_META
-                    if self.area.config.get(CONF_TYPE) == AREA_TYPE_META
+                    if self.area.is_meta()
                     else OPTIONS_AREA
                 ),
                 dynamic_validators={
@@ -178,6 +196,40 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(
                         sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
                     ),
+                },
+            ),
+            errors=errors,
+        )
+
+    async def async_step_secondary_states(self, user_input=None):
+
+        """Gather secondary states settings for the area."""
+        errors = {}
+        if user_input is not None:
+            _LOGGER.debug(f"Validating area secondary states config: {user_input}")
+            AREA_state_schema = (SECONDARY_STATES_SCHEMA)
+            try:
+                self.area_options[CONF_SECONDARY_STATES].update(AREA_state_schema(user_input))
+            except vol.MultipleInvalid as validation:
+                errors = {error.path[0]: error.msg for error in validation.errors}
+                _LOGGER.debug(f"Found the following errors: {errors}")
+            except Exception as e:
+                _LOGGER.warning(f"Unexpected error caught: {str(e)}")
+            else:
+                _LOGGER.debug(f"Saving area secondary state config: {self.area_options}")
+                return await self.async_step_select_features()
+
+        return self.async_show_form(
+            step_id="secondary_states",
+            data_schema=self._build_options_schema(
+                options=(
+                    OPTIONS_SECONDARY_STATES
+                ),
+                saved_options=self.config_entry.options.get(CONF_SECONDARY_STATES, {}),
+                dynamic_validators={
+                    CONF_DARK_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
+                    CONF_SLEEP_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
+                    CONF_ACCENT_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
                 },
             ),
             errors=errors,
@@ -215,7 +267,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             step_id="select_features",
             data_schema=self._build_options_schema(
                 options=[(feature, False, bool) for feature in feature_list],
-                old_options={
+                saved_options={
                     feature: (
                         feature
                         in self.config_entry.options.get(CONF_ENABLED_FEATURES, {})
@@ -248,14 +300,26 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_feature_conf_light_groups(self, user_input=None):
         """Configure the light groups feature"""
+
+        available_states = BUILTIN_AREA_STATES.copy()
+        
+        for extra_state, extra_state_opts in CONFIGURABLE_AREA_STATE_MAP.items():
+            extra_state_entity, extra_state_state = extra_state_opts
+            if self.area_options[CONF_SECONDARY_STATES].get(extra_state_entity, None):
+                available_states.append(extra_state)
+
         return await self.do_feature_config(
             name=CONF_FEATURE_LIGHT_GROUPS,
             options=OPTIONS_LIGHT_GROUP,
             dynamic_validators={
-                CONF_MAIN_LIGHTS: cv.multi_select(self.all_lights),
+                CONF_OVERHEAD_LIGHTS: cv.multi_select(self.all_lights),
+                CONF_OVERHEAD_LIGHTS_STATES: cv.multi_select(available_states),
                 CONF_SLEEP_LIGHTS: cv.multi_select(self.all_lights),
-                CONF_NIGHT_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
-                CONF_SLEEP_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
+                CONF_SLEEP_LIGHTS_STATES: cv.multi_select(available_states),
+                CONF_ACCENT_LIGHTS: cv.multi_select(self.all_lights),
+                CONF_ACCENT_LIGHTS_STATES: cv.multi_select(available_states),
+                CONF_TASK_LIGHTS: cv.multi_select(self.all_lights),
+                CONF_TASK_LIGHTS_STATES: cv.multi_select(available_states),
             },
             user_input=user_input,
         )
@@ -300,20 +364,20 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         _LOGGER.debug(f"Config entry options: {self.config_entry.options}")
 
-        old_options = self.config_entry.options.get(
+        saved_options = self.config_entry.options.get(
                     CONF_ENABLED_FEATURES, {}
             )
 
         # Handle legacy options somewhat-gracefully
         # @REMOVEME on 4.x.x, users shall be updated by then
-        if type(old_options) is not dict:
-            old_options = {}
+        if type(saved_options) is not dict:
+            saved_options = {}
 
         return self.async_show_form(
             step_id=f"feature_conf_{name}",
             data_schema=self._build_options_schema(
                 options=options,
-                old_options=old_options.get(name, {}),
+                saved_options=saved_options.get(name, {}),
                 dynamic_validators=dynamic_validators,
             ),
             errors=errors,

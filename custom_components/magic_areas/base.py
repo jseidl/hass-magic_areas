@@ -24,8 +24,8 @@ from .const import (
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_INCLUDE_ENTITIES,
-    CONF_NIGHT_ENTITY,
-    CONF_NIGHT_STATE,
+    CONF_DARK_ENTITY,
+    CONF_DARK_STATE,
     CONF_ON_STATES,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_STATE,
@@ -85,7 +85,6 @@ class MagicSensorBase(MagicEntity):
 
     sensors = []
     _device_class = None
-    tracking_listeners = []
 
     @property
     def device_class(self):
@@ -105,13 +104,9 @@ class MagicSensorBase(MagicEntity):
         # Setup the listeners
         await self._setup_listeners()
 
-    def _remove_listeners(self):
-        while self.tracking_listeners:
-            remove_listener = self.tracking_listeners.pop()
-            remove_listener()
 
     async def _shutdown(self) -> None:
-        self._remove_listeners()
+        pass
 
     async def async_will_remove_from_hass(self):
         """Remove the listeners upon removing the component."""
@@ -288,17 +283,20 @@ class AggregateBase(MagicSensorBase):
             return
 
         # Track presence sensors
-        remove_state_tracker = async_track_state_change(
-            self.hass, self.sensors, self.sensor_state_change
+        self.async_on_remove(
+            async_track_state_change(
+                self.hass, self.sensors, self.sensor_state_change
+            )
         )
+
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
 
         # Timed self update
-        remove_interval = async_track_time_interval(
-            self.hass, self.refresh_states, delta
+        self.async_on_remove(
+            async_track_time_interval(
+                self.hass, self.refresh_states, delta
+            )
         )
-
-        self.tracking_listeners.extend([remove_state_tracker, remove_interval])
 
 
 class MagicArea(object):
@@ -488,10 +486,10 @@ class MagicArea(object):
     def is_night(self):
 
         # Check if has night entity
-        if self.has_feature(CONF_FEATURE_LIGHT_GROUPS) and self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_ENTITY):
-            night_entity = self.hass.states.get(self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_ENTITY))
+        if self.has_feature(CONF_FEATURE_LIGHT_GROUPS) and self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_DARK_ENTITY):
+            night_entity = self.hass.states.get(self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_DARK_ENTITY))
             if night_entity and (
-                night_entity.state.lower() == self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_STATE).lower()
+                night_entity.state.lower() == self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_DARK_STATE).lower()
             ):
                 _LOGGER.info(
                     f"Night entity '{night_entity.entity_id}' on night state '{night_entity.state}'"

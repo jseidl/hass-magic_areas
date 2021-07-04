@@ -32,6 +32,7 @@ from .const import (
     AUTOLIGHTS_STATE_SLEEP,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
+    CONF_SECONDARY_STATES,
     CONF_ENABLED_FEATURES,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_CLIMATE_CONTROL,
@@ -40,9 +41,9 @@ from .const import (
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_MEDIA_CONTROL,
     CONF_ICON,
-    CONF_MAIN_LIGHTS,
-    CONF_NIGHT_ENTITY,
-    CONF_NIGHT_STATE,
+    CONF_OVERHEAD_LIGHTS,
+    CONF_DARK_ENTITY,
+    CONF_DARK_STATE,
     CONF_ON_STATES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SLEEP_ENTITY,
@@ -55,6 +56,7 @@ from .const import (
     MODULE_DATA,
     PRESENCE_DEVICE_COMPONENTS,
     META_AREAS,
+    CONFIGURABLE_AREA_STATE_MAP
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -157,7 +159,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._device_class = DEVICE_CLASS_OCCUPANCY
         self.sensors = []
 
-        self.tracking_listeners = []
+        self.secondary_states = []
 
     def load_presence_sensors(self) -> None:
         
@@ -212,7 +214,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         # Set attributes
         self._attributes = {
             "presence_sensors": self.sensors,
-            "features": self.area.config.get(CONF_ENABLED_FEATURES),
+            "features": [feature_name for feature_name, opts in self.area.config.get(CONF_ENABLED_FEATURES, {}).items()],
             "active_sensors": [],
             "lights": area_lights,
             "clear_timeout": self.area.config.get(CONF_CLEAR_TIMEOUT),
@@ -234,9 +236,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             {
                 "climate": area_climate,
                 "on_states": self.area.config.get(CONF_ON_STATES),
-                "automatic_lights": self._get_autolights_state(),
-                "night": self.area.is_night(),
-                "sleep": self.area.is_sleeping(),
+                "secondary_states": self._get_secondary_states(),
             }
         )
 
@@ -290,113 +290,85 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             return
 
         # Track presence sensors
-        remove_presence = async_track_state_change(
-            self.hass, self.sensors, self.sensor_state_change
+        assert self.hass
+        self.async_on_remove(
+            async_track_state_change(
+                self.hass, self.sensors, self.sensor_state_change
+            )
         )
 
-        # Track autolight_disable sensor if available
-        if self.area.has_feature(CONF_FEATURE_LIGHT_GROUPS) and self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_ENTITY):
-            remove_disable = async_track_state_change(
-                self.hass,
-                self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_ENTITY),
-                self.autolight_disable_state_change,
-            )
-            self.tracking_listeners.append(remove_disable)
+        # Track secondary states
+        for configurable_state in self._get_configured_secondary_states():
 
-        # Track autolight_sleep sensor if available
-        if self.area.has_feature(CONF_FEATURE_LIGHT_GROUPS) and self.area.config.get(CONF_SLEEP_ENTITY):
-            remove_sleep = async_track_state_change(
-                self.hass,
-                self.area.config.get(CONF_SLEEP_ENTITY),
-                self.autolight_sleep_state_change,
+            configurable_state_entity, configurable_state_value = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
+            tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(configurable_state_entity, None)
+
+            if not tracked_entity:
+                continue
+            
+            _LOGGER.debug(f"Secondary state tracking: {tracked_entity}")
+
+            self.async_on_remove(
+                async_track_state_change(
+                    self.hass, tracked_entity, self.secondary_state_change
+                )
             )
-            self.tracking_listeners.append(remove_sleep)
 
         # Timed self update
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
-        remove_interval = async_track_time_interval(
-            self.hass, self.refresh_states, delta
+        self.async_on_remove(
+            async_track_time_interval(
+                self.hass, self.refresh_states, delta
+            )
         )
 
-        self.tracking_listeners.extend([remove_presence, remove_interval])
+    def secondary_state_change(self, entity_id, from_state, to_state):
+    
+        _LOGGER.debug(f"{self.name}: Secondary state change: entity '{entity_id}' changed to {to_state.state}")
 
-    def autolight_sleep_state_change(self, entity_id, from_state, to_state):
+        self._update_state()
 
-        self._update_autolights_state()
+    def _get_configured_secondary_states(self):
 
-    def autolight_disable_state_change(self, entity_id, from_state, to_state):
+        secondary_states = []
 
-        last_state = self._attributes["automatic_lights"]
-        self._update_autolights_state()
+        for configurable_state, configurable_state_opts in CONFIGURABLE_AREA_STATE_MAP.items():
+            configurable_state_entity, configurable_state_value = configurable_state_opts
+            
+            secondary_state_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(configurable_state_entity, None)
 
-        # Check state change
-        if self._attributes["automatic_lights"] != last_state:
+            if not secondary_state_entity:
+                continue
 
-            if not to_state:
-                return
+            secondary_states.append(configurable_state)
 
-            if to_state.state != self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_STATE):
-                if self._state:
-                    self._lights_off()
-            else:
-                if self._state:
-                    self._lights_on()
+        return secondary_states
 
-    def _update_autolights_state(self):
+    def _get_secondary_states(self):
 
-        self._update_attributes()
-        self.schedule_update_ha_state()
+        secondary_states = []
 
-    def _is_autolights_disabled(self):
+        for configurable_state in self._get_configured_secondary_states():
 
-        if not self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_NIGHT_ENTITY):
-            return False
+            configurable_state_entity, configurable_state_value = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
 
-        return not self.area.is_night()
+            secondary_state_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(configurable_state_entity, None)
+            secondary_state_value = self.area.config.get(CONF_SECONDARY_STATES, {}).get(configurable_state_value, None)
 
-    def _get_autolights_state(self):
+            if not secondary_state_entity:
+                continue
 
-        if (
-            not self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL)
-            or self._is_autolights_disabled()
-        ):
-            return AUTOLIGHTS_STATE_DISABLED
+            entity = self.hass.states.get(secondary_state_entity)
 
-        if self.area.is_sleeping() and self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_LIGHTS):
-            return AUTOLIGHTS_STATE_SLEEP
+            if entity.state.lower() == secondary_state_value.lower():
+                _LOGGER.debug(f"{self.area.name}: Secondary state: {secondary_state_entity} is at {secondary_state_value}")
+                secondary_states.append(configurable_state)
 
-        return AUTOLIGHTS_STATE_NORMAL
-
-    def _autolights(self):
-
-        # All lights affected by default
-        affected_lights = [
-            entity["entity_id"] for entity in self.area.entities[LIGHT_DOMAIN]
-        ]
-
-        # Regular operation
-        if self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_MAIN_LIGHTS):
-            affected_lights = self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_MAIN_LIGHTS)
-
-        # Check if in disable mode
-        if self._is_autolights_disabled():
-            return False
-
-        # Check if in sleep mode
-        if self.area.is_sleeping() and self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_LIGHTS):
-            affected_lights = self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_LIGHTS)
-
-        # Call service to turn_on the lights
-        service_data = {ATTR_ENTITY_ID: affected_lights}
-        self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
-
-        return True
+        return secondary_states
 
     def _update_attributes(self):
 
-        self._attributes["night"] = self.area.is_night()
-        self._attributes["sleep"] = self.area.is_sleeping()
-        self._attributes["automatic_lights"] = self._get_autolights_state()
+        self._attributes['secondary_states'] = self._get_secondary_states()
 
         if self.area.is_meta():
             self._attributes["active_areas"] = self.area.get_active_areas()
@@ -452,67 +424,15 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             else:
                 self._state_off()
 
-    def _lights_on(self):
-        # Turn on lights, if configured
-        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self.area.has_entities(
-            LIGHT_DOMAIN
-        ):
-            self._autolights()
-
     def _state_on(self):
 
-        self._lights_on()
-
-        # Turn on climate, if configured
-        if self.area.has_feature(
-            CONF_FEATURE_CLIMATE_CONTROL
-        ) and self.area.has_entities(CLIMATE_DOMAIN):
-            service_data = {
-                ATTR_ENTITY_ID: [
-                    entity["entity_id"] for entity in self.area.entities[CLIMATE_DOMAIN]
-                ]
-            }
-            self.hass.services.call(CLIMATE_DOMAIN, SERVICE_TURN_ON, service_data)
-
-    def _lights_off(self):
-        # Turn off lights, if configured
-        if self.area.has_feature(CONF_FEATURE_LIGHT_CONTROL) and self.area.has_entities(
-            LIGHT_DOMAIN
-        ):
-            service_data = {
-                ATTR_ENTITY_ID: [
-                    entity["entity_id"] for entity in self.area.entities[LIGHT_DOMAIN]
-                ]
-            }
-            self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
+        # @TODO fire event
+        return
 
     def _state_off(self):
 
-        self._lights_off()
-
-        # Turn off climate, if configured
-        if self.area.has_feature(
-            CONF_FEATURE_CLIMATE_CONTROL
-        ) and self.area.has_entities(CLIMATE_DOMAIN):
-            service_data = {
-                ATTR_ENTITY_ID: [
-                    entity["entity_id"] for entity in self.area.entities[CLIMATE_DOMAIN]
-                ]
-            }
-            self.hass.services.call(CLIMATE_DOMAIN, SERVICE_TURN_OFF, service_data)
-
-        # Turn off media, if configured
-        if self.area.has_feature(CONF_FEATURE_MEDIA_CONTROL) and self.area.has_entities(
-            MEDIA_PLAYER_DOMAIN
-        ):
-            service_data = {
-                ATTR_ENTITY_ID: [
-                    entity["entity_id"]
-                    for entity in self.area.entities[MEDIA_PLAYER_DOMAIN]
-                ]
-            }
-            self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_TURN_OFF, service_data)
-
+        # @TODO fire event
+        return
 
 class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
     def __init__(self, hass, area, device_class):
@@ -525,8 +445,6 @@ class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
 
         device_class_name = " ".join(device_class.split('_')).title()
         self._name = f"Area {device_class_name} ({self.area.name})"
-
-        self.tracking_listeners = []
 
     async def _initialize(self, _=None) -> None:
 
@@ -550,8 +468,6 @@ class AreaDistressBinarySensor(BinarySensorBase, AggregateBase):
         self._state = False
 
         self._name = f"Area Health ({self.area.name})"
-
-        self.tracking_listeners = []
 
     async def _initialize(self, _=None) -> None:
 
