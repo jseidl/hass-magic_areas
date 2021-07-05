@@ -10,51 +10,51 @@ from homeassistant.core import callback
 
 from .const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
+    AREA_STATE_ACCENT,
+    AREA_STATE_DARK,
+    AREA_STATE_SLEEP,
     AREA_TYPE_META,
+    BUILTIN_AREA_STATES,
+    CONF_ACCENT_ENTITY,
+    CONF_ACCENT_LIGHTS,
+    CONF_ACCENT_LIGHTS_STATES,
+    CONF_DARK_ENTITY,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
-    CONF_SECONDARY_STATES,
+    CONF_FEATURE_AGGREGATION,
+    CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
+    CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_LIST,
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
-    CONF_FEATURE_LIGHT_GROUPS,
-    CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
-    CONF_FEATURE_AGGREGATION,
     CONF_INCLUDE_ENTITIES,
+    CONF_NOTIFICATION_DEVICES,
     CONF_OVERHEAD_LIGHTS,
     CONF_OVERHEAD_LIGHTS_STATES,
-    CONF_ACCENT_LIGHTS,
-    CONF_ACCENT_LIGHTS_STATES,
-    CONF_TASK_LIGHTS,
-    CONF_TASK_LIGHTS_STATES,
+    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_SECONDARY_STATES,
+    CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
     CONF_SLEEP_LIGHTS_STATES,
-    CONF_DARK_ENTITY,
-    CONF_SLEEP_ENTITY,
-    CONF_ACCENT_ENTITY,
-    CONF_NOTIFICATION_DEVICES,
-    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_TASK_LIGHTS,
+    CONF_TASK_LIGHTS_STATES,
     CONF_TYPE,
+    CONFIG_FLOW_ENTITY_FILTER_EXT,
+    CONFIGURABLE_AREA_STATE_MAP,
     CONFIGURABLE_FEATURES,
     DATA_AREA_OBJECT,
     DOMAIN,
     META_AREA_GLOBAL,
     META_AREA_SCHEMA,
-    SECONDARY_STATES_SCHEMA,
     MODULE_DATA,
-    OPTIONS_AREA,
-    OPTIONS_AREA_META,
-    OPTIONS_SECONDARY_STATES,
-    OPTIONS_LIGHT_GROUP,
     OPTIONS_AGGREGATES,
+    OPTIONS_AREA,
     OPTIONS_AREA_AWARE_MEDIA_PLAYER,
+    OPTIONS_AREA_META,
+    OPTIONS_LIGHT_GROUP,
+    OPTIONS_SECONDARY_STATES,
     REGULAR_AREA_SCHEMA,
-    CONFIG_FLOW_ENTITY_FILTER_EXT,
-    BUILTIN_AREA_STATES,
-    AREA_STATE_ACCENT, 
-    AREA_STATE_DARK, 
-    AREA_STATE_SLEEP,
-    CONFIGURABLE_AREA_STATE_MAP
+    SECONDARY_STATES_SCHEMA,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -136,17 +136,26 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         _LOGGER.debug(f"Initializing options flow for area {self.area.name}")
         _LOGGER.debug(f"Options in config entry: {self.config_entry.options}")
-        
+
         # Return all relevant entities
-        self.all_entities = sorted(entity_id for entity_id in self.hass.states.async_entity_ids() if entity_id.split('.')[0] in CONFIG_FLOW_ENTITY_FILTER_EXT)
-        
+        self.all_entities = sorted(
+            entity_id
+            for entity_id in self.hass.states.async_entity_ids()
+            if entity_id.split(".")[0] in CONFIG_FLOW_ENTITY_FILTER_EXT
+        )
+
         # Return all relevant area entities
         filtered_area_entities = []
         for domain in CONFIG_FLOW_ENTITY_FILTER_EXT:
-            filtered_area_entities.extend([entity["entity_id"] for entity in self.area.entities.get(domain, [])])
+            filtered_area_entities.extend(
+                [entity["entity_id"] for entity in self.area.entities.get(domain, [])]
+            )
 
         self.area_entities = sorted(filtered_area_entities)
-        self.all_area_entities = sorted(self.area_entities + self.config_entry.options.get(CONF_EXCLUDE_ENTITIES, []))
+        self.all_area_entities = sorted(
+            self.area_entities
+            + self.config_entry.options.get(CONF_EXCLUDE_ENTITIES, [])
+        )
 
         self.all_lights = sorted(
             entity["entity_id"] for entity in self.area.entities.get(LIGHT_DOMAIN, [])
@@ -164,9 +173,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             _LOGGER.debug(f"Validating area base config: {user_input}")
             area_schema = (
-                META_AREA_SCHEMA
-                if self.area.is_meta()
-                else REGULAR_AREA_SCHEMA
+                META_AREA_SCHEMA if self.area.is_meta() else REGULAR_AREA_SCHEMA
             )
             try:
                 self.area_options = area_schema(user_input)
@@ -185,11 +192,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="area_config",
             data_schema=self._build_options_schema(
-                options=(
-                    OPTIONS_AREA_META
-                    if self.area.is_meta()
-                    else OPTIONS_AREA
-                ),
+                options=(OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA),
                 dynamic_validators={
                     CONF_INCLUDE_ENTITIES: cv.multi_select(self.all_entities),
                     CONF_EXCLUDE_ENTITIES: cv.multi_select(self.all_area_entities),
@@ -207,24 +210,26 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         errors = {}
         if user_input is not None:
             _LOGGER.debug(f"Validating area secondary states config: {user_input}")
-            AREA_state_schema = (SECONDARY_STATES_SCHEMA)
+            AREA_state_schema = SECONDARY_STATES_SCHEMA
             try:
-                self.area_options[CONF_SECONDARY_STATES].update(AREA_state_schema(user_input))
+                self.area_options[CONF_SECONDARY_STATES].update(
+                    AREA_state_schema(user_input)
+                )
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
                 _LOGGER.debug(f"Found the following errors: {errors}")
             except Exception as e:
                 _LOGGER.warning(f"Unexpected error caught: {str(e)}")
             else:
-                _LOGGER.debug(f"Saving area secondary state config: {self.area_options}")
+                _LOGGER.debug(
+                    f"Saving area secondary state config: {self.area_options}"
+                )
                 return await self.async_step_select_features()
 
         return self.async_show_form(
             step_id="secondary_states",
             data_schema=self._build_options_schema(
-                options=(
-                    OPTIONS_SECONDARY_STATES
-                ),
+                options=(OPTIONS_SECONDARY_STATES),
                 saved_options=self.config_entry.options.get(CONF_SECONDARY_STATES, {}),
                 dynamic_validators={
                     CONF_DARK_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
@@ -370,9 +375,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         _LOGGER.debug(f"Config entry options: {self.config_entry.options}")
 
-        saved_options = self.config_entry.options.get(
-                    CONF_ENABLED_FEATURES, {}
-            )
+        saved_options = self.config_entry.options.get(CONF_ENABLED_FEATURES, {})
 
         # Handle legacy options somewhat-gracefully
         # @REMOVEME on 4.x.x, users shall be updated by then

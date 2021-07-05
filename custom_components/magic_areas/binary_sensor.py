@@ -36,7 +36,8 @@ from .const import (
     AUTOLIGHTS_STATE_SLEEP,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
-    CONF_SECONDARY_STATES,
+    CONF_DARK_ENTITY,
+    CONF_DARK_STATE,
     CONF_ENABLED_FEATURES,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_CLIMATE_CONTROL,
@@ -45,22 +46,21 @@ from .const import (
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_MEDIA_CONTROL,
     CONF_ICON,
-    CONF_OVERHEAD_LIGHTS,
-    CONF_DARK_ENTITY,
-    CONF_DARK_STATE,
     CONF_ON_STATES,
+    CONF_OVERHEAD_LIGHTS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_SECONDARY_STATES,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
     CONF_SLEEP_TIMEOUT,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
+    CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
     DISTRESS_SENSOR_CLASSES,
+    META_AREAS,
     MODULE_DATA,
     PRESENCE_DEVICE_COMPONENTS,
-    META_AREAS,
-    CONFIGURABLE_AREA_STATE_MAP
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -108,7 +108,9 @@ async def create_health_sensors(hass, area, async_add_entities):
 
         distress_entities.append(entity)
 
-    if len(distress_entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(CONF_AGGREGATES_MIN_ENTITIES):
+    if len(distress_entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
+        CONF_AGGREGATES_MIN_ENTITIES
+    ):
         return
 
     _LOGGER.debug(f"Creating helth sensor for area ({area.slug})")
@@ -139,7 +141,9 @@ async def create_aggregate_sensors(hass, area, async_add_entities):
         device_class_count[entity["device_class"]] += 1
 
     for device_class, entity_count in device_class_count.items():
-        if entity_count < area.feature_config(CONF_FEATURE_AGGREGATION).get(CONF_AGGREGATES_MIN_ENTITIES):
+        if entity_count < area.feature_config(CONF_FEATURE_AGGREGATION).get(
+            CONF_AGGREGATES_MIN_ENTITIES
+        ):
             continue
 
         _LOGGER.debug(
@@ -164,7 +168,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.sensors = []
 
     def load_presence_sensors(self) -> None:
-        
+
         if self.area.is_meta():
             # MetaAreas track their children
             child_areas = self.area.get_child_areas()
@@ -194,9 +198,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 self.sensors.append(entity["entity_id"])
 
         # Append presence_hold switch as a presence_sensor
-        presence_hold_switch_id = (
-            f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
-        )
+        presence_hold_switch_id = f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
         self.sensors.append(presence_hold_switch_id)
 
     def load_attributes(self) -> None:
@@ -216,7 +218,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         # Set attributes
         self._attributes = {
             "presence_sensors": self.sensors,
-            "features": [feature_name for feature_name, opts in self.area.config.get(CONF_ENABLED_FEATURES, {}).items()],
+            "features": [
+                feature_name
+                for feature_name, opts in self.area.config.get(
+                    CONF_ENABLED_FEATURES, {}
+                ).items()
+            ],
             "active_sensors": [],
             "lights": area_lights,
             "clear_timeout": self.area.config.get(CONF_CLEAR_TIMEOUT),
@@ -228,7 +235,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self._attributes.update(
                 {
                     "areas": self.area.get_child_areas(),
-                    "active_areas": self.area.get_active_areas()
+                    "active_areas": self.area.get_active_areas(),
                 }
             )
             return
@@ -300,20 +307,23 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         # Track presence sensors
         assert self.hass
         self.async_on_remove(
-            async_track_state_change(
-                self.hass, self.sensors, self.sensor_state_change
-            )
+            async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
         )
 
         # Track secondary states
         for configurable_state in self._get_configured_secondary_states():
 
-            configurable_state_entity, configurable_state_value = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
-            tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(configurable_state_entity, None)
+            (
+                configurable_state_entity,
+                configurable_state_value,
+            ) = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
+            tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+                configurable_state_entity, None
+            )
 
             if not tracked_entity:
                 continue
-            
+
             _LOGGER.debug(f"Secondary state tracking: {tracked_entity}")
 
             self.async_on_remove(
@@ -325,14 +335,14 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         # Timed self update
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
         self.async_on_remove(
-            async_track_time_interval(
-                self.hass, self.refresh_states, delta
-            )
+            async_track_time_interval(self.hass, self.refresh_states, delta)
         )
 
     def secondary_state_change(self, entity_id, from_state, to_state):
-    
-        _LOGGER.debug(f"{self.name}: Secondary state change: entity '{entity_id}' changed to {to_state.state}")
+
+        _LOGGER.debug(
+            f"{self.name}: Secondary state change: entity '{entity_id}' changed to {to_state.state}"
+        )
 
         last_state = self.area.secondary_states
         self._update_state()
@@ -346,10 +356,18 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         secondary_states = []
 
-        for configurable_state, configurable_state_opts in CONFIGURABLE_AREA_STATE_MAP.items():
-            configurable_state_entity, configurable_state_value = configurable_state_opts
-            
-            secondary_state_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(configurable_state_entity, None)
+        for (
+            configurable_state,
+            configurable_state_opts,
+        ) in CONFIGURABLE_AREA_STATE_MAP.items():
+            (
+                configurable_state_entity,
+                configurable_state_value,
+            ) = configurable_state_opts
+
+            secondary_state_entity = self.area.config.get(
+                CONF_SECONDARY_STATES, {}
+            ).get(configurable_state_entity, None)
 
             if not secondary_state_entity:
                 continue
@@ -369,10 +387,17 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         for configurable_state in self._get_configured_secondary_states():
 
-            configurable_state_entity, configurable_state_value = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
+            (
+                configurable_state_entity,
+                configurable_state_value,
+            ) = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
 
-            secondary_state_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(configurable_state_entity, None)
-            secondary_state_value = self.area.config.get(CONF_SECONDARY_STATES, {}).get(configurable_state_value, None)
+            secondary_state_entity = self.area.config.get(
+                CONF_SECONDARY_STATES, {}
+            ).get(configurable_state_entity, None)
+            secondary_state_value = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+                configurable_state_value, None
+            )
 
             if not secondary_state_entity:
                 continue
@@ -380,7 +405,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             entity = self.hass.states.get(secondary_state_entity)
 
             if entity.state.lower() == secondary_state_value.lower():
-                _LOGGER.debug(f"{self.area.name}: Secondary state: {secondary_state_entity} is at {secondary_state_value}")
+                _LOGGER.debug(
+                    f"{self.area.name}: Secondary state: {secondary_state_entity} is at {secondary_state_value}"
+                )
                 secondary_states.append(configurable_state)
 
         return secondary_states
@@ -407,9 +434,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             )
             self.area.occupied = True
         else:
-            _LOGGER.debug(
-                f"Area {self.area.slug} state: Occupancy not detected."
-            )
+            _LOGGER.debug(f"Area {self.area.slug} state: Occupancy not detected.")
             if sleep_timeout and self.area.is_sleeping():
                 # if in sleep mode and sleep_timeout is set, use it...
                 _LOGGER.debug(
@@ -452,6 +477,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         _LOGGER.debug(f"Reporting state change for {self.area.id}")
         dispatcher_send(self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id)
 
+
 class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
     def __init__(self, hass, area, device_class):
         """Initialize an area sensor group binary sensor."""
@@ -461,7 +487,7 @@ class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
         self._device_class = device_class
         self._state = False
 
-        device_class_name = " ".join(device_class.split('_')).title()
+        device_class_name = " ".join(device_class.split("_")).title()
         self._name = f"Area {device_class_name} ({self.area.name})"
 
     async def _initialize(self, _=None) -> None:
