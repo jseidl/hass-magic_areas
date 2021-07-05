@@ -197,20 +197,20 @@ CONF_ACCENT_LIGHTS_STATES = "accent_lights_states"
 CONF_TASK_LIGHTS = "task_lights"
 CONF_TASK_LIGHTS_STATES = "task_lights_states"
 
-LIGHT_GROUP_DEFAULT_ICON = 'mdi:lightbulb-group'
+LIGHT_GROUP_DEFAULT_ICON = "mdi:lightbulb-group"
 
 LIGHT_GROUP_ICONS = {
-    CONF_OVERHEAD_LIGHTS: 'mdi:ceiling-light',
-    CONF_SLEEP_LIGHTS: 'mdi:sleep',
-    CONF_ACCENT_LIGHTS: 'mdi:outdoor-lamp',
-    CONF_TASK_LIGHTS: 'mdi:desk-lamp'
+    CONF_OVERHEAD_LIGHTS: "mdi:ceiling-light",
+    CONF_SLEEP_LIGHTS: "mdi:sleep",
+    CONF_ACCENT_LIGHTS: "mdi:outdoor-lamp",
+    CONF_TASK_LIGHTS: "mdi:desk-lamp",
 }
 
 LIGHT_GROUP_STATES = {
     CONF_OVERHEAD_LIGHTS: CONF_OVERHEAD_LIGHTS_STATES,
     CONF_SLEEP_LIGHTS: CONF_SLEEP_LIGHTS_STATES,
     CONF_ACCENT_LIGHTS: CONF_ACCENT_LIGHTS_STATES,
-    CONF_TASK_LIGHTS: CONF_TASK_LIGHTS_STATES
+    CONF_TASK_LIGHTS: CONF_TASK_LIGHTS_STATES,
 }
 
 LIGHT_GROUP_CATEGORIES = [
@@ -257,27 +257,35 @@ AGGREGATE_MODE_SUM = [DEVICE_CLASS_POWER, DEVICE_CLASS_CURRENT, DEVICE_CLASS_ENE
 
 # Config Schema
 
-AGGREGATE_FEATURE_SCHEMA = vol.Schema({
-    vol.Optional(
-        CONF_AGGREGATES_MIN_ENTITIES, default=DEFAULT_AGGREGATES_MIN_ENTITIES
-    ): cv.positive_int,
-})
+AGGREGATE_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_AGGREGATES_MIN_ENTITIES, default=DEFAULT_AGGREGATES_MIN_ENTITIES
+        ): cv.positive_int,
+    }
+)
 
-LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema({
-    vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
-    vol.Optional(CONF_OVERHEAD_LIGHTS_STATES, default=[AREA_STATE_OCCUPIED]): cv.ensure_list,
-    vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
-    vol.Optional(CONF_SLEEP_LIGHTS_STATES, default=[]): cv.ensure_list,
-    vol.Optional(CONF_ACCENT_LIGHTS, default=[]): cv.entity_ids,
-    vol.Optional(CONF_ACCENT_LIGHTS_STATES, default=[]): cv.ensure_list,
-    vol.Optional(CONF_TASK_LIGHTS, default=[]): cv.entity_ids,
-    vol.Optional(CONF_TASK_LIGHTS_STATES, default=[]): cv.ensure_list,
-})
+LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
+        vol.Optional(
+            CONF_OVERHEAD_LIGHTS_STATES, default=[AREA_STATE_OCCUPIED]
+        ): cv.ensure_list,
+        vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
+        vol.Optional(CONF_SLEEP_LIGHTS_STATES, default=[]): cv.ensure_list,
+        vol.Optional(CONF_ACCENT_LIGHTS, default=[]): cv.entity_ids,
+        vol.Optional(CONF_ACCENT_LIGHTS_STATES, default=[]): cv.ensure_list,
+        vol.Optional(CONF_TASK_LIGHTS, default=[]): cv.entity_ids,
+        vol.Optional(CONF_TASK_LIGHTS_STATES, default=[]): cv.ensure_list,
+    }
+)
 
-AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA = vol.Schema({
-    vol.Optional(CONF_NOTIFICATION_DEVICES, default=[]): cv.entity_ids,
-    vol.Optional(CONF_NOTIFY_ON_SLEEP, default=DEFAULT_NOTIFY_ON_SLEEP): bool,
-})
+AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_NOTIFICATION_DEVICES, default=[]): cv.entity_ids,
+        vol.Optional(CONF_NOTIFY_ON_SLEEP, default=DEFAULT_NOTIFY_ON_SLEEP): bool,
+    }
+)
 
 ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
 

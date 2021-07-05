@@ -4,26 +4,20 @@ import logging
 
 from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.const import (
-    ATTR_ENTITY_ID,
-    SERVICE_TURN_ON,
-    SERVICE_TURN_OFF,
-)
 
 from .base import MagicEntity
 from .const import (
-    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
-    CONF_FEATURE_LIGHT_GROUPS,
-    AREA_STATE_OCCUPIED,
     AREA_STATE_DARK,
-    LIGHT_GROUP_CATEGORIES,
-    LIGHT_GROUP_STATES,
-    LIGHT_GROUP_ICONS,
-    LIGHT_GROUP_DEFAULT_ICON,
+    AREA_STATE_OCCUPIED,
+    CONF_FEATURE_LIGHT_GROUPS,
     DATA_AREA_OBJECT,
+    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     LIGHT_GROUP_CATEGORIES,
+    LIGHT_GROUP_DEFAULT_ICON,
+    LIGHT_GROUP_ICONS,
+    LIGHT_GROUP_STATES,
     MODULE_DATA,
 )
 
@@ -64,20 +58,22 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         category_lights = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(category)
 
         if category_lights:
-            _LOGGER.debug(f"Creating {category} group for area {area.name} with lights: {category_lights}")
+            _LOGGER.debug(
+                f"Creating {category} group for area {area.name} with lights: {category_lights}"
+            )
             light_groups.append(AreaLightGroup(hass, area, category_lights, category))
 
     # Create all groups
     async_add_entities(light_groups)
 
-class AreaLightGroup(MagicEntity, LightGroup):
 
-    def __init__(self, hass, area, entities, category = None):
+class AreaLightGroup(MagicEntity, LightGroup):
+    def __init__(self, hass, area, entities, category=None):
 
         name = f"{area.name} Lights"
 
         if category:
-            category_title = ' '.join(category.split('_')).title()
+            category_title = " ".join(category.split("_")).title()
             name = f"{category_title} ({area.name})"
 
         self._name = name
@@ -97,9 +93,13 @@ class AreaLightGroup(MagicEntity, LightGroup):
 
         # Get assigned states
         if category:
-            self.assigned_states = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(LIGHT_GROUP_STATES[category])
+            self.assigned_states = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
+                LIGHT_GROUP_STATES[category]
+            )
 
-        _LOGGER.debug(f"Light group {self._name} ({category}/{self._icon}) created with entities: {self._entities}")
+        _LOGGER.debug(
+            f"Light group {self._name} ({category}/{self._icon}) created with entities: {self._entities}"
+        )
 
     def relevant_states(self):
 
@@ -121,7 +121,7 @@ class AreaLightGroup(MagicEntity, LightGroup):
         return True
 
     def turn_off(self):
-    
+
         service_data = {ATTR_ENTITY_ID: self.entity_id}
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
 
@@ -135,18 +135,24 @@ class AreaLightGroup(MagicEntity, LightGroup):
             return self.turn_off()
 
         # If area has AREA_STATE_DARK configured but it's not dark
-        if self.area.has_configured_state(AREA_STATE_DARK) and not self.area.has_state(AREA_STATE_DARK):
-            _LOGGER.debug(f"Area has AREA_STATE_DARK entity but state not present, {self.name} SHOULD TURN OFF!")
+        if self.area.has_configured_state(AREA_STATE_DARK) and not self.area.has_state(
+            AREA_STATE_DARK
+        ):
+            _LOGGER.debug(
+                f"Area has AREA_STATE_DARK entity but state not present, {self.name} SHOULD TURN OFF!"
+            )
             return self.turn_off()
 
-        # Get all light groups from config and check for someone 
+        # Get all light groups from config and check for someone
         # listening to AREA_STATE_OCCUPIED
         # if someone is listening to this state, we should bail and let them have it
         for category in LIGHT_GROUP_CATEGORIES:
             # Check if light group is defined
             if self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(category):
                 # Check light group states
-                category_states = self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(LIGHT_GROUP_STATES[category])
+                category_states = self.area.feature_config(
+                    CONF_FEATURE_LIGHT_GROUPS
+                ).get(LIGHT_GROUP_STATES[category])
                 if AREA_STATE_OCCUPIED in category_states:
                     # Do nothing, category group will do
                     return False
@@ -162,11 +168,17 @@ class AreaLightGroup(MagicEntity, LightGroup):
             return False
 
         # If area has AREA_STATE_DARK configured but it's not dark, do nothing (main group will)
-        if self.area.has_configured_state(AREA_STATE_DARK) and not self.area.has_state(AREA_STATE_DARK):
-            _LOGGER.debug(f"Area has AREA_STATE_DARK entity but state not present, {self.name} SHOULD TURN OFF!")
+        if self.area.has_configured_state(AREA_STATE_DARK) and not self.area.has_state(
+            AREA_STATE_DARK
+        ):
+            _LOGGER.debug(
+                f"Area has AREA_STATE_DARK entity but state not present, {self.name} SHOULD TURN OFF!"
+            )
             return False
 
-        _LOGGER.debug(f"Light group {self.name} assigned states: {self.assigned_states}")
+        _LOGGER.debug(
+            f"Light group {self.name} assigned states: {self.assigned_states}"
+        )
 
         valid_states = []
 
@@ -175,21 +187,29 @@ class AreaLightGroup(MagicEntity, LightGroup):
             if self.area.has_state(state):
                 valid_states.append(state)
 
-        if AREA_STATE_OCCUPIED in valid_states and self.relevant_states() != [AREA_STATE_OCCUPIED]:
+        if AREA_STATE_OCCUPIED in valid_states and self.relevant_states() != [
+            AREA_STATE_OCCUPIED
+        ]:
             valid_states.remove(AREA_STATE_OCCUPIED)
 
         if valid_states:
-            _LOGGER.debug(f"Area has valid states ({valid_states}), {self.name} SHOULD TURN ON!")
+            _LOGGER.debug(
+                f"Area has valid states ({valid_states}), {self.name} SHOULD TURN ON!"
+            )
             return self.turn_on()
 
-        #if set(self.area.secondary_states) != set(AREA_STATE_OCCUPIED, AREA_STATE_DARK):
-        _LOGGER.debug(f"Area doesn't have any valid states, {self.name} SHOULD TURN OFF!")
+        # if set(self.area.secondary_states) != set(AREA_STATE_OCCUPIED, AREA_STATE_DARK):
+        _LOGGER.debug(
+            f"Area doesn't have any valid states, {self.name} SHOULD TURN OFF!"
+        )
         return self.turn_off()
 
     def area_state_changed(self, area_id):
 
         if area_id != self.area.id:
-            _LOGGER.debug(f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})")
+            _LOGGER.debug(
+                f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
+            )
             return
 
         _LOGGER.debug(f"Light group {self.name} detected area state change")
@@ -204,7 +224,9 @@ class AreaLightGroup(MagicEntity, LightGroup):
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
 
-        async_dispatcher_connect(self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed)
+        async_dispatcher_connect(
+            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed
+        )
 
         await super().async_added_to_hass()
 

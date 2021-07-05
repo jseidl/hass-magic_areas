@@ -7,8 +7,8 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     EVENT_HOMEASSISTANT_STARTED,
-    STATE_ON,
     STATE_OFF,
+    STATE_ON,
     STATE_UNAVAILABLE,
 )
 from homeassistant.helpers.entity import Entity
@@ -20,10 +20,9 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
 from .const import (
-    AREA_STATE_OCCUPIED,
     _DOMAIN_SCHEMA,
+    AREA_STATE_OCCUPIED,
     AREA_TYPE_META,
-    CONFIGURABLE_AREA_STATE_MAP,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_FEATURE_LIGHT_GROUPS,
@@ -33,6 +32,7 @@ from .const import (
     CONF_SLEEP_STATE,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
+    CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
@@ -339,7 +339,7 @@ class MagicArea(object):
         if state == AREA_STATE_OCCUPIED:
             return self.is_occupied()
 
-        return (state in self.secondary_states)
+        return state in self.secondary_states
 
     def has_configured_state(self, state) -> bool:
 
@@ -509,7 +509,7 @@ class MagicMetaArea(MagicArea):
         self.entities = {}
         self.occupied = False
         self.last_changed = datetime.utcnow()
-        
+
         self.loaded_platforms = []
 
         # Check if area is defined on YAML
