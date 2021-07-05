@@ -25,8 +25,12 @@ from homeassistant.helpers.event import (
     async_track_time_interval,
 )
 
+from homeassistant.helpers.dispatcher import dispatcher_send
+
 from .base import AggregateBase, BinarySensorBase
 from .const import (
+    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
+    AREA_STATE_EXTENDED,
     AUTOLIGHTS_STATE_DISABLED,
     AUTOLIGHTS_STATE_NORMAL,
     AUTOLIGHTS_STATE_SLEEP,
@@ -153,13 +157,11 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.area = area
         self.hass = hass
         self._name = f"Area ({self.area.name})"
-        self._state = False
+        self.area.occupied = False
         self.last_off_time = datetime.utcnow()
 
         self._device_class = DEVICE_CLASS_OCCUPANCY
         self.sensors = []
-
-        self.secondary_states = []
 
     def load_presence_sensors(self) -> None:
         
@@ -251,6 +253,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             return self.area.config.get(CONF_ICON)
         return None
 
+
+    @property
+    def is_on(self):
+        """Return true if the area is occupied."""
+        return self.area.occupied
+
     async def async_added_to_hass(self):
         """Call when entity about to be added to hass."""
         if self.hass.is_running:
@@ -268,7 +276,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self._update_state()
         else:
             _LOGGER.debug(f"Sensor {self.name} restored [state={last_state.state}]")
-            self._state = last_state.state == STATE_ON
+            self.area.occupied = last_state.state == STATE_ON
             self.schedule_update_ha_state()
 
     async def _initialize(self, _=None) -> None:
@@ -326,7 +334,13 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     
         _LOGGER.debug(f"{self.name}: Secondary state change: entity '{entity_id}' changed to {to_state.state}")
 
+        last_state = self.area.secondary_states
         self._update_state()
+        current_state = self._get_secondary_states()
+
+        if last_state != current_state:
+            self.area.secondary_states = current_state
+            self.report_state_change()
 
     def _get_configured_secondary_states(self):
 
@@ -348,6 +362,11 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         secondary_states = []
 
+        seconds_since_last_change = (datetime.utcnow() - self.area.last_changed).total_seconds()
+
+        if self.area.is_occupied() and seconds_since_last_change >= (self.area.config.get(CONF_CLEAR_TIMEOUT) * 1.5):
+            secondary_states.append(AREA_STATE_EXTENDED)
+
         for configurable_state in self._get_configured_secondary_states():
 
             configurable_state_entity, configurable_state_value = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
@@ -366,9 +385,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         return secondary_states
 
+    def has_state(self, state):
+        return state in self.area.secondary_states
+
     def _update_attributes(self):
 
-        self._attributes['secondary_states'] = self._get_secondary_states()
+        self._attributes['secondary_states'] = self.area.secondary_states
 
         if self.area.is_meta():
             self._attributes["active_areas"] = self.area.get_active_areas()
@@ -376,14 +398,14 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     def _update_state(self):
 
         area_state = self._get_sensors_state(valid_states=self.area.config.get(CONF_ON_STATES))
-        last_state = self._state
+        last_state = self.area.occupied
         sleep_timeout = self.area.config.get(CONF_SLEEP_TIMEOUT)
 
         if area_state:
             _LOGGER.debug(
                 f"Area {self.area.slug} state: Occupancy detected."
             )
-            self._state = True
+            self.area.occupied = True
         else:
             _LOGGER.debug(
                 f"Area {self.area.slug} state: Occupancy not detected."
@@ -411,28 +433,24 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 _LOGGER.debug(
                     f"Area {self.area.slug} timeout exceeded. Clearing occupancy state."
                 )
-                self._state = False
+                self.area.occupied = False
 
+        state_changed = (last_state != self.area.occupied)
+
+        if state_changed:
+            self.area.last_changed = datetime.utcnow()
+
+        self.area.secondary_states = self._get_secondary_states()
         self._update_attributes()
         self.schedule_update_ha_state()
 
         # Check state change
-        if last_state != self._state:
+        if state_changed:
+            self.report_state_change()
 
-            if self._state:
-                self._state_on()
-            else:
-                self._state_off()
-
-    def _state_on(self):
-
-        # @TODO fire event
-        return
-
-    def _state_off(self):
-
-        # @TODO fire event
-        return
+    def report_state_change(self):
+        _LOGGER.debug(f"Reporting state change for {self.area.id}")
+        dispatcher_send(self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id)
 
 class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
     def __init__(self, hass, area, device_class):

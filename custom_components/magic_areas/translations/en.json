@@ -32,12 +32,14 @@
         "title": "Light Groups",
         "description": "Configure the Light Groups feature",
         "data": {
-          "night_entity": "Entity used to track area night state",
-          "night_state": "State of night entity",
-          "sleep_entity": "Entity used to track area sleep state",
-          "sleep_state": "State of sleep entity",
-          "main_lights": "Main lights (Leave blank for all area lights)",
-          "sleep_lights": "Sleep lights"
+          "overhead_lights": "Overhead lights (Leave blank for all area lights)",
+          "overhead_lights_states": "States which overhead lights are turned on",
+          "sleep_lights": "Sleep lights",
+          "sleep_lights_states": "States which sleep lights are turned on",
+          "accent_lights": "Accent lights",
+          "accent_lights_states": "States which accent lights are turned on",
+          "task_lights": "Task lights",
+          "task_lights_states": "States which task lights are turned on"
         }
       },
       "feature_conf_area_aware_media_player": {
@@ -53,6 +55,18 @@
         "description": "Configure the sensor aggregates feature",
         "data": {
           "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates."
+        }
+      },
+      "secondary_states": {
+        "title": "Secondary states",
+        "description": "Map an entity state to an area's secondary state which are used by features to more precisely control devices automatically.",
+        "data": {
+          "dark_entity": "Entity used to track area dark state",
+          "dark_state": "State of dark state entity",
+          "sleep_entity": "Entity used to track area sleep state",
+          "sleep_state": "State of sleep state entity",
+          "accent_entity": "Entity used to track area accented state",
+          "accent_state": "State of accent state entity"
         }
       },
       "area_config": {

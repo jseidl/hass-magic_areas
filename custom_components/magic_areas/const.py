@@ -133,7 +133,7 @@ CONF_ID = "id"
 CONF_NAME, DEFAULT_NAME = "name", ""  # cv.string
 CONF_TYPE, DEFAULT_TYPE = "type", AREA_TYPE_INTERIOR  # cv.string
 CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES = "features", {}  # cv.ensure_list
-CONF_SECONDARY_STATES, DEFAULT_AREA_STATES = "AREA_states", {}  # cv.ensure_list
+CONF_SECONDARY_STATES, DEFAULT_AREA_STATES = "secondary_states", {}  # cv.ensure_list
 CONF_INCLUDE_ENTITIES = "include_entities"  # cv.entity_ids
 CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
 (
@@ -196,6 +196,22 @@ CONF_ACCENT_LIGHTS_STATES = "accent_lights_states"
 CONF_TASK_LIGHTS = "task_lights"
 CONF_TASK_LIGHTS_STATES = "task_lights_states"
 
+LIGHT_GROUP_DEFAULT_ICON = 'mdi:lightbulb-group'
+
+LIGHT_GROUP_ICONS = {
+    CONF_OVERHEAD_LIGHTS: 'mdi:ceiling-light',
+    CONF_SLEEP_LIGHTS: 'mdi:sleep',
+    CONF_ACCENT_LIGHTS: 'mdi:outdoor-lamp',
+    CONF_TASK_LIGHTS: 'mdi:desk-lamp'
+}
+
+LIGHT_GROUP_STATES = {
+    CONF_OVERHEAD_LIGHTS: CONF_OVERHEAD_LIGHTS_STATES,
+    CONF_SLEEP_LIGHTS: CONF_SLEEP_LIGHTS_STATES,
+    CONF_ACCENT_LIGHTS: CONF_ACCENT_LIGHTS_STATES,
+    CONF_TASK_LIGHTS: CONF_TASK_LIGHTS_STATES
+}
+
 LIGHT_GROUP_CATEGORIES = [
     CONF_OVERHEAD_LIGHTS,
     CONF_SLEEP_LIGHTS,
@@ -248,7 +264,7 @@ AGGREGATE_FEATURE_SCHEMA = vol.Schema({
 
 LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema({
     vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
-    vol.Optional(CONF_OVERHEAD_LIGHTS_STATES, default=[]): cv.ensure_list,
+    vol.Optional(CONF_OVERHEAD_LIGHTS_STATES, default=[AREA_STATE_OCCUPIED]): cv.ensure_list,
     vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
     vol.Optional(CONF_SLEEP_LIGHTS_STATES, default=[]): cv.ensure_list,
     vol.Optional(CONF_ACCENT_LIGHTS, default=[]): cv.entity_ids,
@@ -366,7 +382,7 @@ OPTIONS_SECONDARY_STATES = [
 
 OPTIONS_LIGHT_GROUP = [
     (CONF_OVERHEAD_LIGHTS, [], cv.entity_ids),
-    (CONF_OVERHEAD_LIGHTS_STATES, [], cv.ensure_list),
+    (CONF_OVERHEAD_LIGHTS_STATES, [AREA_STATE_OCCUPIED], cv.ensure_list),
     (CONF_SLEEP_LIGHTS, [], cv.entity_ids),
     (CONF_SLEEP_LIGHTS_STATES, [], cv.ensure_list),
     (CONF_ACCENT_LIGHTS, [], cv.entity_ids),

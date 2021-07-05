@@ -8,6 +8,7 @@ from homeassistant.const import (
     ATTR_ENTITY_ID,
     EVENT_HOMEASSISTANT_STARTED,
     STATE_ON,
+    STATE_OFF,
     STATE_UNAVAILABLE,
 )
 from homeassistant.helpers.entity import Entity
@@ -19,8 +20,10 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
 from .const import (
+    AREA_STATE_OCCUPIED,
     _DOMAIN_SCHEMA,
     AREA_TYPE_META,
+    CONFIGURABLE_AREA_STATE_MAP,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_INCLUDE_ENTITIES,
@@ -311,6 +314,10 @@ class MagicArea(object):
 
         self.entities = {}
 
+        self.occupied = False
+        self.last_changed = datetime.utcnow()
+        self.secondary_states = []
+
         self.loaded_platforms = []
 
         # Check if area is defined on YAML
@@ -329,6 +336,32 @@ class MagicArea(object):
             self.hass.bus.async_listen_once(
                 EVENT_HOMEASSISTANT_STARTED, self.initialize
             )
+
+    def is_occupied(self) -> bool:
+
+        return self.occupied
+
+    def has_state(self, state) -> bool:
+
+        # Handle AREA_STATE_OCCUPIED primary state
+        if state == AREA_STATE_OCCUPIED:
+            return self.is_occupied()
+
+        return (state in self.secondary_states)
+
+    def has_configured_state(self, state) -> bool:
+
+        state_opts = CONFIGURABLE_AREA_STATE_MAP.get(state, None)
+
+        if not state_opts:
+            return False
+
+        state_entity, state_value = state_opts
+
+        if state_entity and state_value:
+            return True
+
+        return False
 
     def has_feature(self, feature) -> bool:
 
@@ -471,34 +504,6 @@ class MagicArea(object):
 
         return domain in self.entities.keys()
 
-    def is_sleeping(self):
-        if self.has_feature(CONF_FEATURE_LIGHT_GROUPS) and self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_ENTITY):
-
-            sleep_entity = self.hass.states.get(self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_ENTITY))
-            if sleep_entity.state.lower() == self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_SLEEP_STATE).lower():
-                _LOGGER.info(
-                    f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
-                )
-                return True
-
-        return False
-
-    def is_night(self):
-
-        # Check if has night entity
-        if self.has_feature(CONF_FEATURE_LIGHT_GROUPS) and self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_DARK_ENTITY):
-            night_entity = self.hass.states.get(self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_DARK_ENTITY))
-            if night_entity and (
-                night_entity.state.lower() == self.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(CONF_DARK_STATE).lower()
-            ):
-                _LOGGER.info(
-                    f"Night entity '{night_entity.entity_id}' on night state '{night_entity.state}'"
-                )
-                return True
-
-        return False
-
-
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area_name, config) -> None:
 
@@ -510,7 +515,9 @@ class MagicMetaArea(MagicArea):
         self.initialized = False
 
         self.entities = {}
-
+        self.occupied = False
+        self.last_changed = datetime.utcnow()
+        
         self.loaded_platforms = []
 
         # Check if area is defined on YAML

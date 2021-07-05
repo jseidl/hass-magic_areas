@@ -302,8 +302,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Configure the light groups feature"""
 
         available_states = BUILTIN_AREA_STATES.copy()
+
+        LIGHT_GROUP_STATE_EXEMPT = [AREA_STATE_DARK]
         
         for extra_state, extra_state_opts in CONFIGURABLE_AREA_STATE_MAP.items():
+            # Skip AREA_STATE_DARK because lights can't be tied to this state
+            if extra_state in LIGHT_GROUP_STATE_EXEMPT:
+                continue
+            
             extra_state_entity, extra_state_state = extra_state_opts
             if self.area_options[CONF_SECONDARY_STATES].get(extra_state_entity, None):
                 available_states.append(extra_state)
