@@ -482,11 +482,8 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         if state_changed:
             self.area.last_changed = datetime.utcnow()
 
-<<<<<<< HEAD
-=======
         secondary_states_changed = self._update_secondary_states()
 
->>>>>>> c47bcf980ce3ffc88313ffaf906836293b432316
         # @FIXME is this logic correct?
         if not secondary_states_changed:
             self._update_attributes()
