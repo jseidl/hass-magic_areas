@@ -438,8 +438,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self._attributes["active_areas"] = self.area.get_active_areas()
 
     def _update_state(self):
-        
-        valid_on_states = [STATE_ON] if self.area.is_meta() else self.area.config.get(CONF_ON_STATES)
+
+        valid_on_states = (
+            [STATE_ON] if self.area.is_meta() else self.area.config.get(CONF_ON_STATES)
+        )
 
         area_state = self._get_sensors_state(valid_states=valid_on_states)
         last_state = self.area.occupied
@@ -479,9 +481,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         if state_changed:
             self.area.last_changed = datetime.utcnow()
-        
+
+<<<<<<< HEAD
+=======
         secondary_states_changed = self._update_secondary_states()
 
+>>>>>>> c47bcf980ce3ffc88313ffaf906836293b432316
         # @FIXME is this logic correct?
         if not secondary_states_changed:
             self._update_attributes()
