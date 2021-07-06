@@ -496,6 +496,7 @@ class MagicArea(object):
 
         return domain in self.entities.keys()
 
+
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area_name, config) -> None:
 
@@ -510,6 +511,7 @@ class MagicMetaArea(MagicArea):
         self.occupied = False
         self.last_changed = datetime.utcnow()
 
+        self.secondary_states = []
         self.loaded_platforms = []
 
         # Check if area is defined on YAML
