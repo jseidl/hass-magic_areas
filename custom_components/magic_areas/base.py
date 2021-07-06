@@ -339,7 +339,7 @@ class MagicArea(object):
         if state == AREA_STATE_OCCUPIED:
             return self.is_occupied()
 
-        return (state in self.secondary_states)
+        return state in self.secondary_states
 
     def has_configured_state(self, state) -> bool:
 
@@ -495,6 +495,7 @@ class MagicArea(object):
     def has_entities(self, domain):
 
         return domain in self.entities.keys()
+
 
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area_name, config) -> None:

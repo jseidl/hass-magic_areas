@@ -343,7 +343,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     def _update_secondary_states(self, report=True):
 
         last_state = set(self.area.secondary_states.copy())
-        #self._update_state()
+        # self._update_state()
         current_state = set(self._get_secondary_states())
 
         if last_state == current_state:
@@ -351,7 +351,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         # Calculate what's new
         new_states = current_state - last_state
-        _LOGGER.warn(f"{self.name}: Current state: {current_state}, last state: {last_state} -> new states {new_states}")
+        _LOGGER.warn(
+            f"{self.name}: Current state: {current_state}, last state: {last_state} -> new states {new_states}"
+        )
 
         self.area.secondary_states = list(current_state)
 
@@ -436,12 +438,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self._attributes["active_areas"] = self.area.get_active_areas()
 
     def _update_state(self):
-        
-        valid_on_states = STATE_ON if self.area.is_meta() else self.area.config.get(CONF_ON_STATES)
 
-        area_state = self._get_sensors_state(
-            valid_states=valid_on_states
+        valid_on_states = (
+            [STATE_ON] if self.area.is_meta() else self.area.config.get(CONF_ON_STATES)
         )
+
+        area_state = self._get_sensors_state(valid_states=valid_on_states)
         last_state = self.area.occupied
         sleep_timeout = self.area.config.get(CONF_SLEEP_TIMEOUT)
 
@@ -479,7 +481,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         if state_changed:
             self.area.last_changed = datetime.utcnow()
-        
+
         secondary_states_changed = self._update_secondary_states()
 
         # @FIXME is this logic correct?
@@ -494,8 +496,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self.report_state_change(new_states)
 
     def report_state_change(self, new_states=[]):
-        _LOGGER.debug(f"Reporting state change for {self.area.id} (new states: {new_states})")
-        dispatcher_send(self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, new_states)
+        _LOGGER.debug(
+            f"Reporting state change for {self.area.id} (new states: {new_states})"
+        )
+        dispatcher_send(
+            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, new_states
+        )
 
 
 class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
