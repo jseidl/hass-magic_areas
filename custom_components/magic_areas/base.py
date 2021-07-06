@@ -496,6 +496,7 @@ class MagicArea(object):
 
         return domain in self.entities.keys()
 
+
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area_name, config) -> None:
 

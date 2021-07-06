@@ -183,9 +183,15 @@ class AreaLightGroup(MagicEntity, LightGroup):
 
         # Calculate valid states (if area has states we listen to)
         # and check if area is under one or more priority state
-        valid_states = [state for state in self.assigned_states if self.area.has_state(state)]
-        has_priority_states = any([self.area.has_state(state) for state in AREA_PRIORITY_STATES])
-        non_priority_states = [state for state in valid_states if state not in AREA_PRIORITY_STATES]
+        valid_states = [
+            state for state in self.assigned_states if self.area.has_state(state)
+        ]
+        has_priority_states = any(
+            [self.area.has_state(state) for state in AREA_PRIORITY_STATES]
+        )
+        non_priority_states = [
+            state for state in valid_states if state not in AREA_PRIORITY_STATES
+        ]
 
         _LOGGER.warn(
             f"{self.name} Has prio? {has_priority_states}. Non-prio: {non_priority_states}"
