@@ -29,6 +29,8 @@ from homeassistant.helpers.event import (
 from .base import AggregateBase, BinarySensorBase
 from .const import (
     AREA_STATE_EXTENDED,
+    CONF_EXTENDED_TIME,
+    DEFAULT_EXTENDED_TIME,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_DARK_ENTITY,
@@ -37,7 +39,6 @@ from .const import (
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_HEALTH,
-    CONF_FEATURE_LIGHT_CONTROL,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_MEDIA_CONTROL,
     CONF_ICON,
@@ -351,7 +352,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         # Calculate what's new
         new_states = current_state - last_state
-        _LOGGER.warn(
+        _LOGGER.debug(
             f"{self.name}: Current state: {current_state}, last state: {last_state} -> new states {new_states}"
         )
 
@@ -391,15 +392,16 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     def _get_secondary_states(self):
 
         secondary_states = []
-        _LOGGER.warn(f"{self.name}: Secondary states: START {secondary_states}")
 
         seconds_since_last_change = (
             datetime.utcnow() - self.area.last_changed
         ).total_seconds()
 
-        if self.area.is_occupied() and seconds_since_last_change >= (
-            self.area.config.get(CONF_CLEAR_TIMEOUT) * 1.5
-        ):
+        extended_time = self.area.config.get(
+                CONF_SECONDARY_STATES, {}
+            ).get(CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME)
+
+        if self.area.is_occupied() and seconds_since_last_change >= extended_time:
             secondary_states.append(AREA_STATE_EXTENDED)
 
         for configurable_state in self._get_configured_secondary_states():
@@ -427,7 +429,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 )
                 secondary_states.append(configurable_state)
 
-        _LOGGER.warn(f"{self.name}: Secondary states: END {secondary_states}")
         return secondary_states
 
     def _update_attributes(self):

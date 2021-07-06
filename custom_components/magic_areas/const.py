@@ -82,7 +82,8 @@ CONF_ACCENT_ENTITY = "accent_entity"
 CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE = "accent_state", STATE_ON
 CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT = "sleep_timeout", 0  # int
 CONF_SLEEP_ENTITY = "sleep_entity"
-CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE = "sleep_state", STATE_ON
+CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE = "sleep_state", STATE_ON 
+CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME = "extended_time", 120 # cv.positive_int
 
 AREA_STATE_OCCUPIED = "occupied"
 AREA_STATE_EXTENDED = "extended"
@@ -164,7 +165,6 @@ CONF_NOTIFICATION_DEVICES = "notification_devices"  # cv.entity_ids
 CONF_NOTIFY_ON_SLEEP, DEFAULT_NOTIFY_ON_SLEEP = "notify_on_sleep", False  # cv.bool
 # features
 CONF_FEATURE_CLIMATE_CONTROL = "control_climate"
-CONF_FEATURE_LIGHT_CONTROL = "control_lights"
 CONF_FEATURE_MEDIA_CONTROL = "control_media"
 CONF_FEATURE_LIGHT_GROUPS = "light_groups"
 CONF_FEATURE_COVER_GROUPS = "cover_groups"
@@ -181,7 +181,6 @@ CONF_FEATURE_LIST_META = [
 
 CONF_FEATURE_LIST = CONF_FEATURE_LIST_META + [
     CONF_FEATURE_CLIMATE_CONTROL,
-    CONF_FEATURE_LIGHT_CONTROL,
     CONF_FEATURE_MEDIA_CONTROL,
 ]
 
@@ -320,6 +319,7 @@ SECONDARY_STATES_SCHEMA = vol.Schema(
         vol.Optional(CONF_DARK_STATE, default=DEFAULT_DARK_STATE): str,
         vol.Optional(CONF_ACCENT_ENTITY, default=""): vol.Any("", cv.entity_id),
         vol.Optional(CONF_ACCENT_STATE, default=DEFAULT_ACCENT_STATE): str,
+        vol.Optional(CONF_EXTENDED_TIME, default=DEFAULT_EXTENDED_TIME): cv.positive_int,
     }
 )
 
@@ -406,6 +406,7 @@ OPTIONS_SECONDARY_STATES = [
     (CONF_DARK_STATE, DEFAULT_DARK_STATE, str),
     (CONF_ACCENT_ENTITY, "", cv.entity_id),
     (CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE, str),
+    (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
 ]
 
 OPTIONS_LIGHT_GROUP = [

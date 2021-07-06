@@ -193,8 +193,8 @@ class AreaLightGroup(MagicEntity, LightGroup):
             state for state in valid_states if state not in AREA_PRIORITY_STATES
         ]
 
-        _LOGGER.warn(
-            f"{self.name} Has prio? {has_priority_states}. Non-prio: {non_priority_states}"
+        _LOGGER.debug(
+            f"{self.name} Has priority states? {has_priority_states}. Non-priority states: {non_priority_states}"
         )
 
         # Prefer priority states when present
