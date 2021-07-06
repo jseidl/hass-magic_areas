@@ -29,9 +29,6 @@ from homeassistant.helpers.event import (
 from .base import AggregateBase, BinarySensorBase
 from .const import (
     AREA_STATE_EXTENDED,
-    AUTOLIGHTS_STATE_DISABLED,
-    AUTOLIGHTS_STATE_NORMAL,
-    AUTOLIGHTS_STATE_SLEEP,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_DARK_ENTITY,
@@ -341,14 +338,29 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         _LOGGER.debug(
             f"{self.name}: Secondary state change: entity '{entity_id}' changed to {to_state.state}"
         )
+        self._update_secondary_states()
 
-        last_state = self.area.secondary_states
-        self._update_state()
-        current_state = self._get_secondary_states()
+    def _update_secondary_states(self, report=True):
 
-        if last_state != current_state:
-            self.area.secondary_states = current_state
-            self.report_state_change()
+        last_state = set(self.area.secondary_states.copy())
+        #self._update_state()
+        current_state = set(self._get_secondary_states())
+
+        if last_state == current_state:
+            return False
+
+        # Calculate what's new
+        new_states = current_state - last_state
+        _LOGGER.warn(f"{self.name}: Current state: {current_state}, last state: {last_state} -> new states {new_states}")
+
+        self.area.secondary_states = list(current_state)
+
+        if report:
+            self._update_attributes()
+            self.schedule_update_ha_state()
+            self.report_state_change(new_states)
+
+        return True
 
     def _get_configured_secondary_states(self):
 
@@ -377,6 +389,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     def _get_secondary_states(self):
 
         secondary_states = []
+        _LOGGER.warn(f"{self.name}: Secondary states: START {secondary_states}")
 
         seconds_since_last_change = (
             datetime.utcnow() - self.area.last_changed
@@ -408,14 +421,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
             if entity.state.lower() == secondary_state_value.lower():
                 _LOGGER.debug(
-                    f"{self.area.name}: Secondary state: {secondary_state_entity} is at {secondary_state_value}"
+                    f"{self.area.name}: Secondary state: {secondary_state_entity} is at {secondary_state_value}, adding {configurable_state}"
                 )
                 secondary_states.append(configurable_state)
 
+        _LOGGER.warn(f"{self.name}: Secondary states: END {secondary_states}")
         return secondary_states
-
-    def has_state(self, state):
-        return state in self.area.secondary_states
 
     def _update_attributes(self):
 
@@ -425,9 +436,11 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self._attributes["active_areas"] = self.area.get_active_areas()
 
     def _update_state(self):
+        
+        valid_on_states = STATE_ON if self.area.is_meta() else self.area.config.get(CONF_ON_STATES)
 
         area_state = self._get_sensors_state(
-            valid_states=self.area.config.get(CONF_ON_STATES)
+            valid_states=valid_on_states
         )
         last_state = self.area.occupied
         sleep_timeout = self.area.config.get(CONF_SLEEP_TIMEOUT)
@@ -466,18 +479,23 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         if state_changed:
             self.area.last_changed = datetime.utcnow()
+        
+        secondary_states_changed = self._update_secondary_states()
 
-        self.area.secondary_states = self._get_secondary_states()
-        self._update_attributes()
-        self.schedule_update_ha_state()
+        # @FIXME is this logic correct?
+        if not secondary_states_changed:
+            self._update_attributes()
+            self.schedule_update_ha_state()
 
         # Check state change
         if state_changed:
-            self.report_state_change()
+            # Consider all secondary states new
+            new_states = self.area.secondary_states.copy()
+            self.report_state_change(new_states)
 
-    def report_state_change(self):
-        _LOGGER.debug(f"Reporting state change for {self.area.id}")
-        dispatcher_send(self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id)
+    def report_state_change(self, new_states=[]):
+        _LOGGER.debug(f"Reporting state change for {self.area.id} (new states: {new_states})")
+        dispatcher_send(self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, new_states)
 
 
 class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):

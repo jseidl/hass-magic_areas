@@ -9,6 +9,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from .base import MagicEntity
 from .const import (
+    AREA_PRIORITY_STATES,
     AREA_STATE_DARK,
     AREA_STATE_OCCUPIED,
     CONF_FEATURE_LIGHT_GROUPS,
@@ -103,7 +104,7 @@ class AreaLightGroup(MagicEntity, LightGroup):
 
     def relevant_states(self):
 
-        relevant_states = self.area.secondary_states
+        relevant_states = self.area.secondary_states.copy()
 
         if self.area.is_occupied():
             relevant_states.append(AREA_STATE_OCCUPIED)
@@ -160,7 +161,7 @@ class AreaLightGroup(MagicEntity, LightGroup):
         # If we don't, just turn on all of them
         return self.turn_on()
 
-    def state_change_secondary(self):
+    def state_change_secondary(self, new_states):
 
         # If area clear, do nothing (main group will)
         if not self.area.is_occupied():
@@ -177,20 +178,23 @@ class AreaLightGroup(MagicEntity, LightGroup):
             return False
 
         _LOGGER.debug(
-            f"Light group {self.name} assigned states: {self.assigned_states}"
+            f"Light group {self.name} assigned states: {self.assigned_states}. New states: {new_states}"
         )
 
-        valid_states = []
+        # Calculate valid states (if area has states we listen to)
+        # and check if area is under one or more priority state
+        valid_states = [state for state in self.assigned_states if self.area.has_state(state)]
+        has_priority_states = any([self.area.has_state(state) for state in AREA_PRIORITY_STATES])
+        non_priority_states = [state for state in valid_states if state not in AREA_PRIORITY_STATES]
 
-        # Check if we should react
-        for state in self.assigned_states:
-            if self.area.has_state(state):
-                valid_states.append(state)
+        _LOGGER.warn(
+            f"{self.name} Has prio? {has_priority_states}. Non-prio: {non_priority_states}"
+        )
 
-        if AREA_STATE_OCCUPIED in valid_states and self.relevant_states() != [
-            AREA_STATE_OCCUPIED
-        ]:
-            valid_states.remove(AREA_STATE_OCCUPIED)
+        # Prefer priority states when present
+        if has_priority_states:
+            for non_priority_state in non_priority_states:
+                valid_states.remove(non_priority_state)
 
         if valid_states:
             _LOGGER.debug(
@@ -198,13 +202,14 @@ class AreaLightGroup(MagicEntity, LightGroup):
             )
             return self.turn_on()
 
-        # if set(self.area.secondary_states) != set(AREA_STATE_OCCUPIED, AREA_STATE_DARK):
-        _LOGGER.debug(
-            f"Area doesn't have any valid states, {self.name} SHOULD TURN OFF!"
-        )
-        return self.turn_off()
+        # Only turn lights off if not going into dark state
+        if AREA_STATE_DARK not in new_states:
+            _LOGGER.debug(
+                f"Area doesn't have any valid states, {self.name} SHOULD TURN OFF!"
+            )
+            return self.turn_off()
 
-    def area_state_changed(self, area_id):
+    def area_state_changed(self, area_id, new_states):
 
         if area_id != self.area.id:
             _LOGGER.debug(
@@ -219,7 +224,7 @@ class AreaLightGroup(MagicEntity, LightGroup):
             return self.state_change_primary()
 
         # @TODO Handle light category
-        return self.state_change_secondary()
+        return self.state_change_secondary(new_states)
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""

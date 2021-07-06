@@ -339,7 +339,7 @@ class MagicArea(object):
         if state == AREA_STATE_OCCUPIED:
             return self.is_occupied()
 
-        return state in self.secondary_states
+        return (state in self.secondary_states)
 
     def has_configured_state(self, state) -> bool:
 
@@ -510,6 +510,7 @@ class MagicMetaArea(MagicArea):
         self.occupied = False
         self.last_changed = datetime.utcnow()
 
+        self.secondary_states = []
         self.loaded_platforms = []
 
         # Check if area is defined on YAML
