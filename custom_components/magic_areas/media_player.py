@@ -56,7 +56,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     # Area-Aware Media Player
     if area.has_feature(CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER):
         _LOGGER.debug(f"{area.name}: Setting up area-aware media player")
-        setup_area_aware_media_player(hass, ma_data)
+        setup_area_aware_media_player(hass, area, ma_data, async_add_entities)
 
 def setup_media_player_group(hass, area, async_add_entities):
 
@@ -69,7 +69,7 @@ def setup_media_player_group(hass, area, async_add_entities):
 
     async_add_entities([AreaMediaGroup(hass, area, media_player_entities)])
 
-def setup_area_aware_media_player(hass, ma_data, async_add_entities):
+def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
 
     # Check if we have areas with MEDIA_PLAYER_DOMAIN entities
     areas_with_media_players = []
