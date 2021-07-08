@@ -3,6 +3,7 @@ DEPENDENCIES = ["media_player"]
 import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.group.media_player import MediaGroup
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.media_player import SUPPORT_PLAY_MEDIA, MediaPlayerEntity
 from homeassistant.components.media_player.const import (
@@ -10,26 +11,20 @@ from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_TYPE,
     SERVICE_PLAY_MEDIA,
 )
-from homeassistant.components.group.media_player import MediaGroup
-from homeassistant.const import (
-    ATTR_ENTITY_ID, 
-    STATE_IDLE, 
-    STATE_ON, 
-    SERVICE_TURN_OFF,
-)
-from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, STATE_ON
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.restore_state import RestoreEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 from .base import MagicEntity
 from .const import (
-    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_ON_SLEEP,
     DATA_AREA_OBJECT,
+    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
@@ -56,7 +51,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     # Area-Aware Media Player
     if area.has_feature(CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER):
         _LOGGER.debug(f"{area.name}: Setting up area-aware media player")
-        setup_area_aware_media_player(hass, ma_data)
+        setup_area_aware_media_player(hass, area, ma_data, async_add_entities)
+
 
 def setup_media_player_group(hass, area, async_add_entities):
 
@@ -69,7 +65,8 @@ def setup_media_player_group(hass, area, async_add_entities):
 
     async_add_entities([AreaMediaGroup(hass, area, media_player_entities)])
 
-def setup_area_aware_media_player(hass, ma_data, async_add_entities):
+
+def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
 
     # Check if we have areas with MEDIA_PLAYER_DOMAIN entities
     areas_with_media_players = []
@@ -230,6 +227,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
         return True
 
+
 class AreaMediaGroup(MagicEntity, MediaGroup):
     def __init__(self, hass, area, entities):
 
@@ -248,7 +246,7 @@ class AreaMediaGroup(MagicEntity, MediaGroup):
         )
 
     def area_state_changed(self, area_id, new_states):
-    
+
         if area_id != self.area.id:
             _LOGGER.debug(
                 f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
