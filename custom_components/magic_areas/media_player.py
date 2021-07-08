@@ -10,14 +10,23 @@ from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_TYPE,
     SERVICE_PLAY_MEDIA,
 )
-from homeassistant.const import ATTR_ENTITY_ID, STATE_IDLE, STATE_ON
+from homeassistant.components.group.media_player import MediaGroup
+from homeassistant.const import (
+    ATTR_ENTITY_ID, 
+    STATE_IDLE, 
+    STATE_ON, 
+    SERVICE_TURN_OFF,
+)
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 _LOGGER = logging.getLogger(__name__)
 
 from .base import MagicEntity
 from .const import (
+    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
+    CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_ON_SLEEP,
     DATA_AREA_OBJECT,
@@ -34,14 +43,33 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     area_data = ma_data[config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
 
+    # Media Player Groups
+    if area.has_feature(CONF_FEATURE_MEDIA_PLAYER_GROUPS):
+        _LOGGER.debug(f"{area.name}: Setting up media player groups")
+        setup_media_player_group(hass, area, async_add_entities)
+
     # Check if we are the Global Meta Area
     if not area.is_meta() or area.id != META_AREA_GLOBAL.lower():
-        _LOGGER.warning("This feature is only available for the Global Meta-Area")
+        _LOGGER.debug("{area.name}: Not Global Meta-Area, skipping.")
         return
 
-    # Check if feature is enabled
-    if not area.has_feature(CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER):
+    # Area-Aware Media Player
+    if area.has_feature(CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER):
+        _LOGGER.debug(f"{area.name}: Setting up area-aware media player")
+        setup_area_aware_media_player(hass, ma_data)
+
+def setup_media_player_group(hass, area, async_add_entities):
+
+    # Check if there are any lights
+    if not area.has_entities(MEDIA_PLAYER_DOMAIN):
+        _LOGGER.debug(f"No {MEDIA_PLAYER_DOMAIN} entities for area {area.name} ")
         return
+
+    media_player_entities = [e["entity_id"] for e in area.entities[MEDIA_PLAYER_DOMAIN]]
+
+    async_add_entities([AreaMediaGroup(hass, area, media_player_entities)])
+
+def setup_area_aware_media_player(hass, ma_data, async_add_entities):
 
     # Check if we have areas with MEDIA_PLAYER_DOMAIN entities
     areas_with_media_players = []
@@ -201,3 +229,48 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
         self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA, data)
 
         return True
+
+class AreaMediaGroup(MagicEntity, MediaGroup):
+    def __init__(self, hass, area, entities):
+
+        name = f"{area.name} Media Players"
+
+        self._name = name
+        self._entities = entities
+
+        self.hass = hass
+        self.area = area
+
+        MediaGroup.__init__(self, self._name, self._entities)
+
+        _LOGGER.debug(
+            f"Media Player group {self._name} created with entities: {self._entities}"
+        )
+
+    def area_state_changed(self, area_id, new_states):
+    
+        if area_id != self.area.id:
+            _LOGGER.debug(
+                f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
+            )
+            return
+
+        _LOGGER.debug(f"Media Player group {self.name} detected area state change")
+
+        if not self.area.is_occupied():
+            _LOGGER.debug(f"{self.area.name}: Area clear, turning off media players")
+            self.turn_off()
+
+    def turn_off(self):
+
+        service_data = {ATTR_ENTITY_ID: self.entity_id}
+        self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_TURN_OFF, service_data)
+
+    async def async_added_to_hass(self) -> None:
+        """Register callbacks."""
+
+        async_dispatcher_connect(
+            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed
+        )
+
+        await super().async_added_to_hass()

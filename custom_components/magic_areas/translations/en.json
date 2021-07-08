@@ -19,8 +19,7 @@
         "description": "Select the features you want to enable for this area. Each feature will be configured in subsequent steps.",
         "data": {
           "control_climate": "Control climate devices",
-          "control_lights": "Automatic lights",
-          "control_media": "Control media devices",
+          "media_player_groups": "Create media player groups",
           "light_groups": "Create light groups",
           "cover_groups": "Create cover groups",
           "area_aware_media_player": "Area aware media player",

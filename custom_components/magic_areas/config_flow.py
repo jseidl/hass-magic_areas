@@ -10,9 +10,7 @@ from homeassistant.core import callback
 
 from .const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
-    AREA_STATE_ACCENT,
     AREA_STATE_DARK,
-    AREA_STATE_SLEEP,
     AREA_TYPE_META,
     BUILTIN_AREA_STATES,
     CONF_ACCENT_ENTITY,

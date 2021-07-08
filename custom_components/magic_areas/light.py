@@ -42,10 +42,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     light_entities = [e["entity_id"] for e in area.entities[LIGHT_DOMAIN]]
 
-    if not light_entities:
-        _LOGGER.debug(f"Not enough entities for Light group for area {area.name}")
-        return
-
     light_groups = []
 
     # Create All light group

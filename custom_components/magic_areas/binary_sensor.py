@@ -37,10 +37,7 @@ from .const import (
     CONF_DARK_STATE,
     CONF_ENABLED_FEATURES,
     CONF_FEATURE_AGGREGATION,
-    CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_HEALTH,
-    CONF_FEATURE_LIGHT_GROUPS,
-    CONF_FEATURE_MEDIA_CONTROL,
     CONF_ICON,
     CONF_ON_STATES,
     CONF_OVERHEAD_LIGHTS,
@@ -339,16 +336,16 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         _LOGGER.debug(
             f"{self.name}: Secondary state change: entity '{entity_id}' changed to {to_state.state}"
         )
-        self._update_secondary_states()
+        self._update_state()
 
-    def _update_secondary_states(self, report=True):
+    def _update_secondary_states(self):
 
         last_state = set(self.area.secondary_states.copy())
         # self._update_state()
         current_state = set(self._get_secondary_states())
 
         if last_state == current_state:
-            return False
+            return []
 
         # Calculate what's new
         new_states = current_state - last_state
@@ -358,12 +355,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         self.area.secondary_states = list(current_state)
 
-        if report:
-            self._update_attributes()
-            self.schedule_update_ha_state()
-            self.report_state_change(new_states)
-
-        return True
+        return new_states
 
     def _get_configured_secondary_states(self):
 
@@ -445,8 +437,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
         area_state = self._get_sensors_state(valid_states=valid_on_states)
-        last_state = self.area.occupied
+        last_state = (self.area.occupied)
         sleep_timeout = self.area.config.get(CONF_SLEEP_TIMEOUT)
+
+        _LOGGER.warn(f"{self.area.name}: Current state: {area_state}, Last State: {last_state}, Valid on states: {valid_on_states}")
 
         if area_state:
             _LOGGER.debug(f"Area {self.area.slug} state: Occupancy detected.")
@@ -480,21 +474,18 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         state_changed = last_state != self.area.occupied
 
-        if state_changed:
-            self.area.last_changed = datetime.utcnow()
+        new_states = self._update_secondary_states()
+        _LOGGER.debug(f"Secondary states updated. New states: {new_states}")        
+        
+        self.area.last_changed = datetime.utcnow()
 
-        secondary_states_changed = self._update_secondary_states()
+        self._update_attributes()
+        self.schedule_update_ha_state()
 
-        # @FIXME is this logic correct?
-        if not secondary_states_changed:
-            self._update_attributes()
-            self.schedule_update_ha_state()
-
-        # Check state change
         if state_changed:
             # Consider all secondary states new
             new_states = self.area.secondary_states.copy()
-            self.report_state_change(new_states)
+        self.report_state_change(new_states)
 
     def report_state_change(self, new_states=[]):
         _LOGGER.debug(
