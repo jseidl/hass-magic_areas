@@ -29,13 +29,12 @@ from homeassistant.helpers.event import (
 from .base import AggregateBase, BinarySensorBase
 from .const import (
     AREA_STATE_EXTENDED,
-    CONF_EXTENDED_TIME,
-    DEFAULT_EXTENDED_TIME,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_DARK_ENTITY,
     CONF_DARK_STATE,
     CONF_ENABLED_FEATURES,
+    CONF_EXTENDED_TIME,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
     CONF_ICON,
@@ -50,6 +49,7 @@ from .const import (
     CONF_UPDATE_INTERVAL,
     CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
+    DEFAULT_EXTENDED_TIME,
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     META_AREAS,
@@ -389,9 +389,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             datetime.utcnow() - self.area.last_changed
         ).total_seconds()
 
-        extended_time = self.area.config.get(
-                CONF_SECONDARY_STATES, {}
-            ).get(CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME)
+        extended_time = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+            CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME
+        )
 
         if self.area.is_occupied() and seconds_since_last_change >= extended_time:
             secondary_states.append(AREA_STATE_EXTENDED)
@@ -437,10 +437,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
         area_state = self._get_sensors_state(valid_states=valid_on_states)
-        last_state = (self.area.occupied)
+        last_state = self.area.occupied
         sleep_timeout = self.area.config.get(CONF_SLEEP_TIMEOUT)
 
-        _LOGGER.warn(f"{self.area.name}: Current state: {area_state}, Last State: {last_state}, Valid on states: {valid_on_states}")
+        _LOGGER.warn(
+            f"{self.area.name}: Current state: {area_state}, Last State: {last_state}, Valid on states: {valid_on_states}"
+        )
 
         if area_state:
             _LOGGER.debug(f"Area {self.area.slug} state: Occupancy detected.")
@@ -475,8 +477,8 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         state_changed = last_state != self.area.occupied
 
         new_states = self._update_secondary_states()
-        _LOGGER.debug(f"Secondary states updated. New states: {new_states}")        
-        
+        _LOGGER.debug(f"Secondary states updated. New states: {new_states}")
+
         self.area.last_changed = datetime.utcnow()
 
         self._update_attributes()
