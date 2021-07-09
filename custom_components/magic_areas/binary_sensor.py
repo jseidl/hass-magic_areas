@@ -34,19 +34,14 @@ from .const import (
     AREA_STATE_SLEEP,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
-    CONF_DARK_ENTITY,
-    CONF_DARK_STATE,
     CONF_ENABLED_FEATURES,
     CONF_EXTENDED_TIME,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
     CONF_ICON,
     CONF_ON_STATES,
-    CONF_OVERHEAD_LIGHTS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SECONDARY_STATES,
-    CONF_SLEEP_ENTITY,
-    CONF_SLEEP_LIGHTS,
     CONF_SLEEP_TIMEOUT,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
@@ -55,7 +50,6 @@ from .const import (
     DEFAULT_EXTENDED_TIME,
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
-    META_AREAS,
     MODULE_DATA,
     PRESENCE_DEVICE_COMPONENTS,
 )
@@ -449,10 +443,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         timeout = self.get_clear_timeout()
 
         _LOGGER.debug(f"{self.area.name}: Scheduling clear in {timeout} seconds")
-        self.clear_timeout_callback = call_later(self.hass, timeout, self.refresh_states)
+        self.clear_timeout_callback = call_later(
+            self.hass, timeout, self.refresh_states
+        )
 
     def remove_clear_timeout(self):
-        
+
         if not self.clear_timeout_callback:
             return False
 
@@ -461,25 +457,21 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def is_on_clear_timeout(self):
 
-        return (self.clear_timeout_callback is not None)
+        return self.clear_timeout_callback is not None
 
     def timeout_exceeded(self):
 
         if not self.area.is_occupied():
             return False
 
-        clear_delta = timedelta(
-            seconds=self.get_clear_timeout()
-        )
+        clear_delta = timedelta(seconds=self.get_clear_timeout())
 
         last_clear = self.last_off_time
         clear_time = last_clear + clear_delta
         time_now = datetime.utcnow()
 
         if time_now >= clear_time:
-            _LOGGER.debug(
-                f"{self.area.name}: Clear Timeout exceeded."
-            )
+            _LOGGER.debug(f"{self.area.name}: Clear Timeout exceeded.")
             self.remove_clear_timeout()
             return True
 
@@ -508,13 +500,17 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                     self.area.occupied = False
             else:
                 if self.area.is_occupied() and not area_state:
-                    _LOGGER.warn(f"{self.area.name}: Area not on timeout, setting call_later")
+                    _LOGGER.warn(
+                        f"{self.area.name}: Area not on timeout, setting call_later"
+                    )
                     self.set_clear_timeout()
 
         state_changed = last_state != self.area.is_occupied()
 
         new_states = self._update_secondary_states()
-        _LOGGER.debug(f"{self.area.name}: Secondary states updated. New states: {new_states}")
+        _LOGGER.debug(
+            f"{self.area.name}: Secondary states updated. New states: {new_states}"
+        )
 
         self.area.last_changed = datetime.utcnow()
 
