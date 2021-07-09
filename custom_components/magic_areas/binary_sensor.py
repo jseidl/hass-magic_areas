@@ -18,7 +18,6 @@ from homeassistant.const import (
     STATE_UNAVAILABLE,
 )
 from homeassistant.helpers.dispatcher import dispatcher_send
-
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
@@ -189,7 +188,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         # Append presence_hold switch as a presence_sensor
         if self.area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
-            presence_hold_switch_id = f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
+            presence_hold_switch_id = (
+                f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
+            )
             self.sensors.append(presence_hold_switch_id)
 
     def load_attributes(self) -> None:

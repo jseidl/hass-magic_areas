@@ -7,34 +7,34 @@ Once this goes into the main Home Assistant code it will be phased out.
 import itertools
 import logging
 from collections import Counter
-from typing import List, Optional, Iterator, Any, Callable
+from typing import Any, Callable, Iterator, List, Optional
 
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.components import climate
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
-from homeassistant.components.climate import ClimateEntity, PLATFORM_SCHEMA
+from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
 from homeassistant.components.climate.const import *
 from homeassistant.const import (
     ATTR_ENTITY_ID,
+    ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
-    TEMP_CELSIUS,
-    TEMP_FAHRENHEIT,
-    CONF_TEMPERATURE_UNIT,
     CONF_ENTITIES,
     CONF_NAME,
-    ATTR_SUPPORTED_FEATURES,
-    SERVICE_TURN_ON,
+    CONF_TEMPERATURE_UNIT,
     SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
+    TEMP_CELSIUS,
+    TEMP_FAHRENHEIT,
 )
 from homeassistant.core import State, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change
 
 from .base import MagicEntity
 from .const import (
-    MODULE_DATA,
-    DATA_AREA_OBJECT,
     CONF_FEATURE_CLIMATE_GROUPS,
-    EVENT_MAGICAREAS_AREA_STATE_CHANGED
+    DATA_AREA_OBJECT,
+    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
+    MODULE_DATA,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,17 +69,19 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         _LOGGER.debug(f"{area.name}: Setting up climate group")
         setup_climate_group(hass, area, async_add_entities)
 
+
 def setup_climate_group(hass, area, async_add_entities):
-    
+
     # Check if there are any lights
     if not area.has_entities(CLIMATE_DOMAIN):
         _LOGGER.debug(f"No {CLIMATE_DOMAIN} entities for area {area.name} ")
         return
 
     climate_entities = [e["entity_id"] for e in area.entities[CLIMATE_DOMAIN]]
-    #@TODO get unit from entities
+    # @TODO get unit from entities
 
     async_add_entities([AreaClimateGroup(hass, area, climate_entities)])
+
 
 class ClimateGroup(ClimateEntity):
     """Representation of a climate group."""
@@ -400,8 +402,8 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
         self.hass = hass
         self.area = area
 
-        #@FIXME get from entities
-        unit = '°F'
+        # @FIXME get from entities
+        unit = "°F"
 
         ClimateGroup.__init__(self, self._name, self._entities, [], unit)
 

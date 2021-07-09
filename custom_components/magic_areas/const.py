@@ -194,7 +194,10 @@ CONF_FEATURE_LIST_GLOBAL = CONF_FEATURE_LIST_META + [
 ]
 
 # Presence Hold options
-CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT = "presence_hold_timeout" , 0  # cv.int
+CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT = (
+    "presence_hold_timeout",
+    0,
+)  # cv.int
 
 # Light group options
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
