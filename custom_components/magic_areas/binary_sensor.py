@@ -21,14 +21,17 @@ from homeassistant.const import (
     STATE_UNAVAILABLE,
 )
 from homeassistant.helpers.dispatcher import dispatcher_send
+
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
+    call_later,
 )
 
 from .base import AggregateBase, BinarySensorBase
 from .const import (
     AREA_STATE_EXTENDED,
+    AREA_STATE_SLEEP,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_DARK_ENTITY,
@@ -157,6 +160,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._name = f"Area ({self.area.name})"
         self.area.occupied = False
         self.last_off_time = datetime.utcnow()
+        self.clear_timeout_callback = None
 
         self._device_class = DEVICE_CLASS_OCCUPANCY
         self.sensors = []
@@ -426,9 +430,60 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     def _update_attributes(self):
 
         self._attributes["secondary_states"] = self.area.secondary_states
+        self._attributes["clear_timeout"] = self.get_clear_timeout()
 
         if self.area.is_meta():
             self._attributes["active_areas"] = self.area.get_active_areas()
+
+    def get_clear_timeout(self):
+        if self.area.has_state(AREA_STATE_SLEEP):
+            return self.area.config.get(CONF_SLEEP_TIMEOUT)
+
+        return self.area.config.get(CONF_CLEAR_TIMEOUT)
+
+    def set_clear_timeout(self):
+
+        if not self.area.is_occupied():
+            return False
+
+        timeout = self.get_clear_timeout()
+
+        _LOGGER.debug(f"{self.area.name}: Scheduling clear in {timeout} seconds")
+        self.clear_timeout_callback = call_later(self.hass, timeout, self.refresh_states)
+
+    def remove_clear_timeout(self):
+        
+        if not self.clear_timeout_callback:
+            return False
+
+        self.clear_timeout_callback()
+        self.clear_timeout_callback = None
+
+    def is_on_clear_timeout(self):
+
+        return (self.clear_timeout_callback is not None)
+
+    def timeout_exceeded(self):
+
+        if not self.area.is_occupied():
+            return False
+
+        clear_delta = timedelta(
+            seconds=self.get_clear_timeout()
+        )
+
+        last_clear = self.last_off_time
+        clear_time = last_clear + clear_delta
+        time_now = datetime.utcnow()
+
+        if time_now >= clear_time:
+            _LOGGER.debug(
+                f"{self.area.name}: Clear Timeout exceeded."
+            )
+            self.remove_clear_timeout()
+            return True
+
+        return False
 
     def _update_state(self):
 
@@ -438,46 +493,28 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         area_state = self._get_sensors_state(valid_states=valid_on_states)
         last_state = self.area.occupied
-        sleep_timeout = self.area.config.get(CONF_SLEEP_TIMEOUT)
 
         _LOGGER.warn(
             f"{self.area.name}: Current state: {area_state}, Last State: {last_state}, Valid on states: {valid_on_states}"
         )
 
         if area_state:
-            _LOGGER.debug(f"Area {self.area.slug} state: Occupancy detected.")
             self.area.occupied = True
+            self.remove_clear_timeout()
         else:
-            _LOGGER.debug(f"Area {self.area.slug} state: Occupancy not detected.")
-            if sleep_timeout and self.area.is_sleeping():
-                # if in sleep mode and sleep_timeout is set, use it...
-                _LOGGER.debug(
-                    f"Area {self.area.slug} sleep mode is active. Timeout: {str(sleep_timeout)}"
-                )
-                clear_delta = timedelta(seconds=sleep_timeout)
+            if self.is_on_clear_timeout():
+                _LOGGER.warn(f"{self.area.name}: Area is on timeout")
+                if self.timeout_exceeded():
+                    self.area.occupied = False
             else:
-                # ..else, use clear_timeout
-                _LOGGER.debug(
-                    f"Area {self.area.slug} not in sleep mode. Timeout: {str(self.area.config.get(CONF_CLEAR_TIMEOUT))}"
-                )
-                clear_delta = timedelta(
-                    seconds=self.area.config.get(CONF_CLEAR_TIMEOUT)
-                )
+                if self.area.is_occupied() and not area_state:
+                    _LOGGER.warn(f"{self.area.name}: Area not on timeout, setting call_later")
+                    self.set_clear_timeout()
 
-            last_clear = self.last_off_time
-            clear_time = last_clear + clear_delta
-            time_now = datetime.utcnow()
-
-            if time_now >= clear_time:
-                _LOGGER.debug(
-                    f"Area {self.area.slug} timeout exceeded. Clearing occupancy state."
-                )
-                self.area.occupied = False
-
-        state_changed = last_state != self.area.occupied
+        state_changed = last_state != self.area.is_occupied()
 
         new_states = self._update_secondary_states()
-        _LOGGER.debug(f"Secondary states updated. New states: {new_states}")
+        _LOGGER.debug(f"{self.area.name}: Secondary states updated. New states: {new_states}")
 
         self.area.last_changed = datetime.utcnow()
 
