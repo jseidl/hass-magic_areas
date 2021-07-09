@@ -53,6 +53,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         _LOGGER.debug(f"{area.name}: Setting up area-aware media player")
         setup_area_aware_media_player(hass, area, ma_data, async_add_entities)
 
+
 def setup_media_player_group(hass, area, async_add_entities):
 
     # Check if there are any lights
@@ -63,6 +64,7 @@ def setup_media_player_group(hass, area, async_add_entities):
     media_player_entities = [e["entity_id"] for e in area.entities[MEDIA_PLAYER_DOMAIN]]
 
     async_add_entities([AreaMediaGroup(hass, area, media_player_entities)])
+
 
 def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
 
