@@ -18,13 +18,14 @@
         "title": "Feature selection",
         "description": "Select the features you want to enable for this area. Each feature will be configured in subsequent steps.",
         "data": {
-          "control_climate": "Control climate devices",
+          "climate_groups": "Create climate groups",
           "media_player_groups": "Create media player groups",
           "light_groups": "Create light groups",
           "cover_groups": "Create cover groups",
           "area_aware_media_player": "Area aware media player",
           "aggregates": "Create aggregate sensors",
-          "health": "Create health sensors"
+          "health": "Create health sensors",
+          "presence_hold": "Create presence hold switch"
         }
       },
       "feature_conf_light_groups": {
@@ -39,6 +40,13 @@
           "accent_lights_states": "States which accent lights are turned on",
           "task_lights": "Task lights",
           "task_lights_states": "States which task lights are turned on"
+        }
+      },
+      "feature_conf_presence_hold": {
+        "title": "Presence Hold",
+        "description": "Creates a switch that will hold an area occupied while it's on",
+        "data": {
+          "presence_hold_timeout": "Time after the switch will be automatically turned off. (0 = timeout disabled)."
         }
       },
       "feature_conf_area_aware_media_player": {

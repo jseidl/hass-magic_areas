@@ -8,9 +8,6 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_PROBLEM,
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
@@ -38,6 +35,7 @@ from .const import (
     CONF_EXTENDED_TIME,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
+    CONF_FEATURE_PRESENCE_HOLD,
     CONF_ICON,
     CONF_ON_STATES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -190,22 +188,11 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 self.sensors.append(entity["entity_id"])
 
         # Append presence_hold switch as a presence_sensor
-        presence_hold_switch_id = f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
-        self.sensors.append(presence_hold_switch_id)
+        if self.area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
+            presence_hold_switch_id = f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
+            self.sensors.append(presence_hold_switch_id)
 
     def load_attributes(self) -> None:
-
-        area_lights = (
-            [entity["entity_id"] for entity in self.area.entities[LIGHT_DOMAIN]]
-            if self.area.has_entities(LIGHT_DOMAIN)
-            else []
-        )
-
-        area_climate = (
-            [entity["entity_id"] for entity in self.area.entities[CLIMATE_DOMAIN]]
-            if self.area.has_entities(CLIMATE_DOMAIN)
-            else []
-        )
 
         # Set attributes
         self._attributes = {
@@ -217,7 +204,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 ).items()
             ],
             "active_sensors": [],
-            "lights": area_lights,
             "clear_timeout": self.area.config.get(CONF_CLEAR_TIMEOUT),
             "update_interval": self.area.config.get(CONF_UPDATE_INTERVAL),
             "type": self.area.config.get(CONF_TYPE),
@@ -235,7 +221,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         # Add non-meta attributes
         self._attributes.update(
             {
-                "climate": area_climate,
                 "on_states": self.area.config.get(CONF_ON_STATES),
                 "secondary_states": self._get_secondary_states(),
             }
