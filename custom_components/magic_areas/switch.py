@@ -4,11 +4,18 @@ import logging
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import STATE_ON
+from homeassistant.helpers.event import call_later
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.event import call_later
 
 from .base import MagicEntity
-from .const import DATA_AREA_OBJECT, MODULE_DATA, CONF_FEATURE_PRESENCE_HOLD, CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT
+from .const import (
+    CONF_FEATURE_PRESENCE_HOLD,
+    CONF_PRESENCE_HOLD_TIMEOUT,
+    DATA_AREA_OBJECT,
+    DEFAULT_PRESENCE_HOLD_TIMEOUT,
+    MODULE_DATA,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,10 +83,14 @@ class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
         self._state = True
         self.schedule_update_ha_state()
 
-        timeout = self.area.feature_config(CONF_FEATURE_PRESENCE_HOLD).get(CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT)
+        timeout = self.area.feature_config(CONF_FEATURE_PRESENCE_HOLD).get(
+            CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT
+        )
 
         if timeout and not self.timeout_callback:
-            self.timeout_callback = call_later(self.hass, timeout, self.timeout_turn_off)
+            self.timeout_callback = call_later(
+                self.hass, timeout, self.timeout_turn_off
+            )
 
     def turn_off(self, **kwargs):
         """Turn off presence hold."""
