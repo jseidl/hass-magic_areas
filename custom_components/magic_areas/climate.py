@@ -30,7 +30,7 @@ from homeassistant.helpers.event import async_track_state_change
 
 from .base import MagicEntity
 from .const import (
-    AREA_STATE_OCCUPIED,
+    DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_FEATURE_CLIMATE_GROUPS,
     DATA_AREA_OBJECT,
@@ -426,13 +426,13 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
             _LOGGER.debug(
                 f"{self.area.name}: Area clear, turning off Climate {self.entity_id}"
             )
-            return self.turn_off()
+            return self._turn_off()
 
         if self.area.is_occupied() and self.hvac_mode == CURRENT_HVAC_OFF:
 
             configured_state = self.area.feature_config(
                 CONF_FEATURE_CLIMATE_GROUPS
-            ).get(CONF_CLIMATE_GROUPS_TURN_ON_STATE, AREA_STATE_OCCUPIED)
+            ).get(CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE)
 
             if not self.area.has_state(configured_state):
                 return
@@ -440,9 +440,9 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
             _LOGGER.debug(
                 f"{self.area.name}: Area on {configured_state}, turning on Climate {self.entity_id}"
             )
-            return self.turn_on()
+            return self._turn_on()
 
-    def turn_off(self):
+    def _turn_off(self):
 
         service_data = {
             ATTR_ENTITY_ID: self.entity_id,
@@ -450,7 +450,7 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
         }
         self.hass.services.call(CLIMATE_DOMAIN, SERVICE_SET_HVAC_MODE, service_data)
 
-    def turn_on(self):
+    def _turn_on(self):
 
         for mode in (HVAC_MODE_HEAT_COOL, HVAC_MODE_HEAT, HVAC_MODE_COOL):
             if mode not in self.hvac_modes:
