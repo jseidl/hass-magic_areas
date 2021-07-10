@@ -110,14 +110,20 @@ class AreaLightGroup(MagicEntity, LightGroup):
 
         return relevant_states
 
-    def turn_on(self):
+    def _turn_on(self):
+
+        if self.is_on:
+            return False
 
         service_data = {ATTR_ENTITY_ID: self.entity_id}
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
 
         return True
 
-    def turn_off(self):
+    def _turn_off(self):
+
+        if not self.is_on:
+            return False
 
         service_data = {ATTR_ENTITY_ID: self.entity_id}
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
@@ -129,7 +135,7 @@ class AreaLightGroup(MagicEntity, LightGroup):
         # If area clear
         if not self.area.is_occupied():
             _LOGGER.debug(f"Area is clear, {self.name} SHOULD TURN OFF!")
-            return self.turn_off()
+            return self._turn_off()
 
         # If area has AREA_STATE_DARK configured but it's not dark
         if self.area.has_configured_state(AREA_STATE_DARK) and not self.area.has_state(
@@ -138,7 +144,7 @@ class AreaLightGroup(MagicEntity, LightGroup):
             _LOGGER.debug(
                 f"Area has AREA_STATE_DARK entity but state not present, {self.name} SHOULD TURN OFF!"
             )
-            return self.turn_off()
+            return self._turn_off()
 
         # Get all light groups from config and check for someone
         # listening to AREA_STATE_OCCUPIED
@@ -155,7 +161,7 @@ class AreaLightGroup(MagicEntity, LightGroup):
                     return False
 
         # If we don't, just turn on all of them
-        return self.turn_on()
+        return self._turn_on()
 
     def state_change_secondary(self, new_states):
 
@@ -202,14 +208,22 @@ class AreaLightGroup(MagicEntity, LightGroup):
             _LOGGER.debug(
                 f"Area has valid states ({valid_states}), {self.name} SHOULD TURN ON!"
             )
-            return self.turn_on()
+            return self._turn_on()
+
+        # Do not turn off 
 
         # Only turn lights off if not going into dark state
         if AREA_STATE_DARK not in new_states:
             _LOGGER.debug(
                 f"Area doesn't have any valid states, {self.name} SHOULD TURN OFF!"
             )
-            return self.turn_off()
+            
+            # Do not turn off lights that are not tied to a state
+            if not self.assigned_states:
+                _LOGGER.debug(f"{self.name}: No assigned states. Noop.")
+                return False
+
+            return self._turn_off()
 
     def area_state_changed(self, area_id, new_states):
 
