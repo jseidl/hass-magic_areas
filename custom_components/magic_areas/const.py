@@ -74,7 +74,6 @@ ALL_BINARY_SENSOR_DEVICE_CLASSES = (
 DATA_AREA_OBJECT = "area_object"
 DATA_UNDO_UPDATE_LISTENER = "undo_update_listener"
 
-
 # Secondary states options
 CONF_DARK_ENTITY = "dark_entity"
 CONF_DARK_STATE, DEFAULT_DARK_STATE = "dark_state", STATE_ON
@@ -84,6 +83,7 @@ CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT = "sleep_timeout", 0  # int
 CONF_SLEEP_ENTITY = "sleep_entity"
 CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE = "sleep_state", STATE_ON
 CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME = "extended_time", 120  # cv.positive_int
+CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT = "extended_timeout", 300  # int
 
 AREA_STATE_OCCUPIED = "occupied"
 AREA_STATE_EXTENDED = "extended"
@@ -199,6 +199,9 @@ CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT = (
     0,
 )  # cv.int
 
+# Climate Group Options
+CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = "turn_on_state", AREA_STATE_EXTENDED
+
 # Light group options
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
 CONF_OVERHEAD_LIGHTS_STATES = "overhead_lights_states"  # cv.ensure_list
@@ -285,6 +288,14 @@ PRESENCE_HOLD_FEATURE_SCHEMA = vol.Schema(
     }
 )
 
+CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_CLIMATE_GROUPS_TURN_ON_STATE, default=DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE
+        ): str,
+    }
+)
+
 LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
@@ -311,6 +322,7 @@ ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
 
 CONFIGURABLE_FEATURES = {
     CONF_FEATURE_LIGHT_GROUPS: LIGHT_GROUP_FEATURE_SCHEMA,
+    CONF_FEATURE_CLIMATE_GROUPS: CLIMATE_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_AGGREGATION: AGGREGATE_FEATURE_SCHEMA,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA,
     CONF_FEATURE_PRESENCE_HOLD: PRESENCE_HOLD_FEATURE_SCHEMA,
@@ -335,12 +347,18 @@ SECONDARY_STATES_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_SLEEP_ENTITY, default=""): vol.Any("", cv.entity_id),
         vol.Optional(CONF_SLEEP_STATE, default=DEFAULT_SLEEP_STATE): str,
+        vol.Optional(
+            CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT
+        ): cv.positive_int,
         vol.Optional(CONF_DARK_ENTITY, default=""): vol.Any("", cv.entity_id),
         vol.Optional(CONF_DARK_STATE, default=DEFAULT_DARK_STATE): str,
         vol.Optional(CONF_ACCENT_ENTITY, default=""): vol.Any("", cv.entity_id),
         vol.Optional(CONF_ACCENT_STATE, default=DEFAULT_ACCENT_STATE): str,
         vol.Optional(
             CONF_EXTENDED_TIME, default=DEFAULT_EXTENDED_TIME
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_EXTENDED_TIMEOUT, default=DEFAULT_EXTENDED_TIMEOUT
         ): cv.positive_int,
     }
 )
@@ -360,9 +378,6 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list_csv,
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
-        ): cv.positive_int,
-        vol.Optional(
-            CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT
         ): cv.positive_int,
         vol.Optional(
             CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
@@ -409,7 +424,6 @@ OPTIONS_AREA = [
         str,
     ),  # this should actually be cv.ensure_list_csv, but voluptuous doesn't support serializing this validator, so we'll work around with str and mangling the default
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
-    (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
     (CONF_ICON, DEFAULT_ICON, str),
 ]
@@ -424,11 +438,13 @@ OPTIONS_AREA_META = [
 OPTIONS_SECONDARY_STATES = [
     (CONF_SLEEP_ENTITY, "", cv.entity_id),
     (CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE, str),
+    (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
     (CONF_DARK_ENTITY, "", cv.entity_id),
     (CONF_DARK_STATE, DEFAULT_DARK_STATE, str),
     (CONF_ACCENT_ENTITY, "", cv.entity_id),
     (CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE, str),
     (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
+    (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),
 ]
 
 OPTIONS_LIGHT_GROUP = [
@@ -448,6 +464,10 @@ OPTIONS_AGGREGATES = [
 
 OPTIONS_PRESENCE_HOLD = [
     (CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT, int),
+]
+
+OPTIONS_CLIMATE_GROUP = [
+    (CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE, str),
 ]
 
 OPTIONS_AREA_AWARE_MEDIA_PLAYER = [

@@ -33,6 +33,10 @@ from .const import (
     MODULE_DATA,
     DATA_AREA_OBJECT,
     CONF_FEATURE_CLIMATE_GROUPS,
+    AREA_STATE_OCCUPIED,
+    AREA_STATE_EXTENDED,
+    CONF_FEATURE_CLIMATE_GROUPS,
+    CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED
 )
 
@@ -423,7 +427,13 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
             return self.turn_off()
 
         if self.area.is_occupied() and self.hvac_mode == CURRENT_HVAC_OFF:
-            _LOGGER.debug(f"{self.area.name}: Area occupied, turning on Climate {self.entity_id}")
+
+            configured_state = self.area.feature_config(CONF_FEATURE_CLIMATE_GROUPS).get(CONF_CLIMATE_GROUPS_TURN_ON_STATE, AREA_STATE_OCCUPIED)
+
+            if not self.area.has_state(configured_state):
+                return
+
+            _LOGGER.debug(f"{self.area.name}: Area on {configured_state}, turning on Climate {self.entity_id}")
             return self.turn_on()
 
     def turn_off(self):

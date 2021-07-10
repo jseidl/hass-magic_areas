@@ -10,9 +10,13 @@ from homeassistant.core import callback
 
 from .const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
+    AREA_STATE_EXTENDED, 
+    AREA_STATE_OCCUPIED, 
     AREA_STATE_DARK,
     AREA_TYPE_META,
     BUILTIN_AREA_STATES,
+    CONF_CLIMATE_GROUPS_TURN_ON_STATE, 
+    CONF_FEATURE_CLIMATE_GROUPS,
     CONF_ACCENT_ENTITY,
     CONF_ACCENT_LIGHTS,
     CONF_ACCENT_LIGHTS_STATES,
@@ -25,6 +29,8 @@ from .const import (
     CONF_FEATURE_LIST,
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
+    CONF_FEATURE_PRESENCE_HOLD, 
+    OPTIONS_PRESENCE_HOLD,
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
     CONF_OVERHEAD_LIGHTS,
@@ -50,6 +56,7 @@ from .const import (
     OPTIONS_AREA_AWARE_MEDIA_PLAYER,
     OPTIONS_AREA_META,
     OPTIONS_LIGHT_GROUP,
+    OPTIONS_CLIMATE_GROUP,
     OPTIONS_SECONDARY_STATES,
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
@@ -332,6 +339,21 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             user_input=user_input,
         )
 
+
+    async def async_step_feature_conf_climate_groups(self, user_input=None):
+        """Configure the climate groups feature"""
+
+        available_states = [AREA_STATE_OCCUPIED, AREA_STATE_EXTENDED]
+
+        return await self.do_feature_config(
+            name=CONF_FEATURE_CLIMATE_GROUPS,
+            options=OPTIONS_CLIMATE_GROUP,
+            dynamic_validators={
+                CONF_CLIMATE_GROUPS_TURN_ON_STATE: vol.In(available_states),
+            },
+            user_input=user_input,
+        )
+
     async def async_step_feature_conf_area_aware_media_player(self, user_input=None):
         """Configure the area aware media player feature"""
         return await self.do_feature_config(
@@ -348,6 +370,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return await self.do_feature_config(
             name=CONF_FEATURE_AGGREGATION,
             options=OPTIONS_AGGREGATES,
+            user_input=user_input,
+        )
+
+    async def async_step_feature_conf_presence_hold(self, user_input=None):
+        """Configure the sensor presence_hold feature"""
+        return await self.do_feature_config(
+            name=CONF_FEATURE_PRESENCE_HOLD,
+            options=OPTIONS_PRESENCE_HOLD,
             user_input=user_input,
         )
 
