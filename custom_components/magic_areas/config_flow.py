@@ -10,27 +10,26 @@ from homeassistant.core import callback
 
 from .const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
-    AREA_STATE_EXTENDED, 
-    AREA_STATE_OCCUPIED, 
     AREA_STATE_DARK,
+    AREA_STATE_EXTENDED,
+    AREA_STATE_OCCUPIED,
     AREA_TYPE_META,
     BUILTIN_AREA_STATES,
-    CONF_CLIMATE_GROUPS_TURN_ON_STATE, 
-    CONF_FEATURE_CLIMATE_GROUPS,
     CONF_ACCENT_ENTITY,
     CONF_ACCENT_LIGHTS,
     CONF_ACCENT_LIGHTS_STATES,
+    CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_DARK_ENTITY,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
+    CONF_FEATURE_CLIMATE_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_LIST,
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
-    CONF_FEATURE_PRESENCE_HOLD, 
-    OPTIONS_PRESENCE_HOLD,
+    CONF_FEATURE_PRESENCE_HOLD,
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
     CONF_OVERHEAD_LIGHTS,
@@ -55,8 +54,9 @@ from .const import (
     OPTIONS_AREA,
     OPTIONS_AREA_AWARE_MEDIA_PLAYER,
     OPTIONS_AREA_META,
-    OPTIONS_LIGHT_GROUP,
     OPTIONS_CLIMATE_GROUP,
+    OPTIONS_LIGHT_GROUP,
+    OPTIONS_PRESENCE_HOLD,
     OPTIONS_SECONDARY_STATES,
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
@@ -68,7 +68,7 @@ EMPTY_ENTRY = [""]
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Adaptive Lighting."""
+    """Handle a config flow for Magic Areas."""
 
     VERSION = 1
 
@@ -338,7 +338,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             },
             user_input=user_input,
         )
-
 
     async def async_step_feature_conf_climate_groups(self, user_input=None):
         """Configure the climate groups feature"""
