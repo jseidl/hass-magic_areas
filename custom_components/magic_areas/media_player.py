@@ -257,9 +257,9 @@ class AreaMediaGroup(MagicEntity, MediaGroup):
 
         if not self.area.is_occupied():
             _LOGGER.debug(f"{self.area.name}: Area clear, turning off media players")
-            self.turn_off()
+            self._turn_off()
 
-    def turn_off(self):
+    def _turn_off(self):
 
         service_data = {ATTR_ENTITY_ID: self.entity_id}
         self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_TURN_OFF, service_data)
