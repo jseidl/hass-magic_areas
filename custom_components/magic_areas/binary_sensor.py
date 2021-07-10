@@ -508,12 +508,11 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             f"{self.area.name}: Secondary states updated. New states: {new_states}"
         )
 
-        self.area.last_changed = datetime.utcnow()
-
         self._update_attributes()
         self.schedule_update_ha_state()
 
         if state_changed:
+            self.area.last_changed = datetime.utcnow()
             # Consider all secondary states new
             new_states = self.area.secondary_states.copy()
         self.report_state_change(new_states)
