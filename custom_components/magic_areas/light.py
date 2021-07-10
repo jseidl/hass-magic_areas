@@ -12,6 +12,7 @@ from .const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_DARK,
     AREA_STATE_OCCUPIED,
+    AREA_STATE_BRIGHT,
     CONF_FEATURE_LIGHT_GROUPS,
     DATA_AREA_OBJECT,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
@@ -130,19 +131,17 @@ class AreaLightGroup(MagicEntity, LightGroup):
 
         return True
 
-    def state_change_primary(self):
+    def state_change_primary(self, new_states):
 
         # If area clear
         if not self.area.is_occupied():
             _LOGGER.debug(f"Area is clear, {self.name} SHOULD TURN OFF!")
             return self._turn_off()
 
-        # If area has AREA_STATE_DARK configured but it's not dark
-        if self.area.has_configured_state(AREA_STATE_DARK) and not self.area.has_state(
-            AREA_STATE_DARK
-        ):
+        # If area has just went into AREA_STATE_BRIGHT state
+        if self.area.has_state(AREA_STATE_BRIGHT) and AREA_STATE_BRIGHT in new_states:
             _LOGGER.debug(
-                f"Area has AREA_STATE_DARK entity but state not present, {self.name} SHOULD TURN OFF!"
+                f"Area has AREA_STATE_BRIGHT, {self.name} SHOULD TURN OFF!"
             )
             return self._turn_off()
 
@@ -210,20 +209,23 @@ class AreaLightGroup(MagicEntity, LightGroup):
             )
             return self._turn_on()
 
-        # Do not turn off 
-
         # Only turn lights off if not going into dark state
-        if AREA_STATE_DARK not in new_states:
-            _LOGGER.debug(
-                f"Area doesn't have any valid states, {self.name} SHOULD TURN OFF!"
-            )
+        if AREA_STATE_DARK in new_states:
+            _LOGGER.debug(f"{self.name}: Entering {AREA_STATE_DARK} state, noop.")
+            return False
             
-            # Do not turn off lights that are not tied to a state
-            if not self.assigned_states:
-                _LOGGER.debug(f"{self.name}: No assigned states. Noop.")
-                return False
+        # Do not turn off lights that are not tied to a state
+        if not self.assigned_states:
+            _LOGGER.debug(f"{self.name}: No assigned states. Noop.")
+            return False
 
-            return self._turn_off()
+        # Do not turn off if no new PRIORITY_STATES
+        new_priority_states = [state for state in AREA_PRIORITY_STATES if state in new_states]
+        if not new_priority_states:
+            _LOGGER.debug(f"{self.name}: No new priority states. Noop.")
+            return False
+
+        return self._turn_off()
 
     def area_state_changed(self, area_id, new_states):
 
@@ -237,7 +239,7 @@ class AreaLightGroup(MagicEntity, LightGroup):
 
         # @TODO Handle all lights group
         if not self.category:
-            return self.state_change_primary()
+            return self.state_change_primary(new_states)
 
         # @TODO Handle light category
         return self.state_change_secondary(new_states)

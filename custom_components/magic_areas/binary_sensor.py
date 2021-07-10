@@ -28,6 +28,8 @@ from .base import AggregateBase, BinarySensorBase
 from .const import (
     AREA_STATE_EXTENDED,
     AREA_STATE_SLEEP,
+    AREA_STATE_DARK,
+    AREA_STATE_BRIGHT,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,
@@ -383,7 +385,13 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         if self.area.is_occupied() and seconds_since_last_change >= extended_time:
             secondary_states.append(AREA_STATE_EXTENDED)
 
-        for configurable_state in self._get_configured_secondary_states():
+        configurable_states = self._get_configured_secondary_states()
+
+        # Assume AREA_STATE_DARK if not configured
+        if AREA_STATE_DARK not in configurable_states:
+            secondary_states.append(AREA_STATE_DARK)
+
+        for configurable_state in configurable_states:
 
             (
                 configurable_state_entity,
@@ -407,6 +415,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                     f"{self.area.name}: Secondary state: {secondary_state_entity} is at {secondary_state_value}, adding {configurable_state}"
                 )
                 secondary_states.append(configurable_state)
+
+        # Meta-state bright
+        if AREA_STATE_DARK in configurable_states and AREA_STATE_DARK not in secondary_states:
+            secondary_states.append(AREA_STATE_BRIGHT)
 
         return secondary_states
 

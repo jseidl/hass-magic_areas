@@ -255,7 +255,7 @@ class AreaMediaGroup(MagicEntity, MediaGroup):
 
         _LOGGER.debug(f"Media Player group {self.name} detected area state change")
 
-        if not self.area.is_occupied():
+        if not self.area.is_occupied() and new_states:
             _LOGGER.debug(f"{self.area.name}: Area clear, turning off media players")
             self._turn_off()
 
