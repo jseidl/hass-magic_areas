@@ -7,34 +7,33 @@ Once this goes into the main Home Assistant code it will be phased out.
 import itertools
 import logging
 from collections import Counter
-from typing import Any, Callable, Iterator, List, Optional
+from typing import List, Optional, Iterator, Any, Callable
 
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.components import climate
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
-from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
+from homeassistant.components.climate import ClimateEntity, PLATFORM_SCHEMA
 from homeassistant.components.climate.const import *
 from homeassistant.const import (
     ATTR_ENTITY_ID,
-    ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
-    CONF_ENTITIES,
-    CONF_NAME,
-    CONF_TEMPERATURE_UNIT,
-    SERVICE_TURN_OFF,
-    SERVICE_TURN_ON,
     TEMP_CELSIUS,
     TEMP_FAHRENHEIT,
+    CONF_TEMPERATURE_UNIT,
+    CONF_ENTITIES,
+    CONF_NAME,
+    ATTR_SUPPORTED_FEATURES,
+    SERVICE_TURN_ON,
 )
 from homeassistant.core import State, callback
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change
 
 from .base import MagicEntity
 from .const import (
-    CONF_FEATURE_CLIMATE_GROUPS,
-    DATA_AREA_OBJECT,
-    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     MODULE_DATA,
+    DATA_AREA_OBJECT,
+    CONF_FEATURE_CLIMATE_GROUPS,
+    EVENT_MAGICAREAS_AREA_STATE_CHANGED
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,19 +68,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         _LOGGER.debug(f"{area.name}: Setting up climate group")
         setup_climate_group(hass, area, async_add_entities)
 
-
 def setup_climate_group(hass, area, async_add_entities):
-
+    
     # Check if there are any lights
     if not area.has_entities(CLIMATE_DOMAIN):
         _LOGGER.debug(f"No {CLIMATE_DOMAIN} entities for area {area.name} ")
         return
 
     climate_entities = [e["entity_id"] for e in area.entities[CLIMATE_DOMAIN]]
-    # @TODO get unit from entities
+    #@TODO get unit from entities
 
     async_add_entities([AreaClimateGroup(hass, area, climate_entities)])
-
 
 class ClimateGroup(ClimateEntity):
     """Representation of a climate group."""
@@ -402,8 +399,8 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
         self.hass = hass
         self.area = area
 
-        # @FIXME get from entities
-        unit = "°F"
+        #@FIXME get from entities
+        unit = '°F'
 
         ClimateGroup.__init__(self, self._name, self._entities, [], unit)
 
@@ -421,14 +418,37 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
         _LOGGER.debug(f"Climate group {self.name} detected area state change")
 
-        if not self.area.is_occupied():
-            _LOGGER.debug(f"{self.area.name}: Area clear, turning off Climate")
-            self.turn_off()
+        if not self.area.is_occupied() and self.hvac_mode != CURRENT_HVAC_OFF:
+            _LOGGER.debug(f"{self.area.name}: Area clear, turning off Climate {self.entity_id}")
+            return self.turn_off()
+
+        if self.area.is_occupied() and self.hvac_mode == CURRENT_HVAC_OFF:
+            _LOGGER.debug(f"{self.area.name}: Area occupied, turning on Climate {self.entity_id}")
+            return self.turn_on()
 
     def turn_off(self):
 
-        service_data = {ATTR_ENTITY_ID: self.entity_id}
-        self.hass.services.call(CLIMATE_DOMAIN, SERVICE_TURN_OFF, service_data)
+        service_data = {
+            ATTR_ENTITY_ID: self.entity_id,
+            ATTR_HVAC_MODE: HVAC_MODE_OFF,
+        }
+        self.hass.services.call(CLIMATE_DOMAIN, SERVICE_SET_HVAC_MODE, service_data)
+
+    def turn_on(self):
+    
+        for mode in (HVAC_MODE_HEAT_COOL, HVAC_MODE_HEAT, HVAC_MODE_COOL):
+            if mode not in self.hvac_modes:
+                continue
+
+            service_data = {
+                ATTR_ENTITY_ID: self.entity_id,
+                ATTR_HVAC_MODE: mode,
+            }
+
+            self.hass.services.call(CLIMATE_DOMAIN, SERVICE_SET_HVAC_MODE, service_data)
+            break
+
+            self.set_hvac_mode(mode)
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
