@@ -32,6 +32,7 @@ from .const import (
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,
     CONF_EXTENDED_TIME,
+    CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
     CONF_FEATURE_PRESENCE_HOLD,
@@ -45,6 +46,8 @@ from .const import (
     CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
     DEFAULT_EXTENDED_TIME,
+    DEFAULT_EXTENDED_TIMEOUT,
+    DEFAULT_SLEEP_TIMEOUT,
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     MODULE_DATA,
@@ -417,7 +420,14 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def get_clear_timeout(self):
         if self.area.has_state(AREA_STATE_SLEEP):
-            return self.area.config.get(CONF_SLEEP_TIMEOUT)
+            return self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+                CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT
+            )
+
+        if self.area.has_state(AREA_STATE_EXTENDED):
+            return self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+                CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT
+            )
 
         return self.area.config.get(CONF_CLEAR_TIMEOUT)
 

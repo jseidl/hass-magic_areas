@@ -64,6 +64,13 @@
           "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates."
         }
       },
+      "feature_conf_climate_groups": {
+        "title": "Feature: Climate Groups",
+        "description": "Configure the Climate Groups feature",
+        "data": {
+          "turn_on_state": "State to turn on the climate group."
+        }
+      },
       "secondary_states": {
         "title": "Secondary states",
         "description": "Map an entity state to an area's secondary state which are used by features to more precisely control devices automatically.",
@@ -72,9 +79,11 @@
           "dark_state": "State of dark state entity",
           "sleep_entity": "Entity used to track area sleep state",
           "sleep_state": "State of sleep state entity",
+          "sleep_timeout": "How long area will wait before clearing the state when on sleep state",
           "accent_entity": "Entity used to track area accented state",
           "accent_state": "State of accent state entity",
-          "extended_time": "Area will be marked as 'extended' after being occupied for N seconds"
+          "extended_time": "Area will be marked as 'extended' after being occupied for N seconds",
+          "extended_timeout": "How long area will wait before clearing the state when on extended state"
         }
       },
       "area_config": {
@@ -88,7 +97,6 @@
           "icon": "Icon",
           "update_interval": "Interval for checking missed events",
           "clear_timeout": "How long since last presence event should it wait before clearing the area",
-          "sleep_timeout": "How long since last presence event should it wait before clearing the area when on sleep mode",
           "type": "Area type (interior/exterior)"
         }
       }
