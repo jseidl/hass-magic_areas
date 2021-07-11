@@ -26,10 +26,10 @@ from homeassistant.helpers.event import (
 
 from .base import AggregateBase, BinarySensorBase
 from .const import (
+    AREA_STATE_BRIGHT,
+    AREA_STATE_DARK,
     AREA_STATE_EXTENDED,
     AREA_STATE_SLEEP,
-    AREA_STATE_DARK,
-    AREA_STATE_BRIGHT,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,
@@ -334,17 +334,18 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         current_state = set(self._get_secondary_states())
 
         if last_state == current_state:
-            return []
+            return ([], [])
 
         # Calculate what's new
         new_states = current_state - last_state
+        lost_states = last_state - current_state
         _LOGGER.debug(
-            f"{self.name}: Current state: {current_state}, last state: {last_state} -> new states {new_states}"
+            f"{self.name}: Current state: {current_state}, last state: {last_state} -> new states {new_states} / lost states {lost_states}"
         )
 
         self.area.secondary_states = list(current_state)
 
-        return new_states
+        return (new_states, lost_states)
 
     def _get_configured_secondary_states(self):
 
@@ -417,7 +418,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 secondary_states.append(configurable_state)
 
         # Meta-state bright
-        if AREA_STATE_DARK in configurable_states and AREA_STATE_DARK not in secondary_states:
+        if (
+            AREA_STATE_DARK in configurable_states
+            and AREA_STATE_DARK not in secondary_states
+        ):
             secondary_states.append(AREA_STATE_BRIGHT)
 
         return secondary_states
@@ -515,26 +519,31 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         state_changed = last_state != self.area.is_occupied()
 
-        new_states = self._update_secondary_states()
+        if state_changed:
+            self.area.last_changed = datetime.utcnow()
+
+        states_tuple = self._update_secondary_states()
+        new_states, lost_states = states_tuple
         _LOGGER.debug(
-            f"{self.area.name}: Secondary states updated. New states: {new_states}"
+            f"{self.area.name}: Secondary states updated. New states: {new_states} / Lost states: {lost_states}"
         )
 
         self._update_attributes()
         self.schedule_update_ha_state()
 
         if state_changed:
-            self.area.last_changed = datetime.utcnow()
             # Consider all secondary states new
-            new_states = self.area.secondary_states.copy()
-        self.report_state_change(new_states)
+            states_tuple = (self.area.secondary_states.copy(), [])
 
-    def report_state_change(self, new_states=[]):
+        self.report_state_change(states_tuple)
+
+    def report_state_change(self, states_tuple=([], [])):
+        new_states, lost_states = states_tuple
         _LOGGER.debug(
-            f"Reporting state change for {self.area.id} (new states: {new_states})"
+            f"Reporting state change for {self.area.id} (new states: {new_states}/lost states: {lost_states})"
         )
         dispatcher_send(
-            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, new_states
+            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, states_tuple
         )
 
 

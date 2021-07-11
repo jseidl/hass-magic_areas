@@ -30,10 +30,10 @@ from homeassistant.helpers.event import async_track_state_change
 
 from .base import MagicEntity
 from .const import (
-    DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_FEATURE_CLIMATE_GROUPS,
     DATA_AREA_OBJECT,
+    DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     MODULE_DATA,
 )
@@ -412,7 +412,7 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
             f"Climate group {self._name} created with entities: {self._entities}"
         )
 
-    def area_state_changed(self, area_id, new_states):
+    def area_state_changed(self, area_id, states_tuple):
 
         if area_id != self.area.id:
             _LOGGER.debug(
@@ -432,7 +432,9 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
             configured_state = self.area.feature_config(
                 CONF_FEATURE_CLIMATE_GROUPS
-            ).get(CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE)
+            ).get(
+                CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE
+            )
 
             if not self.area.has_state(configured_state):
                 return
