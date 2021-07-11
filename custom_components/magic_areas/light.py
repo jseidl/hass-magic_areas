@@ -2,9 +2,10 @@ DEPENDENCIES = ["magic_areas"]
 
 import logging
 
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON, STATE_ON
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from .base import MagicEntity
@@ -65,7 +66,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities(light_groups)
 
 
-class AreaLightGroup(MagicEntity, LightGroup):
+class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
     def __init__(self, hass, area, entities, category=None):
 
         name = f"{area.name} Lights"
@@ -131,7 +132,9 @@ class AreaLightGroup(MagicEntity, LightGroup):
 
         return True
 
-    def state_change_primary(self, new_states):
+    def state_change_primary(self, states_tuple):
+
+        new_states, lost_states = states_tuple
 
         # If area clear
         if not self.area.is_occupied():
@@ -162,7 +165,14 @@ class AreaLightGroup(MagicEntity, LightGroup):
         # If we don't, just turn on all of them
         return self._turn_on()
 
-    def state_change_secondary(self, new_states):
+    def state_change_secondary(self, states_tuple):
+
+        new_states, lost_states = states_tuple
+
+        # Only react to actual secondary state changes
+        if not new_states and not lost_states:
+            _LOGGER.debug(f"{self.name}: No new or lost states, noop.")
+            return False
 
         # If area clear, do nothing (main group will)
         if not self.area.is_occupied():
@@ -174,12 +184,12 @@ class AreaLightGroup(MagicEntity, LightGroup):
             AREA_STATE_DARK
         ):
             _LOGGER.debug(
-                f"Area has AREA_STATE_DARK entity but state not present, {self.name} SHOULD TURN OFF!"
+                f"{self.name}: Area has AREA_STATE_DARK entity but state not present, noop!"
             )
             return False
 
         _LOGGER.debug(
-            f"Light group {self.name} assigned states: {self.assigned_states}. New states: {new_states}"
+            f"Light group {self.name} assigned states: {self.assigned_states}. New states: {new_states} / Lost states {lost_states}"
         )
 
         # Calculate valid states (if area has states we listen to)
@@ -219,6 +229,11 @@ class AreaLightGroup(MagicEntity, LightGroup):
             _LOGGER.debug(f"{self.name}: No assigned states. Noop.")
             return False
 
+        # Turn off if we're a PRIORITY_STATE and we're coming out of it
+        out_of_priority_states = [state for state in AREA_PRIORITY_STATES if state in self.assigned_states and state in lost_states]
+        if out_of_priority_states:
+            return self._turn_off()
+
         # Do not turn off if no new PRIORITY_STATES
         new_priority_states = [state for state in AREA_PRIORITY_STATES if state in new_states]
         if not new_priority_states:
@@ -227,7 +242,7 @@ class AreaLightGroup(MagicEntity, LightGroup):
 
         return self._turn_off()
 
-    def area_state_changed(self, area_id, new_states):
+    def area_state_changed(self, area_id, states_tuple):
 
         if area_id != self.area.id:
             _LOGGER.debug(
@@ -237,15 +252,27 @@ class AreaLightGroup(MagicEntity, LightGroup):
 
         _LOGGER.debug(f"Light group {self.name} detected area state change")
 
-        # @TODO Handle all lights group
+        # Handle all lights group
         if not self.category:
-            return self.state_change_primary(new_states)
+            return self.state_change_primary(states_tuple)
 
-        # @TODO Handle light category
-        return self.state_change_secondary(new_states)
+        # Handle light category
+        return self.state_change_secondary(states_tuple)
 
     async def async_added_to_hass(self) -> None:
-        """Register callbacks."""
+
+        # Get last state
+        last_state = await self.async_get_last_state()
+
+        if last_state:
+            _LOGGER.debug(f"{self.name} restored [state={last_state.state}]")
+            self._state = last_state.state == STATE_ON
+        else:
+            self._state = False
+
+        self.schedule_update_ha_state()
+
+        # Register Callback
 
         async_dispatcher_connect(
             self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed

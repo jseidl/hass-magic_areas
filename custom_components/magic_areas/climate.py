@@ -412,7 +412,7 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
             f"Climate group {self._name} created with entities: {self._entities}"
         )
 
-    def area_state_changed(self, area_id, new_states):
+    def area_state_changed(self, area_id, states_tuple):
 
         if area_id != self.area.id:
             _LOGGER.debug(
