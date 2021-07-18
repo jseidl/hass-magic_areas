@@ -5,15 +5,21 @@ import logging
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON, STATE_ON
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
+    STATE_ON,
+)
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from .base import MagicEntity
 from .const import (
     AREA_PRIORITY_STATES,
+    AREA_STATE_BRIGHT,
     AREA_STATE_DARK,
     AREA_STATE_OCCUPIED,
-    AREA_STATE_BRIGHT,
     CONF_FEATURE_LIGHT_GROUPS,
     DATA_AREA_OBJECT,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
@@ -143,9 +149,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
 
         # If area has just went into AREA_STATE_BRIGHT state
         if self.area.has_state(AREA_STATE_BRIGHT) and AREA_STATE_BRIGHT in new_states:
-            _LOGGER.debug(
-                f"Area has AREA_STATE_BRIGHT, {self.name} SHOULD TURN OFF!"
-            )
+            _LOGGER.debug(f"Area has AREA_STATE_BRIGHT, {self.name} SHOULD TURN OFF!")
             return self._turn_off()
 
         # Get all light groups from config and check for someone
@@ -223,19 +227,25 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         if AREA_STATE_DARK in new_states:
             _LOGGER.debug(f"{self.name}: Entering {AREA_STATE_DARK} state, noop.")
             return False
-            
+
         # Do not turn off lights that are not tied to a state
         if not self.assigned_states:
             _LOGGER.debug(f"{self.name}: No assigned states. Noop.")
             return False
 
         # Turn off if we're a PRIORITY_STATE and we're coming out of it
-        out_of_priority_states = [state for state in AREA_PRIORITY_STATES if state in self.assigned_states and state in lost_states]
+        out_of_priority_states = [
+            state
+            for state in AREA_PRIORITY_STATES
+            if state in self.assigned_states and state in lost_states
+        ]
         if out_of_priority_states:
             return self._turn_off()
 
         # Do not turn off if no new PRIORITY_STATES
-        new_priority_states = [state for state in AREA_PRIORITY_STATES if state in new_states]
+        new_priority_states = [
+            state for state in AREA_PRIORITY_STATES if state in new_states
+        ]
         if not new_priority_states:
             _LOGGER.debug(f"{self.name}: No new priority states. Noop.")
             return False

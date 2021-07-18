@@ -26,10 +26,10 @@ from homeassistant.helpers.event import (
 
 from .base import AggregateBase, BinarySensorBase
 from .const import (
+    AREA_STATE_BRIGHT,
+    AREA_STATE_DARK,
     AREA_STATE_EXTENDED,
     AREA_STATE_SLEEP,
-    AREA_STATE_DARK,
-    AREA_STATE_BRIGHT,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,
@@ -418,7 +418,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 secondary_states.append(configurable_state)
 
         # Meta-state bright
-        if AREA_STATE_DARK in configurable_states and AREA_STATE_DARK not in secondary_states:
+        if (
+            AREA_STATE_DARK in configurable_states
+            and AREA_STATE_DARK not in secondary_states
+        ):
             secondary_states.append(AREA_STATE_BRIGHT)
 
         return secondary_states
@@ -531,10 +534,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         if state_changed:
             # Consider all secondary states new
             states_tuple = (self.area.secondary_states.copy(), [])
-            
+
         self.report_state_change(states_tuple)
 
-    def report_state_change(self, states_tuple=([],[])):
+    def report_state_change(self, states_tuple=([], [])):
         new_states, lost_states = states_tuple
         _LOGGER.debug(
             f"Reporting state change for {self.area.id} (new states: {new_states}/lost states: {lost_states})"

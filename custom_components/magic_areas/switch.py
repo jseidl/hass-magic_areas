@@ -6,7 +6,6 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import STATE_ON
 from homeassistant.helpers.event import call_later
 from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.helpers.event import call_later
 
 from .base import MagicEntity
 from .const import (
