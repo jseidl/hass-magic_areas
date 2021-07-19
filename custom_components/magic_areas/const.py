@@ -23,6 +23,7 @@ from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
+from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
@@ -132,10 +133,10 @@ CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
 (
     CONF_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
-) = "presence_device_platforms",[
+) = "presence_device_platforms", [
     MEDIA_PLAYER_DOMAIN,
     BINARY_SENSOR_DOMAIN,
-] # cv.ensure_list
+]  # cv.ensure_list
 ALL_PRESENCE_DEVICE_PLATFORMS = [
     MEDIA_PLAYER_DOMAIN,
     BINARY_SENSOR_DOMAIN,
@@ -347,7 +348,13 @@ CONFIGURABLE_FEATURES = {
     CONF_FEATURE_PRESENCE_HOLD: PRESENCE_HOLD_FEATURE_SCHEMA,
 }
 
+<<<<<<< HEAD
 NON_CONFIGURABLE_FEATURES_META = [CONF_FEATURE_LIGHT_GROUPS, ]
+=======
+NON_CONFIGURABLE_FEATURES_META = [
+    CONF_FEATURE_LIGHT_GROUPS,
+]
+>>>>>>> d02d5657eed6b0a6a90c53a5da79ee2054eeee23
 
 NON_CONFIGURABLE_FEATURES = {
     feature: {}

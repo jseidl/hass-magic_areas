@@ -2,7 +2,6 @@ DEPENDENCIES = ["magic_areas"]
 
 import logging
 
-from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.const import (
@@ -63,13 +62,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
         # Create extended light groups
         for category in LIGHT_GROUP_CATEGORIES:
-            category_lights = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(category)
+            category_lights = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
+                category
+            )
 
             if category_lights:
                 _LOGGER.debug(
                     f"Creating {category} group for area {area.name} with lights: {category_lights}"
                 )
-                light_groups.append(AreaLightGroup(hass, area, category_lights, category))
+                light_groups.append(
+                    AreaLightGroup(hass, area, category_lights, category)
+                )
 
     # Create all groups
     async_add_entities(light_groups)

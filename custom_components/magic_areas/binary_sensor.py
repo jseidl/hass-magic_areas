@@ -40,6 +40,7 @@ from .const import (
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_ICON,
     CONF_ON_STATES,
+    CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_SECONDARY_STATES,
@@ -50,6 +51,7 @@ from .const import (
     DATA_AREA_OBJECT,
     DEFAULT_EXTENDED_TIME,
     DEFAULT_EXTENDED_TIMEOUT,
+    DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_SLEEP_TIMEOUT,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     DISTRESS_SENSOR_CLASSES,
@@ -172,7 +174,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 self.sensors.append(entity_id)
             return
 
-        valid_presence_platforms = self.area.config.get(CONF_PRESENCE_DEVICE_PLATFORMS, DEFAULT_PRESENCE_DEVICE_PLATFORMS)
+        valid_presence_platforms = self.area.config.get(
+            CONF_PRESENCE_DEVICE_PLATFORMS, DEFAULT_PRESENCE_DEVICE_PLATFORMS
+        )
 
         for component, entities in self.area.entities.items():
 
