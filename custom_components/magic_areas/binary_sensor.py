@@ -40,6 +40,7 @@ from .const import (
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_ICON,
     CONF_ON_STATES,
+    CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SECONDARY_STATES,
     CONF_SLEEP_TIMEOUT,
@@ -49,11 +50,11 @@ from .const import (
     DATA_AREA_OBJECT,
     DEFAULT_EXTENDED_TIME,
     DEFAULT_EXTENDED_TIMEOUT,
+    DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_SLEEP_TIMEOUT,
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     MODULE_DATA,
-    PRESENCE_DEVICE_COMPONENTS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -171,9 +172,13 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 self.sensors.append(entity_id)
             return
 
+        valid_presence_platforms = self.area.config.get(
+            CONF_PRESENCE_DEVICE_PLATFORMS, DEFAULT_PRESENCE_DEVICE_PLATFORMS
+        )
+
         for component, entities in self.area.entities.items():
 
-            if component not in PRESENCE_DEVICE_COMPONENTS:
+            if component not in valid_presence_platforms:
                 continue
 
             for entity in entities:
