@@ -25,6 +25,7 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
 from homeassistant.const import (
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
@@ -128,6 +129,18 @@ CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES = "features", {}  # cv.ensure_li
 CONF_SECONDARY_STATES, DEFAULT_AREA_STATES = "secondary_states", {}  # cv.ensure_list
 CONF_INCLUDE_ENTITIES = "include_entities"  # cv.entity_ids
 CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
+(
+    CONF_PRESENCE_DEVICE_PLATFORMS,
+    DEFAULT_PRESENCE_DEVICE_PLATFORMS,
+) = "presence_device_platforms",[
+    MEDIA_PLAYER_DOMAIN,
+    BINARY_SENSOR_DOMAIN,
+] # cv.ensure_list
+ALL_PRESENCE_DEVICE_PLATFORMS = [
+    MEDIA_PLAYER_DOMAIN,
+    BINARY_SENSOR_DOMAIN,
+    REMOTE_DOMAIN,
+]
 (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
@@ -245,12 +258,6 @@ LIGHT_GROUP_CATEGORIES = [
     CONF_TASK_LIGHTS,
 ]
 
-# Health related
-PRESENCE_DEVICE_COMPONENTS = [
-    MEDIA_PLAYER_DOMAIN,
-    BINARY_SENSOR_DOMAIN,
-]  # @todo make configurable
-
 AGGREGATE_BINARY_SENSOR_CLASSES = [
     DEVICE_CLASS_WINDOW,
     DEVICE_CLASS_DOOR,
@@ -259,6 +266,7 @@ AGGREGATE_BINARY_SENSOR_CLASSES = [
     DEVICE_CLASS_LIGHT,
 ]
 
+# Health related
 DISTRESS_SENSOR_CLASSES = [
     DEVICE_CLASS_PROBLEM,
     DEVICE_CLASS_SMOKE,
@@ -339,6 +347,8 @@ CONFIGURABLE_FEATURES = {
     CONF_FEATURE_PRESENCE_HOLD: PRESENCE_HOLD_FEATURE_SCHEMA,
 }
 
+NON_CONFIGURABLE_FEATURES_META = [CONF_FEATURE_LIGHT_GROUPS, ]
+
 NON_CONFIGURABLE_FEATURES = {
     feature: {}
     for feature in ALL_FEATURES
@@ -383,6 +393,10 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(
+            CONF_PRESENCE_DEVICE_PLATFORMS,
+            default=DEFAULT_PRESENCE_DEVICE_PLATFORMS,
+        ): cv.ensure_list,
+        vol.Optional(
             CONF_PRESENCE_SENSOR_DEVICE_CLASS,
             default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
         ): cv.ensure_list,
@@ -424,6 +438,11 @@ OPTIONS_AREA = [
     (CONF_TYPE, DEFAULT_TYPE, vol.In([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])),
     (CONF_INCLUDE_ENTITIES, [], cv.entity_ids),
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
+    (
+        CONF_PRESENCE_DEVICE_PLATFORMS,
+        DEFAULT_PRESENCE_DEVICE_PLATFORMS,
+        cv.ensure_list,
+    ),
     (
         CONF_PRESENCE_SENSOR_DEVICE_CLASS,
         DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,

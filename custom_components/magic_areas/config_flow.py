@@ -10,6 +10,7 @@ from homeassistant.core import callback
 
 from .const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
+    ALL_PRESENCE_DEVICE_PLATFORMS,
     AREA_STATE_DARK,
     AREA_STATE_EXTENDED,
     AREA_STATE_OCCUPIED,
@@ -34,6 +35,7 @@ from .const import (
     CONF_NOTIFICATION_DEVICES,
     CONF_OVERHEAD_LIGHTS,
     CONF_OVERHEAD_LIGHTS_STATES,
+    CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SECONDARY_STATES,
     CONF_SLEEP_ENTITY,
@@ -45,6 +47,7 @@ from .const import (
     CONFIG_FLOW_ENTITY_FILTER_EXT,
     CONFIGURABLE_AREA_STATE_MAP,
     CONFIGURABLE_FEATURES,
+    NON_CONFIGURABLE_FEATURES_META,
     DATA_AREA_OBJECT,
     DOMAIN,
     META_AREA_GLOBAL,
@@ -201,6 +204,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 dynamic_validators={
                     CONF_INCLUDE_ENTITIES: cv.multi_select(self.all_entities),
                     CONF_EXCLUDE_ENTITIES: cv.multi_select(self.all_area_entities),
+                    CONF_PRESENCE_DEVICE_PLATFORMS: cv.multi_select(
+                        sorted(ALL_PRESENCE_DEVICE_PLATFORMS)
+                    ),
                     CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(
                         sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
                     ),
@@ -251,8 +257,16 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             self.selected_features = [
                 feature for feature, is_selected in user_input.items() if is_selected
             ]
+
+            # Disable feature configuration for meta-areas
+            filtered_configurable_features = list(CONFIGURABLE_FEATURES.keys())
+            if self.area.is_meta():
+                for feature in NON_CONFIGURABLE_FEATURES_META:
+                    if feature in filtered_configurable_features:
+                        filtered_configurable_features.remove(feature)
+
             self.features_to_configure = list(
-                set(self.selected_features) & set(CONFIGURABLE_FEATURES.keys())
+                set(self.selected_features) & set(filtered_configurable_features)
             )
             _LOGGER.debug(f"Selected features: {self.selected_features}")
             self.area_options[CONF_ENABLED_FEATURES].update(
