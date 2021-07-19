@@ -26,7 +26,6 @@ from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
 from homeassistant.const import (
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
@@ -348,13 +347,9 @@ CONFIGURABLE_FEATURES = {
     CONF_FEATURE_PRESENCE_HOLD: PRESENCE_HOLD_FEATURE_SCHEMA,
 }
 
-<<<<<<< HEAD
-NON_CONFIGURABLE_FEATURES_META = [CONF_FEATURE_LIGHT_GROUPS, ]
-=======
 NON_CONFIGURABLE_FEATURES_META = [
     CONF_FEATURE_LIGHT_GROUPS,
 ]
->>>>>>> d02d5657eed6b0a6a90c53a5da79ee2054eeee23
 
 NON_CONFIGURABLE_FEATURES = {
     feature: {}
