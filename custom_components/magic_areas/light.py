@@ -42,4 +42,4 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     _LOGGER.debug(
         f"Creating light groups for area {area.name} with lights: {light_entities}"
     )
-    async_add_entities([LightGroup(group_name, light_entities)])
+    async_add_entities([LightGroup(None, group_name, light_entities)])
