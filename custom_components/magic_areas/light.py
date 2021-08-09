@@ -17,9 +17,9 @@ from .base import MagicEntity
 from .const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,
+    AREA_STATE_CLEAR,
     AREA_STATE_DARK,
     AREA_STATE_OCCUPIED,
-    AREA_STATE_CLEAR,
     CONF_FEATURE_LIGHT_GROUPS,
     DATA_AREA_OBJECT,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
@@ -58,7 +58,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     )
     if area.is_meta():
         unique_id = f"magicareas_light_group_meta_{area.slug}_all"
-        light_groups.append(LightGroup(unique_id, f"{area.name} Lights", light_entities))
+        light_groups.append(
+            LightGroup(unique_id, f"{area.name} Lights", light_entities)
+        )
     else:
         light_groups.append(AreaLightGroup(hass, area, light_entities))
 
@@ -97,7 +99,11 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         self.category = category
         self.assigned_states = []
 
-        unique_id = f"magicareas_light_group_{area.slug}_{category}" if category else f"magicareas_light_group_{area.slug}_all"
+        unique_id = (
+            f"magicareas_light_group_{area.slug}_{category}"
+            if category
+            else f"magicareas_light_group_{area.slug}_all"
+        )
 
         LightGroup.__init__(self, unique_id, self._name, self._entities)
 

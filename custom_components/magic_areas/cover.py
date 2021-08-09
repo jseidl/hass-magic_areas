@@ -65,7 +65,11 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
         ]
         self._attributes["covers"] = [e["entity_id"] for e in self._entities]
 
-        unique_id = f"magicareas_cover_group_{area.slug}_{device_class}" if device_class else f"magicareas_cover_group_{area.slug}"
+        unique_id = (
+            f"magicareas_cover_group_{area.slug}_{device_class}"
+            if device_class
+            else f"magicareas_cover_group_{area.slug}"
+        )
 
         CoverGroup.__init__(self, unique_id, self._name, self._attributes["covers"])
 
