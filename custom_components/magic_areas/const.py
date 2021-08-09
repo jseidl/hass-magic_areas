@@ -75,8 +75,20 @@ ALL_BINARY_SENSOR_DEVICE_CLASSES = (
 DATA_AREA_OBJECT = "area_object"
 DATA_UNDO_UPDATE_LISTENER = "undo_update_listener"
 
-# Area States
+# Attributes
+ATTR_STATES = "states"
+ATTR_ON_STATES = "on_states"
+ATTR_AREAS = "areas"
+ATTR_ACTIVE_AREAS = "active_areas"
+ATTR_TYPE = "type"
+ATTR_UPDATE_INTERVAL = "update_interval"
+ATTR_CLEAR_TIMEOUT = "clear_timeout"
+ATTR_ACTIVE_SENSORS = "active_sensors"
+ATTR_FEATURES = "features"
+ATTR_PRESENCE_SENSORS = "presence_sensors"
 
+# Area States
+AREA_STATE_CLEAR = "clear"
 AREA_STATE_OCCUPIED = "occupied"
 AREA_STATE_EXTENDED = "extended"
 AREA_STATE_DARK = "dark"

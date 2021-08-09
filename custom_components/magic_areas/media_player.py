@@ -27,6 +27,7 @@ from .const import (
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     META_AREA_GLOBAL,
     MODULE_DATA,
+    AREA_STATE_CLEAR,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -239,7 +240,9 @@ class AreaMediaGroup(MagicEntity, MediaGroup):
         self.hass = hass
         self.area = area
 
-        MediaGroup.__init__(self, self._name, self._entities)
+        unique_id = f"magicareas_media_player_group_{area.slug}"
+
+        MediaGroup.__init__(self, unique_id, self._name, self._entities)
 
         _LOGGER.debug(
             f"Media Player group {self._name} created with entities: {self._entities}"
@@ -257,7 +260,7 @@ class AreaMediaGroup(MagicEntity, MediaGroup):
 
         _LOGGER.debug(f"Media Player group {self.name} detected area state change")
 
-        if not self.area.is_occupied() and new_states:
+        if AREA_STATE_CLEAR in new_states:
             _LOGGER.debug(f"{self.area.name}: Area clear, turning off media players")
             self._turn_off()
 
