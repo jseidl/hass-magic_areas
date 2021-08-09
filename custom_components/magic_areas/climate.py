@@ -17,10 +17,6 @@ from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
-    CONF_ENTITIES,
-    CONF_NAME,
-    CONF_TEMPERATURE_UNIT,
-    SERVICE_TURN_ON,
     TEMP_CELSIUS,
     TEMP_FAHRENHEIT,
 )
@@ -30,6 +26,7 @@ from homeassistant.helpers.event import async_track_state_change
 
 from .base import MagicEntity
 from .const import (
+    AREA_STATE_CLEAR,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_FEATURE_CLIMATE_GROUPS,
     DATA_AREA_OBJECT,
@@ -414,6 +411,8 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
     def area_state_changed(self, area_id, states_tuple):
 
+        new_states, old_states = states_tuple
+
         if area_id != self.area.id:
             _LOGGER.debug(
                 f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
@@ -422,7 +421,7 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
         _LOGGER.debug(f"Climate group {self.name} detected area state change")
 
-        if not self.area.is_occupied() and self.hvac_mode != CURRENT_HVAC_OFF:
+        if AREA_STATE_CLEAR in new_states and self.hvac_mode != CURRENT_HVAC_OFF:
             _LOGGER.debug(
                 f"{self.area.name}: Area clear, turning off Climate {self.entity_id}"
             )

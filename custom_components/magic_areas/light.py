@@ -17,6 +17,7 @@ from .base import MagicEntity
 from .const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,
+    AREA_STATE_CLEAR,
     AREA_STATE_DARK,
     AREA_STATE_OCCUPIED,
     CONF_FEATURE_LIGHT_GROUPS,
@@ -56,7 +57,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         f"Creating Area light group for area {area.name} with lights: {light_entities}"
     )
     if area.is_meta():
-        light_groups.append(LightGroup(f"{area.name} Lights", light_entities))
+        unique_id = f"magicareas_light_group_meta_{area.slug}_all"
+        light_groups.append(
+            LightGroup(unique_id, f"{area.name} Lights", light_entities)
+        )
     else:
         light_groups.append(AreaLightGroup(hass, area, light_entities))
 
@@ -95,7 +99,13 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         self.category = category
         self.assigned_states = []
 
-        LightGroup.__init__(self, self._name, self._entities)
+        unique_id = (
+            f"magicareas_light_group_{area.slug}_{category}"
+            if category
+            else f"magicareas_light_group_{area.slug}_all"
+        )
+
+        LightGroup.__init__(self, unique_id, self._name, self._entities)
 
         self._icon = LIGHT_GROUP_DEFAULT_ICON
 
@@ -114,7 +124,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
 
     def relevant_states(self):
 
-        relevant_states = self.area.secondary_states.copy()
+        relevant_states = self.area.states.copy()
 
         if self.area.is_occupied():
             relevant_states.append(AREA_STATE_OCCUPIED)
@@ -149,7 +159,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         new_states, lost_states = states_tuple
 
         # If area clear
-        if not self.area.is_occupied():
+        if AREA_STATE_CLEAR in new_states:
             _LOGGER.debug(f"Area is clear, {self.name} SHOULD TURN OFF!")
             return self._turn_off()
 

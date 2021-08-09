@@ -25,11 +25,8 @@ from .const import (
     AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
-    CONF_FEATURE_LIGHT_GROUPS,
     CONF_INCLUDE_ENTITIES,
     CONF_ON_STATES,
-    CONF_SLEEP_ENTITY,
-    CONF_SLEEP_STATE,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     CONFIGURABLE_AREA_STATE_MAP,
@@ -306,9 +303,8 @@ class MagicArea(object):
 
         self.entities = {}
 
-        self.occupied = False
         self.last_changed = datetime.utcnow()
-        self.secondary_states = []
+        self.states = []
 
         self.loaded_platforms = []
 
@@ -331,15 +327,11 @@ class MagicArea(object):
 
     def is_occupied(self) -> bool:
 
-        return self.occupied
+        return self.has_state(AREA_STATE_OCCUPIED)
 
     def has_state(self, state) -> bool:
 
-        # Handle AREA_STATE_OCCUPIED primary state
-        if state == AREA_STATE_OCCUPIED:
-            return self.is_occupied()
-
-        return state in self.secondary_states
+        return state in self.states
 
     def has_configured_state(self, state) -> bool:
 
@@ -511,7 +503,7 @@ class MagicMetaArea(MagicArea):
         self.occupied = False
         self.last_changed = datetime.utcnow()
 
-        self.secondary_states = []
+        self.states = []
         self.loaded_platforms = []
 
         # Check if area is defined on YAML
