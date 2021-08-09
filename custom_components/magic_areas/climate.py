@@ -26,6 +26,7 @@ from homeassistant.helpers.event import async_track_state_change
 
 from .base import MagicEntity
 from .const import (
+    AREA_STATE_CLEAR,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_FEATURE_CLIMATE_GROUPS,
     DATA_AREA_OBJECT,

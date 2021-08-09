@@ -19,6 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 
 from .base import MagicEntity
 from .const import (
+    AREA_STATE_CLEAR,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_NOTIFICATION_DEVICES,

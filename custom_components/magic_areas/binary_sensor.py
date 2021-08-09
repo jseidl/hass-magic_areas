@@ -10,6 +10,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
+    ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
     ATTR_DEVICE_CLASS,
     EVENT_HOMEASSISTANT_STARTED,
@@ -25,14 +26,19 @@ from homeassistant.helpers.event import (
 from .base import AggregateBase, BinarySensorBase
 from .const import (
     AREA_STATE_BRIGHT,
+    AREA_STATE_CLEAR,
     AREA_STATE_DARK,
     AREA_STATE_EXTENDED,
     AREA_STATE_OCCUPIED,
     AREA_STATE_SLEEP,
-    AREA_STATE_CLEAR,
+    ATTR_ACTIVE_AREAS,
     ATTR_ACTIVE_SENSORS,
+    ATTR_AREAS,
     ATTR_CLEAR_TIMEOUT,
     ATTR_FEATURES,
+    ATTR_ON_STATES,
+    ATTR_PRESENCE_SENSORS,
+    ATTR_STATES,
     ATTR_TYPE,
     ATTR_UPDATE_INTERVAL,
     CONF_AGGREGATES_MIN_ENTITIES,
@@ -399,7 +405,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         last_state = self.area.is_occupied()
 
         states.append(AREA_STATE_OCCUPIED if current_state else AREA_STATE_CLEAR)
-        
         if current_state != last_state:
             self.area.last_changed = datetime.utcnow()
             _LOGGER.debug(
@@ -449,10 +454,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 states.append(configurable_state)
 
         # Meta-state bright
-        if (
-            AREA_STATE_DARK in configurable_states
-            and AREA_STATE_DARK not in states
-        ):
+        if AREA_STATE_DARK in configurable_states and AREA_STATE_DARK not in states:
             states.append(AREA_STATE_BRIGHT)
 
         return states
@@ -551,7 +553,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         states_tuple = self._update_area_states()
         new_states, lost_states = states_tuple
 
-        state_changed = any(state in new_states for state in [AREA_STATE_OCCUPIED, AREA_STATE_CLEAR])
+        state_changed = any(
+            state in new_states for state in [AREA_STATE_OCCUPIED, AREA_STATE_CLEAR]
+        )
 
         _LOGGER.debug(
             f"{self.area.name}: States updated. New states: {new_states} / Lost states: {lost_states}"
