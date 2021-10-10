@@ -33,7 +33,6 @@ from .const import (
     DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     MODULE_DATA,
-    AREA_STATE_CLEAR,
 )
 
 _LOGGER = logging.getLogger(__name__)

@@ -12,7 +12,6 @@ from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
-    ATTR_DEVICE_CLASS,
     EVENT_HOMEASSISTANT_STARTED,
     STATE_ON,
 )
@@ -66,16 +65,6 @@ from .const import (
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     MODULE_DATA,
-    ATTR_STATES,
-    ATTR_ON_STATES,
-    ATTR_PRESENCE_SENSORS,
-    ATTR_FEATURES,
-    ATTR_ACTIVE_SENSORS,
-    ATTR_CLEAR_TIMEOUT,
-    ATTR_UPDATE_INTERVAL,
-    ATTR_TYPE,
-    ATTR_AREAS,
-    ATTR_ACTIVE_AREAS,
 )
 
 _LOGGER = logging.getLogger(__name__)

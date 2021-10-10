@@ -28,7 +28,6 @@ from .const import (
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     META_AREA_GLOBAL,
     MODULE_DATA,
-    AREA_STATE_CLEAR,
 )
 
 _LOGGER = logging.getLogger(__name__)
