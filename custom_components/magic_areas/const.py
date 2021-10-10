@@ -240,12 +240,21 @@ CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = (
 # Light group options
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
 CONF_OVERHEAD_LIGHTS_STATES = "overhead_lights_states"  # cv.ensure_list
+CONF_OVERHEAD_LIGHTS_ACT_ON = "overhead_lights_act_on"  # cv.ensure_list
 CONF_SLEEP_LIGHTS = "sleep_lights"
 CONF_SLEEP_LIGHTS_STATES = "sleep_lights_states"
+CONF_SLEEP_LIGHTS_ACT_ON = "sleep_lights_act_on"
 CONF_ACCENT_LIGHTS = "accent_lights"
 CONF_ACCENT_LIGHTS_STATES = "accent_lights_states"
+CONF_ACCENT_LIGHTS_ACT_ON = "accent_lights_act_on"
 CONF_TASK_LIGHTS = "task_lights"
 CONF_TASK_LIGHTS_STATES = "task_lights_states"
+CONF_TASK_LIGHTS_ACT_ON = "task_lights_act_on"
+
+LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE = "occupancy"
+LIGHT_GROUP_ACT_ON_STATE_CHANGE = "state"
+DEFAULT_LIGHT_GROUP_ACT_ON = [LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE, LIGHT_GROUP_ACT_ON_STATE_CHANGE]
+LIGHT_GROUP_ACT_ON_OPTIONS = [LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE, LIGHT_GROUP_ACT_ON_STATE_CHANGE]
 
 LIGHT_GROUP_DEFAULT_ICON = "mdi:lightbulb-group"
 
@@ -261,6 +270,13 @@ LIGHT_GROUP_STATES = {
     CONF_SLEEP_LIGHTS: CONF_SLEEP_LIGHTS_STATES,
     CONF_ACCENT_LIGHTS: CONF_ACCENT_LIGHTS_STATES,
     CONF_TASK_LIGHTS: CONF_TASK_LIGHTS_STATES,
+}
+
+LIGHT_GROUP_ACT_ON = {
+    CONF_OVERHEAD_LIGHTS: CONF_OVERHEAD_LIGHTS_ACT_ON,
+    CONF_SLEEP_LIGHTS: CONF_SLEEP_LIGHTS_ACT_ON,
+    CONF_ACCENT_LIGHTS: CONF_ACCENT_LIGHTS_ACT_ON,
+    CONF_TASK_LIGHTS: CONF_TASK_LIGHTS_ACT_ON,
 }
 
 LIGHT_GROUP_CATEGORIES = [
@@ -333,12 +349,16 @@ LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_OVERHEAD_LIGHTS_STATES, default=[AREA_STATE_OCCUPIED]
         ): cv.ensure_list,
+        vol.Optional(CONF_OVERHEAD_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON): cv.ensure_list,
         vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
         vol.Optional(CONF_SLEEP_LIGHTS_STATES, default=[]): cv.ensure_list,
+        vol.Optional(CONF_SLEEP_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON): cv.ensure_list,
         vol.Optional(CONF_ACCENT_LIGHTS, default=[]): cv.entity_ids,
         vol.Optional(CONF_ACCENT_LIGHTS_STATES, default=[]): cv.ensure_list,
+        vol.Optional(CONF_ACCENT_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON): cv.ensure_list,
         vol.Optional(CONF_TASK_LIGHTS, default=[]): cv.entity_ids,
         vol.Optional(CONF_TASK_LIGHTS_STATES, default=[]): cv.ensure_list,
+        vol.Optional(CONF_TASK_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON): cv.ensure_list,
     }
 )
 
@@ -494,12 +514,16 @@ OPTIONS_SECONDARY_STATES = [
 OPTIONS_LIGHT_GROUP = [
     (CONF_OVERHEAD_LIGHTS, [], cv.entity_ids),
     (CONF_OVERHEAD_LIGHTS_STATES, [AREA_STATE_OCCUPIED], cv.ensure_list),
+    (CONF_OVERHEAD_LIGHTS_ACT_ON, DEFAULT_LIGHT_GROUP_ACT_ON, cv.ensure_list),
     (CONF_SLEEP_LIGHTS, [], cv.entity_ids),
     (CONF_SLEEP_LIGHTS_STATES, [], cv.ensure_list),
+    (CONF_SLEEP_LIGHTS_ACT_ON, DEFAULT_LIGHT_GROUP_ACT_ON, cv.ensure_list),
     (CONF_ACCENT_LIGHTS, [], cv.entity_ids),
     (CONF_ACCENT_LIGHTS_STATES, [], cv.ensure_list),
+    (CONF_ACCENT_LIGHTS_ACT_ON, DEFAULT_LIGHT_GROUP_ACT_ON, cv.ensure_list),
     (CONF_TASK_LIGHTS, [], cv.entity_ids),
     (CONF_TASK_LIGHTS_STATES, [], cv.ensure_list),
+    (CONF_TASK_LIGHTS_ACT_ON, DEFAULT_LIGHT_GROUP_ACT_ON, cv.ensure_list),
 ]
 
 OPTIONS_AGGREGATES = [

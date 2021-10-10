@@ -436,7 +436,7 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
                 CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE
             )
 
-            if not self.area.has_state(configured_state):
+            if not self.area.has_state(configured_state) or configured_state not in new_states:
                 return
 
             _LOGGER.debug(

@@ -28,6 +28,10 @@ from .const import (
     LIGHT_GROUP_DEFAULT_ICON,
     LIGHT_GROUP_ICONS,
     LIGHT_GROUP_STATES,
+    LIGHT_GROUP_ACT_ON,
+    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
+    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
+    DEFAULT_LIGHT_GROUP_ACT_ON,
     MODULE_DATA,
 )
 
@@ -99,6 +103,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         self.area = area
         self.category = category
         self.assigned_states = []
+        self.act_on = []
 
         unique_id = (
             f"magicareas_light_group_{area.slug}_{category}"
@@ -116,7 +121,10 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         # Get assigned states
         if category:
             self.assigned_states = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
-                LIGHT_GROUP_STATES[category]
+                LIGHT_GROUP_STATES[category], []
+            )
+            self.act_on = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
+                LIGHT_GROUP_ACT_ON[category], DEFAULT_LIGHT_GROUP_ACT_ON
             )
 
         _LOGGER.debug(
@@ -174,7 +182,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         # if someone is listening to this state, we should bail and let them have it
         for category in LIGHT_GROUP_CATEGORIES:
             # Check if light group is defined
-            if self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(category):
+            if self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(category, None):
                 # Check light group states
                 category_states = self.area.feature_config(
                     CONF_FEATURE_LIGHT_GROUPS
@@ -193,6 +201,11 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         # Only react to actual secondary state changes
         if not new_states and not lost_states:
             _LOGGER.debug(f"{self.name}: No new or lost states, noop.")
+            return False
+
+        # Do not handle lights that are not tied to a state
+        if not self.assigned_states:
+            _LOGGER.debug(f"{self.name}: No assigned states. Noop.")
             return False
 
         # If area clear, do nothing (main group will)
@@ -229,6 +242,17 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             f"{self.name} Has priority states? {has_priority_states}. Non-priority states: {non_priority_states}"
         )
 
+        ## ACT ON Control
+        # Do not act on occupancy change if not defined on act_on
+        if AREA_STATE_OCCUPIED in new_states and LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE not in self.act_on:
+            _LOGGER.warn(f"Area occupancy change detected but not configured to act on. Skipping.")
+            return False
+
+        # Do not act on state change if not defined on act_on
+        if AREA_STATE_OCCUPIED not in new_states and LIGHT_GROUP_ACT_ON_STATE_CHANGE not in self.act_on:
+            _LOGGER.warn(f"Area state change detected but not configured to act on. Skipping.")
+            return False
+
         # Prefer priority states when present
         if has_priority_states:
             for non_priority_state in non_priority_states:
@@ -243,11 +267,6 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         # Only turn lights off if not going into dark state
         if AREA_STATE_DARK in new_states:
             _LOGGER.debug(f"{self.name}: Entering {AREA_STATE_DARK} state, noop.")
-            return False
-
-        # Do not turn off lights that are not tied to a state
-        if not self.assigned_states:
-            _LOGGER.debug(f"{self.name}: No assigned states. Noop.")
             return False
 
         # Turn off if we're a PRIORITY_STATE and we're coming out of it

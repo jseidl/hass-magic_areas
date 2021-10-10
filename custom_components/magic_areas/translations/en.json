@@ -34,12 +34,16 @@
         "data": {
           "overhead_lights": "Overhead lights (Leave blank for all area lights)",
           "overhead_lights_states": "States which overhead lights are turned on",
+          "overhead_lights_act_on": "When should overhead lights be controlled?",
           "sleep_lights": "Sleep lights",
           "sleep_lights_states": "States which sleep lights are turned on",
+          "sleep_lights_act_on": "When should sleep lights be controlled?",
           "accent_lights": "Accent lights",
           "accent_lights_states": "States which accent lights are turned on",
+          "accent_lights_act_on": "When should accent lights be controlled?",
           "task_lights": "Task lights",
-          "task_lights_states": "States which task lights are turned on"
+          "task_lights_states": "States which task lights are turned on",
+          "task_lights_act_on": "When should task lights be controlled?"
         }
       },
       "feature_conf_presence_hold": {
