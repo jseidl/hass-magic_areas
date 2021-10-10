@@ -22,15 +22,15 @@ from .const import (
     AREA_STATE_OCCUPIED,
     CONF_FEATURE_LIGHT_GROUPS,
     DATA_AREA_OBJECT,
+    DEFAULT_LIGHT_GROUP_ACT_ON,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
+    LIGHT_GROUP_ACT_ON,
+    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
+    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
     LIGHT_GROUP_CATEGORIES,
     LIGHT_GROUP_DEFAULT_ICON,
     LIGHT_GROUP_ICONS,
     LIGHT_GROUP_STATES,
-    LIGHT_GROUP_ACT_ON,
-    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
-    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
-    DEFAULT_LIGHT_GROUP_ACT_ON,
     MODULE_DATA,
 )
 
@@ -243,13 +243,23 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
 
         ## ACT ON Control
         # Do not act on occupancy change if not defined on act_on
-        if AREA_STATE_OCCUPIED in new_states and LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE not in self.act_on:
-            _LOGGER.warn(f"Area occupancy change detected but not configured to act on. Skipping.")
+        if (
+            AREA_STATE_OCCUPIED in new_states
+            and LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE not in self.act_on
+        ):
+            _LOGGER.warn(
+                f"Area occupancy change detected but not configured to act on. Skipping."
+            )
             return False
 
         # Do not act on state change if not defined on act_on
-        if AREA_STATE_OCCUPIED not in new_states and LIGHT_GROUP_ACT_ON_STATE_CHANGE not in self.act_on:
-            _LOGGER.warn(f"Area state change detected but not configured to act on. Skipping.")
+        if (
+            AREA_STATE_OCCUPIED not in new_states
+            and LIGHT_GROUP_ACT_ON_STATE_CHANGE not in self.act_on
+        ):
+            _LOGGER.warn(
+                f"Area state change detected but not configured to act on. Skipping."
+            )
             return False
 
         # Prefer priority states when present

@@ -253,8 +253,14 @@ CONF_TASK_LIGHTS_ACT_ON = "task_lights_act_on"
 
 LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE = "occupancy"
 LIGHT_GROUP_ACT_ON_STATE_CHANGE = "state"
-DEFAULT_LIGHT_GROUP_ACT_ON = [LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE, LIGHT_GROUP_ACT_ON_STATE_CHANGE]
-LIGHT_GROUP_ACT_ON_OPTIONS = [LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE, LIGHT_GROUP_ACT_ON_STATE_CHANGE]
+DEFAULT_LIGHT_GROUP_ACT_ON = [
+    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
+    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
+]
+LIGHT_GROUP_ACT_ON_OPTIONS = [
+    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
+    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
+]
 
 LIGHT_GROUP_DEFAULT_ICON = "mdi:lightbulb-group"
 
@@ -349,16 +355,24 @@ LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_OVERHEAD_LIGHTS_STATES, default=[AREA_STATE_OCCUPIED]
         ): cv.ensure_list,
-        vol.Optional(CONF_OVERHEAD_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON): cv.ensure_list,
+        vol.Optional(
+            CONF_OVERHEAD_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON
+        ): cv.ensure_list,
         vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
         vol.Optional(CONF_SLEEP_LIGHTS_STATES, default=[]): cv.ensure_list,
-        vol.Optional(CONF_SLEEP_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON): cv.ensure_list,
+        vol.Optional(
+            CONF_SLEEP_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON
+        ): cv.ensure_list,
         vol.Optional(CONF_ACCENT_LIGHTS, default=[]): cv.entity_ids,
         vol.Optional(CONF_ACCENT_LIGHTS_STATES, default=[]): cv.ensure_list,
-        vol.Optional(CONF_ACCENT_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON): cv.ensure_list,
+        vol.Optional(
+            CONF_ACCENT_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON
+        ): cv.ensure_list,
         vol.Optional(CONF_TASK_LIGHTS, default=[]): cv.entity_ids,
         vol.Optional(CONF_TASK_LIGHTS_STATES, default=[]): cv.ensure_list,
-        vol.Optional(CONF_TASK_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON): cv.ensure_list,
+        vol.Optional(
+            CONF_TASK_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON
+        ): cv.ensure_list,
     }
 )
 
