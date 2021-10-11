@@ -14,6 +14,7 @@ from .const import (
     AREA_STATE_DARK,
     AREA_STATE_EXTENDED,
     AREA_STATE_OCCUPIED,
+    AREA_STATE_SLEEP,
     AREA_TYPE_META,
     BUILTIN_AREA_STATES,
     CONF_ACCENT_ENTITY,
@@ -34,6 +35,7 @@ from .const import (
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
+    CONF_NOTIFY_STATES,
     CONF_OVERHEAD_LIGHTS,
     CONF_OVERHEAD_LIGHTS_ACT_ON,
     CONF_OVERHEAD_LIGHTS_STATES,
@@ -63,6 +65,7 @@ from .const import (
     OPTIONS_AREA_AWARE_MEDIA_PLAYER,
     OPTIONS_AREA_META,
     OPTIONS_CLIMATE_GROUP,
+    OPTIONS_CLIMATE_GROUP_META,
     OPTIONS_LIGHT_GROUP,
     OPTIONS_PRESENCE_HOLD,
     OPTIONS_SECONDARY_STATES,
@@ -371,20 +374,28 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         return await self.do_feature_config(
             name=CONF_FEATURE_CLIMATE_GROUPS,
-            options=OPTIONS_CLIMATE_GROUP,
+            options=OPTIONS_CLIMATE_GROUP
+            if not self.area.is_meta()
+            else OPTIONS_CLIMATE_GROUP_META,
             dynamic_validators={
-                CONF_CLIMATE_GROUPS_TURN_ON_STATE: vol.In(available_states),
+                CONF_CLIMATE_GROUPS_TURN_ON_STATE: vol.In(
+                    EMPTY_ENTRY + available_states
+                ),
             },
             user_input=user_input,
         )
 
     async def async_step_feature_conf_area_aware_media_player(self, user_input=None):
         """Configure the area aware media player feature"""
+
+        available_states = [AREA_STATE_OCCUPIED, AREA_STATE_EXTENDED, AREA_STATE_SLEEP]
+
         return await self.do_feature_config(
             name=CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
             options=OPTIONS_AREA_AWARE_MEDIA_PLAYER,
             dynamic_validators={
                 CONF_NOTIFICATION_DEVICES: cv.multi_select(self.all_media_players),
+                CONF_NOTIFY_STATES: cv.multi_select(available_states),
             },
             user_input=user_input,
         )
