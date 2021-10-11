@@ -76,7 +76,6 @@ def setup_climate_group(hass, area, async_add_entities):
         return
 
     climate_entities = [e["entity_id"] for e in area.entities[CLIMATE_DOMAIN]]
-    
     async_add_entities([AreaClimateGroup(hass, area, climate_entities)])
 
 

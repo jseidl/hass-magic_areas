@@ -36,6 +36,7 @@ from .const import (
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
+    CONF_NOTIFY_STATES,
     CONF_OVERHEAD_LIGHTS,
     CONF_OVERHEAD_LIGHTS_ACT_ON,
     CONF_OVERHEAD_LIGHTS_STATES,
@@ -374,9 +375,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         return await self.do_feature_config(
             name=CONF_FEATURE_CLIMATE_GROUPS,
-            options=OPTIONS_CLIMATE_GROUP if not self.area.is_meta() else OPTIONS_CLIMATE_GROUP_META,
+            options=OPTIONS_CLIMATE_GROUP
+            if not self.area.is_meta()
+            else OPTIONS_CLIMATE_GROUP_META,
             dynamic_validators={
-                CONF_CLIMATE_GROUPS_TURN_ON_STATE: vol.In(EMPTY_ENTRY + available_states),
+                CONF_CLIMATE_GROUPS_TURN_ON_STATE: vol.In(
+                    EMPTY_ENTRY + available_states
+                ),
             },
             user_input=user_input,
         )

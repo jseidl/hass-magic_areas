@@ -21,13 +21,13 @@ from .base import MagicEntity
 from .const import (
     AREA_STATE_CLEAR,
     AREA_STATE_SLEEP,
-    DEFAULT_NOTIFY_STATES,
-    DEFAULT_NOTIFICATION_DEVICES,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
     DATA_AREA_OBJECT,
+    DEFAULT_NOTIFICATION_DEVICES,
+    DEFAULT_NOTIFY_STATES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     META_AREA_GLOBAL,
     MODULE_DATA,
@@ -84,12 +84,16 @@ def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
 
         # Skip areas with feature not enabled
         if not current_area.has_feature(CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER):
-            _LOGGER.debug(f"{current_area.name}: Does not have AAMP feature enabled, skipping.")
+            _LOGGER.debug(
+                f"{current_area.name}: Does not have AAMP feature enabled, skipping."
+            )
             continue
 
         # Skip areas without media player entities
         if not current_area.has_entities(MEDIA_PLAYER_DOMAIN):
-            _LOGGER.debug(f"{current_area.name}: Has no media player entities, skipping.")
+            _LOGGER.debug(
+                f"{current_area.name}: Has no media player entities, skipping."
+            )
             continue
 
         # Skip areas without notification devices set
@@ -98,9 +102,11 @@ def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
         ).get(CONF_NOTIFICATION_DEVICES)
 
         if not notification_devices:
-            _LOGGER.debug(f"{current_area.name}: Has no notification devices, skipping.")
+            _LOGGER.debug(
+                f"{current_area.name}: Has no notification devices, skipping."
+            )
             continue
-        
+
         # If all passes, we add this valid area to the list
         areas_with_media_players.append(current_area)
 
@@ -112,7 +118,9 @@ def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
 
     area_names = [i.name for i in areas_with_media_players]
 
-    _LOGGER.debug(f"{area.name}: Setting up area-aware media player with areas: {area_names}")
+    _LOGGER.debug(
+        f"{area.name}: Setting up area-aware media player with areas: {area_names}"
+    )
     async_add_entities([AreaAwareMediaPlayer(hass, area, areas_with_media_players)])
 
 
@@ -213,7 +221,9 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             ).get(CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES)
 
             # Check sleep
-            if area.has_state(AREA_STATE_SLEEP) and (AREA_STATE_SLEEP not in notification_states):
+            if area.has_state(AREA_STATE_SLEEP) and (
+                AREA_STATE_SLEEP not in notification_states
+            ):
                 continue
 
             # Check other states
