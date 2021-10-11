@@ -58,7 +58,7 @@
         "description": "Configure the area aware media player feature",
         "data": {
           "notification_devices": "Media Player devices used for broadcasting",
-          "notify_on_sleep": "Allow notification devices in this area to play notifications when on sleep mode"
+          "notification_states": "Play notifications devices only when on these states"
         }
       },
       "feature_conf_aggregates": {

@@ -76,8 +76,7 @@ def setup_climate_group(hass, area, async_add_entities):
         return
 
     climate_entities = [e["entity_id"] for e in area.entities[CLIMATE_DOMAIN]]
-    # @TODO get unit from entities
-
+    
     async_add_entities([AreaClimateGroup(hass, area, climate_entities)])
 
 
@@ -400,8 +399,7 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
         self.hass = hass
         self.area = area
 
-        # @FIXME get from entities
-        unit = "°F"
+        unit = hass.config.units.temperature_unit
 
         ClimateGroup.__init__(self, self._name, self._entities, [], unit)
 
@@ -410,6 +408,10 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
         )
 
     def area_state_changed(self, area_id, states_tuple):
+
+        if self.area.is_meta():
+            _LOGGER.debug(f"{self.area.name} is meta. Noop.")
+            return
 
         new_states, old_states = states_tuple
 
@@ -473,8 +475,9 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
 
-        async_dispatcher_connect(
-            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed
-        )
+        if not self.area.is_meta():
+            async_dispatcher_connect(
+                self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed
+            )
 
         await super().async_added_to_hass()
