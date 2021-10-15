@@ -67,7 +67,9 @@ async def load_sensors(hass, async_add_entities, area):
         device_class_count[map_key] += 1
 
     for map_key, entity_count in device_class_count.items():
-        if entity_count < area.feature_config(CONF_FEATURE_AGGREGATION).get(CONF_AGGREGATES_MIN_ENTITIES):
+        if entity_count < area.feature_config(CONF_FEATURE_AGGREGATION).get(
+            CONF_AGGREGATES_MIN_ENTITIES
+        ):
             continue
 
         device_class, unit_of_measurement = map_key.split("/")
@@ -94,7 +96,7 @@ class AreaSensorGroupSensor(AggregateBase, SensorBase):
         self._unit_of_measurement = unit_of_measurement
         self._state = 0
 
-        device_class_name = " ".join(device_class.split('_')).title()
+        device_class_name = " ".join(device_class.split("_")).title()
         self._name = (
             f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
         )

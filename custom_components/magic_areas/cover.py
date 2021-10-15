@@ -6,11 +6,7 @@ import homeassistant.components.cover as cover
 from homeassistant.components.group.cover import CoverGroup
 
 from .base import MagicEntity
-from .const import (
-    CONF_FEATURE_COVER_GROUPS,
-    DATA_AREA_OBJECT,
-    MODULE_DATA,
-)
+from .const import CONF_FEATURE_COVER_GROUPS, DATA_AREA_OBJECT, MODULE_DATA
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,7 +50,7 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
         self.area = area
         self.hass = hass
 
-        device_class_name = " ".join(device_class.split('_')).title()
+        device_class_name = " ".join(device_class.split("_")).title()
 
         self._name = (
             f"Area {device_class_name} Covers ({area.name})"
@@ -69,7 +65,13 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
         ]
         self._attributes["covers"] = [e["entity_id"] for e in self._entities]
 
-        CoverGroup.__init__(self, self._name, self._attributes["covers"])
+        unique_id = (
+            f"magicareas_cover_group_{area.slug}_{device_class}"
+            if device_class
+            else f"magicareas_cover_group_{area.slug}"
+        )
+
+        CoverGroup.__init__(self, unique_id, self._name, self._attributes["covers"])
 
     @property
     def device_class(self):
