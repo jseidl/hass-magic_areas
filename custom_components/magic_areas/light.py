@@ -190,8 +190,9 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
                     # Do nothing, category group will do
                     return False
 
-        # If we don't, just turn on all of them
-        return self._turn_on()
+        if AREA_STATE_OCCUPIED in new_states:
+            # If we don't, just turn on all of them
+            return self._turn_on()
 
     def state_change_secondary(self, states_tuple):
 
