@@ -244,6 +244,7 @@ CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = (
 )
 
 # Light group options
+CONF_ENABLE_AUTOMATIC_CONTROL = "enable_automatic_control" # cv.boolean
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
 CONF_OVERHEAD_LIGHTS_STATES = "overhead_lights_states"  # cv.ensure_list
 CONF_OVERHEAD_LIGHTS_ACT_ON = "overhead_lights_act_on"  # cv.ensure_list
@@ -357,6 +358,7 @@ CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
 
 LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
     {
+        vol.Optional(CONF_ENABLE_AUTOMATIC_CONTROL, default=False): cv.boolean,
         vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
         vol.Optional(
             CONF_OVERHEAD_LIGHTS_STATES, default=[AREA_STATE_OCCUPIED]
@@ -533,6 +535,7 @@ OPTIONS_SECONDARY_STATES = [
 ]
 
 OPTIONS_LIGHT_GROUP = [
+    (CONF_ENABLE_AUTOMATIC_CONTROL, False, cv.boolean),
     (CONF_OVERHEAD_LIGHTS, [], cv.entity_ids),
     (CONF_OVERHEAD_LIGHTS_STATES, [AREA_STATE_OCCUPIED], cv.ensure_list),
     (CONF_OVERHEAD_LIGHTS_ACT_ON, DEFAULT_LIGHT_GROUP_ACT_ON, cv.ensure_list),
