@@ -70,7 +70,7 @@ def setup_media_player_group(hass, area, async_add_entities):
 
 
 def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
-    
+
     # Check if we have areas with MEDIA_PLAYER_DOMAIN entities
     areas_with_media_players = []
 

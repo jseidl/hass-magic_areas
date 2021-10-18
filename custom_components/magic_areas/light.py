@@ -20,6 +20,7 @@ from .const import (
     AREA_STATE_CLEAR,
     AREA_STATE_DARK,
     AREA_STATE_OCCUPIED,
+    CONF_ENABLE_AUTOMATIC_CONTROL,
     CONF_FEATURE_LIGHT_GROUPS,
     DATA_AREA_OBJECT,
     DEFAULT_LIGHT_GROUP_ACT_ON,
@@ -305,6 +306,16 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
                 f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
             )
             return
+
+        automatic_control = self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
+            CONF_ENABLE_AUTOMATIC_CONTROL, False
+        )
+
+        if not automatic_control:
+            _LOGGER.debug(
+                f"{self.name}: Automatic control for light group is disabled, skipping..."
+            )
+            return False
 
         _LOGGER.debug(f"Light group {self.name} detected area state change")
 
