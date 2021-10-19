@@ -249,7 +249,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             AREA_STATE_OCCUPIED in new_states
             and LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE not in self.act_on
         ):
-            _LOGGER.warn(
+            _LOGGER.debug(
                 f"Area occupancy change detected but not configured to act on. Skipping."
             )
             return False
@@ -259,7 +259,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             AREA_STATE_OCCUPIED not in new_states
             and LIGHT_GROUP_ACT_ON_STATE_CHANGE not in self.act_on
         ):
-            _LOGGER.warn(
+            _LOGGER.debug(
                 f"Area state change detected but not configured to act on. Skipping."
             )
             return False

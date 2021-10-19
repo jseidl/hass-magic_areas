@@ -111,7 +111,7 @@ def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
         areas_with_media_players.append(current_area)
 
     if not areas_with_media_players:
-        _LOGGER.warning(
+        _LOGGER.debug(
             f"No areas with {MEDIA_PLAYER_DOMAIN} entities. Skipping creation of area-aware-media-player"
         )
         return

@@ -196,9 +196,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 self.area_options = area_schema(user_input)
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
-                _LOGGER.debug(f"Found the following errors: {errors}")
+                _LOGGER.debug(f"Area Step Config: Found the following errors: {errors}")
             except Exception as e:
-                _LOGGER.warning(f"Unexpected error caught: {str(e)}")
+                _LOGGER.warn(f"Area Step Config: Unexpected error caught: {str(e)}")
             else:
                 _LOGGER.debug(f"Saving area base config: {self.area_options}")
                 if self.area.is_meta():
@@ -237,9 +237,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 )
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
-                _LOGGER.debug(f"Found the following errors: {errors}")
+                _LOGGER.debug(f"Area Secondary States: Found the following errors: {errors}")
             except Exception as e:
-                _LOGGER.warning(f"Unexpected error caught: {str(e)}")
+                _LOGGER.warn(f"Area Secondary States: Unexpected error caught: {str(e)}")
             else:
                 _LOGGER.debug(
                     f"Saving area secondary state config: {self.area_options}"

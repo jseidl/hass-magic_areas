@@ -357,7 +357,7 @@ class MagicArea(object):
 
         # Handle everything else
         if type(enabled_features) is not dict:
-            _LOGGER.warning(
+            _LOGGER.warn(
                 f"{self.name}: Invalid configuration for {CONF_ENABLED_FEATURES}"
             )
             return False
@@ -367,14 +367,13 @@ class MagicArea(object):
     def feature_config(self, feature) -> dict:
 
         if not self.has_feature(feature):
-            # @TODO reduce to info/debug when done testing
-            _LOGGER.warning(f"{self.name}: Feature {feature} not enabled")
+            _LOGGER.debug(f"{self.name}: Feature {feature} not enabled")
             return {}
 
         options = self.config.get(CONF_ENABLED_FEATURES, {})
 
         if not options:
-            _LOGGER.warning(f"{self.name}: No feature config found for {feature}")
+            _LOGGER.debug(f"{self.name}: No feature config found for {feature}")
 
         return options.get(feature, {})
 
