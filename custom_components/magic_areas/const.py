@@ -244,7 +244,7 @@ CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = (
 )
 
 # Light group options
-CONF_ENABLE_AUTOMATIC_CONTROL = "enable_automatic_control" # cv.boolean
+CONF_ENABLE_AUTOMATIC_CONTROL = "enable_automatic_control"  # cv.boolean
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
 CONF_OVERHEAD_LIGHTS_STATES = "overhead_lights_states"  # cv.ensure_list
 CONF_OVERHEAD_LIGHTS_ACT_ON = "overhead_lights_act_on"  # cv.ensure_list

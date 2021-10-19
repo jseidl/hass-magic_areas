@@ -307,12 +307,14 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             )
             return
 
-        automatic_control = self.area.feature_config(
-                    CONF_FEATURE_LIGHT_GROUPS
-                ).get(CONF_ENABLE_AUTOMATIC_CONTROL, False)
+        automatic_control = self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
+            CONF_ENABLE_AUTOMATIC_CONTROL, False
+        )
 
         if not automatic_control:
-            _LOGGER.debug(f"{self.name}: Automatic control for light group is disabled, skipping...")
+            _LOGGER.debug(
+                f"{self.name}: Automatic control for light group is disabled, skipping..."
+            )
             return False
 
         _LOGGER.debug(f"Light group {self.name} detected area state change")
