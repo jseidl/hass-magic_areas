@@ -32,7 +32,6 @@
         "title": "Light Groups",
         "description": "Configure the Light Groups feature",
         "data": {
-          "enable_automatic_control": "Enable automatic control",
           "overhead_lights": "Overhead lights (Leave blank for all area lights)",
           "overhead_lights_states": "States which overhead lights are turned on",
           "overhead_lights_act_on": "When should overhead lights be controlled?",

@@ -1,4 +1,5 @@
 import logging
+from custom_components.magic_areas.const import AVAILABLE_ON_STATES
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -11,12 +12,15 @@ from homeassistant.core import callback
 from .const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
+    AVAILABLE_ON_STATES,
     AREA_STATE_DARK,
     AREA_STATE_EXTENDED,
     AREA_STATE_OCCUPIED,
     AREA_STATE_SLEEP,
     AREA_TYPE_META,
     BUILTIN_AREA_STATES,
+    CONF_ON_STATES,
+    CONF_NOTIFY_STATES,
     CONF_ACCENT_ENTITY,
     CONF_ACCENT_LIGHTS,
     CONF_ACCENT_LIGHTS_ACT_ON,
@@ -195,9 +199,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 self.area_options = area_schema(user_input)
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
-                _LOGGER.debug(f"Area Step Config: Found the following errors: {errors}")
+                _LOGGER.debug(f"Found the following errors: {errors}")
             except Exception as e:
-                _LOGGER.warn(f"Area Step Config: Unexpected error caught: {str(e)}")
+                _LOGGER.warning(f"Unexpected error caught: {str(e)}")
             else:
                 _LOGGER.debug(f"Saving area base config: {self.area_options}")
                 if self.area.is_meta():
@@ -218,6 +222,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(
                         sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
                     ),
+                    CONF_ON_STATES: cv.multi_select(
+                        sorted(AVAILABLE_ON_STATES)
+                    )
                 },
             ),
             errors=errors,
@@ -236,9 +243,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 )
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
-                _LOGGER.debug(f"Area Secondary States: Found the following errors: {errors}")
+                _LOGGER.debug(f"Found the following errors: {errors}")
             except Exception as e:
-                _LOGGER.warn(f"Area Secondary States: Unexpected error caught: {str(e)}")
+                _LOGGER.warning(f"Unexpected error caught: {str(e)}")
             else:
                 _LOGGER.debug(
                     f"Saving area secondary state config: {self.area_options}"

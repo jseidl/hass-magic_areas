@@ -3,22 +3,25 @@ DEPENDENCIES = ["magic_areas"]
 import logging
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.const import STATE_ON
+from homeassistant.const import STATE_ON, STATE_OFF
 from homeassistant.helpers.event import call_later
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .base import MagicEntity
 from .const import (
     CONF_FEATURE_PRESENCE_HOLD,
+    CONF_FEATURE_LIGHT_GROUPS,
     CONF_PRESENCE_HOLD_TIMEOUT,
     DATA_AREA_OBJECT,
     DEFAULT_PRESENCE_HOLD_TIMEOUT,
     MODULE_DATA,
+    ICON_PRESENCE_HOLD,
+    ICON_LIGHT_CONTROL
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-PRESENCE_HOLD_ICON = "mdi:car-brake-hold"
+
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -30,6 +33,57 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     if area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
         async_add_entities([AreaPresenceHoldSwitch(hass, area)])
 
+    if area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
+        async_add_entities([AreaLightControlSwitch(hass, area)])
+
+class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
+    def __init__(self, hass, area):
+        """Initialize the area light control switch."""
+
+        self.area = area
+        self.hass = hass
+        self._name = f"Area Light Control ({self.area.name})"
+        self._state = STATE_OFF
+
+        _LOGGER.debug(f"{self.name} Switch initializing.")
+
+        # Set attributes
+        self._attributes = {}
+
+        _LOGGER.info(f"{self.name} Switch initialized.")
+
+    @property
+    def is_on(self):
+        """Return true if the area is occupied."""
+        return (self._state == STATE_ON)
+
+    @property
+    def icon(self):
+        """Return the icon to be used for this entity."""
+        return ICON_LIGHT_CONTROL
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+
+        last_state = await self.async_get_last_state()
+
+        if last_state:
+            _LOGGER.debug(f"Switch {self.name} restored [state={last_state.state}]")
+            self._state = last_state.state
+        else:
+            self._state = STATE_OFF
+
+        self.schedule_update_ha_state()
+
+    def turn_off(self, **kwargs):
+        """Turn off presence hold."""
+        self._state = STATE_OFF
+        self.schedule_update_ha_state()
+
+    def turn_on(self, **kwargs):
+        """Turn on presence hold."""
+        self._state = STATE_ON
+        self.schedule_update_ha_state()
 
 class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     def __init__(self, hass, area):
@@ -38,7 +92,7 @@ class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
         self.area = area
         self.hass = hass
         self._name = f"Area Presence Hold ({self.area.name})"
-        self._state = False
+        self._state = STATE_OFF
 
         _LOGGER.debug(f"{self.name} Switch initializing.")
 
@@ -52,12 +106,12 @@ class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     @property
     def is_on(self):
         """Return true if the area is occupied."""
-        return self._state
+        return (self._state == STATE_ON)
 
     @property
     def icon(self):
         """Return the icon to be used for this entity."""
-        return PRESENCE_HOLD_ICON
+        return ICON_PRESENCE_HOLD
 
     async def async_added_to_hass(self):
         """Call when entity about to be added to hass."""
@@ -66,20 +120,20 @@ class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
 
         if last_state:
             _LOGGER.debug(f"Switch {self.name} restored [state={last_state.state}]")
-            self._state = last_state.state == STATE_ON
+            self._state = last_state.state
         else:
-            self._state = False
+            self._state = STATE_OFF
 
         self.schedule_update_ha_state()
 
     def timeout_turn_off(self, next_interval):
 
-        if self._state:
+        if self._state == STATE_ON:
             self.turn_off()
 
     def turn_on(self, **kwargs):
         """Turn on presence hold."""
-        self._state = True
+        self._state = STATE_ON
         self.schedule_update_ha_state()
 
         timeout = self.area.feature_config(CONF_FEATURE_PRESENCE_HOLD).get(
@@ -93,7 +147,7 @@ class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
 
     def turn_off(self, **kwargs):
         """Turn off presence hold."""
-        self._state = False
+        self._state = STATE_OFF
         self.schedule_update_ha_state()
 
         if self.timeout_callback:

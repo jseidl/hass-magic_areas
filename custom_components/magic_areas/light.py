@@ -4,6 +4,7 @@ import logging
 
 from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     SERVICE_TURN_OFF,
@@ -20,7 +21,6 @@ from .const import (
     AREA_STATE_CLEAR,
     AREA_STATE_DARK,
     AREA_STATE_OCCUPIED,
-    CONF_ENABLE_AUTOMATIC_CONTROL,
     CONF_FEATURE_LIGHT_GROUPS,
     DATA_AREA_OBJECT,
     DEFAULT_LIGHT_GROUP_ACT_ON,
@@ -131,6 +131,15 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             f"Light group {self._name} ({category}/{self._icon}) created with entities: {self._entities}"
         )
 
+    def is_control_enabled(self):
+
+        entity_id = f"{SWITCH_DOMAIN}.area_light_control_{self.area.slug}"
+
+        switch_entity = self.hass.states.get(entity_id)
+
+        return (switch_entity.state.lower() == STATE_ON)
+
+    
     def relevant_states(self):
 
         relevant_states = self.area.states.copy()
@@ -307,14 +316,10 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             )
             return
 
-        automatic_control = self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
-            CONF_ENABLE_AUTOMATIC_CONTROL, False
-        )
+        automatic_control = self.is_control_enabled()
 
         if not automatic_control:
-            _LOGGER.debug(
-                f"{self.name}: Automatic control for light group is disabled, skipping..."
-            )
+            _LOGGER.debug(f"{self.name}: Automatic control for light group is disabled, skipping...")
             return False
 
         _LOGGER.debug(f"Light group {self.name} detected area state change")
