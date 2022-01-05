@@ -72,7 +72,7 @@ class MagicEntity:
         return False
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the attributes of the entity."""
         return self._attributes
 
@@ -197,15 +197,15 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
             entity = self.hass.states.get(sensor)
 
-            _LOGGER.debug(
-                f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
-            )
-
             if not entity:
                 _LOGGER.info(
                     f"[Area: {self.area.slug}] Could not get sensor state: {sensor} entity not found, skipping"
                 )
                 continue
+
+            _LOGGER.debug(
+                f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
+            )
 
             # Skip unavailable entities
             if entity.state == STATE_UNAVAILABLE:
@@ -357,7 +357,7 @@ class MagicArea(object):
 
         # Handle everything else
         if type(enabled_features) is not dict:
-            _LOGGER.warn(
+            _LOGGER.warning(
                 f"{self.name}: Invalid configuration for {CONF_ENABLED_FEATURES}"
             )
             return False
@@ -367,13 +367,14 @@ class MagicArea(object):
     def feature_config(self, feature) -> dict:
 
         if not self.has_feature(feature):
-            _LOGGER.debug(f"{self.name}: Feature {feature} not enabled")
+            # @TODO reduce to info/debug when done testing
+            _LOGGER.warning(f"{self.name}: Feature {feature} not enabled")
             return {}
 
         options = self.config.get(CONF_ENABLED_FEATURES, {})
 
         if not options:
-            _LOGGER.debug(f"{self.name}: No feature config found for {feature}")
+            _LOGGER.warning(f"{self.name}: No feature config found for {feature}")
 
         return options.get(feature, {})
 

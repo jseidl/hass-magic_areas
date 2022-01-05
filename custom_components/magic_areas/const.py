@@ -87,6 +87,10 @@ ATTR_ACTIVE_SENSORS = "active_sensors"
 ATTR_FEATURES = "features"
 ATTR_PRESENCE_SENSORS = "presence_sensors"
 
+# Icons
+ICON_PRESENCE_HOLD = "mdi:car-brake-hold"
+ICON_LIGHT_CONTROL = "mdi:lightbulb-auto-outline"
+
 # Area States
 AREA_STATE_CLEAR = "clear"
 AREA_STATE_OCCUPIED = "occupied"
@@ -135,6 +139,8 @@ AREA_TYPE_INTERIOR = "interior"
 AREA_TYPE_EXTERIOR = "exterior"
 AREA_TYPES = [AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR, AREA_TYPE_META]
 
+AVAILABLE_ON_STATES = [STATE_ON, STATE_HOME, STATE_PLAYING, STATE_OPEN]
+
 # Configuration parameters
 CONF_ID = "id"
 CONF_NAME, DEFAULT_NAME = "name", ""  # cv.string
@@ -165,8 +171,6 @@ ALL_PRESENCE_DEVICE_PLATFORMS = [
 ]  # cv.ensure_list
 CONF_ON_STATES, DEFAULT_ON_STATES = "on_states", [
     STATE_ON,
-    STATE_HOME,
-    STATE_PLAYING,
     STATE_OPEN,
 ]  # cv.ensure_list
 CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
@@ -244,7 +248,6 @@ CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = (
 )
 
 # Light group options
-CONF_ENABLE_AUTOMATIC_CONTROL = "enable_automatic_control"  # cv.boolean
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
 CONF_OVERHEAD_LIGHTS_STATES = "overhead_lights_states"  # cv.ensure_list
 CONF_OVERHEAD_LIGHTS_ACT_ON = "overhead_lights_act_on"  # cv.ensure_list
@@ -358,7 +361,6 @@ CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
 
 LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
     {
-        vol.Optional(CONF_ENABLE_AUTOMATIC_CONTROL, default=False): cv.boolean,
         vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
         vol.Optional(
             CONF_OVERHEAD_LIGHTS_STATES, default=[AREA_STATE_OCCUPIED]
@@ -457,7 +459,7 @@ REGULAR_AREA_SCHEMA = vol.Schema(
             CONF_PRESENCE_SENSOR_DEVICE_CLASS,
             default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
         ): cv.ensure_list,
-        vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list_csv,
+        vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list,
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
         ): cv.positive_int,
@@ -475,7 +477,7 @@ META_AREA_SCHEMA = vol.Schema(
         vol.Optional(CONF_TYPE, default=AREA_TYPE_META): AREA_TYPE_META,
         vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
-        vol.Optional(CONF_ON_STATES, default=[]): cv.ensure_list_csv,
+        vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list,
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
         ): cv.positive_int,
@@ -507,9 +509,9 @@ OPTIONS_AREA = [
     ),
     (
         CONF_ON_STATES,
-        ",".join(DEFAULT_ON_STATES),
-        str,
-    ),  # this should actually be cv.ensure_list_csv, but voluptuous doesn't support serializing this validator, so we'll work around with str and mangling the default
+        DEFAULT_ON_STATES,
+        cv.ensure_list,
+    ),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
     (CONF_ICON, DEFAULT_ICON, str),
@@ -535,7 +537,6 @@ OPTIONS_SECONDARY_STATES = [
 ]
 
 OPTIONS_LIGHT_GROUP = [
-    (CONF_ENABLE_AUTOMATIC_CONTROL, False, cv.boolean),
     (CONF_OVERHEAD_LIGHTS, [], cv.entity_ids),
     (CONF_OVERHEAD_LIGHTS_STATES, [AREA_STATE_OCCUPIED], cv.ensure_list),
     (CONF_OVERHEAD_LIGHTS_ACT_ON, DEFAULT_LIGHT_GROUP_ACT_ON, cv.ensure_list),

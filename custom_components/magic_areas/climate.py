@@ -185,17 +185,17 @@ class ClimateGroup(ClimateEntity):
         return self._target_temp_high
 
     @property
+    def should_poll(self):
+        """No polling needed for a climate group."""
+        return False
+
+    @property
     def temperature_unit(self):
         """Return the unit of measurement that is used."""
         return self._unit
 
     @property
-    def should_poll(self) -> bool:
-        """No polling needed for a climate group."""
-        return False
-
-    @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes for the climate group."""
         return {ATTR_ENTITY_ID: self._entity_ids}
 
