@@ -137,9 +137,8 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
 
         switch_entity = self.hass.states.get(entity_id)
 
-        return (switch_entity.state.lower() == STATE_ON)
+        return switch_entity.state.lower() == STATE_ON
 
-    
     def relevant_states(self):
 
         relevant_states = self.area.states.copy()

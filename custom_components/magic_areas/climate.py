@@ -190,6 +190,11 @@ class ClimateGroup(ClimateEntity):
         return False
 
     @property
+    def should_poll(self):
+        """No polling needed for a climate group."""
+        return False
+
+    @property
     def temperature_unit(self):
         """Return the unit of measurement that is used."""
         return self._unit
