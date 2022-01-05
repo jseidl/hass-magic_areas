@@ -183,7 +183,7 @@ class ClimateGroup(ClimateEntity):
     @property
     def target_temperature_high(self):
         return self._target_temp_high
-        
+
     @property
     def should_poll(self):
         """No polling needed for a climate group."""
@@ -203,7 +203,6 @@ class ClimateGroup(ClimateEntity):
     def extra_state_attributes(self):
         """Return the state attributes for the climate group."""
         return {ATTR_ENTITY_ID: self._entity_ids}
-
 
     async def async_set_temperature(self, **kwargs):
         """Forward the turn_on command to all climate in the climate group."""
