@@ -24,11 +24,6 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> cb498d3def8a9ba35d45eadd5009c8f514f16a82
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
@@ -42,10 +37,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     if area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
         async_add_entities([AreaLightControlSwitch(hass, area)])
 
-<<<<<<< HEAD
-=======
-
->>>>>>> cb498d3def8a9ba35d45eadd5009c8f514f16a82
 class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     def __init__(self, hass, area):
         """Initialize the area light control switch."""
@@ -65,11 +56,7 @@ class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     @property
     def is_on(self):
         """Return true if the area is occupied."""
-<<<<<<< HEAD
-        return (self._state == STATE_ON)
-=======
         return self._state == STATE_ON
->>>>>>> cb498d3def8a9ba35d45eadd5009c8f514f16a82
 
     @property
     def icon(self):
@@ -98,10 +85,6 @@ class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
         """Turn on presence hold."""
         self._state = STATE_ON
         self.schedule_update_ha_state()
-<<<<<<< HEAD
-=======
-
->>>>>>> cb498d3def8a9ba35d45eadd5009c8f514f16a82
 
 class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     def __init__(self, hass, area):
@@ -124,11 +107,7 @@ class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     @property
     def is_on(self):
         """Return true if the area is occupied."""
-<<<<<<< HEAD
-        return (self._state == STATE_ON)
-=======
         return self._state == STATE_ON
->>>>>>> cb498d3def8a9ba35d45eadd5009c8f514f16a82
 
     @property
     def icon(self):
