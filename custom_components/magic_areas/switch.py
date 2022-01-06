@@ -34,6 +34,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     if area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
         async_add_entities([AreaLightControlSwitch(hass, area)])
 
+
 class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     def __init__(self, hass, area):
         """Initialize the area light control switch."""
@@ -82,6 +83,7 @@ class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
         """Turn on presence hold."""
         self._state = STATE_ON
         self.schedule_update_ha_state()
+
 
 class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     def __init__(self, hass, area):
