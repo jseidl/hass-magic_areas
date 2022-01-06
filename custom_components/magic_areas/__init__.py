@@ -140,11 +140,20 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     data = hass.data.setdefault(MODULE_DATA, {})
     area_id = config_entry.data[CONF_ID]
     area_name = config_entry.data[CONF_NAME]
+
+    _LOGGER.debug(f"Setting up entry for {area_name}")
+
     meta_ids = [meta_area.lower() for meta_area in META_AREAS]
 
     if area_id not in meta_ids:
         area_registry = await hass.helpers.area_registry.async_get_registry()
         area = area_registry.async_get_area(area_id)
+
+        if not area:
+            _LOGGER.debug(f"Could not find {area_name} ({area_id}) on registry")
+            return False
+
+        _LOGGER.debug(f"Got area {area_name} from registry: {area}")
 
         magic_area = MagicArea(
             hass,
