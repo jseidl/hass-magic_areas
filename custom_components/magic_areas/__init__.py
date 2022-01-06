@@ -21,7 +21,6 @@ from .const import (
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
-    MAGIC_AREAS_COMPONENTS,
     META_AREAS,
     MODULE_DATA,
 )
@@ -60,7 +59,9 @@ async def async_setup(hass, config):
 
     # Add Meta Areas to area list
     for meta_area in META_AREAS:
-        areas.append(AreaEntry(name=meta_area, normalized_name=meta_area, id=meta_area.lower()))
+        areas.append(
+            AreaEntry(name=meta_area, normalized_name=meta_area, id=meta_area.lower())
+        )
 
     for area in areas:
 
