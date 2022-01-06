@@ -325,6 +325,8 @@ class MagicArea(object):
                 EVENT_HOMEASSISTANT_STARTED, self.initialize
             )
 
+        _LOGGER.debug(f"Area {self.slug} Primed for initialization.")
+
     def is_occupied(self) -> bool:
 
         return self.has_state(AREA_STATE_OCCUPIED)
@@ -532,7 +534,7 @@ class MagicMetaArea(MagicArea):
             if area.config.get(CONF_TYPE) != AREA_TYPE_META:
 
                 if not area.initialized:
-                    _LOGGER.debug(f"Area {area.id} not initialized")
+                    _LOGGER.debug(f"Area {area.name} not initialized")
                     return False
 
         return True

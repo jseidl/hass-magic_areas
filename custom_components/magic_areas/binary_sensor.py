@@ -562,7 +562,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     def report_state_change(self, states_tuple=([], [])):
         new_states, lost_states = states_tuple
         _LOGGER.debug(
-            f"Reporting state change for {self.area.id} (new states: {new_states}/lost states: {lost_states})"
+            f"Reporting state change for {self.area.name} (new states: {new_states}/lost states: {lost_states})"
         )
         dispatcher_send(
             self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, states_tuple

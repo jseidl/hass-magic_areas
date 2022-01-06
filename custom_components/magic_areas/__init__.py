@@ -1,4 +1,4 @@
-"""Magic Areas component for Homme Assistant."""
+"""Magic Areas component for Home Assistant."""
 
 import asyncio
 import logging
@@ -41,6 +41,7 @@ async def async_setup(hass, config):
 
     # Populate MagicAreas
     areas = list(area_registry.async_list_areas())
+    _LOGGER.debug(f"Areas from registry: {areas}")
 
     if DOMAIN not in config.keys():
         _LOGGER.error(f"'magic_areas:' not defined on YAML. Aborting.")
@@ -49,18 +50,18 @@ async def async_setup(hass, config):
     magic_areas_config = config[DOMAIN]
 
     # Check reserved names
-    reserved_ids = [meta_area.lower() for meta_area in META_AREAS]
+    reserved_names = [meta_area.lower() for meta_area in META_AREAS]
     for area in areas:
-        if area.id in reserved_ids:
+        if area.normalized_name in reserved_names:
             _LOGGER.error(
-                f"Area uses reserved name {area.id}. Please rename your area and restart."
+                f"Area uses reserved name {area.normalized_name}. Please rename your area and restart."
             )
             return
 
     # Add Meta Areas to area list
     for meta_area in META_AREAS:
         areas.append(
-            AreaEntry(name=meta_area, normalized_name=meta_area, id=meta_area.lower())
+            AreaEntry(name=meta_area, normalized_name=meta_area.lower(), id=meta_area.lower())
         )
 
     for area in areas:
@@ -75,7 +76,7 @@ async def async_setup(hass, config):
             config_entry = magic_areas_config[area.id]
             source = SOURCE_IMPORT
 
-        if area.id in reserved_ids:
+        if area.normalized_name in reserved_names:
             config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
         config_entry.update(
@@ -85,6 +86,7 @@ async def async_setup(hass, config):
             }
         )
 
+        _LOGGER.debug(f"Creating config flow task for area {area.name} ({area.id}): {config_entry}")
         hass.async_create_task(
             hass.config_entries.flow.async_init(
                 DOMAIN, context={CONF_SOURCE: source}, data=config_entry
@@ -103,7 +105,7 @@ async def async_setup(hass, config):
             if area.config.get(CONF_TYPE) == AREA_TYPE_META:
                 continue
             if not area.initialized:
-                _LOGGER.info(f"Area {area.id} not ready")
+                _LOGGER.info(f"Area {area.normalized_name} not ready")
                 return False
 
         _LOGGER.debug(f"All areas ready.")
