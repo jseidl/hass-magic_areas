@@ -77,22 +77,28 @@ async def async_setup(hass, config):
         if area.id not in magic_areas_config.keys():
             default_config = {f"{area.id}": {}}
             config_entry = _DOMAIN_SCHEMA(default_config)[area.id]
-            _LOGGER.debug(f"Configuration for area {area.name} not found on YAML, creating from default.")
+            _LOGGER.debug(
+                f"Configuration for area {area.name} not found on YAML, creating from default."
+            )
         else:
             config_entry = magic_areas_config[area.id]
             source = SOURCE_IMPORT
-            _LOGGER.debug(f"Configuration for area {area.name} found on YAML, loading from saved config.")
+            _LOGGER.debug(
+                f"Configuration for area {area.name} found on YAML, loading from saved config."
+            )
 
         if area.normalized_name in reserved_names:
             _LOGGER.debug(f"Meta area {area.name} found, setting correct type.")
             config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
         extra_opts = {
-                CONF_NAME: area.name,
-                CONF_ID: area.id,
-            }
+            CONF_NAME: area.name,
+            CONF_ID: area.id,
+        }
         config_entry.update(extra_opts)
-        _LOGGER.debug(f"Configuration for area {area.name} updated with extra options: {extra_opts}")
+        _LOGGER.debug(
+            f"Configuration for area {area.name} updated with extra options: {extra_opts}"
+        )
 
         _LOGGER.debug(
             f"Creating config flow task for area {area.name} ({area.id}): {config_entry}"
@@ -148,7 +154,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     else:
         magic_area = MagicMetaArea(hass, area_name, config_entry)
 
-    _LOGGER.debug(f"Magic Area {magic_area.name} ({magic_area.id}) created: {magic_area.config}")
+    _LOGGER.debug(
+        f"Magic Area {magic_area.name} ({magic_area.id}) created: {magic_area.config}"
+    )
 
     undo_listener = config_entry.add_update_listener(async_update_options)
 
