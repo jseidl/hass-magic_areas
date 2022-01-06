@@ -1,5 +1,4 @@
 import logging
-from custom_components.magic_areas.const import AVAILABLE_ON_STATES
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -14,7 +13,6 @@ from custom_components.magic_areas.const import AVAILABLE_ON_STATES
 from .const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
-    AVAILABLE_ON_STATES,
     AREA_STATE_DARK,
     AREA_STATE_EXTENDED,
     AREA_STATE_OCCUPIED,
@@ -22,8 +20,6 @@ from .const import (
     AREA_TYPE_META,
     AVAILABLE_ON_STATES,
     BUILTIN_AREA_STATES,
-    CONF_ON_STATES,
-    CONF_NOTIFY_STATES,
     CONF_ACCENT_ENTITY,
     CONF_ACCENT_LIGHTS,
     CONF_ACCENT_LIGHTS_ACT_ON,

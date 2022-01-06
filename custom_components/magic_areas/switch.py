@@ -11,15 +11,12 @@ from .base import MagicEntity
 from .const import (
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_PRESENCE_HOLD,
-    CONF_FEATURE_LIGHT_GROUPS,
     CONF_PRESENCE_HOLD_TIMEOUT,
     DATA_AREA_OBJECT,
     DEFAULT_PRESENCE_HOLD_TIMEOUT,
     ICON_LIGHT_CONTROL,
     ICON_PRESENCE_HOLD,
     MODULE_DATA,
-    ICON_PRESENCE_HOLD,
-    ICON_LIGHT_CONTROL
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,6 +33,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     if area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
         async_add_entities([AreaLightControlSwitch(hass, area)])
+
 
 class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     def __init__(self, hass, area):
@@ -85,6 +83,7 @@ class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
         """Turn on presence hold."""
         self._state = STATE_ON
         self.schedule_update_ha_state()
+
 
 class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
     def __init__(self, hass, area):
