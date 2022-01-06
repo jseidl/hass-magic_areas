@@ -61,7 +61,9 @@ async def async_setup(hass, config):
     # Add Meta Areas to area list
     for meta_area in META_AREAS:
         areas.append(
-            AreaEntry(name=meta_area, normalized_name=meta_area.lower(), id=meta_area.lower())
+            AreaEntry(
+                name=meta_area, normalized_name=meta_area.lower(), id=meta_area.lower()
+            )
         )
 
     for area in areas:
@@ -86,7 +88,9 @@ async def async_setup(hass, config):
             }
         )
 
-        _LOGGER.debug(f"Creating config flow task for area {area.name} ({area.id}): {config_entry}")
+        _LOGGER.debug(
+            f"Creating config flow task for area {area.name} ({area.id}): {config_entry}"
+        )
         hass.async_create_task(
             hass.config_entries.flow.async_init(
                 DOMAIN, context={CONF_SOURCE: source}, data=config_entry
