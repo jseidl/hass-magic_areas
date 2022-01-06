@@ -4,7 +4,13 @@ from statistics import mean
 
 import voluptuous as vol
 from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON, STATE_UNAVAILABLE
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    EVENT_HOMEASSISTANT_STARTED,
+    STATE_OFF,
+    STATE_ON,
+    STATE_UNAVAILABLE,
+)
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -15,17 +21,15 @@ from homeassistant.util import slugify
 
 from .const import (
     _DOMAIN_SCHEMA,
+    AREA_STATE_OCCUPIED,
     AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_INCLUDE_ENTITIES,
-    CONF_NIGHT_ENTITY,
-    CONF_NIGHT_STATE,
     CONF_ON_STATES,
-    CONF_SLEEP_ENTITY,
-    CONF_SLEEP_STATE,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
+    CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
@@ -79,7 +83,6 @@ class MagicSensorBase(MagicEntity):
 
     sensors = []
     _device_class = None
-    tracking_listeners = []
 
     @property
     def device_class(self):
@@ -99,13 +102,8 @@ class MagicSensorBase(MagicEntity):
         # Setup the listeners
         await self._setup_listeners()
 
-    def _remove_listeners(self):
-        while self.tracking_listeners:
-            remove_listener = self.tracking_listeners.pop()
-            remove_listener()
-
     async def _shutdown(self) -> None:
-        self._remove_listeners()
+        pass
 
     async def async_will_remove_from_hass(self):
         """Remove the listeners upon removing the component."""
@@ -185,29 +183,51 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
         return self._update_state()
 
-    def _get_sensors_state(self):
+    def _get_sensors_state(self, valid_states=[STATE_ON]):
+
+        _LOGGER.debug(
+            f"[Area: {self.area.slug}] Updating state. (Valid states: {valid_states})"
+        )
 
         active_sensors = []
+        active_areas = set()
 
         # Loop over all entities and check their state
         for sensor in self.sensors:
 
             entity = self.hass.states.get(sensor)
 
+            _LOGGER.debug(
+                f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
+            )
+
             if not entity:
                 _LOGGER.info(
-                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                    f"[Area: {self.area.slug}] Could not get sensor state: {sensor} entity not found, skipping"
                 )
                 continue
 
             # Skip unavailable entities
             if entity.state == STATE_UNAVAILABLE:
+                _LOGGER.debug(
+                    f"[Area: {self.area.slug}] Sensor '{sensor}' is unavailable, skipping..."
+                )
                 continue
 
-            if entity.state in STATE_ON:
+            if entity.state in valid_states:
+                _LOGGER.debug(
+                    f"[Area: {self.area.slug}] Valid presence sensor found: {sensor}."
+                )
                 active_sensors.append(sensor)
 
         self._attributes["active_sensors"] = active_sensors
+
+        _LOGGER.debug(f"[Area: {self.area.slug}] Active sensors: {active_sensors}")
+
+        if self.area.is_meta():
+            active_areas = self.area.get_active_areas()
+            _LOGGER.debug("[Area: {self.area.slug}] Active areas: {active_areas}")
+            self._attributes["active_areas"] = active_areas
 
         return len(active_sensors) > 0
 
@@ -259,17 +279,16 @@ class AggregateBase(MagicSensorBase):
             return
 
         # Track presence sensors
-        remove_state_tracker = async_track_state_change(
-            self.hass, self.sensors, self.sensor_state_change
+        self.async_on_remove(
+            async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
         )
+
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
 
         # Timed self update
-        remove_interval = async_track_time_interval(
-            self.hass, self.refresh_states, delta
+        self.async_on_remove(
+            async_track_time_interval(self.hass, self.refresh_states, delta)
         )
-
-        self.tracking_listeners.extend([remove_state_tracker, remove_interval])
 
 
 class MagicArea(object):
@@ -283,6 +302,9 @@ class MagicArea(object):
         self.initialized = False
 
         self.entities = {}
+
+        self.last_changed = datetime.utcnow()
+        self.states = []
 
         self.loaded_platforms = []
 
@@ -303,9 +325,58 @@ class MagicArea(object):
                 EVENT_HOMEASSISTANT_STARTED, self.initialize
             )
 
+    def is_occupied(self) -> bool:
+
+        return self.has_state(AREA_STATE_OCCUPIED)
+
+    def has_state(self, state) -> bool:
+
+        return state in self.states
+
+    def has_configured_state(self, state) -> bool:
+
+        state_opts = CONFIGURABLE_AREA_STATE_MAP.get(state, None)
+
+        if not state_opts:
+            return False
+
+        state_entity, state_value = state_opts
+
+        if state_entity and state_value:
+            return True
+
+        return False
+
     def has_feature(self, feature) -> bool:
 
-        return feature in self.config.get(CONF_ENABLED_FEATURES)
+        enabled_features = self.config.get(CONF_ENABLED_FEATURES)
+
+        # Deal with legacy
+        if type(enabled_features) is list:
+            return feature in enabled_features
+
+        # Handle everything else
+        if type(enabled_features) is not dict:
+            _LOGGER.warning(
+                f"{self.name}: Invalid configuration for {CONF_ENABLED_FEATURES}"
+            )
+            return False
+
+        return feature in enabled_features.keys()
+
+    def feature_config(self, feature) -> dict:
+
+        if not self.has_feature(feature):
+            # @TODO reduce to info/debug when done testing
+            _LOGGER.warning(f"{self.name}: Feature {feature} not enabled")
+            return {}
+
+        options = self.config.get(CONF_ENABLED_FEATURES, {})
+
+        if not options:
+            _LOGGER.warning(f"{self.name}: No feature config found for {feature}")
+
+        return options.get(feature, {})
 
     def is_meta(self) -> bool:
 
@@ -417,33 +488,6 @@ class MagicArea(object):
 
         return domain in self.entities.keys()
 
-    def is_sleeping(self):
-        if self.config.get(CONF_SLEEP_ENTITY):
-
-            sleep_entity = self.hass.states.get(self.config.get(CONF_SLEEP_ENTITY))
-            if sleep_entity.state.lower() == self.config.get(CONF_SLEEP_STATE).lower():
-                _LOGGER.info(
-                    f"Sleep entity '{sleep_entity.entity_id}' on sleep state '{sleep_entity.state}'"
-                )
-                return True
-
-        return False
-
-    def is_night(self):
-
-        # Check if has night entity
-        if self.config.get(CONF_NIGHT_ENTITY):
-            night_entity = self.hass.states.get(self.config.get(CONF_NIGHT_ENTITY))
-            if night_entity and (
-                night_entity.state.lower() == self.config.get(CONF_NIGHT_STATE).lower()
-            ):
-                _LOGGER.info(
-                    f"Night entity '{night_entity.entity_id}' on night state '{night_entity.state}'"
-                )
-                return True
-
-        return False
-
 
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area_name, config) -> None:
@@ -456,7 +500,10 @@ class MagicMetaArea(MagicArea):
         self.initialized = False
 
         self.entities = {}
+        self.occupied = False
+        self.last_changed = datetime.utcnow()
 
+        self.states = []
         self.loaded_platforms = []
 
         # Check if area is defined on YAML
@@ -485,10 +532,39 @@ class MagicMetaArea(MagicArea):
             if area.config.get(CONF_TYPE) != AREA_TYPE_META:
 
                 if not area.initialized:
-                    _LOGGER.warning(f"Area {area.id} not initialized")
+                    _LOGGER.debug(f"Area {area.id} not initialized")
                     return False
 
         return True
+
+    def get_active_areas(self):
+
+        areas = self.get_child_areas()
+        active_areas = []
+
+        for area in areas:
+            entity_id = f"binary_sensor.area_{area}"
+            entity = self.hass.states.get(entity_id)
+
+            if entity.state == STATE_ON:
+                active_areas.append(area)
+
+        return active_areas
+
+    def get_child_areas(self):
+
+        data = self.hass.data[MODULE_DATA]
+        areas = []
+
+        for area_info in data.values():
+            area = area_info[DATA_AREA_OBJECT]
+            if (
+                self.id == META_AREA_GLOBAL.lower()
+                or area.config.get(CONF_TYPE) == self.id
+            ) and not area.is_meta():
+                areas.append(area.slug)
+
+        return areas
 
     async def initialize(self, _=None) -> None:
         _LOGGER.debug(f"Initializing meta area {self.slug}...")
@@ -528,7 +604,9 @@ class MagicMetaArea(MagicArea):
                 for entities in area.entities.values():
                     for entity in entities:
                         if not isinstance(entity["entity_id"], str):
-                            _LOGGER.warning(f"Entity ID is not a string: {entity['entity_id']}")
+                            _LOGGER.debug(
+                                f"Entity ID is not a string: {entity['entity_id']}"
+                            )
                             continue
                         entity_list.append(entity["entity_id"])
 
