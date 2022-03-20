@@ -8,6 +8,8 @@ from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 
+from custom_components.magic_areas.const import AVAILABLE_ON_STATES
+
 from .const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
@@ -16,8 +18,8 @@ from .const import (
     AREA_STATE_OCCUPIED,
     AREA_STATE_SLEEP,
     AREA_TYPE_META,
+    AVAILABLE_ON_STATES,
     BUILTIN_AREA_STATES,
-    CONF_NOTIFY_STATES,
     CONF_ACCENT_ENTITY,
     CONF_ACCENT_LIGHTS,
     CONF_ACCENT_LIGHTS_ACT_ON,
@@ -37,6 +39,7 @@ from .const import (
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
+    CONF_ON_STATES,
     CONF_OVERHEAD_LIGHTS,
     CONF_OVERHEAD_LIGHTS_ACT_ON,
     CONF_OVERHEAD_LIGHTS_STATES,
@@ -238,6 +241,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(
                         sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
                     ),
+                    CONF_ON_STATES: cv.multi_select(sorted(AVAILABLE_ON_STATES)),
                 },
             ),
             errors=errors,

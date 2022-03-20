@@ -4,6 +4,7 @@ import logging
 
 from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     SERVICE_TURN_OFF,
@@ -130,6 +131,14 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             f"Light group {self._name} ({category}/{self._icon}) created with entities: {self._entities}"
         )
 
+    def is_control_enabled(self):
+
+        entity_id = f"{SWITCH_DOMAIN}.area_light_control_{self.area.slug}"
+
+        switch_entity = self.hass.states.get(entity_id)
+
+        return switch_entity.state.lower() == STATE_ON
+
     def relevant_states(self):
 
         relevant_states = self.area.states.copy()
@@ -190,8 +199,9 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
                     # Do nothing, category group will do
                     return False
 
-        # If we don't, just turn on all of them
-        return self._turn_on()
+        if AREA_STATE_OCCUPIED in new_states:
+            # If we don't, just turn on all of them
+            return self._turn_on()
 
     def state_change_secondary(self, states_tuple):
 
@@ -247,7 +257,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             AREA_STATE_OCCUPIED in new_states
             and LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE not in self.act_on
         ):
-            _LOGGER.warn(
+            _LOGGER.debug(
                 f"Area occupancy change detected but not configured to act on. Skipping."
             )
             return False
@@ -257,7 +267,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             AREA_STATE_OCCUPIED not in new_states
             and LIGHT_GROUP_ACT_ON_STATE_CHANGE not in self.act_on
         ):
-            _LOGGER.warn(
+            _LOGGER.debug(
                 f"Area state change detected but not configured to act on. Skipping."
             )
             return False
@@ -304,6 +314,14 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
                 f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
             )
             return
+
+        automatic_control = self.is_control_enabled()
+
+        if not automatic_control:
+            _LOGGER.debug(
+                f"{self.name}: Automatic control for light group is disabled, skipping..."
+            )
+            return False
 
         _LOGGER.debug(f"Light group {self.name} detected area state change")
 

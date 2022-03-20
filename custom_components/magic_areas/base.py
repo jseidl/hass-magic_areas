@@ -72,7 +72,7 @@ class MagicEntity:
         return False
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the attributes of the entity."""
         return self._attributes
 
@@ -197,15 +197,15 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
             entity = self.hass.states.get(sensor)
 
-            _LOGGER.debug(
-                f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
-            )
-
             if not entity:
                 _LOGGER.info(
                     f"[Area: {self.area.slug}] Could not get sensor state: {sensor} entity not found, skipping"
                 )
                 continue
+
+            _LOGGER.debug(
+                f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
+            )
 
             # Skip unavailable entities
             if entity.state == STATE_UNAVAILABLE:
@@ -324,6 +324,8 @@ class MagicArea(object):
             self.hass.bus.async_listen_once(
                 EVENT_HOMEASSISTANT_STARTED, self.initialize
             )
+
+        _LOGGER.debug(f"Area {self.slug} Primed for initialization.")
 
     def is_occupied(self) -> bool:
 
@@ -532,7 +534,7 @@ class MagicMetaArea(MagicArea):
             if area.config.get(CONF_TYPE) != AREA_TYPE_META:
 
                 if not area.initialized:
-                    _LOGGER.debug(f"Area {area.id} not initialized")
+                    _LOGGER.debug(f"Area {area.name} not initialized")
                     return False
 
         return True
