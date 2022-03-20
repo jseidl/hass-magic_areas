@@ -171,21 +171,40 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 [entity["entity_id"] for entity in self.area.entities.get(domain, [])]
             )
 
-        self.area_entities = sorted(filtered_area_entities)
+        self.area_entities = sorted(self.resolve_groups(filtered_area_entities))
+
         self.all_area_entities = sorted(
             self.area_entities
             + self.config_entry.options.get(CONF_EXCLUDE_ENTITIES, [])
         )
 
         self.all_lights = sorted(
-            entity["entity_id"] for entity in self.area.entities.get(LIGHT_DOMAIN, [])
+            self.resolve_groups(
+                entity["entity_id"]
+                for entity in self.area.entities.get(LIGHT_DOMAIN, [])
+            )
         )
         self.all_media_players = sorted(
-            entity["entity_id"]
-            for entity in self.area.entities.get(MEDIA_PLAYER_DOMAIN, [])
+            self.resolve_groups(
+                entity["entity_id"]
+                for entity in self.area.entities.get(MEDIA_PLAYER_DOMAIN, [])
+            )
         )
 
         return await self.async_step_area_config()
+
+    @staticmethod
+    def resolve_groups(raw_list):
+        """Resolve entities from groups."""
+        resolved_list = []
+        for item in raw_list:
+            if isinstance(item, list):
+                for item_child in item:
+                    resolved_list.append(item_child)
+                continue
+            resolved_list.append(item)
+
+        return list(dict.fromkeys(resolved_list))
 
     async def async_step_area_config(self, user_input=None):
         """Gather basic settings for the area."""
