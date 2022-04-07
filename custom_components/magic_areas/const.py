@@ -2,7 +2,6 @@ from itertools import chain
 
 import voluptuous as vol
 from homeassistant.components.binary_sensor import (
-    DEVICE_CLASSES,
     DEVICE_CLASS_DOOR,
     DEVICE_CLASS_GAS,
     DEVICE_CLASS_LIGHT,
@@ -15,6 +14,7 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_SAFETY,
     DEVICE_CLASS_SMOKE,
     DEVICE_CLASS_WINDOW,
+    DEVICE_CLASSES,
 )
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN

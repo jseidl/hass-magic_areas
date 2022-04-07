@@ -3,7 +3,7 @@ DEPENDENCIES = ["media_player"]
 import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.group.media_player import MediaGroup
+from homeassistant.components.group.media_player import MediaPlayerGroup
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.media_player import SUPPORT_PLAY_MEDIA, MediaPlayerEntity
 from homeassistant.components.media_player.const import (
@@ -66,7 +66,7 @@ def setup_media_player_group(hass, area, async_add_entities):
 
     media_player_entities = [e["entity_id"] for e in area.entities[MEDIA_PLAYER_DOMAIN]]
 
-    async_add_entities([AreaMediaGroup(hass, area, media_player_entities)])
+    async_add_entities([AreaMediaPlayerGroup(hass, area, media_player_entities)])
 
 
 def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
@@ -279,7 +279,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
         return True
 
 
-class AreaMediaGroup(MagicEntity, MediaGroup):
+class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
     def __init__(self, hass, area, entities):
 
         name = f"{area.name} Media Players"
@@ -292,7 +292,7 @@ class AreaMediaGroup(MagicEntity, MediaGroup):
 
         unique_id = f"magicareas_media_player_group_{area.slug}"
 
-        MediaGroup.__init__(self, unique_id, self._name, self._entities)
+        MediaPlayerGroup.__init__(self, unique_id, self._name, self._entities)
 
         _LOGGER.debug(
             f"Media Player group {self._name} created with entities: {self._entities}"
