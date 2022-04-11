@@ -19,7 +19,8 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
-from .const import (
+from custom_components.magic_areas.util import flatten_list
+from custom_components.magic_areas.const import (
     _DOMAIN_SCHEMA,
     AREA_STATE_OCCUPIED,
     AREA_TYPE_META,
@@ -447,7 +448,8 @@ class MagicArea(object):
 
     def load_entity_list(self, entity_list):
 
-        unique_entities = set(entity_list)
+        flattened_entity_list = flatten_list(entity_list)
+        unique_entities = set(flattened_entity_list)
 
         for entity_id in unique_entities:
 
