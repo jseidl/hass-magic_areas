@@ -19,7 +19,6 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
-from custom_components.magic_areas.util import flatten_list
 from custom_components.magic_areas.const import (
     _DOMAIN_SCHEMA,
     AREA_STATE_OCCUPIED,
@@ -41,6 +40,7 @@ from custom_components.magic_areas.const import (
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
+from custom_components.magic_areas.util import flatten_list
 
 CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: _DOMAIN_SCHEMA},
@@ -454,7 +454,7 @@ class MagicArea(object):
         for entity_id in unique_entities:
 
             _LOGGER.debug(f"[{self.slug}] Loading entity: {entity_id}")
-            
+
             try:
 
                 entity_component, entity_name = entity_id.split(".")
