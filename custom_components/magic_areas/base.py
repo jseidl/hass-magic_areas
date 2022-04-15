@@ -453,19 +453,27 @@ class MagicArea(object):
 
         for entity_id in unique_entities:
 
-            entity_component, entity_name = entity_id.split(".")
+            _LOGGER.debug(f"[{self.slug}] Loading entity: {entity_id}")
+            
+            try:
 
-            # Get latest state and create object
-            latest_state = self.hass.states.get(entity_id)
-            updated_entity = {"entity_id": entity_id}
+                entity_component, entity_name = entity_id.split(".")
 
-            if latest_state:
-                updated_entity.update(latest_state.attributes)
+                # Get latest state and create object
+                latest_state = self.hass.states.get(entity_id)
+                updated_entity = {"entity_id": entity_id}
 
-            if entity_component not in self.entities.keys():
-                self.entities[entity_component] = []
+                if latest_state:
+                    updated_entity.update(latest_state.attributes)
 
-            self.entities[entity_component].append(updated_entity)
+                if entity_component not in self.entities.keys():
+                    self.entities[entity_component] = []
+
+                self.entities[entity_component].append(updated_entity)
+
+            except Exception as err:
+                _LOGGER.error(f"[{self.slug}] Unable to load entity '{entity_id}': {str(err)}")
+                pass
 
     async def initialize(self, _=None) -> None:
         _LOGGER.debug(f"Initializing area {self.slug}...")
