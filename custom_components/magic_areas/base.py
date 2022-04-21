@@ -40,7 +40,7 @@ from custom_components.magic_areas.const import (
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
-from custom_components.magic_areas.util import flatten_list
+from custom_components.magic_areas.util import flatten_entity_list
 
 CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: _DOMAIN_SCHEMA},
@@ -450,7 +450,7 @@ class MagicArea(object):
 
         _LOGGER.debug(f"[{self.slug}] Original entity list: {entity_list}")
 
-        flattened_entity_list = flatten_list(entity_list)
+        flattened_entity_list = flatten_entity_list(entity_list)
         unique_entities = set(flattened_entity_list)
 
         _LOGGER.debug(f"[{self.slug}] Unique entities: {unique_entities}")
@@ -476,7 +476,9 @@ class MagicArea(object):
                 self.entities[entity_component].append(updated_entity)
 
             except Exception as err:
-                _LOGGER.error(f"[{self.slug}] Unable to load entity '{entity_id}': {str(err)}")
+                _LOGGER.error(
+                    f"[{self.slug}] Unable to load entity '{entity_id}': {str(err)}"
+                )
                 pass
 
     async def initialize(self, _=None) -> None:
