@@ -40,7 +40,7 @@ from custom_components.magic_areas.const import (
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
-from custom_components.magic_areas.util import flatten_list
+from custom_components.magic_areas.util import flatten_entity_list
 
 CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: _DOMAIN_SCHEMA},
@@ -450,7 +450,7 @@ class MagicArea(object):
 
         _LOGGER.debug(f"[{self.slug}] Original entity list: {entity_list}")
 
-        flattened_entity_list = flatten_list(entity_list)
+        flattened_entity_list = flatten_entity_list(entity_list)
         unique_entities = set(flattened_entity_list)
 
         _LOGGER.debug(f"[{self.slug}] Unique entities: {unique_entities}")
