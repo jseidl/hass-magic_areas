@@ -1,6 +1,12 @@
-import functools
-import operator
+from collections import Iterable
 
+def flatten_entity_list(input_list):
+    
+    basestring = (str, bytes)
 
-def flatten_list(input_list):
-    return functools.reduce(operator.iconcat, input_list, [])
+    for i in input_list:
+        if isinstance(i, Iterable) and not isinstance(i, basestring):
+            for sublist in flatten_entity_list(i):
+                yield sublist
+        else:
+            yield i
