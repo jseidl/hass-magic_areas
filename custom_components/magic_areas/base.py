@@ -448,8 +448,13 @@ class MagicArea(object):
 
     def load_entity_list(self, entity_list):
 
+        _LOGGER.debug(f"[{self.slug}] Original entity list: {entity_list}")
+
         flattened_entity_list = flatten_list(entity_list)
         unique_entities = set(flattened_entity_list)
+
+        _LOGGER.debug(f"[{self.slug}] Expanded entity list: {flattened_entity_list}")
+        _LOGGER.debug(f"[{self.slug}] Unique entities: {unique_entities}")
 
         for entity_id in unique_entities:
 
