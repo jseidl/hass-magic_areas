@@ -1,7 +1,8 @@
 from collections import Iterable
 
+
 def flatten_entity_list(input_list):
-    
+
     basestring = (str, bytes)
 
     for i in input_list:
