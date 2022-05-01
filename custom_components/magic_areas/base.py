@@ -5,11 +5,8 @@ from statistics import mean
 import voluptuous as vol
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import (
-    ATTR_ENTITY_ID,
     EVENT_HOMEASSISTANT_STARTED,
-    STATE_OFF,
     STATE_ON,
-    STATE_UNAVAILABLE,
 )
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import (
@@ -39,6 +36,7 @@ from custom_components.magic_areas.const import (
     MAGIC_AREAS_COMPONENTS_META,
     META_AREA_GLOBAL,
     MODULE_DATA,
+    INVALID_STATES
 )
 from custom_components.magic_areas.util import flatten_entity_list
 
@@ -124,6 +122,10 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
 
         _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
 
+        if to_state.state in INVALID_STATES:
+            _LOGGER.debug(f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}")
+            return None
+
         return self._update_state()
 
     def _get_sensors_state(self):
@@ -133,16 +135,22 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
         # Loop over all entities and check their state
         for sensor in self.sensors:
 
-            entity = self.hass.states.get(sensor)
+            try:
 
-            if not entity:
-                _LOGGER.info(
-                    f"Could not get sensor state: {sensor} entity not found, skipping"
-                )
-                continue
+                entity = self.hass.states.get(sensor)
 
-            # Skip unavailable entities
-            if entity.state == STATE_UNAVAILABLE:
+                if not entity:
+                    _LOGGER.info(
+                        f"[{self.name}] Could not get sensor state: {sensor} entity not found, skipping"
+                    )
+                    continue
+
+                # Skip unavailable entities
+                if entity.state in INVALID_STATES:
+                    continue
+
+            except Exception as e:
+                _LOGGER.error(f"[{self.name}] Error getting entity state for '{sensor}': {str(e)}")
                 continue
 
             try:
@@ -150,7 +158,7 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
             except ValueError as e:
                 err_str = str(e)
                 _LOGGER.info(
-                    f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}, skipping"
+                    f"[{self.name}] Non-numeric sensor value ({err_str}) for entity {entity.entity_id}, skipping"
                 )
                 continue
 
@@ -179,6 +187,10 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
         _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
 
+        if to_state.state in INVALID_STATES:
+            _LOGGER.debug(f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}")
+            return None
+
         if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
             self.last_off_time = datetime.utcnow()  # Update last_off_time
 
@@ -196,30 +208,36 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
         # Loop over all entities and check their state
         for sensor in self.sensors:
 
-            entity = self.hass.states.get(sensor)
+            try:
 
-            if not entity:
-                _LOGGER.info(
-                    f"[Area: {self.area.slug}] Could not get sensor state: {sensor} entity not found, skipping"
-                )
-                continue
+                entity = self.hass.states.get(sensor)
 
-            _LOGGER.debug(
-                f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
-            )
+                if not entity:
+                    _LOGGER.info(
+                        f"[Area: {self.area.slug}] Could not get sensor state: {sensor} entity not found, skipping"
+                    )
+                    continue
 
-            # Skip unavailable entities
-            if entity.state == STATE_UNAVAILABLE:
                 _LOGGER.debug(
-                    f"[Area: {self.area.slug}] Sensor '{sensor}' is unavailable, skipping..."
+                    f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
                 )
-                continue
 
-            if entity.state in valid_states:
-                _LOGGER.debug(
-                    f"[Area: {self.area.slug}] Valid presence sensor found: {sensor}."
-                )
-                active_sensors.append(sensor)
+                # Skip unavailable entities
+                if entity.state in INVALID_STATES:
+                    _LOGGER.debug(
+                        f"[Area: {self.area.slug}] Sensor '{sensor}' is unavailable, skipping..."
+                    )
+                    continue
+
+                if entity.state in valid_states:
+                    _LOGGER.debug(
+                        f"[Area: {self.area.slug}] Valid presence sensor found: {sensor}."
+                    )
+                    active_sensors.append(sensor)
+                
+            except Exception as e:
+                _LOGGER.error(f"[{self.name}] Error getting entity state for '{sensor}': {str(e)}")
+                pass
 
         self._attributes["active_sensors"] = active_sensors
 
@@ -437,7 +455,7 @@ class MagicArea(object):
             if not area_membership:
                 continue
 
-            entity_list.append(entity_id)
+            entity_list.append(entity_object.entity_id)
 
         if include_entities and isinstance(include_entities, list):
             entity_list.extend(include_entities)
@@ -559,11 +577,16 @@ class MagicMetaArea(MagicArea):
         active_areas = []
 
         for area in areas:
-            entity_id = f"binary_sensor.area_{area}"
-            entity = self.hass.states.get(entity_id)
 
-            if entity.state == STATE_ON:
-                active_areas.append(area)
+            try:
+                entity_id = f"binary_sensor.area_{area}"
+                entity = self.hass.states.get(entity_id)
+
+                if entity.state == STATE_ON:
+                    active_areas.append(area)
+            except Exception as e:
+                _LOGGER.error(f"Unable to get active area state for {area}: {str(e)}")
+                pass
 
         return active_areas
 
