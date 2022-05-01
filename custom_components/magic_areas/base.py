@@ -494,7 +494,9 @@ class MagicArea(object):
                 self.entities[entity_component].append(updated_entity)
 
             except Exception as err:
-                _LOGGER.error(f"[{self.slug}] Unable to load entity '{entity_id}': {str(err)}")
+                _LOGGER.error(
+                    f"[{self.slug}] Unable to load entity '{entity_id}': {str(err)}"
+                )
                 pass
 
     async def initialize(self, _=None) -> None:
