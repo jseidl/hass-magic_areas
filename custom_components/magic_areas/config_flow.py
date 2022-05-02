@@ -1,6 +1,7 @@
 import logging
 
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.selector import selector
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
@@ -228,22 +229,32 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 else:
                     return await self.async_step_secondary_states()
 
+        # Data schema
+        data_schema=self._build_options_schema(
+            options=(OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA),
+            dynamic_validators={
+                CONF_INCLUDE_ENTITIES: cv.multi_select(self.all_entities),
+                CONF_EXCLUDE_ENTITIES: cv.multi_select(self.all_area_entities),
+                CONF_PRESENCE_DEVICE_PLATFORMS: cv.multi_select(
+                    sorted(ALL_PRESENCE_DEVICE_PLATFORMS)
+                ),
+                CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(
+                    sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
+                ),
+                CONF_ON_STATES: cv.multi_select(sorted(AVAILABLE_ON_STATES)),
+            },
+        )
+
+        data_schema[CONF_INCLUDE_ENTITIES] = selector({
+            'entity': {
+                'options': self.all_area_entities,
+                'multiple': True
+            }
+        })
+
         return self.async_show_form(
             step_id="area_config",
-            data_schema=self._build_options_schema(
-                options=(OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA),
-                dynamic_validators={
-                    CONF_INCLUDE_ENTITIES: cv.multi_select(self.all_entities),
-                    CONF_EXCLUDE_ENTITIES: cv.multi_select(self.all_area_entities),
-                    CONF_PRESENCE_DEVICE_PLATFORMS: cv.multi_select(
-                        sorted(ALL_PRESENCE_DEVICE_PLATFORMS)
-                    ),
-                    CONF_PRESENCE_SENSOR_DEVICE_CLASS: cv.multi_select(
-                        sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES)
-                    ),
-                    CONF_ON_STATES: cv.multi_select(sorted(AVAILABLE_ON_STATES)),
-                },
-            ),
+            data_schema=data_schema,
             errors=errors,
         )
 
