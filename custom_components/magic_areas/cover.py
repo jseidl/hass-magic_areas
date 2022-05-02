@@ -50,13 +50,12 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
         self.area = area
         self.hass = hass
 
-        device_class_name = " ".join(device_class.split("_")).title()
+        if device_class:
+            device_class_name = " ".join(device_class.split("_")).title()
+            self.name = f"Area {device_class_name} Covers ({area.name})"
+        else:
+            self._name = f"Area Covers ({area.name})"
 
-        self._name = (
-            f"Area {device_class_name} Covers ({area.name})"
-            if device_class
-            else f"Area Covers ({area.name})"
-        )
         self._device_class = device_class
         self._entities = [
             e
