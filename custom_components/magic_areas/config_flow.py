@@ -1,5 +1,5 @@
-from audioop import mul
 import logging
+from audioop import mul
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -10,29 +10,30 @@ from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.selector import selector
 
-
-from custom_components.magic_areas.const import AVAILABLE_ON_STATES, CONF_AGGREGATES_MIN_ENTITIES, CONF_PRESENCE_HOLD_TIMEOUT
-
-from .const import (
+from custom_components.magic_areas.const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
     AREA_STATE_DARK,
     AREA_STATE_EXTENDED,
     AREA_STATE_OCCUPIED,
     AREA_STATE_SLEEP,
-    AREA_TYPE_META,
-    AREA_TYPE_INTERIOR,
     AREA_TYPE_EXTERIOR,
+    AREA_TYPE_INTERIOR,
+    AREA_TYPE_META,
     AVAILABLE_ON_STATES,
     BUILTIN_AREA_STATES,
     CONF_ACCENT_ENTITY,
     CONF_ACCENT_LIGHTS,
     CONF_ACCENT_LIGHTS_ACT_ON,
     CONF_ACCENT_LIGHTS_STATES,
+    CONF_AGGREGATES_MIN_ENTITIES,
+    CONF_CLEAR_TIMEOUT,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_DARK_ENTITY,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
+    CONF_EXTENDED_TIME,
+    CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_CLIMATE_GROUPS,
@@ -41,6 +42,7 @@ from .const import (
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
     CONF_FEATURE_PRESENCE_HOLD,
+    CONF_ICON,
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
@@ -49,20 +51,24 @@ from .const import (
     CONF_OVERHEAD_LIGHTS_ACT_ON,
     CONF_OVERHEAD_LIGHTS_STATES,
     CONF_PRESENCE_DEVICE_PLATFORMS,
+    CONF_PRESENCE_HOLD_TIMEOUT,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SECONDARY_STATES,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
     CONF_SLEEP_LIGHTS_ACT_ON,
     CONF_SLEEP_LIGHTS_STATES,
+    CONF_SLEEP_TIMEOUT,
     CONF_TASK_LIGHTS,
     CONF_TASK_LIGHTS_ACT_ON,
     CONF_TASK_LIGHTS_STATES,
     CONF_TYPE,
+    CONF_UPDATE_INTERVAL,
     CONFIG_FLOW_ENTITY_FILTER_EXT,
     CONFIGURABLE_AREA_STATE_MAP,
     CONFIGURABLE_FEATURES,
     DATA_AREA_OBJECT,
+    DEFAULT_ICON,
     DOMAIN,
     LIGHT_GROUP_ACT_ON_OPTIONS,
     META_AREA_GLOBAL,
@@ -80,13 +86,6 @@ from .const import (
     OPTIONS_SECONDARY_STATES,
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
-    DEFAULT_ICON,
-    CONF_ICON,
-    CONF_UPDATE_INTERVAL,
-    CONF_CLEAR_TIMEOUT,
-    CONF_EXTENDED_TIME,
-    CONF_EXTENDED_TIMEOUT,
-    CONF_SLEEP_TIMEOUT
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -144,39 +143,44 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     # Selector builder
     def _build_selector_select(self, options=[], multiple=False):
 
-        return selector({
-                'select': {
-                    'options': options,
-                    'multiple': multiple,
-                    'mode': 'dropdown'
-                }
-            })
+        return selector(
+            {"select": {"options": options, "multiple": multiple, "mode": "dropdown"}}
+        )
 
-    def _build_selector_entity_simple(self, options=None, multiple=False, force_include=False):
-    
-        selector_opts = {
-                'entity': {
-                    'multiple': multiple
-                }
-            }
+    def _build_selector_entity_simple(
+        self, options=None, multiple=False, force_include=False
+    ):
+
+        selector_opts = {"entity": {"multiple": multiple}}
 
         if options is not None:
-            selector_opts['entity']['include_entities'] = options
+            selector_opts["entity"]["include_entities"] = options
 
         return selector(selector_opts)
 
-    def _build_selector_number(self, min=0, max=9999, mode='box', unit_of_measurement='seconds'):
+    def _build_selector_number(
+        self, min=0, max=9999, mode="box", unit_of_measurement="seconds"
+    ):
 
-        return selector({
-            'number': {
-                'min': min,
-                'max': max,
-                'mode': mode,
-                'unit_of_measurement': unit_of_measurement
+        return selector(
+            {
+                "number": {
+                    "min": min,
+                    "max": max,
+                    "mode": mode,
+                    "unit_of_measurement": unit_of_measurement,
+                }
             }
-        })
+        )
 
-    def _build_options_schema(self, options, saved_options=None, dynamic_validators={}, selectors={}, raw=False):
+    def _build_options_schema(
+        self,
+        options,
+        saved_options=None,
+        dynamic_validators={},
+        selectors={},
+        raw=False,
+    ):
         _LOGGER.debug(
             f"Building schema from options: {options} - dynamic_validators: {dynamic_validators}"
         )
@@ -284,25 +288,31 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 else:
                     return await self.async_step_secondary_states()
 
-        icon_selector = selector({
-            'icon': {
-                'placeholder': DEFAULT_ICON
-            }
-        })
+        icon_selector = selector({"icon": {"placeholder": DEFAULT_ICON}})
 
         all_selectors = {
-            CONF_TYPE: self._build_selector_select(sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])),
+            CONF_TYPE: self._build_selector_select(
+                sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])
+            ),
             CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(multiple=True),
-            CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(self.all_area_entities, multiple=True),
-            CONF_PRESENCE_DEVICE_PLATFORMS: self._build_selector_select(sorted(ALL_PRESENCE_DEVICE_PLATFORMS), multiple=True),
-            CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True),
-            CONF_ON_STATES: self._build_selector_select(sorted(AVAILABLE_ON_STATES), multiple=True),
+            CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(
+                self.all_area_entities, multiple=True
+            ),
+            CONF_PRESENCE_DEVICE_PLATFORMS: self._build_selector_select(
+                sorted(ALL_PRESENCE_DEVICE_PLATFORMS), multiple=True
+            ),
+            CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(
+                sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
+            ),
+            CONF_ON_STATES: self._build_selector_select(
+                sorted(AVAILABLE_ON_STATES), multiple=True
+            ),
             CONF_ICON: icon_selector,
             CONF_UPDATE_INTERVAL: self._build_selector_number(),
             CONF_CLEAR_TIMEOUT: self._build_selector_number(),
         }
 
-        options = (OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA)
+        options = OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA
         selectors = {}
 
         # Apply options for given area type (regular/meta)
@@ -310,10 +320,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         for option_key in option_keys:
             selectors[option_key] = all_selectors[option_key]
 
-        data_schema = self._build_options_schema(
-                options=options,
-                selectors=selectors
-            )
+        data_schema = self._build_options_schema(options=options, selectors=selectors)
 
         return self.async_show_form(
             step_id="area_config",
@@ -357,12 +364,18 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     # CONF_DARK_ENTITY: self._build_selector_entity_simple(),
                     # CONF_SLEEP_ENTITY: self._build_selector_entity_simple(),
                     # CONF_ACCENT_ENTITY: self._build_selector_entity_simple(),
-                    CONF_DARK_ENTITY: self._build_selector_select(EMPTY_ENTRY + self.all_entities),
-                    CONF_SLEEP_ENTITY: self._build_selector_select(EMPTY_ENTRY + self.all_entities),
-                    CONF_ACCENT_ENTITY: self._build_selector_select(EMPTY_ENTRY + self.all_entities),
+                    CONF_DARK_ENTITY: self._build_selector_select(
+                        EMPTY_ENTRY + self.all_entities
+                    ),
+                    CONF_SLEEP_ENTITY: self._build_selector_select(
+                        EMPTY_ENTRY + self.all_entities
+                    ),
+                    CONF_ACCENT_ENTITY: self._build_selector_select(
+                        EMPTY_ENTRY + self.all_entities
+                    ),
                     CONF_SLEEP_TIMEOUT: self._build_selector_number(),
                     CONF_EXTENDED_TIME: self._build_selector_number(),
-                    CONF_EXTENDED_TIMEOUT: self._build_selector_number()
+                    CONF_EXTENDED_TIMEOUT: self._build_selector_number(),
                 },
             ),
             errors=errors,
@@ -474,18 +487,42 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 CONF_TASK_LIGHTS_ACT_ON: cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
             },
             selectors={
-                CONF_OVERHEAD_LIGHTS: self._build_selector_entity_simple(self.all_lights, multiple=True),
-                CONF_OVERHEAD_LIGHTS_STATES: self._build_selector_select(available_states, multiple=True),
-                CONF_OVERHEAD_LIGHTS_ACT_ON: self._build_selector_select(LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True),
-                CONF_SLEEP_LIGHTS: self._build_selector_entity_simple(self.all_lights, multiple=True),
-                CONF_SLEEP_LIGHTS_STATES: self._build_selector_select(available_states, multiple=True),
-                CONF_SLEEP_LIGHTS_ACT_ON: self._build_selector_select(LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True),
-                CONF_ACCENT_LIGHTS: self._build_selector_entity_simple(self.all_lights, multiple=True),
-                CONF_ACCENT_LIGHTS_STATES: self._build_selector_select(available_states, multiple=True),
-                CONF_ACCENT_LIGHTS_ACT_ON: self._build_selector_select(LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True),
-                CONF_TASK_LIGHTS: self._build_selector_entity_simple(self.all_lights, multiple=True),
-                CONF_TASK_LIGHTS_STATES: self._build_selector_select(available_states, multiple=True),
-                CONF_TASK_LIGHTS_ACT_ON: self._build_selector_select(LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True),
+                CONF_OVERHEAD_LIGHTS: self._build_selector_entity_simple(
+                    self.all_lights, multiple=True
+                ),
+                CONF_OVERHEAD_LIGHTS_STATES: self._build_selector_select(
+                    available_states, multiple=True
+                ),
+                CONF_OVERHEAD_LIGHTS_ACT_ON: self._build_selector_select(
+                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                ),
+                CONF_SLEEP_LIGHTS: self._build_selector_entity_simple(
+                    self.all_lights, multiple=True
+                ),
+                CONF_SLEEP_LIGHTS_STATES: self._build_selector_select(
+                    available_states, multiple=True
+                ),
+                CONF_SLEEP_LIGHTS_ACT_ON: self._build_selector_select(
+                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                ),
+                CONF_ACCENT_LIGHTS: self._build_selector_entity_simple(
+                    self.all_lights, multiple=True
+                ),
+                CONF_ACCENT_LIGHTS_STATES: self._build_selector_select(
+                    available_states, multiple=True
+                ),
+                CONF_ACCENT_LIGHTS_ACT_ON: self._build_selector_select(
+                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                ),
+                CONF_TASK_LIGHTS: self._build_selector_entity_simple(
+                    self.all_lights, multiple=True
+                ),
+                CONF_TASK_LIGHTS_STATES: self._build_selector_select(
+                    available_states, multiple=True
+                ),
+                CONF_TASK_LIGHTS_ACT_ON: self._build_selector_select(
+                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                ),
             },
             user_input=user_input,
         )
@@ -506,7 +543,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 ),
             },
             selectors={
-                CONF_CLIMATE_GROUPS_TURN_ON_STATE: self._build_selector_select(EMPTY_ENTRY + available_states)
+                CONF_CLIMATE_GROUPS_TURN_ON_STATE: self._build_selector_select(
+                    EMPTY_ENTRY + available_states
+                )
             },
             user_input=user_input,
         )
@@ -524,8 +563,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 CONF_NOTIFY_STATES: cv.multi_select(available_states),
             },
             selectors={
-                CONF_NOTIFICATION_DEVICES: self._build_selector_entity_simple(self.all_media_players, multiple=True),
-                CONF_NOTIFY_STATES: self._build_selector_select(available_states, multiple=True)
+                CONF_NOTIFICATION_DEVICES: self._build_selector_entity_simple(
+                    self.all_media_players, multiple=True
+                ),
+                CONF_NOTIFY_STATES: self._build_selector_select(
+                    available_states, multiple=True
+                ),
             },
             user_input=user_input,
         )
@@ -534,7 +577,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Configure the sensor aggregates feature"""
 
         selectors = {
-            CONF_AGGREGATES_MIN_ENTITIES: self._build_selector_number(unit_of_measurement='entities')
+            CONF_AGGREGATES_MIN_ENTITIES: self._build_selector_number(
+                unit_of_measurement="entities"
+            )
         }
 
         return await self.do_feature_config(
@@ -547,9 +592,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_feature_conf_presence_hold(self, user_input=None):
         """Configure the sensor presence_hold feature"""
 
-        selectors = {
-            CONF_PRESENCE_HOLD_TIMEOUT: self._build_selector_number()
-        }
+        selectors = {CONF_PRESENCE_HOLD_TIMEOUT: self._build_selector_number()}
 
         return await self.do_feature_config(
             name=CONF_FEATURE_PRESENCE_HOLD,
