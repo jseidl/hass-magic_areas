@@ -290,7 +290,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             }
         })
 
-        selectors = {
+        all_selectors = {
             CONF_TYPE: self._build_selector_select(sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])),
             CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(multiple=True),
             CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(self.all_area_entities, multiple=True),
@@ -302,8 +302,16 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             CONF_CLEAR_TIMEOUT: self._build_selector_number(),
         }
 
+        options = (OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA)
+        selectors = {}
+
+        # Apply options for given area type (regular/meta)
+        option_keys = [option[0] for option in options]
+        for option_key in option_keys:
+            selectors[option_key] = all_selectors[option_key]
+
         data_schema = self._build_options_schema(
-                options=(OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA),
+                options=options,
                 selectors=selectors
             )
 
