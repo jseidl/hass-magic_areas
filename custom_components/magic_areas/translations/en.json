@@ -85,7 +85,7 @@
           "sleep_timeout": "How long area will wait before clearing the state when on sleep state",
           "accent_entity": "Entity used to track area accented state",
           "accent_state": "State of accent state entity",
-          "extended_time": "Area will be marked as 'extended' after being occupied for N seconds",
+          "extended_time": "Area will be marked as 'extended' after being occupied for this long",
           "extended_timeout": "How long area will wait before clearing the state when on extended state"
         }
       },
@@ -95,7 +95,8 @@
         "data": {
           "include_entities": "Include entities to this area",
           "exclude_entities": "Exclude entities from being analyzed",
-          "presence_sensor_device_class": "Device classes of sensors to be considered presence sensors",
+          "presence_sensor_device_class": "Presence sensors device classes",
+          "presence_device_platforms": "Platforms to be used for presence sensing",
           "on_states": "Sensor states that indicate presence",
           "icon": "Icon",
           "update_interval": "Interval for checking missed events",
