@@ -37,6 +37,8 @@ from homeassistant.const import (
     STATE_OPEN,
     STATE_PLAYING,
     STATE_PROBLEM,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
 )
 from homeassistant.helpers import config_validation as cv
 
@@ -124,6 +126,8 @@ AREA_TYPE_EXTERIOR = "exterior"
 AREA_TYPES = [AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR, AREA_TYPE_META]
 
 AVAILABLE_ON_STATES = [STATE_ON, STATE_HOME, STATE_PLAYING, STATE_OPEN]
+
+INVALID_STATES = [STATE_UNAVAILABLE, STATE_UNKNOWN]
 
 # Configuration parameters
 CONF_ID = "id"

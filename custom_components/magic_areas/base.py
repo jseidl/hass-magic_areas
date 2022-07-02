@@ -4,13 +4,7 @@ from statistics import mean
 
 import voluptuous as vol
 from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.const import (
-    ATTR_ENTITY_ID,
-    EVENT_HOMEASSISTANT_STARTED,
-    STATE_OFF,
-    STATE_ON,
-    STATE_UNAVAILABLE,
-)
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -19,7 +13,7 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
-from .const import (
+from custom_components.magic_areas.const import (
     _DOMAIN_SCHEMA,
     AREA_STATE_OCCUPIED,
     AREA_TYPE_META,
@@ -34,12 +28,14 @@ from .const import (
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
+    INVALID_STATES,
     MAGIC_AREAS_COMPONENTS,
     MAGIC_AREAS_COMPONENTS_GLOBAL,
     MAGIC_AREAS_COMPONENTS_META,
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
+from custom_components.magic_areas.util import flatten_entity_list
 
 CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: _DOMAIN_SCHEMA},
@@ -123,6 +119,12 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
 
         _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
 
+        if to_state.state in INVALID_STATES:
+            _LOGGER.debug(
+                f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}"
+            )
+            return None
+
         return self._update_state()
 
     def _get_sensors_state(self):
@@ -132,16 +134,24 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
         # Loop over all entities and check their state
         for sensor in self.sensors:
 
-            entity = self.hass.states.get(sensor)
+            try:
 
-            if not entity:
-                _LOGGER.info(
-                    f"Could not get sensor state: {sensor} entity not found, skipping"
+                entity = self.hass.states.get(sensor)
+
+                if not entity:
+                    _LOGGER.info(
+                        f"[{self.name}] Could not get sensor state: {sensor} entity not found, skipping"
+                    )
+                    continue
+
+                # Skip unavailable entities
+                if entity.state in INVALID_STATES:
+                    continue
+
+            except Exception as e:
+                _LOGGER.error(
+                    f"[{self.name}] Error getting entity state for '{sensor}': {str(e)}"
                 )
-                continue
-
-            # Skip unavailable entities
-            if entity.state == STATE_UNAVAILABLE:
                 continue
 
             try:
@@ -149,7 +159,7 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
             except ValueError as e:
                 err_str = str(e)
                 _LOGGER.info(
-                    f"Non-numeric sensor value ({err_str}) for entity {entity.entity_id}, skipping"
+                    f"[{self.name}] Non-numeric sensor value ({err_str}) for entity {entity.entity_id}, skipping"
                 )
                 continue
 
@@ -178,6 +188,12 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
 
         _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
 
+        if to_state.state in INVALID_STATES:
+            _LOGGER.debug(
+                f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}"
+            )
+            return None
+
         if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
             self.last_off_time = datetime.utcnow()  # Update last_off_time
 
@@ -195,30 +211,38 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
         # Loop over all entities and check their state
         for sensor in self.sensors:
 
-            entity = self.hass.states.get(sensor)
+            try:
 
-            if not entity:
-                _LOGGER.info(
-                    f"[Area: {self.area.slug}] Could not get sensor state: {sensor} entity not found, skipping"
-                )
-                continue
+                entity = self.hass.states.get(sensor)
 
-            _LOGGER.debug(
-                f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
-            )
+                if not entity:
+                    _LOGGER.info(
+                        f"[Area: {self.area.slug}] Could not get sensor state: {sensor} entity not found, skipping"
+                    )
+                    continue
 
-            # Skip unavailable entities
-            if entity.state == STATE_UNAVAILABLE:
                 _LOGGER.debug(
-                    f"[Area: {self.area.slug}] Sensor '{sensor}' is unavailable, skipping..."
+                    f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
                 )
-                continue
 
-            if entity.state in valid_states:
-                _LOGGER.debug(
-                    f"[Area: {self.area.slug}] Valid presence sensor found: {sensor}."
+                # Skip unavailable entities
+                if entity.state in INVALID_STATES:
+                    _LOGGER.debug(
+                        f"[Area: {self.area.slug}] Sensor '{sensor}' is unavailable, skipping..."
+                    )
+                    continue
+
+                if entity.state in valid_states:
+                    _LOGGER.debug(
+                        f"[Area: {self.area.slug}] Valid presence sensor found: {sensor}."
+                    )
+                    active_sensors.append(sensor)
+
+            except Exception as e:
+                _LOGGER.error(
+                    f"[{self.name}] Error getting entity state for '{sensor}': {str(e)}"
                 )
-                active_sensors.append(sensor)
+                pass
 
         self._attributes["active_sensors"] = active_sensors
 
@@ -436,7 +460,7 @@ class MagicArea(object):
             if not area_membership:
                 continue
 
-            entity_list.append(entity_id)
+            entity_list.append(entity_object.entity_id)
 
         if include_entities and isinstance(include_entities, list):
             entity_list.extend(include_entities)
@@ -447,23 +471,38 @@ class MagicArea(object):
 
     def load_entity_list(self, entity_list):
 
-        unique_entities = set(entity_list)
+        _LOGGER.debug(f"[{self.slug}] Original entity list: {entity_list}")
+
+        flattened_entity_list = flatten_entity_list(entity_list)
+        unique_entities = set(flattened_entity_list)
+
+        _LOGGER.debug(f"[{self.slug}] Unique entities: {unique_entities}")
 
         for entity_id in unique_entities:
 
-            entity_component, entity_name = entity_id.split(".")
+            _LOGGER.debug(f"[{self.slug}] Loading entity: {entity_id}")
 
-            # Get latest state and create object
-            latest_state = self.hass.states.get(entity_id)
-            updated_entity = {"entity_id": entity_id}
+            try:
 
-            if latest_state:
-                updated_entity.update(latest_state.attributes)
+                entity_component, entity_name = entity_id.split(".")
 
-            if entity_component not in self.entities.keys():
-                self.entities[entity_component] = []
+                # Get latest state and create object
+                latest_state = self.hass.states.get(entity_id)
+                updated_entity = {"entity_id": entity_id}
 
-            self.entities[entity_component].append(updated_entity)
+                if latest_state:
+                    updated_entity.update(latest_state.attributes)
+
+                if entity_component not in self.entities.keys():
+                    self.entities[entity_component] = []
+
+                self.entities[entity_component].append(updated_entity)
+
+            except Exception as err:
+                _LOGGER.error(
+                    f"[{self.slug}] Unable to load entity '{entity_id}': {str(err)}"
+                )
+                pass
 
     async def initialize(self, _=None) -> None:
         _LOGGER.debug(f"Initializing area {self.slug}...")
@@ -545,11 +584,16 @@ class MagicMetaArea(MagicArea):
         active_areas = []
 
         for area in areas:
-            entity_id = f"binary_sensor.area_{area}"
-            entity = self.hass.states.get(entity_id)
 
-            if entity.state == STATE_ON:
-                active_areas.append(area)
+            try:
+                entity_id = f"binary_sensor.area_{area}"
+                entity = self.hass.states.get(entity_id)
+
+                if entity.state == STATE_ON:
+                    active_areas.append(area)
+            except Exception as e:
+                _LOGGER.error(f"Unable to get active area state for {area}: {str(e)}")
+                pass
 
         return active_areas
 
