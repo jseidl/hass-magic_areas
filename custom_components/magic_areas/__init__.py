@@ -37,7 +37,7 @@ async def async_setup(hass, config):
     """Set up areas."""
 
     # Load registries
-    area_registry = await hass.helpers.area_registry.async_get_registry()
+    area_registry = await hass.helpers.area_registry.async_get()
 
     # Populate MagicAreas
     areas = list(area_registry.async_list_areas())
@@ -146,7 +146,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     meta_ids = [meta_area.lower() for meta_area in META_AREAS]
 
     if area_id not in meta_ids:
-        area_registry = await hass.helpers.area_registry.async_get_registry()
+        area_registry = await hass.helpers.area_registry.async_get()
         area = area_registry.async_get_area(area_id)
 
         if not area:

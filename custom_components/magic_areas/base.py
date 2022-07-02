@@ -404,7 +404,7 @@ class MagicArea(object):
         if entity_object.device_id:
 
             device_registry = (
-                await self.hass.helpers.device_registry.async_get_registry()
+                await self.hass.helpers.device_registry.async_get()
             )
             if entity_object.device_id in device_registry.devices.keys():
                 device_object = device_registry.devices[entity_object.device_id]
@@ -422,7 +422,7 @@ class MagicArea(object):
         entity_list = []
         include_entities = self.config.get(CONF_INCLUDE_ENTITIES)
 
-        entity_registry = await self.hass.helpers.entity_registry.async_get_registry()
+        entity_registry = await self.hass.helpers.entity_registry.async_get()
 
         for entity_id, entity_object in entity_registry.entities.items():
 
