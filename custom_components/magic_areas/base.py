@@ -4,10 +4,7 @@ from statistics import mean
 
 import voluptuous as vol
 from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.const import (
-    EVENT_HOMEASSISTANT_STARTED,
-    STATE_ON,
-)
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -31,12 +28,12 @@ from custom_components.magic_areas.const import (
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
+    INVALID_STATES,
     MAGIC_AREAS_COMPONENTS,
     MAGIC_AREAS_COMPONENTS_GLOBAL,
     MAGIC_AREAS_COMPONENTS_META,
     META_AREA_GLOBAL,
     MODULE_DATA,
-    INVALID_STATES
 )
 from custom_components.magic_areas.util import flatten_entity_list
 
@@ -123,7 +120,9 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
         _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
 
         if to_state.state in INVALID_STATES:
-            _LOGGER.debug(f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}")
+            _LOGGER.debug(
+                f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}"
+            )
             return None
 
         return self._update_state()
@@ -150,7 +149,9 @@ class SensorBase(MagicSensorBase, RestoreEntity, Entity):
                     continue
 
             except Exception as e:
-                _LOGGER.error(f"[{self.name}] Error getting entity state for '{sensor}': {str(e)}")
+                _LOGGER.error(
+                    f"[{self.name}] Error getting entity state for '{sensor}': {str(e)}"
+                )
                 continue
 
             try:
@@ -188,7 +189,9 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
         _LOGGER.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
 
         if to_state.state in INVALID_STATES:
-            _LOGGER.debug(f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}")
+            _LOGGER.debug(
+                f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}"
+            )
             return None
 
         if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
@@ -234,9 +237,11 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity, RestoreEntity):
                         f"[Area: {self.area.slug}] Valid presence sensor found: {sensor}."
                     )
                     active_sensors.append(sensor)
-                
+
             except Exception as e:
-                _LOGGER.error(f"[{self.name}] Error getting entity state for '{sensor}': {str(e)}")
+                _LOGGER.error(
+                    f"[{self.name}] Error getting entity state for '{sensor}': {str(e)}"
+                )
                 pass
 
         self._attributes["active_sensors"] = active_sensors

@@ -37,8 +37,8 @@ from homeassistant.const import (
     STATE_OPEN,
     STATE_PLAYING,
     STATE_PROBLEM,
+    STATE_UNAVAILABLE,
     STATE_UNKNOWN,
-    STATE_UNAVAILABLE
 )
 from homeassistant.helpers import config_validation as cv
 

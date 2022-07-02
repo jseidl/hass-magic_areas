@@ -64,8 +64,8 @@ from .const import (
     DEFAULT_SLEEP_TIMEOUT,
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
+    INVALID_STATES,
     MODULE_DATA,
-    INVALID_STATES
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -342,7 +342,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
         if to_state.state in INVALID_STATES:
-            _LOGGER.debug(f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}")
+            _LOGGER.debug(
+                f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}"
+            )
             return None
 
         self._update_state()
