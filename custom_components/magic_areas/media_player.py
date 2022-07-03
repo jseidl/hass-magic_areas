@@ -151,7 +151,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
         self._attributes["areas"] = [
             f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}" for area in self.areas
         ]
-        self._attributes["entities"] = self._tracked_entities
+        self._attributes["entity_id"] = self._tracked_entities
 
     def get_media_players_for_area(self, area):
 
