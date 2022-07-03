@@ -290,9 +290,7 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
         self.hass = hass
         self.area = area
 
-        unique_id = f"media_player_group_{area.slug}"
-
-        MediaPlayerGroup.__init__(self, unique_id, self._name, self._entities)
+        MediaPlayerGroup.__init__(self, self.unique_id, self._name, self._entities)
 
         _LOGGER.debug(
             f"Media Player group {self._name} created with entities: {self._entities}"
