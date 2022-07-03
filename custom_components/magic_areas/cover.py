@@ -52,7 +52,7 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
 
         if device_class:
             device_class_name = " ".join(device_class.split("_")).title()
-            self.name = f"Area {device_class_name} Covers ({area.name})"
+            self.name = f"Area Covers ({device_class_name}) ({area.name})"
         else:
             self._name = f"Area Covers ({area.name})"
 
@@ -64,13 +64,9 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
         ]
         self._attributes["entity_id"] = [e["entity_id"] for e in self._entities]
 
-        unique_id = (
-            f"cover_group_{area.slug}_{device_class}"
-            if device_class
-            else f"cover_group_{area.slug}"
+        CoverGroup.__init__(
+            self, self.unique_id, self._name, self._attributes["entity_id"]
         )
-
-        CoverGroup.__init__(self, unique_id, self._name, self._attributes["entity_id"])
 
     @property
     def device_class(self):

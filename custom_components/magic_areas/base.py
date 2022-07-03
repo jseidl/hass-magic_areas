@@ -55,7 +55,7 @@ class MagicEntity:
     def unique_id(self):
         """Return a unique ID."""
         name_slug = slugify(self._name)
-        return f"entity_{name_slug}"
+        return f"{name_slug}"
 
     @property
     def name(self):
