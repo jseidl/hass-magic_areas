@@ -130,7 +130,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             )
 
         # Add static attributes
-        self._attributes["entity_id"] = [e["entity_id"] for e in self._entities]
+        self._attributes["entity_id"] = self._entities
 
         _LOGGER.debug(
             f"Light group {self._name} ({category}/{self._icon}) created with entities: {self._entities}"

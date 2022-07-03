@@ -35,7 +35,7 @@ from custom_components.magic_areas.const import (
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
-from custom_components.magic_areas.util import flatten_entity_list
+from custom_components.magic_areas.util import flatten_entity_list, is_entity_list
 
 CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: _DOMAIN_SCHEMA},
@@ -427,7 +427,7 @@ class MagicArea(object):
         # Check device's area id, if available
         if entity_object.device_id:
 
-            device_registry = await self.hass.helpers.device_registry.async_get()
+            device_registry = self.hass.helpers.device_registry.async_get(self.hass)
             if entity_object.device_id in device_registry.devices.keys():
                 device_object = device_registry.devices[entity_object.device_id]
                 if device_object.area_id == self.id:
@@ -444,7 +444,7 @@ class MagicArea(object):
         entity_list = []
         include_entities = self.config.get(CONF_INCLUDE_ENTITIES)
 
-        entity_registry = await self.hass.helpers.entity_registry.async_get()
+        entity_registry = self.hass.helpers.entity_registry.async_get(self.hass)
 
         for entity_id, entity_object in entity_registry.entities.items():
 
@@ -490,6 +490,13 @@ class MagicArea(object):
 
                 if latest_state:
                     updated_entity.update(latest_state.attributes)
+
+                # Ignore groups
+                if is_entity_list(updated_entity["entity_id"]):
+                    _LOGGER.debug(
+                        f"[{self.slug}] {entity_id} is probably a group, skipping..."
+                    )
+                    continue
 
                 if entity_component not in self.entities.keys():
                     self.entities[entity_component] = []
@@ -649,7 +656,7 @@ class MagicMetaArea(MagicArea):
                     for entity in entities:
                         if not isinstance(entity["entity_id"], str):
                             _LOGGER.debug(
-                                f"Entity ID is not a string: {entity['entity_id']}"
+                                f"Entity ID is not a string: {entity['entity_id']} (probably a group, skipping)"
                             )
                             continue
                         entity_list.append(entity["entity_id"])
