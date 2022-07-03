@@ -427,9 +427,7 @@ class MagicArea(object):
         # Check device's area id, if available
         if entity_object.device_id:
 
-            device_registry = (
-                await self.hass.helpers.device_registry.async_get()
-            )
+            device_registry = await self.hass.helpers.device_registry.async_get()
             if entity_object.device_id in device_registry.devices.keys():
                 device_object = device_registry.devices[entity_object.device_id]
                 if device_object.area_id == self.id:

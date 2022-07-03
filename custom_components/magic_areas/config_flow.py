@@ -224,11 +224,16 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if entity_id.split(".")[0] in CONFIG_FLOW_ENTITY_FILTER_EXT
         )
 
-        # Return all relevant area entities
+        # Return all relevant area entities that exists
+        # in self.all_entities
         filtered_area_entities = []
         for domain in CONFIG_FLOW_ENTITY_FILTER_EXT:
             filtered_area_entities.extend(
-                [entity["entity_id"] for entity in self.area.entities.get(domain, [])]
+                [
+                    entity["entity_id"]
+                    for entity in self.area.entities.get(domain, [])
+                    if entity["entity_id"] in self.all_entities
+                ]
             )
 
         self.area_entities = sorted(self.resolve_groups(filtered_area_entities))
@@ -242,12 +247,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             self.resolve_groups(
                 entity["entity_id"]
                 for entity in self.area.entities.get(LIGHT_DOMAIN, [])
+                if entity["entity_id"] in self.all_entities
             )
         )
         self.all_media_players = sorted(
             self.resolve_groups(
                 entity["entity_id"]
                 for entity in self.area.entities.get(MEDIA_PLAYER_DOMAIN, [])
+                if entity["entity_id"] in self.all_entities
             )
         )
 

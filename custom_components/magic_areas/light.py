@@ -105,7 +105,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         self.assigned_states = []
         self.act_on = []
 
-        self._attributes = {} # clear object
+        self._attributes = {}  # clear object
 
         unique_id = (
             f"light_group_{area.slug}_{category}"
