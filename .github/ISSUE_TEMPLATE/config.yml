@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: I have a question or need support
+    url: https://github.com/jseidl/hass-magic_areas/discussions/categories/q-a
+    about: We use GitHub for tracking bugs, check our Discussions' Q&A area questions and help.
+  - name: Feature Request
+    url: https://github.com/jseidl/hass-magic_areas/discussions/categories/ideas-feature-requests
+    about: Please use our Discussions' Feature Request area for making feature requests.
+  - name: I'm unsure where to go
+    url: https://discord.gg/8vxJpJ2vP4
+    about: If you are unsure where to go, then joining our discord is recommended; Just ask!
