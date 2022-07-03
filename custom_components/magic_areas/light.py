@@ -62,7 +62,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         f"Creating Area light group for area {area.name} with lights: {light_entities}"
     )
     if area.is_meta():
-        unique_id = f"magicareas_light_group_meta_{area.slug}_all"
+        unique_id = f"light_group_meta_{area.slug}_all"
         light_groups.append(
             LightGroup(unique_id, f"{area.name} Lights", light_entities, mode=False)
         )
@@ -108,9 +108,9 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         self._attributes = {} # clear object
 
         unique_id = (
-            f"magicareas_light_group_{area.slug}_{category}"
+            f"light_group_{area.slug}_{category}"
             if category
-            else f"magicareas_light_group_{area.slug}_all"
+            else f"light_group_{area.slug}_all"
         )
 
         LightGroup.__init__(self, unique_id, self._name, self._entities, mode=False)
