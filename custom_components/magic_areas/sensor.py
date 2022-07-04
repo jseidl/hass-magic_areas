@@ -60,9 +60,8 @@ async def load_sensors(hass, async_add_entities, area):
             )
             continue
 
-        device_class_uom_pairs.append(
-            entity["device_class"], entity["unit_of_measurement"]
-        )
+        dc_uom_pair = (entity["device_class"], entity["unit_of_measurement"])
+        device_class_uom_pairs.append(dc_uom_pair)
 
     # Sort out individual pairs, if they show up more than CONF_AGGREGATES_MIN_ENTITIES,
     # we create a sensor for them
