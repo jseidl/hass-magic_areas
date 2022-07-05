@@ -52,7 +52,7 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
 
         if device_class:
             device_class_name = " ".join(device_class.split("_")).title()
-            self.name = f"Area Covers ({device_class_name}) ({area.name})"
+            self._name = f"Area Covers ({device_class_name}) ({area.name})"
         else:
             self._name = f"Area Covers ({area.name})"
 
