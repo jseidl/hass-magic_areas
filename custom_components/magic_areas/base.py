@@ -661,8 +661,8 @@ class MagicMetaArea(MagicArea):
                             )
                             continue
 
-                        # Check entity validity
-                        if not self._is_valid_entity(entity):
+                        # Skip excluded entities
+                        if entity["entity_id"] in self.config.get(CONF_EXCLUDE_ENTITIES):
                             continue
 
                         entity_list.append(entity["entity_id"])
