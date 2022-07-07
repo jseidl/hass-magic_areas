@@ -654,11 +654,17 @@ class MagicMetaArea(MagicArea):
             ):
                 for entities in area.entities.values():
                     for entity in entities:
+
                         if not isinstance(entity["entity_id"], str):
                             _LOGGER.debug(
                                 f"Entity ID is not a string: {entity['entity_id']} (probably a group, skipping)"
                             )
                             continue
+
+                        # Skip excluded entities
+                        if entity["entity_id"] in self.config.get(CONF_EXCLUDE_ENTITIES):
+                            continue
+
                         entity_list.append(entity["entity_id"])
 
         self.load_entity_list(entity_list)
