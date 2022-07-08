@@ -187,23 +187,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             _LOGGER.debug(f"Area has AREA_STATE_BRIGHT, {self.name} SHOULD TURN OFF!")
             return self._turn_off()
 
-        # Get all light groups from config and check for someone
-        # listening to AREA_STATE_OCCUPIED
-        # if someone is listening to this state, we should bail and let them have it
-        for category in LIGHT_GROUP_CATEGORIES:
-            # Check if light group is defined
-            if self.area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(category, None):
-                # Check light group states
-                category_states = self.area.feature_config(
-                    CONF_FEATURE_LIGHT_GROUPS
-                ).get(LIGHT_GROUP_STATES[category])
-                if AREA_STATE_OCCUPIED in category_states:
-                    # Do nothing, category group will do
-                    return False
-
-        if AREA_STATE_OCCUPIED in new_states:
-            # If we don't, just turn on all of them
-            return self._turn_on()
+        return False
 
     def state_change_secondary(self, states_tuple):
 
