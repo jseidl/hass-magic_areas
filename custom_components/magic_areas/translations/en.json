@@ -3,7 +3,6 @@
   "config": {
     "step": {
       "init": {
-        "title": "Magic Areas",
         "description": "This integration is automatically configured on load. You don't need to manually add the integration on this UI. Your Magic Areas should be already on the integrations page. Use Home Assistant's built-in areas to create new ones and manage entities.",
         "data": {}
       }
@@ -14,33 +13,101 @@
   },
   "options": {
     "step": {
-      "init": {
-        "title": "Magic Areas options",
-        "description": "All settings for a Magic Areas component. The option names correspond with the YAML settings. No options are shown if you have this entry defined in YAML.",
+      "select_features": {
+        "title": "Feature selection",
+        "description": "Select the features you want to enable for this area. Each feature will be configured in subsequent steps.",
         "data": {
-          "features": "Enabled features",
+          "climate_groups": "Create climate groups",
+          "media_player_groups": "Create media player groups",
+          "light_groups": "Create light groups",
+          "cover_groups": "Create cover groups",
+          "area_aware_media_player": "Area aware media player",
+          "aggregates": "Create aggregate sensors",
+          "health": "Create health sensors",
+          "presence_hold": "Create presence hold switch"
+        }
+      },
+      "feature_conf_light_groups": {
+        "title": "Light Groups",
+        "description": "Configure the Light Groups feature",
+        "data": {
+          "overhead_lights": "Overhead lights (Leave blank for all area lights)",
+          "overhead_lights_states": "States which overhead lights are turned on",
+          "overhead_lights_act_on": "When should overhead lights be controlled?",
+          "sleep_lights": "Sleep lights",
+          "sleep_lights_states": "States which sleep lights are turned on",
+          "sleep_lights_act_on": "When should sleep lights be controlled?",
+          "accent_lights": "Accent lights",
+          "accent_lights_states": "States which accent lights are turned on",
+          "accent_lights_act_on": "When should accent lights be controlled?",
+          "task_lights": "Task lights",
+          "task_lights_states": "States which task lights are turned on",
+          "task_lights_act_on": "When should task lights be controlled?"
+        }
+      },
+      "feature_conf_presence_hold": {
+        "title": "Presence Hold",
+        "description": "Creates a switch that will hold an area occupied while it's on",
+        "data": {
+          "presence_hold_timeout": "Time after the switch will be automatically turned off. (0 = timeout disabled)."
+        }
+      },
+      "feature_conf_area_aware_media_player": {
+        "title": "Feature: Area aware media player",
+        "description": "Configure the area aware media player feature",
+        "data": {
+          "notification_devices": "Media Player devices used for broadcasting",
+          "notification_states": "Play notifications devices only when on these states"
+        }
+      },
+      "feature_conf_aggregates": {
+        "title": "Feature: Sensor aggregates",
+        "description": "Configure the sensor aggregates feature",
+        "data": {
+          "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates."
+        }
+      },
+      "feature_conf_climate_groups": {
+        "title": "Feature: Climate Groups",
+        "description": "Configure the Climate Groups feature",
+        "data": {
+          "turn_on_state": "State to turn on the climate group."
+        }
+      },
+      "secondary_states": {
+        "title": "Secondary states",
+        "description": "Map an entity state to an area's secondary state which are used by features to more precisely control devices automatically.",
+        "data": {
+          "dark_entity": "Entity used to track area dark state",
+          "dark_state": "State of dark state entity",
+          "sleep_entity": "Entity used to track area sleep state",
+          "sleep_state": "State of sleep state entity",
+          "sleep_timeout": "How long area will wait before clearing the state when on sleep state",
+          "accent_entity": "Entity used to track area accented state",
+          "accent_state": "State of accent state entity",
+          "extended_time": "Area will be marked as 'extended' after being occupied for this long",
+          "extended_timeout": "How long area will wait before clearing the state when on extended state"
+        }
+      },
+      "area_config": {
+        "title": "Area options",
+        "description": "Configure basic options for the area.",
+        "data": {
           "include_entities": "Include entities to this area",
           "exclude_entities": "Exclude entities from being analyzed",
-          "presence_sensor_device_class": "Device classes of sensors to be considered presence sensors",
+          "presence_sensor_device_class": "Presence sensors device classes",
+          "presence_device_platforms": "Platforms to be used for presence sensing",
+          "on_states": "Sensor states that indicate presence",
           "icon": "Icon",
-          "notification_devices": "Media Player devices used for broadcasting through Area-Aware Media Player",
-          "notify_on_sleep": "Allow notification devices in this area to play notifications when on sleep mode",
           "update_interval": "Interval for checking missed events",
           "clear_timeout": "How long since last presence event should it wait before clearing the area",
-          "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates.",
-          "night_entity": "Entity used to track area night state",
-          "night_state": "State of night entity",
-          "sleep_entity": "Entity used to track area sleep state",
-          "sleep_state": "State of sleep entity",
-          "sleep_timeout": "How long since last presence event should it wait before clearing the area when on sleep mode",
-          "main_lights": "Main lights (Leave blank for all area lights)",
-          "sleep_lights": "Sleep lights",
           "type": "Area type (interior/exterior)"
         }
       }
     },
     "error": {
-      "option_error": "Invalid option"
+      "option_error": "Invalid option",
+      "malformed_input": "This field is invalid:"
     }
   }
 } 

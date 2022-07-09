@@ -1,4 +1,4 @@
-"""Magic Areas component for Homme Assistant."""
+"""Magic Areas component for Home Assistant."""
 
 import asyncio
 import logging
@@ -21,7 +21,6 @@ from .const import (
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
-    MAGIC_AREAS_COMPONENTS,
     META_AREAS,
     MODULE_DATA,
 )
@@ -38,10 +37,11 @@ async def async_setup(hass, config):
     """Set up areas."""
 
     # Load registries
-    area_registry = await hass.helpers.area_registry.async_get_registry()
+    area_registry = hass.helpers.area_registry.async_get(hass)
 
     # Populate MagicAreas
     areas = list(area_registry.async_list_areas())
+    _LOGGER.debug(f"Areas from registry: {areas}")
 
     if DOMAIN not in config.keys():
         _LOGGER.error(f"'magic_areas:' not defined on YAML. Aborting.")
@@ -50,40 +50,59 @@ async def async_setup(hass, config):
     magic_areas_config = config[DOMAIN]
 
     # Check reserved names
-    reserved_ids = [meta_area.lower() for meta_area in META_AREAS]
+    reserved_names = [meta_area.lower() for meta_area in META_AREAS]
     for area in areas:
-        if area.id in reserved_ids:
+        if area.normalized_name in reserved_names:
             _LOGGER.error(
-                f"Area uses reserved name {area.id}. Please rename your area and restart."
+                f"Area uses reserved name {area.normalized_name}. Please rename your area and restart."
             )
             return
 
+    _LOGGER.debug("Area names are valid (not using reserved names), continuing...")
+
     # Add Meta Areas to area list
     for meta_area in META_AREAS:
-        areas.append(AreaEntry(name=meta_area, normalized_name=meta_area, id=meta_area.lower()))
+        _LOGGER.debug(f"Appending Meta Area {meta_area} to the list of areas")
+        areas.append(
+            AreaEntry(
+                name=meta_area, normalized_name=meta_area.lower(), id=meta_area.lower()
+            )
+        )
 
     for area in areas:
-
+        _LOGGER.debug(f"Creating/loading configuration for {area.name}.")
         config_entry = {}
         source = SOURCE_USER
 
         if area.id not in magic_areas_config.keys():
             default_config = {f"{area.id}": {}}
             config_entry = _DOMAIN_SCHEMA(default_config)[area.id]
+            _LOGGER.debug(
+                f"Configuration for area {area.name} not found on YAML, creating from default."
+            )
         else:
             config_entry = magic_areas_config[area.id]
             source = SOURCE_IMPORT
+            _LOGGER.debug(
+                f"Configuration for area {area.name} found on YAML, loading from saved config."
+            )
 
-        if area.id in reserved_ids:
+        if area.normalized_name in reserved_names:
+            _LOGGER.debug(f"Meta area {area.name} found, setting correct type.")
             config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
-        config_entry.update(
-            {
-                CONF_NAME: area.name,
-                CONF_ID: area.id,
-            }
+        extra_opts = {
+            CONF_NAME: area.name,
+            CONF_ID: area.id,
+        }
+        config_entry.update(extra_opts)
+        _LOGGER.debug(
+            f"Configuration for area {area.name} updated with extra options: {extra_opts}"
         )
 
+        _LOGGER.debug(
+            f"Creating config flow task for area {area.name} ({area.id}): {config_entry}"
+        )
         hass.async_create_task(
             hass.config_entries.flow.async_init(
                 DOMAIN, context={CONF_SOURCE: source}, data=config_entry
@@ -102,10 +121,10 @@ async def async_setup(hass, config):
             if area.config.get(CONF_TYPE) == AREA_TYPE_META:
                 continue
             if not area.initialized:
-                _LOGGER.info(f"Area {area.id} not ready")
+                _LOGGER.info(f"Area {area.name} not ready")
                 return False
 
-        _LOGGER.debug(f"All areas ready.")
+        _LOGGER.debug(f"All areas ready. Firing EVENT_MAGICAREAS_READY.")
         hass.bus.async_fire(EVENT_MAGICAREAS_READY)
 
         return True
@@ -121,11 +140,20 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     data = hass.data.setdefault(MODULE_DATA, {})
     area_id = config_entry.data[CONF_ID]
     area_name = config_entry.data[CONF_NAME]
+
+    _LOGGER.debug(f"Setting up entry for {area_name}")
+
     meta_ids = [meta_area.lower() for meta_area in META_AREAS]
 
     if area_id not in meta_ids:
-        area_registry = await hass.helpers.area_registry.async_get_registry()
+        area_registry = hass.helpers.area_registry.async_get(hass)
         area = area_registry.async_get_area(area_id)
+
+        if not area:
+            _LOGGER.debug(f"Could not find {area_name} ({area_id}) on registry")
+            return False
+
+        _LOGGER.debug(f"Got area {area_name} from registry: {area}")
 
         magic_area = MagicArea(
             hass,
@@ -135,7 +163,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     else:
         magic_area = MagicMetaArea(hass, area_name, config_entry)
 
-    _LOGGER.debug(f"AREA {area_id} {area_name}: {config_entry.data}")
+    _LOGGER.debug(
+        f"Magic Area {magic_area.name} ({magic_area.id}) created: {magic_area.config}"
+    )
 
     undo_listener = config_entry.add_update_listener(async_update_options)
 

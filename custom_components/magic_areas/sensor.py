@@ -44,33 +44,38 @@ async def load_sensors(hass, async_add_entities, area):
     if not area.has_entities(SENSOR_DOMAIN):
         return
 
-    device_class_count = {}
+    device_class_uom_pairs = []
 
     for entity in area.entities[SENSOR_DOMAIN]:
 
         if "device_class" not in entity.keys():
-            _LOGGER.warning(
+            _LOGGER.debug(
                 f"Entity {entity['entity_id']} does not have device_class defined"
             )
             continue
 
         if "unit_of_measurement" not in entity.keys():
-            _LOGGER.warning(
+            _LOGGER.debug(
                 f"Entity {entity['entity_id']} does not have unit_of_measurement defined"
             )
             continue
 
-        map_key = f"{entity['device_class']}/{entity['unit_of_measurement']}"
-        if map_key not in device_class_count.keys():
-            device_class_count[map_key] = 0
+        dc_uom_pair = (entity["device_class"], entity["unit_of_measurement"])
+        device_class_uom_pairs.append(dc_uom_pair)
 
-        device_class_count[map_key] += 1
+    # Sort out individual pairs, if they show up more than CONF_AGGREGATES_MIN_ENTITIES,
+    # we create a sensor for them
+    unique_pairs = set(device_class_uom_pairs)
 
-    for map_key, entity_count in device_class_count.items():
-        if entity_count < area.config.get(CONF_AGGREGATES_MIN_ENTITIES):
+    for dc_uom_pair in unique_pairs:
+        entity_count = device_class_uom_pairs.count(dc_uom_pair)
+
+        if entity_count < area.feature_config(CONF_FEATURE_AGGREGATION).get(
+            CONF_AGGREGATES_MIN_ENTITIES
+        ):
             continue
 
-        device_class, unit_of_measurement = map_key.split("/")
+        device_class, unit_of_measurement = dc_uom_pair
 
         _LOGGER.debug(
             f"Creating aggregate sensor for device_class '{device_class}' ({unit_of_measurement}) with {entity_count} entities ({area.slug})"
@@ -94,7 +99,7 @@ class AreaSensorGroupSensor(AggregateBase, SensorBase):
         self._unit_of_measurement = unit_of_measurement
         self._state = 0
 
-        device_class_name = device_class.capitalize()
+        device_class_name = " ".join(device_class.split("_")).title()
         self._name = (
             f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
         )
