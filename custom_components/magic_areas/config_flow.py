@@ -101,8 +101,6 @@ class NullableEntitySelector(EntitySelector):
     def __call__(self, data):
         """Validate the passed selection, if passed."""
 
-        _LOGGER.warn(f"Null data {data}")
-
         if not data:
             return data
 
@@ -177,13 +175,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     def _build_selector_entity_simple(
         self, options=[], multiple=False, force_include=False
     ):
-
-        # selector_opts = {"entity": {"multiple": multiple}}
-
-        # if options is not None:
-        #     selector_opts["entity"]["include_entities"] = options
-
-        # return selector(selector_opts)
 
         return NullableEntitySelector(
             EntitySelectorConfig(include_entities=options, multiple=multiple)
