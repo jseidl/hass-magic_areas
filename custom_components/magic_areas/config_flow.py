@@ -202,7 +202,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         schema = {
             vol.Optional(
                 name,
-                description={"suggested_value": saved_options.get(name)},
+                description={"suggested_value": saved_options.get(name) if saved_options.get(name) else default},
                 default=default,
             ): selectors[name]
             if name in selectors.keys()
