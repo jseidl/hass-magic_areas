@@ -8,7 +8,11 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
-from homeassistant.helpers.selector import selector, EntitySelector, EntitySelectorConfig
+from homeassistant.helpers.selector import (
+    EntitySelector,
+    EntitySelectorConfig,
+    selector,
+)
 
 from custom_components.magic_areas.const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
@@ -104,6 +108,18 @@ class NullableEntitySelector(EntitySelector):
 
         return super().__call__(data)
 
+class NullableEntitySelector(EntitySelector):
+    def __call__(self, data):
+        """Validate the passed selection, if passed."""
+
+        _LOGGER.warn(f"Null data {data}")
+
+        if not data:
+            return data
+
+        return super().__call__(data)
+
+
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Magic Areas."""
 
@@ -170,11 +186,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         # return selector(selector_opts)
 
         return NullableEntitySelector(
-            EntitySelectorConfig(
-                include_entities=options,
-                multiple=multiple
-                )
-            )
+            EntitySelectorConfig(include_entities=options, multiple=multiple)
+        )
 
     def _build_selector_number(
         self, min=0, max=9999, mode="box", unit_of_measurement="seconds"
@@ -210,8 +223,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Optional(
                 name,
                 description={"suggested_value": saved_options.get(name)},
-                default=default
-            ): selectors[name] if name in selectors.keys() else dynamic_validators.get(name, validation)
+                default=default,
+            ): selectors[name]
+            if name in selectors.keys()
+            else dynamic_validators.get(name, validation)
             for name, default, validation in options
         }
 
@@ -315,8 +330,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])
             ),
             CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(
-                self.all_entities,
-                multiple=True
+                self.all_entities, multiple=True
             ),
             CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(
                 self.all_area_entities, multiple=True
