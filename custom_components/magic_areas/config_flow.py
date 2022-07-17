@@ -97,16 +97,6 @@ _LOGGER = logging.getLogger(__name__)
 EMPTY_ENTRY = [""]
 
 class NullableEntitySelector(EntitySelector):
-
-    def __call__(self, data):
-        """Validate the passed selection, if passed."""
-
-        if not data:
-            return data
-
-        return super().__call__(data)
-
-class NullableEntitySelector(EntitySelector):
     def __call__(self, data):
         """Validate the passed selection, if passed."""
 
@@ -116,7 +106,6 @@ class NullableEntitySelector(EntitySelector):
             return data
 
         return super().__call__(data)
-
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Magic Areas."""
