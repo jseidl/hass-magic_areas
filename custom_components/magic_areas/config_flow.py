@@ -96,6 +96,7 @@ _LOGGER = logging.getLogger(__name__)
 
 EMPTY_ENTRY = [""]
 
+
 class NullableEntitySelector(EntitySelector):
     def __call__(self, data):
         """Validate the passed selection, if passed."""
@@ -106,6 +107,7 @@ class NullableEntitySelector(EntitySelector):
             return data
 
         return super().__call__(data)
+
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Magic Areas."""
@@ -202,7 +204,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         schema = {
             vol.Optional(
                 name,
-                description={"suggested_value": saved_options.get(name) if saved_options.get(name) else default},
+                description={
+                    "suggested_value": saved_options.get(name)
+                    if saved_options.get(name)
+                    else default
+                },
                 default=default,
             ): selectors[name]
             if name in selectors.keys()
@@ -378,9 +384,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_ACCENT_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
                 },
                 selectors={
-                    # CONF_DARK_ENTITY: self._build_selector_entity_simple(),
-                    # CONF_SLEEP_ENTITY: self._build_selector_entity_simple(),
-                    # CONF_ACCENT_ENTITY: self._build_selector_entity_simple(),
                     CONF_DARK_ENTITY: self._build_selector_entity_simple(
                         self.all_entities
                     ),
