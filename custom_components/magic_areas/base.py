@@ -662,7 +662,9 @@ class MagicMetaArea(MagicArea):
                             continue
 
                         # Skip excluded entities
-                        if entity["entity_id"] in self.config.get(CONF_EXCLUDE_ENTITIES):
+                        if entity["entity_id"] in self.config.get(
+                            CONF_EXCLUDE_ENTITIES
+                        ):
                             continue
 
                         entity_list.append(entity["entity_id"])

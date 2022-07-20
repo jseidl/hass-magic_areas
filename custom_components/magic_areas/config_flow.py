@@ -8,7 +8,11 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
-from homeassistant.helpers.selector import selector
+from homeassistant.helpers.selector import (
+    EntitySelector,
+    EntitySelectorConfig,
+    selector,
+)
 
 from custom_components.magic_areas.const import (
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
@@ -93,6 +97,18 @@ _LOGGER = logging.getLogger(__name__)
 EMPTY_ENTRY = [""]
 
 
+class NullableEntitySelector(EntitySelector):
+    def __call__(self, data):
+        """Validate the passed selection, if passed."""
+
+        _LOGGER.warn(f"Null data {data}")
+
+        if not data:
+            return data
+
+        return super().__call__(data)
+
+
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Magic Areas."""
 
@@ -148,15 +164,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         )
 
     def _build_selector_entity_simple(
-        self, options=None, multiple=False, force_include=False
+        self, options=[], multiple=False, force_include=False
     ):
 
-        selector_opts = {"entity": {"multiple": multiple}}
-
-        if options is not None:
-            selector_opts["entity"]["include_entities"] = options
-
-        return selector(selector_opts)
+        return NullableEntitySelector(
+            EntitySelectorConfig(include_entities=options, multiple=multiple)
+        )
 
     def _build_selector_number(
         self, min=0, max=9999, mode="box", unit_of_measurement="seconds"
@@ -191,16 +204,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         schema = {
             vol.Optional(
                 name,
-                description={"suggested_value": saved_options.get(name)},
+                description={
+                    "suggested_value": saved_options.get(name)
+                    if saved_options.get(name)
+                    else default
+                },
                 default=default,
-            ): dynamic_validators.get(name, validation)
+            ): selectors[name]
+            if name in selectors.keys()
+            else dynamic_validators.get(name, validation)
             for name, default, validation in options
         }
-
-        # Apply selector overrides
-        if selectors:
-            for conf_key, selector_value in selectors.items():
-                schema[conf_key] = selector_value
 
         _LOGGER.debug(f"Built schema: {schema}")
 
@@ -301,7 +315,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             CONF_TYPE: self._build_selector_select(
                 sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])
             ),
-            CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(multiple=True),
+            CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(
+                self.all_entities, multiple=True
+            ),
             CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(
                 self.all_area_entities, multiple=True
             ),
@@ -368,17 +384,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_ACCENT_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
                 },
                 selectors={
-                    # CONF_DARK_ENTITY: self._build_selector_entity_simple(),
-                    # CONF_SLEEP_ENTITY: self._build_selector_entity_simple(),
-                    # CONF_ACCENT_ENTITY: self._build_selector_entity_simple(),
-                    CONF_DARK_ENTITY: self._build_selector_select(
-                        EMPTY_ENTRY + self.all_entities
+                    CONF_DARK_ENTITY: self._build_selector_entity_simple(
+                        self.all_entities
                     ),
-                    CONF_SLEEP_ENTITY: self._build_selector_select(
-                        EMPTY_ENTRY + self.all_entities
+                    CONF_SLEEP_ENTITY: self._build_selector_entity_simple(
+                        self.all_entities
                     ),
-                    CONF_ACCENT_ENTITY: self._build_selector_select(
-                        EMPTY_ENTRY + self.all_entities
+                    CONF_ACCENT_ENTITY: self._build_selector_entity_simple(
+                        self.all_entities
                     ),
                     CONF_SLEEP_TIMEOUT: self._build_selector_number(),
                     CONF_EXTENDED_TIME: self._build_selector_number(),
