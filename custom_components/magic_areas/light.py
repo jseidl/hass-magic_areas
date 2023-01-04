@@ -184,8 +184,8 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
 
         # If area has just went into AREA_STATE_BRIGHT state
         if self.area.has_state(AREA_STATE_BRIGHT) and AREA_STATE_BRIGHT in new_states:
-            _LOGGER.debug(f"Area has AREA_STATE_BRIGHT, {self.name} SHOULD TURN OFF!")
-            return self._turn_off()
+            _LOGGER.debug(f"Area has AREA_STATE_BRIGHT, {self.name} SHOULD NOT TURN OFF!")
+        #    return self._turn_off()
 
         return False
 
