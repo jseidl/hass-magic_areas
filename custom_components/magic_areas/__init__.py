@@ -65,7 +65,7 @@ async def async_setup(hass, config):
         _LOGGER.debug(f"Appending Meta Area {meta_area} to the list of areas")
         areas.append(
             AreaEntry(
-                name=meta_area, normalized_name=meta_area.lower(), id=meta_area.lower()
+                name=meta_area, normalized_name=meta_area.lower(), aliases=set(), id=meta_area.lower()
             )
         )
 
