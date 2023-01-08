@@ -38,7 +38,7 @@ EVENT_MAGICAREAS_AREA_OCCUPIED = "magicareas_area_occupied"
 EVENT_MAGICAREAS_AREA_CLEAR = "magicareas_area_clear"
 EVENT_MAGICAREAS_AREA_STATE_CHANGED = "magicareas_area_state_changed"
 
-ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in SensorDeviceClass]
+ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]
 
 # Data Items
 DATA_AREA_OBJECT = "area_object"
