@@ -3,11 +3,8 @@ DEPENDENCIES = ["magic_areas", "media_player", "binary_sensor"]
 import logging
 from datetime import datetime, timedelta
 
-from homeassistant.components.binary_sensor import (
-    DEVICE_CLASS_OCCUPANCY,
-    DEVICE_CLASS_PROBLEM,
-)
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
@@ -170,7 +167,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.last_off_time = datetime.utcnow()
         self.clear_timeout_callback = None
 
-        self._device_class = DEVICE_CLASS_OCCUPANCY
+        self._device_class = BinarySensorDeviceClass.OCCUPANCY
         self.sensors = []
 
     def load_presence_sensors(self) -> None:
@@ -607,7 +604,7 @@ class AreaDistressBinarySensor(BinarySensorBase, AggregateBase):
 
         self.area = area
         self.hass = hass
-        self._device_class = DEVICE_CLASS_PROBLEM
+        self._device_class = BinarySensorDeviceClass.PROBLEM
         self._state = False
 
         self._name = f"Area Health ({self.area.name})"
