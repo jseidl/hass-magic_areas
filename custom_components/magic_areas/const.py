@@ -1,19 +1,16 @@
 from itertools import chain
 
 import voluptuous as vol
-
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
-
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.components.sensor import SensorDeviceClass
-
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     STATE_ALARM_TRIGGERED,
@@ -301,7 +298,15 @@ AGGREGATE_SENSOR_CLASSES = (
     SensorDeviceClass.TEMPERATURE,
 )
 
+<<<<<<< HEAD
 AGGREGATE_MODE_SUM = [SensorDeviceClass.POWER, SensorDeviceClass.CURRENT, SensorDeviceClass.ENERGY]
+=======
+AGGREGATE_MODE_SUM = [
+    SensorDeviceClass.POWER,
+    SensorDeviceClass.CURRENT,
+    SensorDeviceClass.ENERGY,
+]
+>>>>>>> 2fd522ad8de4b0598f63a6975780973bac4ef7f5
 
 # Config Schema
 
