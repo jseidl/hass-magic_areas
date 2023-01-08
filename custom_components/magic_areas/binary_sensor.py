@@ -3,11 +3,6 @@ DEPENDENCIES = ["magic_areas", "media_player", "binary_sensor"]
 import logging
 from datetime import datetime, timedelta
 
-<<<<<<< HEAD
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass
-
-=======
->>>>>>> 2fd522ad8de4b0598f63a6975780973bac4ef7f5
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN

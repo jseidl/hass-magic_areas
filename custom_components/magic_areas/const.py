@@ -298,15 +298,11 @@ AGGREGATE_SENSOR_CLASSES = (
     SensorDeviceClass.TEMPERATURE,
 )
 
-<<<<<<< HEAD
-AGGREGATE_MODE_SUM = [SensorDeviceClass.POWER, SensorDeviceClass.CURRENT, SensorDeviceClass.ENERGY]
-=======
 AGGREGATE_MODE_SUM = [
     SensorDeviceClass.POWER,
     SensorDeviceClass.CURRENT,
     SensorDeviceClass.ENERGY,
 ]
->>>>>>> 2fd522ad8de4b0598f63a6975780973bac4ef7f5
 
 # Config Schema
 
