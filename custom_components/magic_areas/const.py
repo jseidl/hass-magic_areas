@@ -1,22 +1,8 @@
 from itertools import chain
 
 import voluptuous as vol
-from homeassistant.components.binary_sensor import (
-    DEVICE_CLASS_DOOR,
-    DEVICE_CLASS_GAS,
-    DEVICE_CLASS_LIGHT,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_MOTION,
-    DEVICE_CLASS_OCCUPANCY,
-    DEVICE_CLASS_POWER,
-    DEVICE_CLASS_PRESENCE,
-    DEVICE_CLASS_PROBLEM,
-    DEVICE_CLASS_SAFETY,
-    DEVICE_CLASS_SMOKE,
-    DEVICE_CLASS_WINDOW,
-    DEVICE_CLASSES,
-)
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
@@ -24,13 +10,9 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
-    DEVICE_CLASS_CURRENT,
-    DEVICE_CLASS_ENERGY,
-    DEVICE_CLASS_HUMIDITY,
-    DEVICE_CLASS_ILLUMINANCE,
-    DEVICE_CLASS_TEMPERATURE,
     STATE_ALARM_TRIGGERED,
     STATE_HOME,
     STATE_ON,
@@ -53,9 +35,7 @@ EVENT_MAGICAREAS_AREA_OCCUPIED = "magicareas_area_occupied"
 EVENT_MAGICAREAS_AREA_CLEAR = "magicareas_area_clear"
 EVENT_MAGICAREAS_AREA_STATE_CHANGED = "magicareas_area_state_changed"
 
-DEVICE_CLASS_DOMAINS = (BINARY_SENSOR_DOMAIN, SENSOR_DOMAIN)
-
-ALL_BINARY_SENSOR_DEVICE_CLASSES = DEVICE_CLASSES
+ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]
 
 # Data Items
 DATA_AREA_OBJECT = "area_object"
@@ -153,9 +133,9 @@ ALL_PRESENCE_DEVICE_PLATFORMS = [
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
 ) = "presence_sensor_device_class", [
-    DEVICE_CLASS_MOTION,
-    DEVICE_CLASS_OCCUPANCY,
-    DEVICE_CLASS_PRESENCE,
+    BinarySensorDeviceClass.MOTION,
+    BinarySensorDeviceClass.OCCUPANCY,
+    BinarySensorDeviceClass.PRESENCE,
 ]  # cv.ensure_list
 CONF_ON_STATES, DEFAULT_ON_STATES = "on_states", [
     STATE_ON,
@@ -291,34 +271,38 @@ LIGHT_GROUP_CATEGORIES = [
 ]
 
 AGGREGATE_BINARY_SENSOR_CLASSES = [
-    DEVICE_CLASS_WINDOW,
-    DEVICE_CLASS_DOOR,
-    DEVICE_CLASS_MOTION,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_LIGHT,
+    BinarySensorDeviceClass.WINDOW,
+    BinarySensorDeviceClass.DOOR,
+    BinarySensorDeviceClass.MOTION,
+    BinarySensorDeviceClass.MOISTURE,
+    BinarySensorDeviceClass.LIGHT,
 ]
 
 # Health related
 DISTRESS_SENSOR_CLASSES = [
-    DEVICE_CLASS_PROBLEM,
-    DEVICE_CLASS_SMOKE,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_SAFETY,
-    DEVICE_CLASS_GAS,
+    BinarySensorDeviceClass.PROBLEM,
+    BinarySensorDeviceClass.SMOKE,
+    BinarySensorDeviceClass.MOISTURE,
+    BinarySensorDeviceClass.SAFETY,
+    BinarySensorDeviceClass.GAS,
 ]  # @todo make configurable
 DISTRESS_STATES = [STATE_ALARM_TRIGGERED, STATE_ON, STATE_PROBLEM]
 
 # Aggregates
 AGGREGATE_SENSOR_CLASSES = (
-    DEVICE_CLASS_CURRENT,
-    DEVICE_CLASS_ENERGY,
-    DEVICE_CLASS_HUMIDITY,
-    DEVICE_CLASS_ILLUMINANCE,
-    DEVICE_CLASS_POWER,
-    DEVICE_CLASS_TEMPERATURE,
+    SensorDeviceClass.CURRENT,
+    SensorDeviceClass.ENERGY,
+    SensorDeviceClass.HUMIDITY,
+    SensorDeviceClass.ILLUMINANCE,
+    SensorDeviceClass.POWER,
+    SensorDeviceClass.TEMPERATURE,
 )
 
-AGGREGATE_MODE_SUM = [DEVICE_CLASS_POWER, DEVICE_CLASS_CURRENT, DEVICE_CLASS_ENERGY]
+AGGREGATE_MODE_SUM = [
+    SensorDeviceClass.POWER,
+    SensorDeviceClass.CURRENT,
+    SensorDeviceClass.ENERGY,
+]
 
 # Config Schema
 
