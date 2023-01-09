@@ -1,0 +1,113 @@
+{
+  "title": "Magic Areas",
+  "config": {
+    "step": {
+      "init": {
+        "description": "Diese Integration wird beim Laden automatisch konfiguriert. Ein manuelles Hinzufügen der Integration ist nicht notwendig. Die Magic Areas sollten bereits für jeden Bereich erstellt worden und auf der Integrations-Seite sichtbar sein. Verwende die Bereichsverwaltung von Home Assistant, um weitere Bereiche hinzuzufügen oder vorhandene Bereiche zu löschen.",
+        "data": {}
+      }
+    },
+    "abort": {
+      "not_supported": "Diese Integration wird beim Laden automatisch konfiguriert. Ein manuelles Hinzufügen der Integration ist nicht notwendig. Die Magic Areas sollten bereits für jeden Bereich erstellt worden und auf der Integrations-Seite sichtbar sein. Verwende die Bereichsverwaltung von Home Assistant, um weitere Bereiche hinzuzufügen oder vorhandene Bereiche zu löschen."
+    }
+  },
+  "options": {
+    "step": {
+      "select_features": {
+        "title": "Auswahl der Features",
+        "description": "Wähle die Features aus, welche für diesen Bereich aktiviert werden sollen. Die ausgewählten Features werden in den nachfolgenden Dialogen konfiguriert.",
+        "data": {
+          "climate_groups": "Klimagruppen erstellen (climate groups)",
+          "media_player_groups": "Media Player-Gruppen erstellen (media player groups)",
+          "light_groups": "Lichtergruppen erstellen (light groups)",
+          "cover_groups": "Beschattungsgruppen erstellen (cover groups)",
+          "area_aware_media_player": "Bereichsbezogener Media Player (Area aware media player)",
+          "aggregates": "Aggregierte Sensoren erstellen (aggregate sensors)",
+          "health": "Gesundheitssensoren erstellen (health sensors)",
+          "presence_hold": "Schalter für Anwesenheitssperre erstellen (presence hold switch)"
+        }
+      },
+      "feature_conf_light_groups": {
+        "title": "Lichtergruppen",
+        "description": "Erzeugt die unten aufgeführten Lichtergruppen",
+        "data": {
+          "overhead_lights": "Deckenlampen (leer lassen, für alle Lichter des Bereichs)",
+          "overhead_lights_states": "Zustände, welche die Deckenlampen einschalten",
+          "overhead_lights_act_on": "Wann sollten die Deckenlampen kontrolliert werden?",
+          "sleep_lights": "Schlaflampen",
+          "sleep_lights_states": "Zustände, welche die Schlaflampen einschalten",
+          "sleep_lights_act_on": "Wann sollten die Schlaflampen kontrolliert werden?",
+          "accent_lights": "Akzentlampen",
+          "accent_lights_states": "Zustände, welche die Akzentlampen einschalten",
+          "accent_lights_act_on": "Wann sollten die Akzentlampen kontrolliert werden?",
+          "task_lights": "Arbeitslampen",
+          "task_lights_states": "Zustände, welche die Arbeitslampen einschalten",
+          "task_lights_act_on": "Wann sollten die Arbeitslampen kontrolliert werden?"
+        }
+      },
+      "feature_conf_presence_hold": {
+        "title": "Anwesenheitssperre",
+        "description": "Erzeugt einen Schalter, der einen Bereich besetzt hält, während er eingeschaltet ist",
+        "data": {
+          "presence_hold_timeout": "Zeit, nach der der Schalter automatisch ausgeschaltet wird (0 = Zeitüberschreitung deaktiviert)."
+        }
+      },
+      "feature_conf_area_aware_media_player": {
+        "title": "Bereichsbezogener Media Player",
+        "description": "Erzeugt einen bereichsbezogenen Media Player",
+        "data": {
+          "notification_devices": "Media Player-Geräte, auf denen Benachrichtigungen abgespielt werden",
+          "notification_states": "Benachrichtigungen nur in diesen Zuständen abspielen"
+        }
+      },
+      "feature_conf_aggregates": {
+        "title": "Aggregierte Sensoren",
+        "description": "Erzeugt Sensoren, welche die Werte von verschiedenen Sensorklassen aggregieren",
+        "data": {
+          "aggregates_min_entities": "Mindestanzahl von Einheiten derselben Geräteklasse, die zur Bildung von Aggregaten erforderlich ist."
+        }
+      },
+      "feature_conf_climate_groups": {
+        "title": "Klimagruppen",
+        "description": "Erzeugt eine Klimagruppe",
+        "data": {
+          "turn_on_state": "Status, um die Klimagruppe einzuschalten."
+        }
+      },
+      "secondary_states": {
+        "title": "Sekundäre Zustände",
+        "description": "Zuordnung eines Entitätsstatus zum sekundären Status eines Bereichs, der von den Features verwendet wird, um Geräte automatisch genauer zu steuern.",
+        "data": {
+          "dark_entity": "Entität, die zur Verfolgung des Dunkelheitszustands des Bereichs verwendet wird",
+          "dark_state": "In welchem Zustand der Entität ist es dunkel?",
+          "sleep_entity": "Entität, die zur Verfolgung des Schlafzustands des Bereichs verwendet wird",
+          "sleep_state": "In welchem Zustand der Entität ist der Schlafzustand erreicht?",
+          "sleep_timeout": "Wie lange der Bereich wartet, bevor der Bereich im Schlafzustand frei wird",
+          "accent_entity": "Entität, die zur Verfolgung des Akzentzustands des Bereichs verwendet wird",
+          "accent_state": "In welchem Zustand der Entität ist der Akzentzustand erreicht?",
+          "extended_time": "Der Bereich wird als 'extended' markiert, wenn dieser so lange besetzt ist",
+          "extended_timeout": "Wie lange der Bereich wartet, bevor der Bereich im 'extended'-Zustand frei wird"
+        }
+      },
+      "area_config": {
+        "title": "Bereichsoptionen",
+        "description": "Konfigurieren der grundlegenen Optionen für diesen Bereich",
+        "data": {
+          "include_entities": "Berücksichtigen zusätzlicher Entitäten in diesem Bereich",
+          "exclude_entities": "Entitäten aus diesem Bereich ausschließen",
+          "presence_sensor_device_class": "Geräteklassen von Anwesenheitssensoren",
+          "presence_device_platforms": "Plattformen zur Anwesenheitserfassung",
+          "on_states": "Sensorzustände, die Anwesenheit anzeigen",
+          "icon": "Icon",
+          "update_interval": "Intervall für die Überprüfung verpasster Ereignisse",
+          "clear_timeout": "Wann soll der Bereich nach dem letzten Ereignis frei werden?",
+          "type": "Bereichstyp (innen/außen)"
+        }
+      }
+    },
+    "error": {
+      "option_error": "Ungültige Option",
+      "malformed_input": "Dieses Feld ist ungültig:"
+    }
+  }
+} 
