@@ -78,7 +78,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 async def load_sensors(hass, async_add_entities, area):
-
     # Create basic presence sensor
     async_add_entities([AreaPresenceBinarySensor(hass, area)])
 
@@ -91,7 +90,6 @@ async def load_sensors(hass, async_add_entities, area):
 
 
 async def create_health_sensors(hass, area, async_add_entities):
-
     if not area.has_feature(CONF_FEATURE_HEALTH):
         return
 
@@ -101,7 +99,6 @@ async def create_health_sensors(hass, area, async_add_entities):
     distress_entities = []
 
     for entity in area.entities[BINARY_SENSOR_DOMAIN]:
-
         if ATTR_DEVICE_CLASS not in entity.keys():
             continue
 
@@ -120,7 +117,6 @@ async def create_health_sensors(hass, area, async_add_entities):
 
 
 async def create_aggregate_sensors(hass, area, async_add_entities):
-
     # Create aggregates
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
         return
@@ -171,7 +167,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.sensors = []
 
     def load_presence_sensors(self) -> None:
-
         if self.area.is_meta():
             # MetaAreas track their children
             child_areas = self.area.get_child_areas()
@@ -185,12 +180,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
         for component, entities in self.area.entities.items():
-
             if component not in valid_presence_platforms:
                 continue
 
             for entity in entities:
-
                 if not entity:
                     continue
 
@@ -212,7 +205,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self.sensors.append(presence_hold_switch_id)
 
     def load_attributes(self) -> None:
-
         # Set attributes
         self._attributes = {
             ATTR_PRESENCE_SENSORS: self.sensors,
@@ -281,7 +273,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self.schedule_update_ha_state()
 
     async def _initialize(self, _=None) -> None:
-
         _LOGGER.debug(f"{self.name} Sensor initializing.")
 
         self.load_presence_sensors()
@@ -306,7 +297,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         # Track secondary states
         for configurable_state in self._get_configured_secondary_states():
-
             (
                 configurable_state_entity,
                 configurable_state_value,
@@ -333,7 +323,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
     def secondary_state_change(self, entity_id, from_state, to_state):
-
         _LOGGER.debug(
             f"{self.name}: Secondary state change: entity '{entity_id}' changed to {to_state.state}"
         )
@@ -347,7 +336,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._update_state()
 
     def _update_area_states(self):
-
         last_state = set(self.area.states.copy())
         # self._update_state()
         current_state = set(self._get_area_states())
@@ -367,7 +355,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return (new_states, lost_states)
 
     def _get_configured_secondary_states(self):
-
         secondary_states = []
 
         for (
@@ -391,7 +378,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return secondary_states
 
     def _get_area_states(self):
-
         states = []
 
         # Get Main occupancy state
@@ -423,7 +409,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             states.append(AREA_STATE_DARK)
 
         for configurable_state in configurable_states:
-
             (
                 configurable_state_entity,
                 configurable_state_value,
@@ -454,7 +439,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return states
 
     def _update_attributes(self):
-
         self._attributes[ATTR_STATES] = self.area.states
         self._attributes[ATTR_CLEAR_TIMEOUT] = self.get_clear_timeout()
 
@@ -475,7 +459,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return self.area.config.get(CONF_CLEAR_TIMEOUT)
 
     def set_clear_timeout(self):
-
         if not self.area.is_occupied():
             return False
 
@@ -487,7 +470,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
     def remove_clear_timeout(self):
-
         if not self.clear_timeout_callback:
             return False
 
@@ -495,11 +477,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.clear_timeout_callback = None
 
     def is_on_clear_timeout(self):
-
         return self.clear_timeout_callback is not None
 
     def timeout_exceeded(self):
-
         if not self.area.is_occupied():
             return False
 
@@ -517,7 +497,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return False
 
     def _get_occupancy_state(self):
-
         valid_on_states = (
             [STATE_ON] if self.area.is_meta() else self.area.config.get(CONF_ON_STATES)
         )
@@ -543,7 +522,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return True
 
     def _update_state(self):
-
         states_tuple = self._update_area_states()
         new_states, lost_states = states_tuple
 
@@ -587,7 +565,6 @@ class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
         self._name = f"Area {device_class_name} ({self.area.name})"
 
     async def _initialize(self, _=None) -> None:
-
         _LOGGER.debug(f"{self.name} Sensor initializing.")
 
         self.load_sensors(BINARY_SENSOR_DOMAIN)
@@ -610,7 +587,6 @@ class AreaDistressBinarySensor(BinarySensorBase, AggregateBase):
         self._name = f"Area Health ({self.area.name})"
 
     async def _initialize(self, _=None) -> None:
-
         _LOGGER.debug(f"{self.name} Sensor initializing.")
 
         self.load_sensors()
@@ -621,12 +597,10 @@ class AreaDistressBinarySensor(BinarySensorBase, AggregateBase):
         _LOGGER.debug(f"{self.name} Sensor initialized.")
 
     def load_sensors(self):
-
         # Fetch sensors
         self.sensors = []
 
         for entity in self.area.entities[BINARY_SENSOR_DOMAIN]:
-
             if ATTR_DEVICE_CLASS not in entity.keys():
                 continue
 

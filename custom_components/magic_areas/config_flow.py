@@ -158,7 +158,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     # Selector builder
     def _build_selector_select(self, options=[], multiple=False):
-
         return selector(
             {"select": {"options": options, "multiple": multiple, "mode": "dropdown"}}
         )
@@ -166,7 +165,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     def _build_selector_entity_simple(
         self, options=[], multiple=False, force_include=False
     ):
-
         return NullableEntitySelector(
             EntitySelectorConfig(include_entities=options, multiple=multiple)
         )
@@ -174,7 +172,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     def _build_selector_number(
         self, min=0, max=9999, mode="box", unit_of_measurement="seconds"
     ):
-
         return selector(
             {
                 "number": {
@@ -352,7 +349,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         )
 
     async def async_step_secondary_states(self, user_input=None):
-
         """Gather secondary states settings for the area."""
         errors = {}
         if user_input is not None:

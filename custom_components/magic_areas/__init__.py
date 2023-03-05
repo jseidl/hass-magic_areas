@@ -113,7 +113,6 @@ async def async_setup(hass, config):
         )
 
     async def async_check_all_ready(event) -> bool:
-
         if MODULE_DATA not in hass.data.keys():
             return False
 

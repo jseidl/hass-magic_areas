@@ -33,7 +33,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 async def load_sensors(hass, async_add_entities, area):
-
     # Create aggregates
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
         return
@@ -47,7 +46,6 @@ async def load_sensors(hass, async_add_entities, area):
     device_class_uom_pairs = []
 
     for entity in area.entities[SENSOR_DOMAIN]:
-
         if "device_class" not in entity.keys():
             _LOGGER.debug(
                 f"Entity {entity['entity_id']} does not have device_class defined"
@@ -89,7 +87,6 @@ async def load_sensors(hass, async_add_entities, area):
 
 class AreaSensorGroupSensor(AggregateBase, SensorBase):
     def __init__(self, hass, area, device_class, unit_of_measurement):
-
         """Initialize an area sensor group sensor."""
 
         self.area = area
@@ -107,7 +104,6 @@ class AreaSensorGroupSensor(AggregateBase, SensorBase):
         self.tracking_listeners = []
 
     async def _initialize(self, _=None) -> None:
-
         _LOGGER.debug(f"{self.name} Sensor initializing.")
 
         self.load_sensors(SENSOR_DOMAIN, self._unit_of_measurement)

@@ -8,7 +8,6 @@ def is_entity_list(item):
 
 
 def flatten_entity_list(input_list):
-
     for i in input_list:
         if is_entity_list(i):
             for sublist in flatten_entity_list(i):
