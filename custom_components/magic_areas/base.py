@@ -393,14 +393,13 @@ class MagicArea(object):
     def feature_config(self, feature) -> dict:
 
         if not self.has_feature(feature):
-            # @TODO reduce to info/debug when done testing
-            _LOGGER.warning(f"{self.name}: Feature {feature} not enabled")
+            _LOGGER.debug(f"{self.name}: Feature {feature} not enabled")
             return {}
 
         options = self.config.get(CONF_ENABLED_FEATURES, {})
 
         if not options:
-            _LOGGER.warning(f"{self.name}: No feature config found for {feature}")
+            _LOGGER.debug(f"{self.name}: No feature config found for {feature}")
 
         return options.get(feature, {})
 
@@ -465,7 +464,7 @@ class MagicArea(object):
 
         self.load_entity_list(entity_list)
 
-        # _LOGGER.debug(f"Loaded entities for area {self.slug}: {self.entities}")
+        _LOGGER.debug(f"Loaded entities for area {self.slug}: {self.entities}")
 
     def load_entity_list(self, entity_list):
 
@@ -489,7 +488,12 @@ class MagicArea(object):
                 updated_entity = {"entity_id": entity_id}
 
                 if latest_state:
-                    updated_entity.update(latest_state.attributes)
+                    # Need to exclude entity_id if present but latest_state.attributes
+                    # is a ReadOnlyDict so we can't remove it, need to iterate and select
+                    # all keys that are NOT entity_id
+                    for attr_key, attr_value in latest_state.attributes.items():
+                        if attr_key != 'entity_id':
+                            updated_entity[attr_key] = attr_value
 
                 # Ignore groups
                 if is_entity_list(updated_entity["entity_id"]):
