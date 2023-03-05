@@ -127,7 +127,6 @@ class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
         self.schedule_update_ha_state()
 
     def timeout_turn_off(self, next_interval):
-
         if self._state == STATE_ON:
             self.turn_off()
 

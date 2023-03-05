@@ -57,7 +57,6 @@ HVAC_ACTIONS = [
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-
     ma_data = hass.data[MODULE_DATA]
     area_data = ma_data[config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
@@ -69,7 +68,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 def setup_climate_group(hass, area, async_add_entities):
-
     # Check if there are any lights
     if not area.has_entities(CLIMATE_DOMAIN):
         _LOGGER.debug(f"No {CLIMATE_DOMAIN} entities for area {area.name} ")
@@ -394,7 +392,6 @@ def _reduce_attribute(
 
 class AreaClimateGroup(MagicEntity, ClimateGroup):
     def __init__(self, hass, area, entities):
-
         name = f"Area Climate ({area.name})"
 
         self._name = name
@@ -412,7 +409,6 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
         )
 
     def area_state_changed(self, area_id, states_tuple):
-
         if self.area.is_meta():
             _LOGGER.debug(f"{self.area.name} is meta. Noop.")
             return
@@ -434,7 +430,6 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
             return self._turn_off()
 
         if self.area.is_occupied() and self.hvac_mode == CURRENT_HVAC_OFF:
-
             configured_state = self.area.feature_config(
                 CONF_FEATURE_CLIMATE_GROUPS
             ).get(
@@ -453,7 +448,6 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
             return self._turn_on()
 
     def _turn_off(self):
-
         service_data = {
             ATTR_ENTITY_ID: self.entity_id,
             ATTR_HVAC_MODE: HVAC_MODE_OFF,
@@ -461,7 +455,6 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
         self.hass.services.call(CLIMATE_DOMAIN, SERVICE_SET_HVAC_MODE, service_data)
 
     def _turn_on(self):
-
         for mode in (HVAC_MODE_HEAT_COOL, HVAC_MODE_HEAT, HVAC_MODE_COOL):
             if mode not in self.hvac_modes:
                 continue
