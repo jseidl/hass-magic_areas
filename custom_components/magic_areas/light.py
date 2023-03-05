@@ -205,10 +205,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             if not self.category:
                 self.handle_group_state_change_primary()
             else:
-                # Check if origin event was fired by parent,
-                # if it, ignore
-                parent_entity_id = f"{LIGHT_DOMAIN}.{self.area.slug}_lights"
-
+                # Ignore certain events
                 if origin_event.event_type == "state_changed":
                     # Skip non ON/OFF state changes
                     if origin_event.data["old_state"].state not in [
@@ -228,18 +225,6 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
                         and origin_event.data["old_state"].attributes["restored"]
                     ):
                         return False
-
-                if origin_event.event_type == "call_service":
-                    if "service_data" in origin_event.data.keys():
-                        if (
-                            "entity_id" in origin_event.data["service_data"].keys()
-                            and origin_event.data["service_data"]["entity_id"]
-                            == parent_entity_id
-                        ):
-                            _LOGGER.debug(
-                                f"{self.name}: State change triggered by parent group, ignoring..."
-                            )
-                            return False
 
                 self.handle_group_state_change_secondary()
 
