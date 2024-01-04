@@ -11,14 +11,13 @@ from typing import Any, Callable, Iterator, List, Optional
 
 from homeassistant.components import climate
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
-from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
+from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity, ClimateEntityFeature, HVACAction
 from homeassistant.components.climate.const import *
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
-    TEMP_CELSIUS,
-    TEMP_FAHRENHEIT,
+    UnitOfTemperature,
 )
 from homeassistant.core import State, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -41,17 +40,17 @@ DEFAULT_NAME = "Climate Group"
 
 # edit the supported_flags
 SUPPORT_FLAGS = (
-    SUPPORT_TARGET_TEMPERATURE | SUPPORT_TARGET_TEMPERATURE_RANGE | SUPPORT_PRESET_MODE
+    ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE | ClimateEntityFeature.PRESET_MODE
 )
 
 # HVAC Action priority
 HVAC_ACTIONS = [
-    CURRENT_HVAC_HEAT,
-    CURRENT_HVAC_COOL,
-    CURRENT_HVAC_DRY,
-    CURRENT_HVAC_FAN,
-    CURRENT_HVAC_IDLE,
-    CURRENT_HVAC_OFF,
+    HVACAction.HEATING,
+    HVACAction.COOLING,
+    HVACAction.DRYING,
+    HVACAction.FAN,
+    HVACAction.IDLE,
+    HVACAction.OFF,
     None,
 ]
 
@@ -68,7 +67,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 def setup_climate_group(hass, area, async_add_entities):
-    # Check if there are any lights
+    # Check if there are any climate entities
     if not area.has_entities(CLIMATE_DOMAIN):
         _LOGGER.debug(f"No {CLIMATE_DOMAIN} entities for area {area.name} ")
         return
@@ -87,9 +86,9 @@ class ClimateGroup(ClimateEntity):
         self._name = name  # type: str
         self._entity_ids = entity_ids  # type: List[str]
         if "c" in unit.lower():
-            self._unit = TEMP_CELSIUS
+            self._unit = UnitOfTemperature.CELCIUS
         else:
-            self._unit = TEMP_FAHRENHEIT
+            self._unit = UnitOfTemperature.FAHRENHEIT
         self._min_temp = 0
         self._max_temp = 0
         self._current_temp = 0
