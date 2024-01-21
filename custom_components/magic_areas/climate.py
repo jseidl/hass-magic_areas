@@ -11,14 +11,12 @@ from typing import Any, Callable, Iterator, List, Optional
 
 from homeassistant.components import climate
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
-from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
+from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity, ClimateEntityFeature, HVACAction, HVACMode
 from homeassistant.components.climate.const import *
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
-    TEMP_CELSIUS,
-    TEMP_FAHRENHEIT,
 )
 from homeassistant.core import State, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -41,17 +39,17 @@ DEFAULT_NAME = "Climate Group"
 
 # edit the supported_flags
 SUPPORT_FLAGS = (
-    SUPPORT_TARGET_TEMPERATURE | SUPPORT_TARGET_TEMPERATURE_RANGE | SUPPORT_PRESET_MODE
+    ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE | ClimateEntityFeature.PRESET_MODE
 )
 
 # HVAC Action priority
 HVAC_ACTIONS = [
-    CURRENT_HVAC_HEAT,
-    CURRENT_HVAC_COOL,
-    CURRENT_HVAC_DRY,
-    CURRENT_HVAC_FAN,
-    CURRENT_HVAC_IDLE,
-    CURRENT_HVAC_OFF,
+    HVACAction.HEATING,
+    HVACAction.COOLING,
+    HVACAction.DRYING,
+    HVACAction.FAN,
+    HVACAction.IDLE,
+    HVACAction.OFF,
     None,
 ]
 
@@ -68,7 +66,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 def setup_climate_group(hass, area, async_add_entities):
-    # Check if there are any lights
+    # Check if there are any climate entities
     if not area.has_entities(CLIMATE_DOMAIN):
         _LOGGER.debug(f"No {CLIMATE_DOMAIN} entities for area {area.name} ")
         return
@@ -86,10 +84,7 @@ class ClimateGroup(ClimateEntity):
         """Initialize a climate group."""
         self._name = name  # type: str
         self._entity_ids = entity_ids  # type: List[str]
-        if "c" in unit.lower():
-            self._unit = TEMP_CELSIUS
-        else:
-            self._unit = TEMP_FAHRENHEIT
+        self._unit = unit
         self._min_temp = 0
         self._max_temp = 0
         self._current_temp = 0
@@ -188,11 +183,6 @@ class ClimateGroup(ClimateEntity):
         return False
 
     @property
-    def should_poll(self):
-        """No polling needed for a climate group."""
-        return False
-
-    @property
     def temperature_unit(self):
         """Return the unit of measurement that is used."""
         return self._unit
@@ -278,7 +268,7 @@ class ClimateGroup(ClimateEntity):
         # return the Mode (what the thermostat is set to do) in priority order (heat, cool, ...)
         self._mode = None
         # iterate through all hvac modes (skip first, as its off)
-        for hvac_mode in HVAC_MODES[1:] + [HVAC_MODE_OFF]:
+        for hvac_mode in HVAC_MODES[1:] + [HVACMode.OFF]:
             # if any thermostat is in the given mode return it
             if any([mode == hvac_mode for mode in all_modes]):
                 self._mode = hvac_mode
@@ -423,13 +413,13 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
         _LOGGER.debug(f"Climate group {self.name} detected area state change")
 
-        if AREA_STATE_CLEAR in new_states and self.hvac_mode != CURRENT_HVAC_OFF:
+        if AREA_STATE_CLEAR in new_states and self.hvac_mode != HVACAction.OFF:
             _LOGGER.debug(
                 f"{self.area.name}: Area clear, turning off Climate {self.entity_id}"
             )
             return self._turn_off()
 
-        if self.area.is_occupied() and self.hvac_mode == CURRENT_HVAC_OFF:
+        if self.area.is_occupied() and self.hvac_mode == HVACAction.OFF:
             configured_state = self.area.feature_config(
                 CONF_FEATURE_CLIMATE_GROUPS
             ).get(
@@ -450,12 +440,12 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
     def _turn_off(self):
         service_data = {
             ATTR_ENTITY_ID: self.entity_id,
-            ATTR_HVAC_MODE: HVAC_MODE_OFF,
+            ATTR_HVAC_MODE: HVACMode.OFF,
         }
         self.hass.services.call(CLIMATE_DOMAIN, SERVICE_SET_HVAC_MODE, service_data)
 
     def _turn_on(self):
-        for mode in (HVAC_MODE_HEAT_COOL, HVAC_MODE_HEAT, HVAC_MODE_COOL):
+        for mode in (HVACMode.HEAT_COOL, HVACMode.HEAT, HVACMode.COOL):
             if mode not in self.hvac_modes:
                 continue
 
