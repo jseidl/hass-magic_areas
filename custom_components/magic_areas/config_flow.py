@@ -1,5 +1,4 @@
 import logging
-from audioop import mul
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
