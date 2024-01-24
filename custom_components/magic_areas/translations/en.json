@@ -2,13 +2,18 @@
   "title": "Magic Areas",
   "config": {
     "step": {
-      "init": {
-        "description": "This integration is automatically configured on load. You don't need to manually add the integration on this UI. Your Magic Areas should be already on the integrations page. Use Home Assistant's built-in areas to create new ones and manage entities.",
-        "data": {}
+      "user": {
+        "title": "Create a Magic Area",
+        "description": "Choose the area you would like to make it magic!",
+        "data": {
+          "name": "Area"
+        }
       }
     },
     "abort": {
-      "not_supported": "This integration is automatically configured on load. You don't need to manually add the integration on this UI. Your Magic Areas should be already on the integrations page. Use Home Assistant's built-in areas to create new ones and manage entities."
+      "already_configured": "This device is already configured",
+      "invalid_area": "The selected area does not exist",
+      "no_more_areas": "All your areas are already magic!"
     }
   },
   "options": {

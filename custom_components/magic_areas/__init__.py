@@ -27,114 +27,114 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-CONFIG_SCHEMA = vol.Schema(
-    {DOMAIN: _DOMAIN_SCHEMA},
-    extra=vol.ALLOW_EXTRA,
-)
+# CONFIG_SCHEMA = vol.Schema(
+#     {DOMAIN: _DOMAIN_SCHEMA},
+#     extra=vol.ALLOW_EXTRA,
+# )
 
 
-async def async_setup(hass, config):
-    """Set up areas."""
+# async def async_setup(hass, config):
+#     """Set up areas."""
 
-    # Load registries
-    area_registry = hass.helpers.area_registry.async_get(hass)
+#     # Load registries
+#     area_registry = hass.helpers.area_registry.async_get(hass)
 
-    # Populate MagicAreas
-    areas = list(area_registry.async_list_areas())
-    _LOGGER.debug(f"Areas from registry: {areas}")
+#     # Populate MagicAreas
+#     areas = list(area_registry.async_list_areas())
+#     _LOGGER.debug(f"Areas from registry: {areas}")
 
-    if DOMAIN not in config.keys():
-        _LOGGER.error(f"'magic_areas:' not defined on YAML. Aborting.")
-        return
+#     if DOMAIN not in config.keys():
+#         _LOGGER.error(f"'magic_areas:' not defined on YAML. Aborting.")
+#         return
 
-    magic_areas_config = config[DOMAIN]
+#     magic_areas_config = config[DOMAIN]
 
-    # Check reserved names
-    reserved_names = [meta_area.lower() for meta_area in META_AREAS]
-    for area in areas:
-        if area.normalized_name in reserved_names:
-            _LOGGER.error(
-                f"Area uses reserved name {area.normalized_name}. Please rename your area and restart."
-            )
-            return
+#     # Check reserved names
+#     reserved_names = [meta_area.lower() for meta_area in META_AREAS]
+#     for area in areas:
+#         if area.normalized_name in reserved_names:
+#             _LOGGER.error(
+#                 f"Area uses reserved name {area.normalized_name}. Please rename your area and restart."
+#             )
+#             return
 
-    _LOGGER.debug("Area names are valid (not using reserved names), continuing...")
+#     _LOGGER.debug("Area names are valid (not using reserved names), continuing...")
 
-    # Add Meta Areas to area list
-    for meta_area in META_AREAS:
-        _LOGGER.debug(f"Appending Meta Area {meta_area} to the list of areas")
-        areas.append(
-            AreaEntry(
-                name=meta_area,
-                normalized_name=meta_area.lower(),
-                aliases=set(),
-                id=meta_area.lower(),
-            )
-        )
+#     # Add Meta Areas to area list
+#     for meta_area in META_AREAS:
+#         _LOGGER.debug(f"Appending Meta Area {meta_area} to the list of areas")
+#         areas.append(
+#             AreaEntry(
+#                 name=meta_area,
+#                 normalized_name=meta_area.lower(),
+#                 aliases=set(),
+#                 id=meta_area.lower(),
+#             )
+#         )
 
-    for area in areas:
-        _LOGGER.debug(f"Creating/loading configuration for {area.name}.")
-        config_entry = {}
-        source = SOURCE_USER
+#     for area in areas:
+#         _LOGGER.debug(f"Creating/loading configuration for {area.name}.")
+#         config_entry = {}
+#         source = SOURCE_USER
 
-        if area.id not in magic_areas_config.keys():
-            default_config = {f"{area.id}": {}}
-            config_entry = _DOMAIN_SCHEMA(default_config)[area.id]
-            _LOGGER.debug(
-                f"Configuration for area {area.name} not found on YAML, creating from default."
-            )
-        else:
-            config_entry = magic_areas_config[area.id]
-            source = SOURCE_IMPORT
-            _LOGGER.debug(
-                f"Configuration for area {area.name} found on YAML, loading from saved config."
-            )
+#         if area.id not in magic_areas_config.keys():
+#             default_config = {f"{area.id}": {}}
+#             config_entry = _DOMAIN_SCHEMA(default_config)[area.id]
+#             _LOGGER.debug(
+#                 f"Configuration for area {area.name} not found on YAML, creating from default."
+#             )
+#         else:
+#             config_entry = magic_areas_config[area.id]
+#             source = SOURCE_IMPORT
+#             _LOGGER.debug(
+#                 f"Configuration for area {area.name} found on YAML, loading from saved config."
+#             )
 
-        if area.normalized_name in reserved_names:
-            _LOGGER.debug(f"Meta area {area.name} found, setting correct type.")
-            config_entry.update({CONF_TYPE: AREA_TYPE_META})
+#         if area.normalized_name in reserved_names:
+#             _LOGGER.debug(f"Meta area {area.name} found, setting correct type.")
+#             config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
-        extra_opts = {
-            CONF_NAME: area.name,
-            CONF_ID: area.id,
-        }
-        config_entry.update(extra_opts)
-        _LOGGER.debug(
-            f"Configuration for area {area.name} updated with extra options: {extra_opts}"
-        )
+#         extra_opts = {
+#             CONF_NAME: area.name,
+#             CONF_ID: area.id,
+#         }
+#         config_entry.update(extra_opts)
+#         _LOGGER.debug(
+#             f"Configuration for area {area.name} updated with extra options: {extra_opts}"
+#         )
 
-        _LOGGER.debug(
-            f"Creating config flow task for area {area.name} ({area.id}): {config_entry}"
-        )
-        hass.async_create_task(
-            hass.config_entries.flow.async_init(
-                DOMAIN, context={CONF_SOURCE: source}, data=config_entry
-            )
-        )
+#         _LOGGER.debug(
+#             f"Creating config flow task for area {area.name} ({area.id}): {config_entry}"
+#         )
+#         hass.async_create_task(
+#             hass.config_entries.flow.async_init(
+#                 DOMAIN, context={CONF_SOURCE: source}, data=config_entry
+#             )
+#         )
 
-    async def async_check_all_ready(event) -> bool:
-        if MODULE_DATA not in hass.data.keys():
-            return False
+#     async def async_check_all_ready(event) -> bool:
+#         if MODULE_DATA not in hass.data.keys():
+#             return False
 
-        data = hass.data[MODULE_DATA]
-        areas = [area_data[DATA_AREA_OBJECT] for area_data in data.values()]
+#         data = hass.data[MODULE_DATA]
+#         areas = [area_data[DATA_AREA_OBJECT] for area_data in data.values()]
 
-        for area in areas:
-            if area.config.get(CONF_TYPE) == AREA_TYPE_META:
-                continue
-            if not area.initialized:
-                _LOGGER.info(f"Area {area.name} not ready")
-                return False
+#         for area in areas:
+#             if area.config.get(CONF_TYPE) == AREA_TYPE_META:
+#                 continue
+#             if not area.initialized:
+#                 _LOGGER.info(f"Area {area.name} not ready")
+#                 return False
 
-        _LOGGER.debug(f"All areas ready. Firing EVENT_MAGICAREAS_READY.")
-        hass.bus.async_fire(EVENT_MAGICAREAS_READY)
+#         _LOGGER.debug(f"All areas ready. Firing EVENT_MAGICAREAS_READY.")
+#         hass.bus.async_fire(EVENT_MAGICAREAS_READY)
 
-        return True
+#         return True
 
-    # Checks whenever an area is ready
-    hass.bus.async_listen(EVENT_MAGICAREAS_AREA_READY, async_check_all_ready)
+#     # Checks whenever an area is ready
+#     hass.bus.async_listen(EVENT_MAGICAREAS_AREA_READY, async_check_all_ready)
 
-    return True
+#     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):

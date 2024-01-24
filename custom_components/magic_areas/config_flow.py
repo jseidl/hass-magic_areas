@@ -6,6 +6,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
+from homeassistant.helpers.area_registry import AreaEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
@@ -15,6 +16,7 @@ from homeassistant.helpers.selector import (
 )
 
 from custom_components.magic_areas.const import (
+    _DOMAIN_SCHEMA,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
     AREA_STATE_DARK,
@@ -46,6 +48,7 @@ from custom_components.magic_areas.const import (
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
     CONF_FEATURE_PRESENCE_HOLD,
+    CONF_ID,
     CONF_ICON,
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
@@ -75,6 +78,7 @@ from custom_components.magic_areas.const import (
     DEFAULT_ICON,
     DOMAIN,
     LIGHT_GROUP_ACT_ON_OPTIONS,
+    META_AREAS,
     META_AREA_GLOBAL,
     META_AREA_SCHEMA,
     MODULE_DATA,
@@ -96,65 +100,7 @@ _LOGGER = logging.getLogger(__name__)
 
 EMPTY_ENTRY = [""]
 
-
-class NullableEntitySelector(EntitySelector):
-    def __call__(self, data):
-        """Validate the passed selection, if passed."""
-
-        _LOGGER.warn(f"Null data {data}")
-
-        if not data:
-            return data
-
-        return super().__call__(data)
-
-
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Magic Areas."""
-
-    VERSION = 1
-
-    async def async_step_user(self, user_input=None):
-        """Handle the initial step."""
-
-        if user_input is not None:
-            await self.async_set_unique_id(user_input[CONF_NAME])
-            self._abort_if_unique_id_configured()
-            return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
-
-        return self.async_abort(reason="not_supported")
-
-    async def async_step_import(self, user_input=None):
-        """Handle configuration by yaml file."""
-        await self.async_set_unique_id(user_input[CONF_NAME])
-        for entry in self._async_current_entries():
-            if entry.unique_id == self.unique_id:
-                self.hass.config_entries.async_update_entry(entry, data=user_input)
-                self._abort_if_unique_id_configured()
-        return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
-
-    @staticmethod
-    @callback
-    def async_get_options_flow(config_entry):
-        """Get the options flow for this handler."""
-        return OptionsFlowHandler(config_entry)
-
-
-class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle a option flow for Adaptive Lighting."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry):
-        """Initialize options flow."""
-        self.config_entry = config_entry
-        self.data = None
-        self.area = None
-        self.all_entities = []
-        self.area_entities = []
-        self.all_area_entities = []
-        self.all_lights = []
-        self.all_media_players = []
-        self.selected_features = []
-        self.features_to_configure = None
+class ConfigBase(object):
 
     # Selector builder
     def _build_selector_select(self, options=[], multiple=False):
@@ -203,7 +149,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 name,
                 description={
                     "suggested_value": saved_options.get(name)
-                    if saved_options.get(name)
+                    if saved_options.get(name) is not None
                     else default
                 },
                 default=default,
@@ -219,6 +165,140 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             return schema
         else:
             return vol.Schema(schema)
+
+class NullableEntitySelector(EntitySelector):
+    def __call__(self, data):
+        """Validate the passed selection, if passed."""
+
+        if data in (None, ''):
+            return data
+
+        return super().__call__(data)
+
+
+class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
+    """Handle a config flow for Magic Areas."""
+
+    VERSION = 1
+    
+    async def async_step_user(self, user_input=None):
+        """Handle the initial step."""
+        errors = {}
+
+        reserved_names = [meta_area.lower() for meta_area in META_AREAS]
+
+        # Load registries
+        area_registry = self.hass.helpers.area_registry.async_get(self.hass)
+        areas = list(area_registry.async_list_areas())
+        area_ids = [area.id for area in areas]
+
+        # Add Meta Areas to area list
+        for meta_area in META_AREAS:
+
+            # Prevent conflicts between meta areas and existing areas
+            if meta_area.lower() in area_ids:
+                _LOGGER.warn(f"You have an area with a reserved name {meta_area}. This will prevent from using the {meta_area} Meta area.")
+                continue
+
+            _LOGGER.debug(f"Appending Meta Area {meta_area} to the list of areas")
+            areas.append(
+                AreaEntry(
+                    name=meta_area,
+                    normalized_name=meta_area.lower(),
+                    aliases=set(),
+                    id=meta_area.lower(),
+                )
+            )
+
+        if user_input is not None:
+            
+            # Look up area object by name
+            area_object = None
+
+            for area in areas:
+
+                area_name = user_input[CONF_NAME]
+
+                # Handle meta area name append
+                if area_name.startswith("(Meta)"):
+                    area_name = ' '.join(area_name.split(' ')[1:])
+
+                if area.name == area_name:
+                    area_object = area
+                    break
+
+            # Fail if area name not found,
+            # this should never happen in ideal conditions.
+            if not area_object:
+                return self.async_abort(reason="invalid_area")
+            
+            # Reserve unique name / already configured check
+            await self.async_set_unique_id(area_object.id)
+            self._abort_if_unique_id_configured()
+
+            # Create area entry with default config
+            config_entry = _DOMAIN_SCHEMA({f"{area.id}": {}})[area.id]
+            extra_opts = {
+                CONF_NAME: area.name,
+                CONF_ID: area.id
+            }
+            config_entry.update(extra_opts)
+
+            # Handle Meta area
+            if area.normalized_name in reserved_names:
+                _LOGGER.debug(f"Meta area {area.name} found, setting correct type.")
+                config_entry.update({CONF_TYPE: AREA_TYPE_META})
+
+            return self.async_create_entry(title=user_input[CONF_NAME], data=config_entry)
+
+        # Filter out already-configured areas
+        configured_areas = []
+        ma_data = self.hass.data[MODULE_DATA]
+
+        for config_id, config_data in ma_data.items():
+            configured_areas.append(config_data[DATA_AREA_OBJECT].id)
+
+        available_areas = [area for area in areas if area.id not in configured_areas]
+
+        if not available_areas:
+            return self.async_abort(reason="no_more_areas")
+
+        # Slight ordering trick so Meta areas are at the bottom
+        available_area_names = sorted([area.name for area in available_areas if area.normalized_name not in reserved_names])
+        available_area_names.extend(sorted([f"(Meta) {area.name}" for area in available_areas if area.normalized_name in reserved_names]))
+
+        schema = vol.Schema({
+            vol.Required(CONF_NAME): vol.In(available_area_names)
+        })
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema = schema,
+            errors=errors,
+        )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        """Get the options flow for this handler."""
+        return OptionsFlowHandler(config_entry)
+
+
+class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
+    """Handle a option flow for Adaptive Lighting."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry):
+        """Initialize options flow."""
+        self.config_entry = config_entry
+        self.data = None
+        self.area = None
+        self.all_entities = []
+        self.area_entities = []
+        self.all_area_entities = []
+        self.all_lights = []
+        self.all_media_players = []
+        self.selected_features = []
+        self.features_to_configure = None
 
     async def async_step_init(self, user_input=None):
         """Initialize the options flow"""
