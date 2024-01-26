@@ -1,11 +1,10 @@
-DEPENDENCIES = ["magic_areas"]
-
 import logging
 
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 
-from .base import AggregateBase, SensorBase
-from .const import (
+from custom_components.magic_areas.base import AggregateBase
+from custom_components.magic_areas.base.primitives import SensorBase
+from custom_components.magic_areas.const import (
     AGGREGATE_MODE_SUM,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
@@ -14,13 +13,6 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-# async def async_setup_platform(
-#     hass, config, async_add_entities, discovery_info=None
-# ):  # pylint: disable=unused-argument
-
-#     await load_sensors(hass, async_add_entities)
-
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Demo config entry."""
@@ -104,11 +96,11 @@ class AreaSensorGroupSensor(AggregateBase, SensorBase):
         self.tracking_listeners = []
 
     async def _initialize(self, _=None) -> None:
-        _LOGGER.debug(f"{self.name} Sensor initializing.")
+        self.logger.debug(f"{self.name} Sensor initializing.")
 
         self.load_sensors(SENSOR_DOMAIN, self._unit_of_measurement)
 
         # Setup the listeners
         await self._setup_listeners()
 
-        _LOGGER.debug(f"{self.name} Sensor initialized.")
+        self.logger.debug(f"{self.name} Sensor initialized.")

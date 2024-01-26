@@ -16,8 +16,8 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .base import MagicEntity
-from .const import (
+from custom_components.magic_areas.base import MagicEntity
+from custom_components.magic_areas.const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,
     AREA_STATE_CLEAR,
@@ -149,7 +149,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         if not self.category:
             self._attributes["child_ids"] = self._child_ids
 
-        _LOGGER.debug(
+        self.logger.debug(
             f"Light group {self._name} ({category}/{self._icon}) created with entities: {self._entities}"
         )
 
@@ -189,11 +189,11 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         # If we changed last, unset
         if self.controlled:
             self.controlled = False
-            _LOGGER.debug(f"{self.name}: Group controlled by us.")
+            self.logger.debug(f"{self.name}: Group controlled by us.")
         else:
             # If not, it was manually controlled, stop controlling
             self.controlling = False
-            _LOGGER.debug(f"{self.name}: Group controlled by something else.")
+            self.logger.debug(f"{self.name}: Group controlled by something else.")
 
     def group_state_changed(self, event):
         # If area is not occupied, ignore
@@ -282,14 +282,14 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         self.controlling = True
         self._attributes["controlling"] = self.controlling
         self.schedule_update_ha_state()
-        _LOGGER.debug("{self.name}: Control Reset.")
+        self.logger.debug("{self.name}: Control Reset.")
 
     def state_change_primary(self, states_tuple):
         new_states, lost_states = states_tuple
 
         # If area clear
         if AREA_STATE_CLEAR in new_states:
-            _LOGGER.debug(f"{self.name}: Area is clear, should turn off lights!")
+            self.logger.debug(f"{self.name}: Area is clear, should turn off lights!")
             self._reset_control()
             return self._turn_off()
 
@@ -299,7 +299,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         new_states, lost_states = states_tuple
 
         if AREA_STATE_CLEAR in new_states:
-            _LOGGER.debug(f"{self.name}: Area is clear, reset control state and Noop!")
+            self.logger.debug(f"{self.name}: Area is clear, reset control state and Noop!")
             self._reset_control()
             return False
 
@@ -311,20 +311,20 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
 
         # Only react to actual secondary state changes
         if not new_states and not lost_states:
-            _LOGGER.debug(f"{self.name}: No new or lost states, noop.")
+            self.logger.debug(f"{self.name}: No new or lost states, noop.")
             return False
 
         # Do not handle lights that are not tied to a state
         if not self.assigned_states:
-            _LOGGER.debug(f"{self.name}: No assigned states. Noop.")
+            self.logger.debug(f"{self.name}: No assigned states. Noop.")
             return False
 
         # If area clear, do nothing (main group will)
         if not self.area.is_occupied():
-            _LOGGER.debug(f"Light group {self.name}: Area not occupied, ignoring.")
+            self.logger.debug(f"Light group {self.name}: Area not occupied, ignoring.")
             return False
 
-        _LOGGER.debug(
+        self.logger.debug(
             f"Light group {self.name} assigned states: {self.assigned_states}. New states: {new_states} / Lost states {lost_states}"
         )
 
@@ -340,7 +340,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             state for state in valid_states if state not in AREA_PRIORITY_STATES
         ]
 
-        _LOGGER.debug(
+        self.logger.debug(
             f"{self.name} Has priority states? {has_priority_states}. Non-priority states: {non_priority_states}"
         )
 
@@ -350,7 +350,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             AREA_STATE_OCCUPIED in new_states
             and LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE not in self.act_on
         ):
-            _LOGGER.debug(
+            self.logger.debug(
                 f"Area occupancy change detected but not configured to act on. Skipping."
             )
             return False
@@ -360,7 +360,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             AREA_STATE_OCCUPIED not in new_states
             and LIGHT_GROUP_ACT_ON_STATE_CHANGE not in self.act_on
         ):
-            _LOGGER.debug(
+            self.logger.debug(
                 f"Area state change detected but not configured to act on. Skipping."
             )
             return False
@@ -371,7 +371,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
                 valid_states.remove(non_priority_state)
 
         if valid_states:
-            _LOGGER.debug(
+            self.logger.debug(
                 f"Area has valid states ({valid_states}), {self.name} SHOULD TURN ON!"
             )
             self.controlled = True
@@ -379,7 +379,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
 
         # Only turn lights off if not going into dark state
         if AREA_STATE_DARK in new_states:
-            _LOGGER.debug(f"{self.name}: Entering {AREA_STATE_DARK} state, noop.")
+            self.logger.debug(f"{self.name}: Entering {AREA_STATE_DARK} state, noop.")
             return False
 
         # Turn off if we're a PRIORITY_STATE and we're coming out of it
@@ -397,7 +397,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             state for state in AREA_PRIORITY_STATES if state in new_states
         ]
         if not new_priority_states:
-            _LOGGER.debug(f"{self.name}: No new priority states. Noop.")
+            self.logger.debug(f"{self.name}: No new priority states. Noop.")
             return False
 
         self.controlled = True
@@ -405,7 +405,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
 
     def area_state_changed(self, area_id, states_tuple):
         if area_id != self.area.id:
-            _LOGGER.debug(
+            self.logger.debug(
                 f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
             )
             return
@@ -413,12 +413,12 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         automatic_control = self.is_control_enabled()
 
         if not automatic_control:
-            _LOGGER.debug(
+            self.logger.debug(
                 f"{self.name}: Automatic control for light group is disabled, skipping..."
             )
             return False
 
-        _LOGGER.debug(f"Light group {self.name} detected area state change")
+        self.logger.debug(f"Light group {self.name} detected area state change")
 
         # Handle all lights group
         if not self.category:
@@ -432,7 +432,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            _LOGGER.debug(f"{self.name} restored [state={last_state.state}]")
+            self.logger.debug(f"{self.name} restored [state={last_state.state}]")
             self._state = last_state.state == STATE_ON
 
             if "controlling" in last_state.attributes.keys():

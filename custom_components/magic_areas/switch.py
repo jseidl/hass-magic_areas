@@ -1,14 +1,12 @@
 DEPENDENCIES = ["magic_areas"]
 
-import logging
-
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.helpers.event import call_later
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .base import MagicEntity
-from .const import (
+from custom_components.magic_areas.base import MagicEntity
+from custom_components.magic_areas.const import (
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_PRESENCE_HOLD_TIMEOUT,
@@ -18,9 +16,6 @@ from .const import (
     ICON_PRESENCE_HOLD,
     MODULE_DATA,
 )
-
-_LOGGER = logging.getLogger(__name__)
-
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
@@ -44,12 +39,12 @@ class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
         self._name = f"Area Light Control ({self.area.name})"
         self._state = STATE_OFF
 
-        _LOGGER.debug(f"{self.name} Switch initializing.")
+        self.logger.debug(f"{self.name} Switch initializing.")
 
         # Set attributes
         self._attributes = {}
 
-        _LOGGER.info(f"{self.name} Switch initialized.")
+        self.logger.info(f"{self.name} Switch initialized.")
 
     @property
     def is_on(self):
@@ -67,7 +62,7 @@ class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            _LOGGER.debug(f"Switch {self.name} restored [state={last_state.state}]")
+            self.logger.debug(f"Switch {self.name} restored [state={last_state.state}]")
             self._state = last_state.state
         else:
             self._state = STATE_OFF
@@ -94,14 +89,14 @@ class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
         self._name = f"Area Presence Hold ({self.area.name})"
         self._state = STATE_OFF
 
-        _LOGGER.debug(f"{self.name} Switch initializing.")
+        self.logger.debug(f"{self.name} Switch initializing.")
 
         self.timeout_callback = None
 
         # Set attributes
         self._attributes = {}
 
-        _LOGGER.info(f"{self.name} Switch initialized.")
+        self.logger.info(f"{self.name} Switch initialized.")
 
     @property
     def is_on(self):
@@ -119,7 +114,7 @@ class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            _LOGGER.debug(f"Switch {self.name} restored [state={last_state.state}]")
+            self.logger.debug(f"Switch {self.name} restored [state={last_state.state}]")
             self._state = last_state.state
         else:
             self._state = STATE_OFF

@@ -15,10 +15,8 @@ from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, ST
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
-_LOGGER = logging.getLogger(__name__)
-
-from .base import MagicEntity
-from .const import (
+from custom_components.magic_areas.base import MagicEntity
+from custom_components.magic_areas.const import (
     AREA_STATE_CLEAR,
     AREA_STATE_SLEEP,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
@@ -139,7 +137,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
             self._tracked_entities.extend(entity_list)
 
-        _LOGGER.info(f"AreaAwareMediaPlayer loaded.")
+        self.logger.info(f"AreaAwareMediaPlayer loaded.")
 
     def _update_attributes(self):
         self._attributes["areas"] = [
@@ -154,7 +152,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER
         ).get(CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES)
 
-        _LOGGER.debug(f"{area.name}: Notification devices: {notification_devices}")
+        self.logger.debug(f"{area.name}: Notification devices: {notification_devices}")
 
         area_media_players = [
             entity["entity_id"] for entity in area.entities[MEDIA_PLAYER_DOMAIN]
@@ -173,7 +171,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            _LOGGER.debug(
+            self.logger.debug(
                 f"Nedia Player {self.name} restored [state={last_state.state}]"
             )
             self._state = last_state.state
@@ -200,7 +198,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             area_binary_sensor_state = self.hass.states.get(area_binary_sensor_name)
 
             if not area_binary_sensor_state:
-                _LOGGER.debug(f"No state found for entity {area_binary_sensor_name}")
+                self.logger.debug(f"No state found for entity {area_binary_sensor_name}")
                 continue
 
             # Ignore not occupied areas
@@ -247,7 +245,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
         # Fail early
         if not active_areas:
-            _LOGGER.info("No areas active. Ignoring.")
+            self.logger.info("No areas active. Ignoring.")
             return False
 
         # Gather media_player entities
@@ -256,7 +254,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             media_players.extend(self.get_media_players_for_area(area))
 
         if not media_players:
-            _LOGGER.info("No media_player entities to forward. Ignoring.")
+            self.logger.info("No media_player entities to forward. Ignoring.")
             return False
 
         data = {
@@ -282,7 +280,7 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
 
         MediaPlayerGroup.__init__(self, self.unique_id, self._name, self._entities)
 
-        _LOGGER.debug(
+        self.logger.debug(
             f"Media Player group {self._name} created with entities: {self._entities}"
         )
 
@@ -290,15 +288,15 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
         new_states, lost_states = states_tuple
 
         if area_id != self.area.id:
-            _LOGGER.debug(
+            self.logger.debug(
                 f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
             )
             return
 
-        _LOGGER.debug(f"Media Player group {self.name} detected area state change")
+        self.logger.debug(f"Media Player group {self.name} detected area state change")
 
         if AREA_STATE_CLEAR in new_states:
-            _LOGGER.debug(f"{self.area.name}: Area clear, turning off media players")
+            self.logger.debug(f"{self.area.name}: Area clear, turning off media players")
             self._turn_off()
 
     def _turn_off(self):

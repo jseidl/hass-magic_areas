@@ -3,9 +3,10 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.area_registry import AreaEntry
 
-from .base import MagicArea, MagicMetaArea
-from .const import (
+from custom_components.magic_areas.base.magic import MagicArea, MagicMetaArea
+from custom_components.magic_areas.const import (
     CONF_ID,
     CONF_NAME,
     DATA_AREA_OBJECT,
@@ -42,7 +43,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             config_entry,
         )
     else:
-        magic_area = MagicMetaArea(hass, area_name, config_entry)
+        meta_area = AreaEntry(
+            name=area_name,
+            normalized_name=area_id,
+            aliases=set(),
+            id=area_id,
+        )
+        magic_area = MagicMetaArea(hass, meta_area, config_entry)
 
     _LOGGER.debug(
         f"Magic Area {magic_area.name} ({magic_area.id}) created: {magic_area.config}"
