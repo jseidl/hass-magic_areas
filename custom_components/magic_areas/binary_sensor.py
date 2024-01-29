@@ -151,15 +151,96 @@ async def create_aggregate_sensors(area, async_add_entities):
 
 
 class AreaPresenceBinarySensor(BinarySensorBase):
+    """
+        Setup & Teardown
+    """
     def __init__(self, area):
         """Initialize the area presence binary sensor."""
 
-        super().__init__(area, device_class = BinarySensorDeviceClass.OCCUPANCY)
+        super().__init__(area, BinarySensorDeviceClass.OCCUPANCY)
 
         self._name = f"Area ({self.area.name})"
 
         self.last_off_time = datetime.utcnow()
         self.clear_timeout_callback = None
+
+    @property
+    def icon(self):
+        """Return the icon to be used for this entity."""
+        if self.area.config.get(CONF_ICON):
+            return self.area.config.get(CONF_ICON)
+        return None
+
+    @property
+    def is_on(self):
+        """Return true if the area is occupied."""
+        return self.area.has_state(AREA_STATE_OCCUPIED)
+
+    async def restore_state(self):
+
+        last_state = await self.async_get_last_state()
+        is_new_entry = last_state is None  # newly added to HA
+
+        if is_new_entry:
+            self.logger.debug(f"New sensor created: {self.name}")
+            self.update_state()
+        else:
+            _LOGGER.debug(f"Sensor {self.name} restored [state={last_state.state}]")
+            if ATTR_STATES in last_state.attributes.keys():
+                self.area.states = last_state.attributes[ATTR_STATES]
+            else:
+                self.area.states = []
+            self.schedule_update_ha_state()
+
+    async def _initialize(self, _=None) -> None:
+        self.logger.debug(f"{self.name} Sensor initializing.")
+
+        self.load_presence_sensors()
+        self.load_attributes()
+
+        # Setup the listeners
+        await self._setup_listeners()
+
+        _LOGGER.debug(f"{self.name} Sensor initialized.")
+
+    async def _setup_listeners(self, _=None) -> None:
+        self.logger.debug("%s: Called '_setup_listeners'", self.name)
+        if not self.hass.is_running:
+            self.logger.debug("%s: Cancelled '_setup_listeners'", self.name)
+            return
+
+        # Track presence sensors
+        assert self.hass
+        self.async_on_remove(
+            async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
+        )
+
+        # Track secondary states
+        for configurable_state in self.get_configured_secondary_states():
+            (
+                configurable_state_entity,
+                configurable_state_value,
+            ) = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
+            tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+                configurable_state_entity, None
+            )
+
+            if not tracked_entity:
+                continue
+
+            self.logger.debug(f"Secondary state tracking: {tracked_entity}")
+
+            self.async_on_remove(
+                async_track_state_change(
+                    self.hass, tracked_entity, self.secondary_state_change
+                )
+            )
+
+        # Timed self update
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+        self.async_on_remove(
+            async_track_time_interval(self.hass, self.refresh_states, delta)
+        )
 
     def load_presence_sensors(self) -> None:
         if self.area.is_meta():
@@ -228,155 +309,27 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._attributes.update(
             {
                 ATTR_ON_STATES: self.area.config.get(CONF_ON_STATES),
-                ATTR_STATES: self._get_area_states(),
+                ATTR_STATES: self.get_area_states(),
             }
         )
 
-    @property
-    def icon(self):
-        """Return the icon to be used for this entity."""
-        if self.area.config.get(CONF_ICON):
-            return self.area.config.get(CONF_ICON)
-        return None
+    def update_attributes(self):
+        self._attributes[ATTR_STATES] = self.area.states
+        self._attributes[ATTR_CLEAR_TIMEOUT] = self.get_clear_timeout()
 
-    @property
-    def is_on(self):
-        """Return true if the area is occupied."""
-        return self.area.has_state(AREA_STATE_OCCUPIED)
+        if self.area.is_meta():
+            self._attributes[ATTR_ACTIVE_AREAS] = self.area.get_active_areas()
 
-    async def async_added_to_hass(self):
-        """Call when entity about to be added to hass."""
-        if self.hass.is_running:
-            await self._initialize()
-        else:
-            self.hass.bus.async_listen_once(
-                EVENT_HOMEASSISTANT_STARTED, self._initialize
-            )
 
-        last_state = await self.async_get_last_state()
-        is_new_entry = last_state is None  # newly added to HA
+    """
+        State Change Handling
+    """
 
-        if is_new_entry:
-            self.logger.debug(f"New sensor created: {self.name}")
-            self._update_state()
-        else:
-            _LOGGER.debug(f"Sensor {self.name} restored [state={last_state.state}]")
-            if ATTR_STATES in last_state.attributes.keys():
-                self.area.states = last_state.attributes[ATTR_STATES]
-            else:
-                self.area.states = []
-            self.schedule_update_ha_state()
-
-    async def _initialize(self, _=None) -> None:
-        self.logger.debug(f"{self.name} Sensor initializing.")
-
-        self.load_presence_sensors()
-        self.load_attributes()
-
-        # Setup the listeners
-        await self._setup_listeners()
-
-        _LOGGER.debug(f"{self.name} Sensor initialized.")
-
-    async def _setup_listeners(self, _=None) -> None:
-        self.logger.debug("%s: Called '_setup_listeners'", self.name)
-        if not self.hass.is_running:
-            self.logger.debug("%s: Cancelled '_setup_listeners'", self.name)
-            return
-
-        # Track presence sensors
-        assert self.hass
-        self.async_on_remove(
-            async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
-        )
-
-        # Track secondary states
-        for configurable_state in self._get_configured_secondary_states():
-            (
-                configurable_state_entity,
-                configurable_state_value,
-            ) = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
-            tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                configurable_state_entity, None
-            )
-
-            if not tracked_entity:
-                continue
-
-            self.logger.debug(f"Secondary state tracking: {tracked_entity}")
-
-            self.async_on_remove(
-                async_track_state_change(
-                    self.hass, tracked_entity, self.secondary_state_change
-                )
-            )
-
-        # Timed self update
-        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
-        self.async_on_remove(
-            async_track_time_interval(self.hass, self.refresh_states, delta)
-        )
-
-    def secondary_state_change(self, entity_id, from_state, to_state):
-        self.logger.debug(
-            f"{self.name}: Secondary state change: entity '{entity_id}' changed to {to_state.state}"
-        )
-
-        if to_state.state in INVALID_STATES:
-            self.logger.debug(
-                f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}"
-            )
-            return None
-
-        self._update_state()
-
-    def _update_area_states(self):
-        last_state = set(self.area.states.copy())
-        # self._update_state()
-        current_state = set(self._get_area_states())
-
-        if last_state == current_state:
-            return ([], [])
-
-        # Calculate what's new
-        new_states = current_state - last_state
-        lost_states = last_state - current_state
-        self.logger.debug(
-            f"{self.name}: Current state: {current_state}, last state: {last_state} -> new states {new_states} / lost states {lost_states}"
-        )
-
-        self.area.states = list(current_state)
-
-        return (new_states, lost_states)
-
-    def _get_configured_secondary_states(self):
-        secondary_states = []
-
-        for (
-            configurable_state,
-            configurable_state_opts,
-        ) in CONFIGURABLE_AREA_STATE_MAP.items():
-            (
-                configurable_state_entity,
-                configurable_state_value,
-            ) = configurable_state_opts
-
-            secondary_state_entity = self.area.config.get(
-                CONF_SECONDARY_STATES, {}
-            ).get(configurable_state_entity, None)
-
-            if not secondary_state_entity:
-                continue
-
-            secondary_states.append(configurable_state)
-
-        return secondary_states
-
-    def _get_area_states(self):
+    def get_area_states(self):
         states = []
 
         # Get Main occupancy state
-        current_state = self._get_occupancy_state()
+        current_state = self.get_occupancy_state()
         last_state = self.area.is_occupied()
 
         states.append(AREA_STATE_OCCUPIED if current_state else AREA_STATE_CLEAR)
@@ -397,7 +350,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         if AREA_STATE_OCCUPIED in states and seconds_since_last_change >= extended_time:
             states.append(AREA_STATE_EXTENDED)
 
-        configurable_states = self._get_configured_secondary_states()
+        configurable_states = self.get_configured_secondary_states()
 
         # Assume AREA_STATE_DARK if not configured
         if AREA_STATE_DARK not in configurable_states:
@@ -433,13 +386,120 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         return states
 
-    def _update_attributes(self):
-        self._attributes[ATTR_STATES] = self.area.states
-        self._attributes[ATTR_CLEAR_TIMEOUT] = self.get_clear_timeout()
+    def update_area_states(self):
+        last_state = set(self.area.states.copy())
+        # self.update_state()
+        current_state = set(self.get_area_states())
 
-        if self.area.is_meta():
-            self._attributes[ATTR_ACTIVE_AREAS] = self.area.get_active_areas()
+        if last_state == current_state:
+            return ([], [])
 
+        # Calculate what's new
+        new_states = current_state - last_state
+        lost_states = last_state - current_state
+        self.logger.debug(
+            f"{self.name}: Current state: {current_state}, last state: {last_state} -> new states {new_states} / lost states {lost_states}"
+        )
+
+        self.area.states = list(current_state)
+
+        return (new_states, lost_states)
+
+
+    def get_occupancy_state(self):
+        valid_on_states = (
+            [STATE_ON] if self.area.is_meta() else self.area.config.get(CONF_ON_STATES)
+        )
+        area_state = self.get_sensors_state(valid_states=valid_on_states)
+
+        if not area_state:
+            if not self.area.is_occupied():
+                return False
+
+            if self.is_on_clear_timeout():
+                self.logger.debug(f"{self.area.name}: Area is on timeout")
+                if self.timeout_exceeded():
+                    return False
+            else:
+                if self.area.is_occupied() and not area_state:
+                    self.logger.debug(
+                        f"{self.area.name}: Area not on timeout, setting call_later"
+                    )
+                    self.set_clear_timeout()
+        else:
+            self.remove_clear_timeout()
+
+        return True
+
+    def update_state(self):
+        states_tuple = self.update_area_states()
+        new_states, lost_states = states_tuple
+
+        state_changed = any(
+            state in new_states for state in [AREA_STATE_OCCUPIED, AREA_STATE_CLEAR]
+        )
+
+        self.logger.debug(
+            f"{self.area.name}: States updated. New states: {new_states} / Lost states: {lost_states}"
+        )
+
+        self.update_attributes()
+        self.schedule_update_ha_state()
+
+        if state_changed:
+            # Consider all secondary states new
+            states_tuple = (self.area.states.copy(), [])
+
+        self.report_state_change(states_tuple)
+
+    def report_state_change(self, states_tuple=([], [])):
+        new_states, lost_states = states_tuple
+        self.logger.debug(
+            f"Reporting state change for {self.area.name} (new states: {new_states}/lost states: {lost_states})"
+        )
+        dispatcher_send(
+            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, states_tuple
+        )
+
+    def secondary_state_change(self, entity_id, from_state, to_state):
+        self.logger.debug(
+            f"{self.name}: Secondary state change: entity '{entity_id}' changed to {to_state.state}"
+        )
+
+        if to_state.state in INVALID_STATES:
+            self.logger.debug(
+                f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}"
+            )
+            return None
+
+        self.update_state()
+
+    def get_configured_secondary_states(self):
+        secondary_states = []
+
+        for (
+            configurable_state,
+            configurable_state_opts,
+        ) in CONFIGURABLE_AREA_STATE_MAP.items():
+            (
+                configurable_state_entity,
+                configurable_state_value,
+            ) = configurable_state_opts
+
+            secondary_state_entity = self.area.config.get(
+                CONF_SECONDARY_STATES, {}
+            ).get(configurable_state_entity, None)
+
+            if not secondary_state_entity:
+                continue
+
+            secondary_states.append(configurable_state)
+
+        return secondary_states
+
+    """
+        Clearing
+    """
     def get_clear_timeout(self):
         if self.area.has_state(AREA_STATE_SLEEP):
             return self.area.config.get(CONF_SECONDARY_STATES, {}).get(
@@ -491,62 +551,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         return False
 
-    def _get_occupancy_state(self):
-        valid_on_states = (
-            [STATE_ON] if self.area.is_meta() else self.area.config.get(CONF_ON_STATES)
-        )
-        area_state = self._get_sensors_state(valid_states=valid_on_states)
-
-        if not area_state:
-            if not self.area.is_occupied():
-                return False
-
-            if self.is_on_clear_timeout():
-                self.logger.debug(f"{self.area.name}: Area is on timeout")
-                if self.timeout_exceeded():
-                    return False
-            else:
-                if self.area.is_occupied() and not area_state:
-                    self.logger.debug(
-                        f"{self.area.name}: Area not on timeout, setting call_later"
-                    )
-                    self.set_clear_timeout()
-        else:
-            self.remove_clear_timeout()
-
-        return True
-
-    def _update_state(self):
-        states_tuple = self._update_area_states()
-        new_states, lost_states = states_tuple
-
-        state_changed = any(
-            state in new_states for state in [AREA_STATE_OCCUPIED, AREA_STATE_CLEAR]
-        )
-
-        self.logger.debug(
-            f"{self.area.name}: States updated. New states: {new_states} / Lost states: {lost_states}"
-        )
-
-        self._update_attributes()
-        self.schedule_update_ha_state()
-
-        if state_changed:
-            # Consider all secondary states new
-            states_tuple = (self.area.states.copy(), [])
-
-        self.report_state_change(states_tuple)
-
-    def report_state_change(self, states_tuple=([], [])):
-        new_states, lost_states = states_tuple
-        self.logger.debug(
-            f"Reporting state change for {self.area.name} (new states: {new_states}/lost states: {lost_states})"
-        )
-        dispatcher_send(
-            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, states_tuple
-        )
-
-
 class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
     def __init__(self, area, device_class):
         """Initialize an area sensor group binary sensor."""
@@ -571,7 +575,7 @@ class AreaDistressBinarySensor(BinarySensorBase, AggregateBase):
     def __init__(self, area):
         """Initialize an area sensor group binary sensor."""
 
-        super().__init__(area, device_class=BinarySensorDeviceClass.PROBLEM)
+        super().__init__(area, BinarySensorDeviceClass.PROBLEM)
 
         self._name = f"Area Health ({self.area.name})"
 

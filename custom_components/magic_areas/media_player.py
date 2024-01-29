@@ -139,7 +139,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
         self.logger.info(f"AreaAwareMediaPlayer loaded.")
 
-    def _update_attributes(self):
+    def update_attributes(self):
         self._attributes["areas"] = [
             f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}" for area in self.areas
         ]
@@ -190,7 +190,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
         """Flag media player features that are supported."""
         return SUPPORT_PLAY_MEDIA
 
-    def _get_active_areas(self):
+    def get_active_areas(self):
         active_areas = []
 
         for area in self.areas:
@@ -228,20 +228,20 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
         return active_areas
 
-    def _update_state(self):
-        self._update_attributes()
+    def update_state(self):
+        self.update_attributes()
         self.schedule_update_ha_state()
 
     def set_state(self, state=None):
         if state:
             self._state = state
-        self._update_state()
+        self.update_state()
 
     def play_media(self, media_type, media_id, **kwargs):
         """Forwards a piece of media to media players in active areas."""
 
         # Read active areas
-        active_areas = self._get_active_areas()
+        active_areas = self.get_active_areas()
 
         # Fail early
         if not active_areas:

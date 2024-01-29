@@ -2,26 +2,62 @@ from datetime import datetime
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import STATE_ON
+from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import STATE_ON, STATE_OFF
 
+from custom_components.magic_areas.base import MagicEntity
 from custom_components.magic_areas.base import MagicSensorBase
 from custom_components.magic_areas.const import (
     CONF_ON_STATES,
     INVALID_STATES
 )
 
+class SwitchBase(MagicEntity, SwitchEntity):
+
+    _state = STATE_OFF
+
+    def __init__(self, area):
+
+        super().__init__(area)
+        self._state = STATE_OFF
+
+    @property
+    def is_on(self):
+        """Return true if the area is occupied."""
+        return self._state == STATE_ON
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+
+        last_state = await self.async_get_last_state()
+
+        if last_state:
+            self.logger.debug(f"Switch {self.name} restored [state={last_state.state}]")
+            self._state = last_state.state
+        else:
+            self._state = STATE_OFF
+
+        self.schedule_update_ha_state()
+
+    def turn_off(self, **kwargs):
+        """Turn off presence hold."""
+        self._state = STATE_OFF
+        self.schedule_update_ha_state()
+
+    def turn_on(self, **kwargs):
+        """Turn on presence hold."""
+        self._state = STATE_ON
+        self.schedule_update_ha_state()
+
 class BinarySensorBase(MagicSensorBase, BinarySensorEntity):
-    _device_class = None
+    
     last_off_time = None
-    area = None
     _state = False
 
     def __init__(self, area, device_class):
 
-        super().__init__()
-
-        self.area = area
-        self._device_class = device_class
+        MagicSensorBase.__init__(self, area, device_class)
+        BinarySensorEntity.__init__(self)
 
     @property
     def is_on(self):
@@ -40,9 +76,9 @@ class BinarySensorBase(MagicSensorBase, BinarySensorEntity):
         if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
             self.last_off_time = datetime.utcnow()  # Update last_off_time
 
-        return self._update_state()
+        return self.update_state()
 
-    def _get_sensors_state(self, valid_states=[STATE_ON]):
+    def get_sensors_state(self, valid_states=[STATE_ON]):
         self.logger.debug(
             f"[Area: {self.area.slug}] Updating state. (Valid states: {valid_states})"
         )
@@ -113,9 +149,9 @@ class SensorBase(MagicSensorBase, SensorEntity):
             )
             return None
 
-        return self._update_state()
+        return self.update_state()
 
-    def _get_sensors_state(self):
+    def get_sensors_state(self):
         sensor_values = []
 
         # Loop over all entities and check their state

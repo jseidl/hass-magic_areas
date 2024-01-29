@@ -7,6 +7,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
@@ -24,10 +25,34 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 class MagicEntity(RestoreEntity, Entity):
+
+    area = None
     _name = None
-    hass = None
     logger = None
     _attributes = {}
+
+    def __init__(self, area):
+
+        # Avoiding using super() due multiple inheritance issues
+        Entity.__init__(self)
+        RestoreEntity.__init__(self)
+
+        self.logger = logging.getLogger(__name__)
+        self._attributes = dict()
+        self.area = area
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, f"magic_area_device_{self.area.id}")
+            },
+            name=self.area.name,
+            manufacturer="Magic Areas",
+            model="Magic Area"
+        )
 
     @property
     def unique_id(self):
@@ -49,21 +74,31 @@ class MagicEntity(RestoreEntity, Entity):
     def extra_state_attributes(self):
         """Return the attributes of the entity."""
         return self._attributes
-    
+
+    async def async_added_to_hass(self):
+        """Call when entity about to be added to hass."""
+        if self.hass.is_running:
+            await self._initialize()
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, self._initialize
+            )
+
+        await self.restore_state()
+
+    async def restore_state(self):
+        self.update_state()
 
 class MagicSensorBase(MagicEntity):
 
-    area = None
-    logger = None
     sensors = []
     _device_class = None
 
-    def __init__(self):
+    def __init__(self, area, device_class):
 
-        super().__init__()
-        self.logger = logging.getLogger(__name__)
+        super().__init__(area)
         self.sensors = list()
-        self._attributes = dict()
+        self._device_class = device_class
 
     @property
     def device_class(self):
@@ -72,10 +107,10 @@ class MagicSensorBase(MagicEntity):
 
     def refresh_states(self, next_interval):
         self.logger.debug(f"Refreshing sensor states {self.name}")
-        return self._update_state()
+        return self.update_state()
 
-    def _update_state(self):
-        self._state = self._get_sensors_state()
+    def update_state(self):
+        self._state = self.get_sensors_state()
         self.schedule_update_ha_state()
 
     async def _initialize(self, _=None) -> None:
@@ -88,6 +123,24 @@ class MagicSensorBase(MagicEntity):
     async def async_will_remove_from_hass(self):
         """Remove the listeners upon removing the component."""
         await self._shutdown()
+
+    async def _setup_listeners(self, _=None) -> None:
+        self.logger.debug("%s: Called '_setup_listeners'", self._name)
+        if not self.hass.is_running:
+            self.logger.debug("%s: Cancelled '_setup_listeners'", self._name)
+            return
+
+        # Track presence sensors
+        self.async_on_remove(
+            async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
+        )
+
+        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+
+        # Timed self update
+        self.async_on_remove(
+            async_track_time_interval(self.hass, self.refresh_states, delta)
+        )
 
 class AggregateBase(MagicSensorBase):
     def load_sensors(self, domain, unit_of_measurement=None):
@@ -115,32 +168,3 @@ class AggregateBase(MagicSensorBase):
             }
         else:
             self._attributes = {"sensors": self.sensors, "active_sensors": []}
-
-    async def async_added_to_hass(self):
-        """Call when entity about to be added to hass."""
-        if self.hass.is_running:
-            await self._initialize()
-        else:
-            self.hass.bus.async_listen_once(
-                EVENT_HOMEASSISTANT_STARTED, self._initialize
-            )
-
-        self._update_state()
-
-    async def _setup_listeners(self, _=None) -> None:
-        _LOGGER.debug("%s: Called '_setup_listeners'", self._name)
-        if not self.hass.is_running:
-            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self._name)
-            return
-
-        # Track presence sensors
-        self.async_on_remove(
-            async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
-        )
-
-        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
-
-        # Timed self update
-        self.async_on_remove(
-            async_track_time_interval(self.hass, self.refresh_states, delta)
-        )

@@ -36,21 +36,18 @@ class MagicArea(object):
         self.hass_config = config
         self.initialized = False
 
+        # Merged options
+        area_config = dict(config.data)
+        if config.options:
+            area_config.update(config.options)
+        self.config = area_config
+
         self.entities = {}
 
         self.last_changed = datetime.utcnow()
         self.states = []
 
         self.loaded_platforms = []
-
-        # Check if area is defined on YAML
-
-        if config.options:
-            merged_dicts = dict(config.data)
-            merged_dicts.update(config.options)
-            self.config = merged_dicts
-        else:
-            self.config = config.data
 
         # Add callback for initialization
         if self.hass.is_running:
@@ -112,7 +109,7 @@ class MagicArea(object):
     def is_meta(self) -> bool:
         return self.config.get(CONF_TYPE) == AREA_TYPE_META
 
-    def _is_valid_entity(self, entity_object) -> bool:
+    def is_valid_entity(self, entity_object) -> bool:
         if entity_object.disabled:
             return False
 
@@ -148,7 +145,7 @@ class MagicArea(object):
 
         for entity_id, entity_object in entity_registry.entities.items():
             # Check entity validity
-            if not self._is_valid_entity(entity_object):
+            if not self.is_valid_entity(entity_object):
                 continue
 
             # Check area membership
@@ -236,9 +233,9 @@ class MagicArea(object):
 
 
 class MagicMetaArea(MagicArea):
-    def __init__(self, hass, area_name, config) -> None:
+    def __init__(self, hass, area, config) -> None:
 
-        super().__init__(hass, area_name, config, EVENT_MAGICAREAS_READY)
+        super().__init__(hass, area, config, EVENT_MAGICAREAS_READY)
 
     def areas_loaded(self):
         if MODULE_DATA not in self.hass.data.keys():

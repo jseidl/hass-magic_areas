@@ -80,7 +80,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                     f"Creating {category} group for area {area.name} with lights: {category_lights}"
                 )
                 light_group_object = AreaLightGroup(
-                    hass, area, category_lights, category
+                    area, category_lights, category
                 )
                 light_groups.append(light_group_object)
 
@@ -93,7 +93,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         )
         light_groups.append(
             AreaLightGroup(
-                hass, area, light_entities, category=None, child_ids=light_group_ids
+                area, light_entities, category=None, child_ids=light_group_ids
             )
         )
 
@@ -101,28 +101,29 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities(light_groups)
 
 
-class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
-    def __init__(self, hass, area, entities, category=None, child_ids=[]):
-        name = f"{area.name} Lights"
+class AreaLightGroup(LightGroup, MagicEntity):
+
+    def __init__(self, area, entities, category=None, child_ids=[]):
+
+        MagicEntity.__init__(self, area)
+
+        name = f"{self.area.name} Lights"
 
         if category:
             category_title = " ".join(category.split("_")).title()
-            name = f"{category_title} ({area.name})"
+            name = f"{category_title} ({self.area.name})"
 
         self._name = name
+
         self._entities = entities
         self._child_ids = child_ids
 
-        self.hass = hass
-        self.area = area
         self.category = category
         self.assigned_states = []
         self.act_on = []
 
         self.controlling = True
         self.controlled = False
-
-        self._attributes = {}  # clear object
 
         LightGroup.__init__(
             self, self.unique_id, self._name, self._entities, mode=False
@@ -153,6 +154,33 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             f"Light group {self._name} ({category}/{self._icon}) created with entities: {self._entities}"
         )
 
+    @property
+    def icon(self):
+        """Return the icon to be used for this entity."""
+        return self._icon
+
+    async def async_added_to_hass(self) -> None:
+        # Get last state
+        last_state = await self.async_get_last_state()
+
+        if last_state:
+            self.logger.debug(f"{self.name} restored [state={last_state.state}]")
+            self._state = last_state.state == STATE_ON
+
+            if "controlling" in last_state.attributes.keys():
+                controlling = last_state.attributes["controlling"]
+                self.controlling = controlling
+                self._attributes["controlling"] = self.controlling
+        else:
+            self._state = False
+
+        self.schedule_update_ha_state()
+
+        # Setup state change listeners
+        await self._setup_listeners()
+
+        await super().async_added_to_hass()
+
     async def _setup_listeners(self, _=None) -> None:
         async_dispatcher_connect(
             self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed
@@ -167,130 +195,39 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
             )
         )
 
-    def is_child_controllable(self, entity_id):
-        entity_object = self.hass.states.get(entity_id)
-        if "controlling" in entity_object.attributes.keys():
-            return entity_object.attributes["controlling"]
+    """ State Change Handling """
 
-        return False
+    def area_state_changed(self, area_id, states_tuple):
+        if area_id != self.area.id:
+            self.logger.debug(
+                f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
+            )
+            return
 
-    def handle_group_state_change_primary(self):
-        controlling = False
+        automatic_control = self.is_control_enabled()
 
-        for entity_id in self._child_ids:
-            if self.is_child_controllable(entity_id):
-                controlling = True
-                break
-
-        self.controlling = controlling
-        self.schedule_update_ha_state()
-
-    def handle_group_state_change_secondary(self):
-        # If we changed last, unset
-        if self.controlled:
-            self.controlled = False
-            self.logger.debug(f"{self.name}: Group controlled by us.")
-        else:
-            # If not, it was manually controlled, stop controlling
-            self.controlling = False
-            self.logger.debug(f"{self.name}: Group controlled by something else.")
-
-    def group_state_changed(self, event):
-        # If area is not occupied, ignore
-        if not self.area.is_occupied():
-            self._reset_control()
-        else:
-            origin_event = event.context.origin_event
-
-            if not self.category:
-                self.handle_group_state_change_primary()
-            else:
-                # Ignore certain events
-                if origin_event.event_type == "state_changed":
-                    # Skip non ON/OFF state changes
-                    if origin_event.data["old_state"].state not in [
-                        STATE_ON,
-                        STATE_OFF,
-                    ]:
-                        return False
-                    if origin_event.data["new_state"].state not in [
-                        STATE_ON,
-                        STATE_OFF,
-                    ]:
-                        return False
-
-                    # Skip restored events
-                    if (
-                        "restored" in origin_event.data["old_state"].attributes.keys()
-                        and origin_event.data["old_state"].attributes["restored"]
-                    ):
-                        return False
-
-                self.handle_group_state_change_secondary()
-
-        # Update attribute
-        self._attributes["controlling"] = self.controlling
-        self.schedule_update_ha_state()
-
-        return True
-
-    def is_control_enabled(self):
-        entity_id = f"{SWITCH_DOMAIN}.area_light_control_{self.area.slug}"
-
-        switch_entity = self.hass.states.get(entity_id)
-
-        return switch_entity.state.lower() == STATE_ON
-
-    def relevant_states(self):
-        relevant_states = self.area.states.copy()
-
-        if self.area.is_occupied():
-            relevant_states.append(AREA_STATE_OCCUPIED)
-
-        if AREA_STATE_DARK in relevant_states:
-            relevant_states.remove(AREA_STATE_DARK)
-
-        return relevant_states
-
-    def _turn_on(self):
-        if not self.controlling:
+        if not automatic_control:
+            self.logger.debug(
+                f"{self.name}: Automatic control for light group is disabled, skipping..."
+            )
             return False
 
-        if self.is_on:
-            return False
+        self.logger.debug(f"Light group {self.name} detected area state change")
 
-        self.controlled = True
+        # Handle all lights group
+        if not self.category:
+            return self.state_change_primary(states_tuple)
 
-        service_data = {ATTR_ENTITY_ID: self.entity_id}
-        self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
-
-        return True
-
-    def _turn_off(self):
-        if not self.controlling:
-            return False
-
-        if not self.is_on:
-            return False
-
-        service_data = {ATTR_ENTITY_ID: self.entity_id}
-        self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
-
-        return True
-
-    def _reset_control(self):
-        self.controlling = True
-        self._attributes["controlling"] = self.controlling
-        self.schedule_update_ha_state()
-        self.logger.debug("{self.name}: Control Reset.")
-
+        # Handle light category
+        return self.state_change_secondary(states_tuple)
+    
     def state_change_primary(self, states_tuple):
         new_states, lost_states = states_tuple
 
         # If area clear
         if AREA_STATE_CLEAR in new_states:
             self.logger.debug(f"{self.name}: Area is clear, should turn off lights!")
-            self._reset_control()
+            self.reset_control()
             return self._turn_off()
 
         return False
@@ -300,7 +237,7 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
 
         if AREA_STATE_CLEAR in new_states:
             self.logger.debug(f"{self.name}: Area is clear, reset control state and Noop!")
-            self._reset_control()
+            self.reset_control()
             return False
 
         if self.area.has_state(AREA_STATE_BRIGHT):
@@ -403,53 +340,123 @@ class AreaLightGroup(MagicEntity, LightGroup, RestoreEntity):
         self.controlled = True
         return self._turn_off()
 
-    def area_state_changed(self, area_id, states_tuple):
-        if area_id != self.area.id:
-            self.logger.debug(
-                f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
-            )
-            return
+    def relevant_states(self):
+        relevant_states = self.area.states.copy()
 
-        automatic_control = self.is_control_enabled()
+        if self.area.is_occupied():
+            relevant_states.append(AREA_STATE_OCCUPIED)
 
-        if not automatic_control:
-            self.logger.debug(
-                f"{self.name}: Automatic control for light group is disabled, skipping..."
-            )
+        if AREA_STATE_DARK in relevant_states:
+            relevant_states.remove(AREA_STATE_DARK)
+
+        return relevant_states
+
+    """ Light Handling """
+
+    def _turn_on(self):
+        if not self.controlling:
             return False
 
-        self.logger.debug(f"Light group {self.name} detected area state change")
+        if self.is_on:
+            return False
 
-        # Handle all lights group
-        if not self.category:
-            return self.state_change_primary(states_tuple)
+        self.controlled = True
 
-        # Handle light category
-        return self.state_change_secondary(states_tuple)
+        service_data = {ATTR_ENTITY_ID: self.entity_id}
+        self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
 
-    async def async_added_to_hass(self) -> None:
-        # Get last state
-        last_state = await self.async_get_last_state()
+        return True
 
-        if last_state:
-            self.logger.debug(f"{self.name} restored [state={last_state.state}]")
-            self._state = last_state.state == STATE_ON
+    def _turn_off(self):
+        if not self.controlling:
+            return False
 
-            if "controlling" in last_state.attributes.keys():
-                controlling = last_state.attributes["controlling"]
-                self.controlling = controlling
-                self._attributes["controlling"] = self.controlling
-        else:
-            self._state = False
+        if not self.is_on:
+            return False
 
+        service_data = {ATTR_ENTITY_ID: self.entity_id}
+        self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
+
+        return True
+    
+    """ Control Release """
+
+    def is_control_enabled(self):
+        entity_id = f"{SWITCH_DOMAIN}.area_light_control_{self.area.slug}"
+
+        switch_entity = self.hass.states.get(entity_id)
+
+        return switch_entity.state.lower() == STATE_ON
+
+    def reset_control(self):
+        self.controlling = True
+        self._attributes["controlling"] = self.controlling
+        self.schedule_update_ha_state()
+        self.logger.debug("{self.name}: Control Reset.")
+
+    def is_child_controllable(self, entity_id):
+        entity_object = self.hass.states.get(entity_id)
+        if "controlling" in entity_object.attributes.keys():
+            return entity_object.attributes["controlling"]
+
+        return False
+    
+    def handle_group_state_change_primary(self):
+        controlling = False
+
+        for entity_id in self._child_ids:
+            if self.is_child_controllable(entity_id):
+                controlling = True
+                break
+
+        self.controlling = controlling
         self.schedule_update_ha_state()
 
-        # Setup state change listeners
-        await self._setup_listeners()
+    def handle_group_state_change_secondary(self):
+        # If we changed last, unset
+        if self.controlled:
+            self.controlled = False
+            self.logger.debug(f"{self.name}: Group controlled by us.")
+        else:
+            # If not, it was manually controlled, stop controlling
+            self.controlling = False
+            self.logger.debug(f"{self.name}: Group controlled by something else.")
 
-        await super().async_added_to_hass()
+    def group_state_changed(self, event):
+        # If area is not occupied, ignore
+        if not self.area.is_occupied():
+            self.reset_control()
+        else:
+            origin_event = event.context.origin_event
 
-    @property
-    def icon(self):
-        """Return the icon to be used for this entity."""
-        return self._icon
+            if not self.category:
+                self.handle_group_state_change_primary()
+            else:
+                # Ignore certain events
+                if origin_event.event_type == "state_changed":
+                    # Skip non ON/OFF state changes
+                    if origin_event.data["old_state"].state not in [
+                        STATE_ON,
+                        STATE_OFF,
+                    ]:
+                        return False
+                    if origin_event.data["new_state"].state not in [
+                        STATE_ON,
+                        STATE_OFF,
+                    ]:
+                        return False
+
+                    # Skip restored events
+                    if (
+                        "restored" in origin_event.data["old_state"].attributes.keys()
+                        and origin_event.data["old_state"].attributes["restored"]
+                    ):
+                        return False
+
+                self.handle_group_state_change_secondary()
+
+        # Update attribute
+        self._attributes["controlling"] = self.controlling
+        self.schedule_update_ha_state()
+
+        return True
