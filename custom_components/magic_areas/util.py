@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Iterable
 
 from custom_components.magic_areas.const import (
@@ -5,6 +6,8 @@ from custom_components.magic_areas.const import (
     DATA_AREA_OBJECT,
     EVENT_MAGICAREAS_AREA_READY,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 basestring = (str, bytes)
 
@@ -35,25 +38,35 @@ def areas_loaded(hass):
     return True
 
 def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn):
+    
+    ma_data = hass.data[MODULE_DATA]
+    area_data = ma_data[config_entry.entry_id]
+    area = area_data[DATA_AREA_OBJECT]
 
-    callback = None
-
-    def load_entities(event):
-
-        area_data = hass.data[MODULE_DATA][config_entry.entry_id]
-        area = area_data[DATA_AREA_OBJECT]
-
-        if area.id != event.data.get('id'):
-            return False
-        
-        # Destroy listener
-        if callback:
-            callback()
-
+    # Run right away if area is ready
+    if area.initialized:
         callback_fn(area, async_add_entities)
+    else:
+
+        callback = None
+
+        def load_entities(event):
+
+            if config_entry.entry_id not in ma_data.keys():
+                _LOGGER.warn(f"Config entry id {config_entry.entry_id} not in Magic Areas data.")
+                return False
+
+            if area.id != event.data.get('id'):
+                return False
+            
+            # Destroy listener
+            if callback:
+                callback()
+
+            callback_fn(area, async_add_entities)
 
 
-    # These sensors need to wait for the area object to be fully initialized
-    callback = hass.bus.async_listen(
-        EVENT_MAGICAREAS_AREA_READY, load_entities
-    )
+        # These sensors need to wait for the area object to be fully initialized
+        callback = hass.bus.async_listen(
+            EVENT_MAGICAREAS_AREA_READY, load_entities
+        )

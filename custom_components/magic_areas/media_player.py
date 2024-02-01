@@ -28,6 +28,7 @@ from custom_components.magic_areas.const import (
     DEFAULT_NOTIFY_STATES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     META_AREA_GLOBAL,
+    MODULE_DATA,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
 
@@ -52,7 +53,7 @@ def add_media_players(area, async_add_entities):
 
     # Try to setup AAMP
     _LOGGER.debug("Trying to setup AAMP")
-    setup_area_aware_media_player(area, ma_data, async_add_entities)
+    setup_area_aware_media_player(area, async_add_entities)
 
 
 def setup_media_player_group(area, async_add_entities):
@@ -66,7 +67,10 @@ def setup_media_player_group(area, async_add_entities):
     async_add_entities([AreaMediaPlayerGroup(area, media_player_entities)])
 
 
-def setup_area_aware_media_player(area, ma_data, async_add_entities):
+def setup_area_aware_media_player(area, async_add_entities):
+
+    ma_data = area.hass.data[MODULE_DATA]
+
     # Check if we have areas with MEDIA_PLAYER_DOMAIN entities
     areas_with_media_players = []
 

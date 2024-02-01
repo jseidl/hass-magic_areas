@@ -10,12 +10,12 @@ from custom_components.magic_areas.util import flatten_entity_list, is_entity_li
 from custom_components.magic_areas.const import (
     AREA_STATE_OCCUPIED,
     AREA_TYPE_META,
+    AREA_TYPE_INTERIOR,
+    AREA_TYPE_EXTERIOR,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_INCLUDE_ENTITIES,
     CONF_TYPE,
-    CONF_NAME,
-    DOMAIN,
     CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
     EVENT_MAGICAREAS_AREA_READY,
@@ -138,8 +138,18 @@ class MagicArea(object):
 
         return available_platforms
 
+    @property
+    def area_type(self):
+        return self.config.get(CONF_TYPE)
+
     def is_meta(self) -> bool:
-        return self.config.get(CONF_TYPE) == AREA_TYPE_META
+        return self.area_type == AREA_TYPE_META
+    
+    def is_interior(self):
+        return self.area_type == AREA_TYPE_INTERIOR
+
+    def is_exterior(self):
+        return self.area_type == AREA_TYPE_EXTERIOR
 
     def is_valid_entity(self, entity_object) -> bool:
         if entity_object.disabled:
@@ -244,17 +254,6 @@ class MagicArea(object):
 
         await self.load_entities()
 
-        # self.logger.debug(f"Area {self.name}: Loading platforms...")
-        # for platform in MAGIC_AREAS_COMPONENTS:
-        #     self.logger.debug(f"> Loading platform '{platform}'...")
-        #     self.hass.async_create_task(
-        #         self.hass.config_entries.async_forward_entry_setup(
-        #             self.hass_config, platform
-        #         )
-        #     )
-        #     self.loaded_platforms.append(platform)
-
-
         self.finalize_init()
 
     async def reload_meta_areas(self):
@@ -344,22 +343,6 @@ class MagicMetaArea(MagicArea):
         self.logger.debug(f"Initializing meta area {self.slug}...")
 
         await self.load_entities()
-
-        # components_to_load = (
-        #     MAGIC_AREAS_COMPONENTS_GLOBAL
-        #     if self.id == META_AREA_GLOBAL.lower()
-        #     else MAGIC_AREAS_COMPONENTS_META
-        # )
-
-        # self.logger.debug(f"Area {self.name}: Loading platforms...")
-        # for platform in components_to_load:
-        #     self.logger.debug(f"> Loading platform '{platform}'...")
-        #     self.hass.async_create_task(
-        #         self.hass.config_entries.async_forward_entry_setup(
-        #             self.hass_config, platform
-        #         )
-        #     )
-        #     self.loaded_platforms.append(platform)
 
         self.finalize_init()
 

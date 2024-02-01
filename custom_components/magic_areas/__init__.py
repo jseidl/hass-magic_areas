@@ -1,5 +1,6 @@
 """Magic Areas component for Home Assistant."""
 import logging
+from collections import defaultdict 
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -12,6 +13,9 @@ from custom_components.magic_areas.const import (
     DATA_AREA_OBJECT,
     DATA_UNDO_UPDATE_LISTENER,
     META_AREAS,
+    META_AREA_EXTERIOR,
+    META_AREA_INTERIOR,
+    META_AREA_GLOBAL,
     MODULE_DATA,
 )
 
@@ -73,8 +77,35 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         )
         magic_area.loaded_platforms.append(platform)
 
-    # Reload related meta-entries, if loaded
-    # @TODO
+    """
+        Conditional reload of related meta-areas
+    """
+
+    # Populate dict with all meta-areas with ID as key
+    meta_areas = defaultdict()
+
+    for area in data.values():
+        area_obj = area[DATA_AREA_OBJECT]
+        if area_obj.is_meta():
+            meta_areas[area_obj.id] = area_obj
+
+    # Handle non-meta areas
+    if not magic_area.is_meta():
+
+        meta_area_key = META_AREA_EXTERIOR.lower() if magic_area.is_exterior() else META_AREA_INTERIOR.lower()
+
+        if meta_area_key in meta_areas.keys():
+
+            meta_area_object = meta_areas[meta_area_key]
+
+            if meta_area_object.initialized:
+                await hass.config_entries.async_reload(meta_area_object.hass_config.entry_id)
+    else:
+        META_AREA_GLOBAL_ID = META_AREA_GLOBAL.lower()
+
+        if magic_area.id != META_AREA_GLOBAL_ID and META_AREA_GLOBAL_ID in meta_areas.keys():
+            if meta_areas[META_AREA_GLOBAL_ID].initialized:
+                await hass.config_entries.async_reload(meta_areas[META_AREA_GLOBAL_ID].hass_config.entry_id)
 
     return True
 
