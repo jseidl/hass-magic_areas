@@ -4,8 +4,9 @@ from datetime import datetime
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
 from homeassistant.util import slugify
+from homeassistant.helpers.discovery import async_load_platform
 
-from custom_components.magic_areas.util import flatten_entity_list, is_entity_list
+from custom_components.magic_areas.util import flatten_entity_list, is_entity_list, areas_loaded
 from custom_components.magic_areas.const import (
     AREA_STATE_OCCUPIED,
     AREA_TYPE_META,
@@ -13,6 +14,8 @@ from custom_components.magic_areas.const import (
     CONF_EXCLUDE_ENTITIES,
     CONF_INCLUDE_ENTITIES,
     CONF_TYPE,
+    CONF_NAME,
+    DOMAIN,
     CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
     EVENT_MAGICAREAS_AREA_READY,
@@ -25,7 +28,7 @@ from custom_components.magic_areas.const import (
 )
 
 class MagicArea(object):
-    def __init__(self, hass, area, config, listen_event = EVENT_HOMEASSISTANT_STARTED) -> None:
+    def __init__(self, hass, area, config, listen_event = EVENT_HOMEASSISTANT_STARTED, init_on_hass_running=True) -> None:
 
         self.logger = logging.getLogger(__name__)
 
@@ -50,7 +53,7 @@ class MagicArea(object):
         self.loaded_platforms = []
 
         # Add callback for initialization
-        if self.hass.is_running:
+        if self.hass.is_running and init_on_hass_running:
             self.hass.async_create_task(self.initialize())
         else:
             self.hass.bus.async_listen_once(
@@ -58,6 +61,18 @@ class MagicArea(object):
             )
 
         self.logger.debug(f"Area {self.slug} Primed for initialization.")
+
+    def finalize_init(self):
+
+        self.initialized = True
+
+        if not self.is_meta():
+            # Check if we finished loading all areas
+            if areas_loaded(self.hass):
+                self.hass.bus.async_fire(EVENT_MAGICAREAS_READY)
+
+        area_type = "Meta-Area" if self.is_meta() else "Area"
+        self.logger.debug(f"{area_type} {self.slug} initialized.")
 
     def is_occupied(self) -> bool:
         return self.has_state(AREA_STATE_OCCUPIED)
@@ -105,6 +120,21 @@ class MagicArea(object):
             self.logger.debug(f"{self.name}: No feature config found for {feature}")
 
         return options.get(feature, {})
+    
+    def available_platforms(self):
+
+        available_platforms = []
+
+        if not self.is_meta():
+            available_platforms = MAGIC_AREAS_COMPONENTS
+        else:
+            available_platforms = (
+                MAGIC_AREAS_COMPONENTS_GLOBAL
+                if self.id == META_AREA_GLOBAL.lower()
+                else MAGIC_AREAS_COMPONENTS_META
+            )
+
+        return available_platforms
 
     def is_meta(self) -> bool:
         return self.config.get(CONF_TYPE) == AREA_TYPE_META
@@ -212,21 +242,35 @@ class MagicArea(object):
 
         await self.load_entities()
 
-        self.initialized = True
+        # self.logger.debug(f"Area {self.name}: Loading platforms...")
+        # for platform in MAGIC_AREAS_COMPONENTS:
+        #     self.logger.debug(f"> Loading platform '{platform}'...")
+        #     self.hass.async_create_task(
+        #         self.hass.config_entries.async_forward_entry_setup(
+        #             self.hass_config, platform
+        #         )
+        #     )
+        #     self.loaded_platforms.append(platform)
 
-        self.hass.bus.async_fire(EVENT_MAGICAREAS_AREA_READY)
 
-        self.logger.debug(f"Area {self.name}: Loading platforms...")
-        for platform in MAGIC_AREAS_COMPONENTS:
-            self.logger.debug(f"> Loading platform '{platform}'...")
-            self.hass.async_create_task(
-                self.hass.config_entries.async_forward_entry_setup(
-                    self.hass_config, platform
-                )
-            )
-            self.loaded_platforms.append(platform)
+        self.finalize_init()
 
-        self.logger.debug(f"Area {self.slug} initialized.")
+    async def reload_meta_areas(self):
+
+        # Check if we need to reload meta entities
+        data = self.hass.data[MODULE_DATA]
+
+        if not self.is_meta():
+            meta_ids = []
+            self.logger.debug(f"Area not meta, reloading meta areas.")
+            for entry_id, area_data in data.items():
+                area = area_data[DATA_AREA_OBJECT]
+                if area.is_meta():
+                    meta_ids.append(entry_id)
+
+            for entry_id in meta_ids:
+                await self.hass.config_entries.async_reload(entry_id)
+            self.logger.debug(f"Meta areas reloaded.")
 
     def has_entities(self, domain):
         return domain in self.entities.keys()
@@ -235,18 +279,20 @@ class MagicArea(object):
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area, config) -> None:
 
-        super().__init__(hass, area, config, EVENT_MAGICAREAS_READY)
+        super().__init__(hass, area, config, EVENT_MAGICAREAS_READY, init_on_hass_running=areas_loaded(hass))
 
-    def areas_loaded(self):
-        if MODULE_DATA not in self.hass.data.keys():
+    def areas_loaded(self, hass=None):
+
+        hass_object = hass if hass else self.hass
+
+        if MODULE_DATA not in hass_object.data.keys():
             return False
 
-        data = self.hass.data[MODULE_DATA]
+        data = hass_object.data[MODULE_DATA]
         for area_info in data.values():
             area = area_info[DATA_AREA_OBJECT]
             if area.config.get(CONF_TYPE) != AREA_TYPE_META:
                 if not area.initialized:
-                    self.logger.debug(f"Area {area.name} not initialized")
                     return False
 
         return True
@@ -283,28 +329,37 @@ class MagicMetaArea(MagicArea):
         return areas
 
     async def initialize(self, _=None) -> None:
+
+        if self.initialized:
+            self.logger.warn(f"Meta-Area {self.name}: Already initialized, ignoring.")
+            return False
+
+        # Meta-areas need to wait until other magic areas are loaded.
+        if not self.areas_loaded():
+            self.logger.warn(f"Meta-Area {self.name}: Non-meta areas not loaded. This shouldn't happen.")
+            return False
+
         self.logger.debug(f"Initializing meta area {self.slug}...")
 
         await self.load_entities()
 
-        self.initialized = True
-        components_to_load = (
-            MAGIC_AREAS_COMPONENTS_GLOBAL
-            if self.id == META_AREA_GLOBAL.lower()
-            else MAGIC_AREAS_COMPONENTS_META
-        )
+        # components_to_load = (
+        #     MAGIC_AREAS_COMPONENTS_GLOBAL
+        #     if self.id == META_AREA_GLOBAL.lower()
+        #     else MAGIC_AREAS_COMPONENTS_META
+        # )
 
-        self.logger.debug(f"Area {self.name}: Loading platforms...")
-        for platform in components_to_load:
-            self.logger.debug(f"> Loading platform '{platform}'...")
-            self.hass.async_create_task(
-                self.hass.config_entries.async_forward_entry_setup(
-                    self.hass_config, platform
-                )
-            )
-            self.loaded_platforms.append(platform)
+        # self.logger.debug(f"Area {self.name}: Loading platforms...")
+        # for platform in components_to_load:
+        #     self.logger.debug(f"> Loading platform '{platform}'...")
+        #     self.hass.async_create_task(
+        #         self.hass.config_entries.async_forward_entry_setup(
+        #             self.hass_config, platform
+        #         )
+        #     )
+        #     self.loaded_platforms.append(platform)
 
-        self.logger.debug(f"Meta Area {self.slug} initialized.")
+        self.finalize_init()
 
     async def load_entities(self) -> None:
         entity_list = []

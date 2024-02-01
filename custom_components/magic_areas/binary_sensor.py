@@ -17,8 +17,7 @@ from homeassistant.helpers.event import (
     call_later,
 )
 
-from custom_components.magic_areas.base import AggregateBase
-from custom_components.magic_areas.base.primitives import BinarySensorBase
+from custom_components.magic_areas.base.primitives import BinarySensorBase, BinarySensorGroupBase
 from custom_components.magic_areas.const import (
     AREA_STATE_BRIGHT,
     AREA_STATE_CLEAR,
@@ -73,10 +72,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     area_data = hass.data[MODULE_DATA][config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
 
-    await load_sensors(hass, async_add_entities, area)
+    await load_sensors(async_add_entities, area)
 
 
-async def load_sensors(hass, async_add_entities, area):
+async def load_sensors(async_add_entities, area):
     # Create basic presence sensor
     async_add_entities([AreaPresenceBinarySensor(area)])
 
@@ -551,7 +550,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         return False
 
-class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
+class AreaSensorGroupBinarySensor(BinarySensorGroupBase):
     def __init__(self, area, device_class):
         """Initialize an area sensor group binary sensor."""
 
@@ -571,7 +570,7 @@ class AreaSensorGroupBinarySensor(BinarySensorBase, AggregateBase):
         self.logger.debug(f"{self.name} Sensor initialized.")
 
 
-class AreaDistressBinarySensor(BinarySensorBase, AggregateBase):
+class AreaDistressBinarySensor(BinarySensorGroupBase):
     def __init__(self, area):
         """Initialize an area sensor group binary sensor."""
 

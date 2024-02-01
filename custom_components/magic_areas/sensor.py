@@ -2,8 +2,7 @@ import logging
 
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 
-from custom_components.magic_areas.base import AggregateBase
-from custom_components.magic_areas.base.primitives import SensorBase
+from custom_components.magic_areas.base.primitives import SensorGroupBase
 from custom_components.magic_areas.const import (
     AGGREGATE_MODE_SUM,
     CONF_AGGREGATES_MIN_ENTITIES,
@@ -77,7 +76,7 @@ async def load_sensors(hass, async_add_entities, area):
     async_add_entities(aggregates)
 
 
-class AreaSensorGroupSensor(AggregateBase, SensorBase):
+class AreaSensorGroupSensor(SensorGroupBase):
     def __init__(self, hass, area, device_class, unit_of_measurement):
         """Initialize an area sensor group sensor."""
 

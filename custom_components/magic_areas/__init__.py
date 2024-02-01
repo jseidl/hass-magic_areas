@@ -18,6 +18,7 @@ from custom_components.magic_areas.const import (
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+
     """Set up the component."""
     data = hass.data.setdefault(MODULE_DATA, {})
     area_id = config_entry.data[CONF_ID]
@@ -62,29 +63,25 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         DATA_UNDO_UPDATE_LISTENER: undo_listener,
     }
 
+    # Setup platforms
+    for platform in magic_area.available_platforms():
+        _LOGGER.debug(f"Area {magic_area.name}: Loading platform '{platform}'...")
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(
+                config_entry, platform
+            )
+        )
+        magic_area.loaded_platforms.append(platform)
+
+    # Reload related meta-entries, if loaded
+    # @TODO
+
     return True
 
 
 async def async_update_options(hass, config_entry: ConfigEntry):
     """Update options."""
     await hass.config_entries.async_reload(config_entry.entry_id)
-
-    # Check if we need to reload meta entities
-    data = hass.data[MODULE_DATA]
-    area = data[config_entry.entry_id][DATA_AREA_OBJECT]
-
-    if not area.is_meta():
-        meta_ids = []
-        _LOGGER.debug(f"Area not meta, reloading meta areas.")
-        for entry_id, area_data in data.items():
-            area = area_data[DATA_AREA_OBJECT]
-            if area.is_meta():
-                meta_ids.append(entry_id)
-
-        for entry_id in meta_ids:
-            await hass.config_entries.async_reload(entry_id)
-        _LOGGER.debug(f"Meta areas reloaded.")
-
 
 async def async_unload_entry(hass, config_entry: ConfigEntry) -> bool:
     """Unload a config entry."""

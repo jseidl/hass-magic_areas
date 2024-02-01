@@ -16,7 +16,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from custom_components.magic_areas.base import MagicEntity
+from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,

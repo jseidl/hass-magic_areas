@@ -15,7 +15,7 @@ from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, ST
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from custom_components.magic_areas.base import MagicEntity
+from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.const import (
     AREA_STATE_CLEAR,
     AREA_STATE_SLEEP,

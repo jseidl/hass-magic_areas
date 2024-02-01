@@ -5,7 +5,7 @@ import logging
 import homeassistant.components.cover as cover
 from homeassistant.components.group.cover import CoverGroup
 
-from custom_components.magic_areas.base import MagicEntity
+from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.const import CONF_FEATURE_COVER_GROUPS, DATA_AREA_OBJECT, MODULE_DATA
 
 _LOGGER = logging.getLogger(__name__)
