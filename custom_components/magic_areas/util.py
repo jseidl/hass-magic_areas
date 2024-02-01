@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from custom_components.magic_areas.const import (
     MODULE_DATA,
     DATA_AREA_OBJECT,
+    EVENT_MAGICAREAS_AREA_READY,
 )
 
 basestring = (str, bytes)
@@ -32,3 +33,27 @@ def areas_loaded(hass):
                 return False
 
     return True
+
+def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn):
+
+    callback = None
+
+    def load_entities(event):
+
+        area_data = hass.data[MODULE_DATA][config_entry.entry_id]
+        area = area_data[DATA_AREA_OBJECT]
+
+        if area.id != event.data.get('id'):
+            return False
+        
+        # Destroy listener
+        if callback:
+            callback()
+
+        callback_fn(area, async_add_entities)
+
+
+    # These sensors need to wait for the area object to be fully initialized
+    callback = hass.bus.async_listen(
+        EVENT_MAGICAREAS_AREA_READY, load_entities
+    )

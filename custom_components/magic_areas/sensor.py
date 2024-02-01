@@ -7,23 +7,18 @@ from custom_components.magic_areas.const import (
     AGGREGATE_MODE_SUM,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
-    DATA_AREA_OBJECT,
-    MODULE_DATA,
 )
+from custom_components.magic_areas.util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Demo config entry."""
-    # await async_setup_platform(hass, {}, async_add_entities)
 
-    area_data = hass.data[MODULE_DATA][config_entry.entry_id]
-    area = area_data[DATA_AREA_OBJECT]
+    add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
 
-    await load_sensors(hass, async_add_entities, area)
-
-
-async def load_sensors(hass, async_add_entities, area):
+def add_sensors(area, async_add_entities):
+    
     # Create aggregates
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
         return
@@ -74,7 +69,6 @@ async def load_sensors(hass, async_add_entities, area):
         )
 
     async_add_entities(aggregates)
-
 
 class AreaSensorGroupSensor(SensorGroupBase):
     def __init__(self, hass, area, device_class, unit_of_measurement):

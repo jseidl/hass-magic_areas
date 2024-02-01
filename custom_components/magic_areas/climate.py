@@ -11,7 +11,7 @@ from typing import Any, Callable, Iterator, List, Optional
 
 from homeassistant.components import climate
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
-from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity, ClimateEntityFeature, HVACAction, HVACMode
+from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACAction, HVACMode
 from homeassistant.components.climate.const import *
 from homeassistant.const import (
     ATTR_ENTITY_ID,
@@ -27,11 +27,11 @@ from custom_components.magic_areas.const import (
     AREA_STATE_CLEAR,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_FEATURE_CLIMATE_GROUPS,
-    DATA_AREA_OBJECT,
     DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
-    MODULE_DATA,
 )
+
+from custom_components.magic_areas.util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,24 +55,26 @@ HVAC_ACTIONS = [
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    ma_data = hass.data[MODULE_DATA]
-    area_data = ma_data[config_entry.entry_id]
-    area = area_data[DATA_AREA_OBJECT]
+    # ma_data = hass.data[MODULE_DATA]
+    # area_data = ma_data[config_entry.entry_id]
+    # area = area_data[DATA_AREA_OBJECT]
 
-    # Climate Groups
-    if area.has_feature(CONF_FEATURE_CLIMATE_GROUPS):
-        _LOGGER.debug(f"{area.name}: Setting up climate group")
-        setup_climate_group(hass, area, async_add_entities)
+    # # Climate Groups
+    # if area.has_feature(CONF_FEATURE_CLIMATE_GROUPS):
+    #     _LOGGER.debug(f"{area.name}: Setting up climate group")
+    #     setup_climate_group(hass, area, async_add_entities)
+
+    add_entities_when_ready(hass, async_add_entities, config_entry, setup_climate_group)
 
 
-def setup_climate_group(hass, area, async_add_entities):
+def setup_climate_group(area, async_add_entities):
     # Check if there are any climate entities
     if not area.has_entities(CLIMATE_DOMAIN):
         _LOGGER.debug(f"No {CLIMATE_DOMAIN} entities for area {area.name} ")
         return
 
     climate_entities = [e["entity_id"] for e in area.entities[CLIMATE_DOMAIN]]
-    async_add_entities([AreaClimateGroup(hass, area, climate_entities)])
+    async_add_entities([AreaClimateGroup(area, climate_entities)])
 
 
 class ClimateGroup(ClimateEntity):
@@ -381,16 +383,15 @@ def _reduce_attribute(
 
 
 class AreaClimateGroup(MagicEntity, ClimateGroup):
-    def __init__(self, hass, area, entities):
+    def __init__(self, area, entities):
         name = f"Area Climate ({area.name})"
 
         self._name = name
         self._entities = entities
 
-        self.hass = hass
         self.area = area
 
-        unit = hass.config.units.temperature_unit
+        unit = self.hass.config.units.temperature_unit
 
         ClimateGroup.__init__(self, self._name, self._entities, [], unit)
 

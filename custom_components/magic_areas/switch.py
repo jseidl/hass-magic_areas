@@ -6,18 +6,18 @@ from custom_components.magic_areas.const import (
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_PRESENCE_HOLD_TIMEOUT,
-    DATA_AREA_OBJECT,
     DEFAULT_PRESENCE_HOLD_TIMEOUT,
     ICON_LIGHT_CONTROL,
     ICON_PRESENCE_HOLD,
-    MODULE_DATA,
 )
+from custom_components.magic_areas.util import add_entities_when_ready
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
-    # await async_setup_platform(hass, {}, async_add_entities)
-    area_data = hass.data[MODULE_DATA][config_entry.entry_id]
-    area = area_data[DATA_AREA_OBJECT]
+
+    add_entities_when_ready(hass, async_add_entities, config_entry, add_switches)
+
+def add_switches(area, async_add_entities):
 
     if area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
         async_add_entities([AreaPresenceHoldSwitch(area)])
@@ -37,8 +37,6 @@ class AreaLightControlSwitch(SwitchBase):
     def icon(self):
         """Return the icon to be used for this entity."""
         return ICON_LIGHT_CONTROL
-
-
 
 class AreaPresenceHoldSwitch(SwitchBase):
     def __init__(self, area):

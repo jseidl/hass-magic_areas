@@ -20,6 +20,7 @@ from custom_components.magic_areas.const import (
     DOMAIN
 )
 
+_LOGGER = logging.getLogger(__name__)
 
 class MagicEntity(RestoreEntity, Entity):
 
@@ -34,7 +35,7 @@ class MagicEntity(RestoreEntity, Entity):
         Entity.__init__(self)
         RestoreEntity.__init__(self)
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(type(self).__module__)
         self._attributes = dict()
         self.area = area
 
@@ -72,6 +73,12 @@ class MagicEntity(RestoreEntity, Entity):
         """Return the attributes of the entity."""
         return self._attributes
 
+    async def _initialize(self) -> None:
+        pass
+
+    async def _shutdown(self) -> None:
+        pass
+
     async def async_added_to_hass(self):
         """Call when entity about to be added to hass."""
         if self.hass.is_running:
@@ -81,7 +88,9 @@ class MagicEntity(RestoreEntity, Entity):
                 EVENT_HOMEASSISTANT_STARTED, self._initialize
             )
 
-        await self.restore_state()
+    async def async_will_remove_from_hass(self):
+        """Remove the listeners upon removing the component."""
+        await self._shutdown()
 
     async def restore_state(self):
         self.update_state()

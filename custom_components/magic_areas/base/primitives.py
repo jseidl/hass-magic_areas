@@ -46,12 +46,7 @@ class MagicSensorBase(MagicEntity):
         # Setup the listeners
         await self._setup_listeners()
 
-    async def _shutdown(self) -> None:
-        pass
-
-    async def async_will_remove_from_hass(self):
-        """Remove the listeners upon removing the component."""
-        await self._shutdown()
+        self.update_state()
 
     async def _setup_listeners(self, _=None) -> None:
         self.logger.debug("%s: Called '_setup_listeners'", self._name)

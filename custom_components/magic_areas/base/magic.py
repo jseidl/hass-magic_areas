@@ -66,6 +66,8 @@ class MagicArea(object):
 
         self.initialized = True
 
+        self.hass.bus.async_fire(EVENT_MAGICAREAS_AREA_READY, {'id': self.id})
+
         if not self.is_meta():
             # Check if we finished loading all areas
             if areas_loaded(self.hass):

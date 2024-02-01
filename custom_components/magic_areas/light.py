@@ -24,7 +24,6 @@ from custom_components.magic_areas.const import (
     AREA_STATE_DARK,
     AREA_STATE_OCCUPIED,
     CONF_FEATURE_LIGHT_GROUPS,
-    DATA_AREA_OBJECT,
     DEFAULT_LIGHT_GROUP_ACT_ON,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     LIGHT_GROUP_ACT_ON,
@@ -34,8 +33,8 @@ from custom_components.magic_areas.const import (
     LIGHT_GROUP_DEFAULT_ICON,
     LIGHT_GROUP_ICONS,
     LIGHT_GROUP_STATES,
-    MODULE_DATA,
 )
+from custom_components.magic_areas.util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,8 +42,9 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
 
-    area_data = hass.data[MODULE_DATA][config_entry.entry_id]
-    area = area_data[DATA_AREA_OBJECT]
+    add_entities_when_ready(hass, async_add_entities, config_entry, add_lights)
+
+def add_lights(area, async_add_entities):
 
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_LIGHT_GROUPS):

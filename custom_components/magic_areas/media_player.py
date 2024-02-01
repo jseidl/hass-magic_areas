@@ -28,21 +28,22 @@ from custom_components.magic_areas.const import (
     DEFAULT_NOTIFY_STATES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     META_AREA_GLOBAL,
-    MODULE_DATA,
 )
+from custom_components.magic_areas.util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    ma_data = hass.data[MODULE_DATA]
-    area_data = ma_data[config_entry.entry_id]
-    area = area_data[DATA_AREA_OBJECT]
+
+    add_entities_when_ready(hass, async_add_entities, config_entry, add_media_players)
+
+def add_media_players(area, async_add_entities):
 
     # Media Player Groups
     if area.has_feature(CONF_FEATURE_MEDIA_PLAYER_GROUPS):
         _LOGGER.debug(f"{area.name}: Setting up media player groups")
-        setup_media_player_group(hass, area, async_add_entities)
+        setup_media_player_group(area, async_add_entities)
 
     # Check if we are the Global Meta Area
     if not area.is_meta() or area.id != META_AREA_GLOBAL.lower():
@@ -51,10 +52,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     # Try to setup AAMP
     _LOGGER.debug("Trying to setup AAMP")
-    setup_area_aware_media_player(hass, area, ma_data, async_add_entities)
+    setup_area_aware_media_player(area, ma_data, async_add_entities)
 
 
-def setup_media_player_group(hass, area, async_add_entities):
+def setup_media_player_group(area, async_add_entities):
     # Check if there are any media player devices
     if not area.has_entities(MEDIA_PLAYER_DOMAIN):
         _LOGGER.debug(f"No {MEDIA_PLAYER_DOMAIN} entities for area {area.name} ")
@@ -62,10 +63,10 @@ def setup_media_player_group(hass, area, async_add_entities):
 
     media_player_entities = [e["entity_id"] for e in area.entities[MEDIA_PLAYER_DOMAIN]]
 
-    async_add_entities([AreaMediaPlayerGroup(hass, area, media_player_entities)])
+    async_add_entities([AreaMediaPlayerGroup(area, media_player_entities)])
 
 
-def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
+def setup_area_aware_media_player(area, ma_data, async_add_entities):
     # Check if we have areas with MEDIA_PLAYER_DOMAIN entities
     areas_with_media_players = []
 
@@ -116,12 +117,11 @@ def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
     _LOGGER.debug(
         f"{area.name}: Setting up area-aware media player with areas: {area_names}"
     )
-    async_add_entities([AreaAwareMediaPlayer(hass, area, areas_with_media_players)])
+    async_add_entities([AreaAwareMediaPlayer(area, areas_with_media_players)])
 
 
 class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
-    def __init__(self, hass, area, areas):
-        self.hass = hass
+    def __init__(self, area, areas):
 
         self._name = "Area-Aware Media Player"
 
@@ -269,13 +269,12 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
 
 class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
-    def __init__(self, hass, area, entities):
+    def __init__(self, area, entities):
         name = f"{area.name} Media Players"
 
         self._name = name
         self._entities = entities
 
-        self.hass = hass
         self.area = area
 
         MediaPlayerGroup.__init__(self, self.unique_id, self._name, self._entities)

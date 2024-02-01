@@ -59,34 +59,56 @@ from custom_components.magic_areas.const import (
     DEFAULT_SLEEP_TIMEOUT,
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
+    EVENT_MAGICAREAS_AREA_READY,
     INVALID_STATES,
     MODULE_DATA,
 )
+from custom_components.magic_areas.util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
-    # await async_setup_platform(hass, {}, async_add_entities)
-    area_data = hass.data[MODULE_DATA][config_entry.entry_id]
-    area = area_data[DATA_AREA_OBJECT]
 
-    await load_sensors(async_add_entities, area)
+    # callback = None
+
+    # def load_sensors(event):
+
+    #     area_data = hass.data[MODULE_DATA][config_entry.entry_id]
+    #     area = area_data[DATA_AREA_OBJECT]
+
+    #     if area.id != event.data.get('id'):
+    #         return False
+        
+    #     # Destroy listener
+    #     if callback:
+    #         callback()
+
+    #     add_sensors(area, async_add_entities)
 
 
-async def load_sensors(async_add_entities, area):
+    # # These sensors need to wait for the area object to be fully initialized
+    # callback = hass.bus.async_listen(
+    #     EVENT_MAGICAREAS_AREA_READY, load_sensors
+    # )
+
+    add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
+
+
+def add_sensors(area, async_add_entities):
+
     # Create basic presence sensor
     async_add_entities([AreaPresenceBinarySensor(area)])
 
     # Create extra sensors
     if area.has_feature(CONF_FEATURE_AGGREGATION):
-        await create_aggregate_sensors(area, async_add_entities)
+        create_aggregate_sensors(area, async_add_entities)
 
     if area.has_feature(CONF_FEATURE_HEALTH):
-        await create_health_sensors(area, async_add_entities)
+        create_health_sensors(area, async_add_entities)
 
-async def create_health_sensors(area, async_add_entities):
+def create_health_sensors(area, async_add_entities):
     if not area.has_feature(CONF_FEATURE_HEALTH):
         return
 
@@ -113,7 +135,7 @@ async def create_health_sensors(area, async_add_entities):
     async_add_entities([AreaDistressBinarySensor(area)])
 
 
-async def create_aggregate_sensors(area, async_add_entities):
+def create_aggregate_sensors(area, async_add_entities):
     # Create aggregates
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
         return
@@ -566,6 +588,9 @@ class AreaSensorGroupBinarySensor(BinarySensorGroupBase):
 
         # Setup the listeners
         await self._setup_listeners()
+
+        # Refresh state
+        self.update_state()
 
         self.logger.debug(f"{self.name} Sensor initialized.")
 
