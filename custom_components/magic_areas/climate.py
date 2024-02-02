@@ -63,6 +63,7 @@ from homeassistant.const import (
     CONF_TEMPERATURE_UNIT,
     CONF_UNIQUE_ID,
     STATE_UNAVAILABLE,
+    UnitOfTemperature,
 )
 
 """
@@ -77,7 +78,7 @@ from custom_components.magic_areas.const import (
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
 )
 
-from custom_components.magic_areas.util import add_entities_when_ready, slugify
+from custom_components.magic_areas.util import add_entities_when_ready
 
 """
     Climate Group Constants
@@ -347,12 +348,9 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
         self._name = name
         self._entities = entities
+        unit = self.area.hass.config.units.temperature_unit
 
-        self.logger = _LOGGER
-
-        unit = self.hass.config.units.temperature_unit
-
-        ClimateGroup.__init__(self, slugify(self._name), self._name, self._entities, unit)
+        ClimateGroup.__init__(self, self.unique_id, self._name, self._entities, unit)
 
         _LOGGER.debug(
             f"Climate group {self._name} created with entities: {self._entities}"

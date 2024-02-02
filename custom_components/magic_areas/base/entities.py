@@ -6,6 +6,7 @@ from datetime import datetime
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.climate import ClimateEntity
 from homeassistant.const import STATE_ON, STATE_OFF
 
 from homeassistant.helpers.entity import Entity
@@ -108,8 +109,8 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
 
     def __init__(self, area, device_class):
 
-        MagicEntity.__init__(self, area, device_class)
-        BinarySensorEntity.__init__(self)
+        MagicEntity.__init__(self, area)
+        BinarySensorEntity.__init__(self, device_class)
 
     @property
     def is_on(self):
