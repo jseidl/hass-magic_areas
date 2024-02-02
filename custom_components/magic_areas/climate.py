@@ -55,14 +55,6 @@ HVAC_ACTIONS = [
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    # ma_data = hass.data[MODULE_DATA]
-    # area_data = ma_data[config_entry.entry_id]
-    # area = area_data[DATA_AREA_OBJECT]
-
-    # # Climate Groups
-    # if area.has_feature(CONF_FEATURE_CLIMATE_GROUPS):
-    #     _LOGGER.debug(f"{area.name}: Setting up climate group")
-    #     setup_climate_group(hass, area, async_add_entities)
 
     add_entities_when_ready(hass, async_add_entities, config_entry, setup_climate_group)
 

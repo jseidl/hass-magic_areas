@@ -25,6 +25,8 @@ from custom_components.magic_areas.const import (
     MAGIC_AREAS_COMPONENTS_META,
     META_AREA_GLOBAL,
     MODULE_DATA,
+    DOMAIN,
+    MAGIC_DEVICE_ID_PREFIX,
 )
 
 class MagicArea(object):
@@ -152,6 +154,21 @@ class MagicArea(object):
         return self.area_type == AREA_TYPE_EXTERIOR
 
     def is_valid_entity(self, entity_object) -> bool:
+        
+        # Ignore our own entities
+        if entity_object.device_id:
+
+            device_registry = self.hass.helpers.device_registry.async_get(self.hass)
+            device_object = device_registry.async_get(entity_object.device_id)
+
+            if device_object:
+
+                our_device_tuple = (DOMAIN, f"{MAGIC_DEVICE_ID_PREFIX}{self.id}")
+
+                if our_device_tuple in device_object.identifiers:
+                    self.logger.debug(f"{self.name}: Entity {entity_object.entity_id} is ours, skipping.")
+                    return False
+
         if entity_object.disabled:
             return False
 
@@ -255,23 +272,6 @@ class MagicArea(object):
         await self.load_entities()
 
         self.finalize_init()
-
-    async def reload_meta_areas(self):
-
-        # Check if we need to reload meta entities
-        data = self.hass.data[MODULE_DATA]
-
-        if not self.is_meta():
-            meta_ids = []
-            self.logger.debug(f"Area not meta, reloading meta areas.")
-            for entry_id, area_data in data.items():
-                area = area_data[DATA_AREA_OBJECT]
-                if area.is_meta():
-                    meta_ids.append(entry_id)
-
-            for entry_id in meta_ids:
-                await self.hass.config_entries.async_reload(entry_id)
-            self.logger.debug(f"Meta areas reloaded.")
 
     def has_entities(self, domain):
         return domain in self.entities.keys()

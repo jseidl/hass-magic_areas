@@ -65,28 +65,24 @@ def add_sensors(area, async_add_entities):
             f"Creating aggregate sensor for device_class '{device_class}' ({unit_of_measurement}) with {entity_count} entities ({area.slug})"
         )
         aggregates.append(
-            AreaSensorGroupSensor(hass, area, device_class, unit_of_measurement)
+            AreaSensorGroupSensor(area, device_class, unit_of_measurement)
         )
 
     async_add_entities(aggregates)
 
 class AreaSensorGroupSensor(SensorGroupBase):
-    def __init__(self, hass, area, device_class, unit_of_measurement):
+    def __init__(self, area, device_class, unit_of_measurement):
         """Initialize an area sensor group sensor."""
 
-        self.area = area
-        self.hass = hass
-        self._mode = "sum" if device_class in AGGREGATE_MODE_SUM else "mean"
-        self._device_class = device_class
-        self._unit_of_measurement = unit_of_measurement
-        self._state = 0
+        super().__init__(area, device_class)
 
+        self._mode = "sum" if device_class in AGGREGATE_MODE_SUM else "mean"
+        self._unit_of_measurement = unit_of_measurement
+        
         device_class_name = " ".join(device_class.split("_")).title()
         self._name = (
             f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
         )
-
-        self.tracking_listeners = []
 
     async def _initialize(self, _=None) -> None:
         self.logger.debug(f"{self.name} Sensor initializing.")

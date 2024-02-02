@@ -4,6 +4,7 @@ from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
 )
+from homeassistant.components.sensor.const import SensorStateClass
 
 from custom_components.magic_areas.base.entities import (
     MagicEntity,
@@ -103,7 +104,7 @@ class BinarySensorGroupBase(MagicAggregateBase, MagicBinarySensorEntity):
     pass
 
 class SensorBase(MagicSensorBase, MagicSensorEntity):
-    pass
+    _state_class = SensorStateClass.MEASUREMENT
 
 class SensorGroupBase(MagicAggregateBase, MagicSensorEntity):
-    pass
+    _state_class = SensorStateClass.MEASUREMENT

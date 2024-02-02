@@ -17,7 +17,8 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from custom_components.magic_areas.const import (
     CONF_ON_STATES,
     INVALID_STATES,
-    DOMAIN
+    DOMAIN,
+    MAGIC_DEVICE_ID_PREFIX,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 class MagicEntity(RestoreEntity, Entity):
 
     area = None
+    _state = None
     _name = None
     logger = None
     _attributes = {}
@@ -45,7 +47,7 @@ class MagicEntity(RestoreEntity, Entity):
         return DeviceInfo(
             identifiers={
                 # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, f"magic_area_device_{self.area.id}")
+                (DOMAIN, f"{MAGIC_DEVICE_ID_PREFIX}{self.area.id}")
             },
             name=self.area.name,
             manufacturer="Magic Areas",
@@ -183,7 +185,7 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
     @property
     def state(self):
         """Return the state of the entity"""
-        return self._state
+        return self.get_sensors_state()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
         self.logger.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")

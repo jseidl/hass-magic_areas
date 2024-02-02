@@ -65,7 +65,6 @@ def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn)
 
             callback_fn(area, async_add_entities)
 
-
         # These sensors need to wait for the area object to be fully initialized
         callback = hass.bus.async_listen(
             EVENT_MAGICAREAS_AREA_READY, load_entities
