@@ -127,10 +127,14 @@ def setup_area_aware_media_player(area, async_add_entities):
 class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
     def __init__(self, area, areas):
 
+        super().__init__(area)
+
         self._name = "Area-Aware Media Player"
 
         self._attributes = {}
         self._state = STATE_IDLE
+
+        self.logger = _LOGGER
 
         self.areas = areas
         self.area = area
@@ -138,8 +142,8 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
         for area in self.areas:
             entity_list = self.get_media_players_for_area(area)
-
-            self._tracked_entities.extend(entity_list)
+            if entity_list:
+                self._tracked_entities.extend(entity_list)
 
         self.logger.info(f"AreaAwareMediaPlayer loaded.")
 
@@ -274,12 +278,13 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
 class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
     def __init__(self, area, entities):
+
+        MagicEntity.__init__(self, area)
+
         name = f"{area.name} Media Players"
 
         self._name = name
         self._entities = entities
-
-        self.area = area
 
         MediaPlayerGroup.__init__(self, self.unique_id, self._name, self._entities)
 

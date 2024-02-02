@@ -49,7 +49,8 @@ def add_cover_groups(area, async_add_entities):
 
 class AreaCoverGroup(MagicEntity, CoverGroup):
     def __init__(self, area, device_class):
-        self.area = area
+
+        MagicEntity.__init__(self, area)
 
         if device_class:
             device_class_name = " ".join(device_class.split("_")).title()

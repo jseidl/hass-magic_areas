@@ -90,9 +90,13 @@ class MagicEntity(RestoreEntity, Entity):
                 EVENT_HOMEASSISTANT_STARTED, self._initialize
             )
 
+        await super().async_added_to_hass()
+
     async def async_will_remove_from_hass(self):
         """Remove the listeners upon removing the component."""
+
         await self._shutdown()
+        await super().async_will_remove_from_hass()
 
     async def restore_state(self):
         self.update_state()

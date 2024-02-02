@@ -63,7 +63,10 @@ def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn)
             if callback:
                 callback()
 
-            callback_fn(area, async_add_entities)
+            try:
+                callback_fn(area, async_add_entities)
+            except Exception as e:
+                _LOGGER.exception(f"[{area.name}] Error loading platform entities on {str(callback_fn)}.")
 
         # These sensors need to wait for the area object to be fully initialized
         callback = hass.bus.async_listen(
