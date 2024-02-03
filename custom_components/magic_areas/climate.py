@@ -58,11 +58,13 @@ from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
+    STATE_OFF,
     CONF_ENTITIES,
     CONF_NAME,
     CONF_TEMPERATURE_UNIT,
     CONF_UNIQUE_ID,
     STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
     UnitOfTemperature,
 )
 
@@ -152,12 +154,25 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         self._attr_preset_modes = None
         self._attr_preset_mode = None
 
+    @property
+    def hvac_mode(self):
+        return STATE_OFF if self._attr_hvac_mode in [STATE_UNKNOWN, STATE_UNAVAILABLE] else self._attr_hvac_mode
+
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
 
         @callback
         def async_state_changed_listener(event: Event) -> None:
             """Handle child updates."""
+
+            if (new_state := event.data['new_state']) is None:
+                return
+            
+            state = new_state.state
+
+            if state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+                return
+
             self.async_set_context(event.context)
             self.async_defer_or_update_ha_state()
 

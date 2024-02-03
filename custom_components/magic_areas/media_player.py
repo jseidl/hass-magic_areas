@@ -4,12 +4,11 @@ import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.group.media_player import MediaPlayerGroup
-from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.components.media_player import SUPPORT_PLAY_MEDIA, MediaPlayerEntity
+from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA
+from homeassistant.components.media_player import MediaPlayerEntity, MediaPlayerEntityFeature
 from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_ID,
     ATTR_MEDIA_CONTENT_TYPE,
-    SERVICE_PLAY_MEDIA,
 )
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, STATE_ON
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -196,7 +195,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
     @property
     def supported_features(self):
         """Flag media player features that are supported."""
-        return SUPPORT_PLAY_MEDIA
+        return MediaPlayerEntityFeature.PLAY_MEDIA
 
     def get_active_areas(self):
         active_areas = []
