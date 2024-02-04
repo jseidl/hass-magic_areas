@@ -281,6 +281,11 @@ AGGREGATE_BINARY_SENSOR_CLASSES = [
     BinarySensorDeviceClass.LIGHT,
 ]
 
+AGGREGATE_MODE_ALL = [
+    BinarySensorDeviceClass.CONNECTIVITY,
+    BinarySensorDeviceClass.PLUG,
+]
+
 # Health related
 DISTRESS_SENSOR_CLASSES = [
     BinarySensorDeviceClass.PROBLEM,
