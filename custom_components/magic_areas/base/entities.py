@@ -106,6 +106,7 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
     
     last_off_time = None
     _state = False
+    _mode = "single"
 
     def __init__(self, area, device_class):
 
@@ -186,7 +187,10 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
             self.logger.debug("[Area: {self.area.slug}] Active areas: {active_areas}")
             self._attributes["active_areas"] = active_areas
 
-        return len(active_sensors) > 0
+        if self._mode == 'all':
+            return (len(active_sensors) == len(self.sensors))
+        else:
+            return len(active_sensors) > 0
 
 class MagicSensorEntity(MagicEntity, SensorEntity):
     _mode = "mean"

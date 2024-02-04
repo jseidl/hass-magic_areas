@@ -58,6 +58,7 @@ from custom_components.magic_areas.const import (
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     INVALID_STATES,
+    AGGREGATE_MODE_ALL,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
 
@@ -549,6 +550,8 @@ class AreaSensorGroupBinarySensor(BinarySensorGroupBase):
         """Initialize an area sensor group binary sensor."""
 
         super().__init__(area, device_class)
+
+        self._mode = "all" if device_class in AGGREGATE_MODE_ALL else "single"
 
         device_class_name = " ".join(device_class.split("_")).title()
         self._name = f"Area {device_class_name} ({self.area.name})"
