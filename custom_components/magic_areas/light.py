@@ -241,7 +241,8 @@ class AreaLightGroup(LightGroup, MagicEntity):
             return False
 
         if self.area.has_state(AREA_STATE_BRIGHT):
-            if AREA_STATE_BRIGHT in new_states:
+            # Only turn off lights when bright if the room was already occupied
+            if AREA_STATE_BRIGHT in new_states and AREA_STATE_OCCUPIED not in new_states:
                 self.controlled = True
                 self._turn_off()
             return False
