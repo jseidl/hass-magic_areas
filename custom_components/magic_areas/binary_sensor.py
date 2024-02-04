@@ -7,7 +7,6 @@ from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
-    EVENT_HOMEASSISTANT_STARTED,
     STATE_ON,
 )
 from homeassistant.helpers.dispatcher import dispatcher_send
@@ -52,16 +51,13 @@ from custom_components.magic_areas.const import (
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     CONFIGURABLE_AREA_STATE_MAP,
-    DATA_AREA_OBJECT,
     DEFAULT_EXTENDED_TIME,
     DEFAULT_EXTENDED_TIMEOUT,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_SLEEP_TIMEOUT,
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
-    EVENT_MAGICAREAS_AREA_READY,
     INVALID_STATES,
-    MODULE_DATA,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
 
@@ -71,30 +67,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
 
-    # callback = None
-
-    # def load_sensors(event):
-
-    #     area_data = hass.data[MODULE_DATA][config_entry.entry_id]
-    #     area = area_data[DATA_AREA_OBJECT]
-
-    #     if area.id != event.data.get('id'):
-    #         return False
-        
-    #     # Destroy listener
-    #     if callback:
-    #         callback()
-
-    #     add_sensors(area, async_add_entities)
-
-
-    # # These sensors need to wait for the area object to be fully initialized
-    # callback = hass.bus.async_listen(
-    #     EVENT_MAGICAREAS_AREA_READY, load_sensors
-    # )
-
     add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
-
 
 def add_sensors(area, async_add_entities):
 
@@ -284,13 +257,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 if not entity:
                     continue
 
-                if (
-                    component == BINARY_SENSOR_DOMAIN
-                    and ATTR_DEVICE_CLASS in entity.keys()
-                    and entity[ATTR_DEVICE_CLASS]
-                    not in self.area.config.get(CONF_PRESENCE_SENSOR_DEVICE_CLASS)
-                ):
-                    continue
+                if component == BINARY_SENSOR_DOMAIN:
+                    if ATTR_DEVICE_CLASS not in entity.keys():
+                        continue
+
+                    if entity[ATTR_DEVICE_CLASS] not in self.area.config.get(CONF_PRESENCE_SENSOR_DEVICE_CLASS):
+                        continue
 
                 self.sensors.append(entity[ATTR_ENTITY_ID])
 
