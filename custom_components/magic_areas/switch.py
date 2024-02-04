@@ -1,130 +1,56 @@
-DEPENDENCIES = ["magic_areas"]
-
-import logging
-
-from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.helpers.event import call_later
-from homeassistant.helpers.restore_state import RestoreEntity
 
-from .base import MagicEntity
-from .const import (
+from custom_components.magic_areas.base.primitives import SwitchBase
+from custom_components.magic_areas.const import (
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_PRESENCE_HOLD_TIMEOUT,
-    DATA_AREA_OBJECT,
     DEFAULT_PRESENCE_HOLD_TIMEOUT,
     ICON_LIGHT_CONTROL,
     ICON_PRESENCE_HOLD,
-    MODULE_DATA,
 )
-
-_LOGGER = logging.getLogger(__name__)
-
+from custom_components.magic_areas.util import add_entities_when_ready
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
-    # await async_setup_platform(hass, {}, async_add_entities)
-    area_data = hass.data[MODULE_DATA][config_entry.entry_id]
-    area = area_data[DATA_AREA_OBJECT]
+
+    add_entities_when_ready(hass, async_add_entities, config_entry, add_switches)
+
+def add_switches(area, async_add_entities):
 
     if area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
-        async_add_entities([AreaPresenceHoldSwitch(hass, area)])
+        async_add_entities([AreaPresenceHoldSwitch(area)])
 
     if area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
-        async_add_entities([AreaLightControlSwitch(hass, area)])
+        async_add_entities([AreaLightControlSwitch(area)])
 
 
-class AreaLightControlSwitch(MagicEntity, SwitchEntity, RestoreEntity):
-    def __init__(self, hass, area):
+class AreaLightControlSwitch(SwitchBase):
+    def __init__(self, area):
         """Initialize the area light control switch."""
 
-        self.area = area
-        self.hass = hass
+        super().__init__(area)
         self._name = f"Area Light Control ({self.area.name})"
-        self._state = STATE_OFF
-
-        _LOGGER.debug(f"{self.name} Switch initializing.")
-
-        # Set attributes
-        self._attributes = {}
-
-        _LOGGER.info(f"{self.name} Switch initialized.")
-
-    @property
-    def is_on(self):
-        """Return true if the area is occupied."""
-        return self._state == STATE_ON
 
     @property
     def icon(self):
         """Return the icon to be used for this entity."""
         return ICON_LIGHT_CONTROL
 
-    async def async_added_to_hass(self):
-        """Call when entity about to be added to hass."""
-
-        last_state = await self.async_get_last_state()
-
-        if last_state:
-            _LOGGER.debug(f"Switch {self.name} restored [state={last_state.state}]")
-            self._state = last_state.state
-        else:
-            self._state = STATE_OFF
-
-        self.schedule_update_ha_state()
-
-    def turn_off(self, **kwargs):
-        """Turn off presence hold."""
-        self._state = STATE_OFF
-        self.schedule_update_ha_state()
-
-    def turn_on(self, **kwargs):
-        """Turn on presence hold."""
-        self._state = STATE_ON
-        self.schedule_update_ha_state()
-
-
-class AreaPresenceHoldSwitch(MagicEntity, SwitchEntity, RestoreEntity):
-    def __init__(self, hass, area):
+class AreaPresenceHoldSwitch(SwitchBase):
+    def __init__(self, area):
         """Initialize the area presence hold switch."""
 
-        self.area = area
-        self.hass = hass
+        super().__init__(area)
         self._name = f"Area Presence Hold ({self.area.name})"
-        self._state = STATE_OFF
-
-        _LOGGER.debug(f"{self.name} Switch initializing.")
-
+        
         self.timeout_callback = None
-
-        # Set attributes
-        self._attributes = {}
-
-        _LOGGER.info(f"{self.name} Switch initialized.")
-
-    @property
-    def is_on(self):
-        """Return true if the area is occupied."""
-        return self._state == STATE_ON
 
     @property
     def icon(self):
         """Return the icon to be used for this entity."""
         return ICON_PRESENCE_HOLD
-
-    async def async_added_to_hass(self):
-        """Call when entity about to be added to hass."""
-
-        last_state = await self.async_get_last_state()
-
-        if last_state:
-            _LOGGER.debug(f"Switch {self.name} restored [state={last_state.state}]")
-            self._state = last_state.state
-        else:
-            self._state = STATE_OFF
-
-        self.schedule_update_ha_state()
 
     def timeout_turn_off(self, next_interval):
         if self._state == STATE_ON:

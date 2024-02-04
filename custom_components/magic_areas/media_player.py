@@ -4,21 +4,18 @@ import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.group.media_player import MediaPlayerGroup
-from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.components.media_player import SUPPORT_PLAY_MEDIA, MediaPlayerEntity
+from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA
+from homeassistant.components.media_player import MediaPlayerEntity, MediaPlayerEntityFeature
 from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_ID,
     ATTR_MEDIA_CONTENT_TYPE,
-    SERVICE_PLAY_MEDIA,
 )
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, STATE_ON
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
-_LOGGER = logging.getLogger(__name__)
-
-from .base import MagicEntity
-from .const import (
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.const import (
     AREA_STATE_CLEAR,
     AREA_STATE_SLEEP,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
@@ -32,19 +29,21 @@ from .const import (
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
+from custom_components.magic_areas.util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    ma_data = hass.data[MODULE_DATA]
-    area_data = ma_data[config_entry.entry_id]
-    area = area_data[DATA_AREA_OBJECT]
+
+    add_entities_when_ready(hass, async_add_entities, config_entry, add_media_players)
+
+def add_media_players(area, async_add_entities):
 
     # Media Player Groups
     if area.has_feature(CONF_FEATURE_MEDIA_PLAYER_GROUPS):
         _LOGGER.debug(f"{area.name}: Setting up media player groups")
-        setup_media_player_group(hass, area, async_add_entities)
+        setup_media_player_group(area, async_add_entities)
 
     # Check if we are the Global Meta Area
     if not area.is_meta() or area.id != META_AREA_GLOBAL.lower():
@@ -53,10 +52,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     # Try to setup AAMP
     _LOGGER.debug("Trying to setup AAMP")
-    setup_area_aware_media_player(hass, area, ma_data, async_add_entities)
+    setup_area_aware_media_player(area, async_add_entities)
 
 
-def setup_media_player_group(hass, area, async_add_entities):
+def setup_media_player_group(area, async_add_entities):
     # Check if there are any media player devices
     if not area.has_entities(MEDIA_PLAYER_DOMAIN):
         _LOGGER.debug(f"No {MEDIA_PLAYER_DOMAIN} entities for area {area.name} ")
@@ -64,10 +63,13 @@ def setup_media_player_group(hass, area, async_add_entities):
 
     media_player_entities = [e["entity_id"] for e in area.entities[MEDIA_PLAYER_DOMAIN]]
 
-    async_add_entities([AreaMediaPlayerGroup(hass, area, media_player_entities)])
+    async_add_entities([AreaMediaPlayerGroup(area, media_player_entities)])
 
 
-def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
+def setup_area_aware_media_player(area, async_add_entities):
+
+    ma_data = area.hass.data[MODULE_DATA]
+
     # Check if we have areas with MEDIA_PLAYER_DOMAIN entities
     areas_with_media_players = []
 
@@ -118,17 +120,20 @@ def setup_area_aware_media_player(hass, area, ma_data, async_add_entities):
     _LOGGER.debug(
         f"{area.name}: Setting up area-aware media player with areas: {area_names}"
     )
-    async_add_entities([AreaAwareMediaPlayer(hass, area, areas_with_media_players)])
+    async_add_entities([AreaAwareMediaPlayer(area, areas_with_media_players)])
 
 
 class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
-    def __init__(self, hass, area, areas):
-        self.hass = hass
+    def __init__(self, area, areas):
+
+        super().__init__(area)
 
         self._name = "Area-Aware Media Player"
 
         self._attributes = {}
         self._state = STATE_IDLE
+
+        self.logger = _LOGGER
 
         self.areas = areas
         self.area = area
@@ -136,12 +141,12 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
         for area in self.areas:
             entity_list = self.get_media_players_for_area(area)
+            if entity_list:
+                self._tracked_entities.extend(entity_list)
 
-            self._tracked_entities.extend(entity_list)
+        self.logger.info(f"AreaAwareMediaPlayer loaded.")
 
-        _LOGGER.info(f"AreaAwareMediaPlayer loaded.")
-
-    def _update_attributes(self):
+    def update_attributes(self):
         self._attributes["areas"] = [
             f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}" for area in self.areas
         ]
@@ -154,7 +159,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER
         ).get(CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES)
 
-        _LOGGER.debug(f"{area.name}: Notification devices: {notification_devices}")
+        self.logger.debug(f"{area.name}: Notification devices: {notification_devices}")
 
         area_media_players = [
             entity["entity_id"] for entity in area.entities[MEDIA_PLAYER_DOMAIN]
@@ -173,7 +178,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            _LOGGER.debug(
+            self.logger.debug(
                 f"Nedia Player {self.name} restored [state={last_state.state}]"
             )
             self._state = last_state.state
@@ -190,9 +195,9 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
     @property
     def supported_features(self):
         """Flag media player features that are supported."""
-        return SUPPORT_PLAY_MEDIA
+        return MediaPlayerEntityFeature.PLAY_MEDIA
 
-    def _get_active_areas(self):
+    def get_active_areas(self):
         active_areas = []
 
         for area in self.areas:
@@ -200,7 +205,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             area_binary_sensor_state = self.hass.states.get(area_binary_sensor_name)
 
             if not area_binary_sensor_state:
-                _LOGGER.debug(f"No state found for entity {area_binary_sensor_name}")
+                self.logger.debug(f"No state found for entity {area_binary_sensor_name}")
                 continue
 
             # Ignore not occupied areas
@@ -230,24 +235,24 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
         return active_areas
 
-    def _update_state(self):
-        self._update_attributes()
+    def update_state(self):
+        self.update_attributes()
         self.schedule_update_ha_state()
 
     def set_state(self, state=None):
         if state:
             self._state = state
-        self._update_state()
+        self.update_state()
 
     def play_media(self, media_type, media_id, **kwargs):
         """Forwards a piece of media to media players in active areas."""
 
         # Read active areas
-        active_areas = self._get_active_areas()
+        active_areas = self.get_active_areas()
 
         # Fail early
         if not active_areas:
-            _LOGGER.info("No areas active. Ignoring.")
+            self.logger.info("No areas active. Ignoring.")
             return False
 
         # Gather media_player entities
@@ -256,7 +261,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             media_players.extend(self.get_media_players_for_area(area))
 
         if not media_players:
-            _LOGGER.info("No media_player entities to forward. Ignoring.")
+            self.logger.info("No media_player entities to forward. Ignoring.")
             return False
 
         data = {
@@ -271,18 +276,18 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
 
 class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
-    def __init__(self, hass, area, entities):
+    def __init__(self, area, entities):
+
+        MagicEntity.__init__(self, area)
+
         name = f"{area.name} Media Players"
 
         self._name = name
         self._entities = entities
 
-        self.hass = hass
-        self.area = area
-
         MediaPlayerGroup.__init__(self, self.unique_id, self._name, self._entities)
 
-        _LOGGER.debug(
+        self.logger.debug(
             f"Media Player group {self._name} created with entities: {self._entities}"
         )
 
@@ -290,15 +295,15 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
         new_states, lost_states = states_tuple
 
         if area_id != self.area.id:
-            _LOGGER.debug(
+            self.logger.debug(
                 f"Area state change event not for us. Skipping. (req: {area_id}/self: {self.area.id})"
             )
             return
 
-        _LOGGER.debug(f"Media Player group {self.name} detected area state change")
+        self.logger.debug(f"Media Player group {self.name} detected area state change")
 
         if AREA_STATE_CLEAR in new_states:
-            _LOGGER.debug(f"{self.area.name}: Area clear, turning off media players")
+            self.logger.debug(f"{self.area.name}: Area clear, turning off media players")
             self._turn_off()
 
     def _turn_off(self):

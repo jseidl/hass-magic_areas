@@ -252,7 +252,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
 
         # Filter out already-configured areas
         configured_areas = []
-        ma_data = self.hass.data[MODULE_DATA]
+        ma_data = self.hass.data[MODULE_DATA] if MODULE_DATA in self.hass.data.keys() else {}
 
         for config_id, config_data in ma_data.items():
             configured_areas.append(config_data[DATA_AREA_OBJECT].id)
