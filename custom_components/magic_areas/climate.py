@@ -165,14 +165,6 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         def async_state_changed_listener(event: Event) -> None:
             """Handle child updates."""
 
-            if (new_state := event.data['new_state']) is None:
-                return
-            
-            state = new_state.state
-
-            if state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
-                return
-
             self.async_set_context(event.context)
             self.async_defer_or_update_ha_state()
 
