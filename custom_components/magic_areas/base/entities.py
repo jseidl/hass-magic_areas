@@ -7,6 +7,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.group.light import LightGroup
 from homeassistant.const import STATE_ON, STATE_OFF
 
 from homeassistant.helpers.entity import Entity
@@ -291,3 +292,21 @@ class MagicSwitchEntity(MagicEntity, SwitchEntity):
         """Turn on presence hold."""
         self._state = STATE_ON
         self.schedule_update_ha_state()
+
+class MagicLightGroup(MagicEntity, LightGroup):
+    
+    def __init__(self, area, entities, init_group=True):
+
+        MagicEntity.__init__(self, area)
+
+        self._entities = entities
+
+        self._name = f"{self.area.name} Lights"
+
+        if init_group:
+            self.init_group()
+
+    def init_group(self):
+        LightGroup.__init__(
+            self, self.unique_id, self._name, self._entities, mode=False
+        )

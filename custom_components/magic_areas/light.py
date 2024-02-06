@@ -2,7 +2,6 @@ DEPENDENCIES = ["magic_areas"]
 
 import logging
 
-from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
@@ -14,9 +13,8 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.helpers.restore_state import RestoreEntity
 
-from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.entities import MagicLightGroup
 from custom_components.magic_areas.const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,
@@ -62,8 +60,8 @@ def add_lights(area, async_add_entities):
     # Create light groups
     if area.is_meta():
         light_groups.append(
-            LightGroup(
-                f"{area.slug}_lights", f"{area.name} Lights", light_entities, mode=False
+            MagicLightGroup(
+                area, light_entities
             )
         )
     else:
@@ -100,22 +98,16 @@ def add_lights(area, async_add_entities):
     # Create all groups
     async_add_entities(light_groups)
 
-
-class AreaLightGroup(LightGroup, MagicEntity):
+class AreaLightGroup(MagicLightGroup):
 
     def __init__(self, area, entities, category=None, child_ids=[]):
 
-        MagicEntity.__init__(self, area)
-
-        name = f"{self.area.name} Lights"
+        MagicLightGroup.__init__(self, area, entities, init_group=False)
 
         if category:
             category_title = " ".join(category.split("_")).title()
-            name = f"{category_title} ({self.area.name})"
+            self._name = f"{category_title} ({self.area.name})"
 
-        self._name = name
-
-        self._entities = entities
         self._child_ids = child_ids
 
         self.category = category
@@ -125,9 +117,7 @@ class AreaLightGroup(LightGroup, MagicEntity):
         self.controlling = True
         self.controlled = False
 
-        LightGroup.__init__(
-            self, self.unique_id, self._name, self._entities, mode=False
-        )
+        self.init_group()
 
         self._icon = LIGHT_GROUP_DEFAULT_ICON
 
