@@ -1,13 +1,7 @@
 name: "Validation Pipeline"
 on:
   push:
-    branches:
-      - 'hotfix/**'
-      - 'feature/**'
-      - 'release/**'
   pull_request:
-    branches: 
-      - main
   schedule:
     - cron: '0 0 * * *'
 jobs:
