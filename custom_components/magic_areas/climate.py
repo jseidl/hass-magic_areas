@@ -154,24 +154,12 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         self._attr_preset_modes = None
         self._attr_preset_mode = None
 
-    @property
-    def hvac_mode(self):
-        return STATE_OFF if self._attr_hvac_mode in [STATE_UNKNOWN, STATE_UNAVAILABLE] else self._attr_hvac_mode
-
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
 
         @callback
         def async_state_changed_listener(event: Event) -> None:
             """Handle child updates."""
-
-            if (new_state := event.data['new_state']) is None:
-                return
-            
-            state = new_state.state
-
-            if state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
-                return
 
             self.async_set_context(event.context)
             self.async_defer_or_update_ha_state()
@@ -228,7 +216,6 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         if all_hvac_modes:
             # Merge all effects from all effect_lists with a union merge.
             self._attr_hvac_modes = list(set().union(*all_hvac_modes))
-
         
         current_hvac_modes = [x.state for x in states if x.state != HVACMode.OFF]
         # return the most common hvac mode (what the thermostat is set to do) except OFF
@@ -236,7 +223,7 @@ class ClimateGroup(GroupEntity, ClimateEntity):
             self._attr_hvac_mode = max(set(current_hvac_modes), key=current_hvac_modes.count)
         # return off if all are off
         elif all(x.state == HVACMode.OFF for x in states):
-            self._attr_preset_mode = HVACMode.OFF
+            self._attr_hvac_mode = HVACMode.OFF
         # else it's none
         else:
             self._attr_hvac_mode = None
@@ -386,13 +373,13 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
         _LOGGER.debug(f"Climate group {self.name} detected area state change")
 
-        if AREA_STATE_CLEAR in new_states and self.hvac_mode != HVACAction.OFF:
+        if AREA_STATE_CLEAR in new_states and self._attr_hvac_action != HVACAction.OFF:
             _LOGGER.debug(
                 f"{self.area.name}: Area clear, turning off Climate {self.entity_id}"
             )
             return self._turn_off()
-
-        if self.area.is_occupied() and self.hvac_mode == HVACAction.OFF:
+        
+        if self.area.is_occupied() and self._attr_hvac_action == HVACAction.OFF:
             configured_state = self.area.feature_config(
                 CONF_FEATURE_CLIMATE_GROUPS
             ).get(
@@ -418,8 +405,10 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
         self.hass.services.call(CLIMATE_DOMAIN, SERVICE_SET_HVAC_MODE, service_data)
 
     def _turn_on(self):
+
         for mode in (HVACMode.HEAT_COOL, HVACMode.HEAT, HVACMode.COOL):
-            if mode not in self.hvac_modes:
+            
+            if mode not in self._attr_hvac_modes:
                 continue
 
             service_data = {
