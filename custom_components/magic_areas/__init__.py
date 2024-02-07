@@ -53,6 +53,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             normalized_name=area_id,
             aliases=set(),
             id=area_id,
+            picture=None,
+            icon=None,
         )
         magic_area = MagicMetaArea(hass, meta_area, config_entry)
 
