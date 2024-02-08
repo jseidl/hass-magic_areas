@@ -181,6 +181,10 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
 
         self._attributes["active_sensors"] = active_sensors
 
+        # Make a copy that doesn't gets cleared out, for debugging
+        if active_sensors:
+            self._attributes["last_active_sensors"] = active_sensors
+
         self.logger.debug(f"[Area: {self.area.slug}] Active sensors: {active_sensors}")
 
         if self.area.is_meta():

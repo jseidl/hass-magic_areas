@@ -51,6 +51,7 @@ ATTR_TYPE = "type"
 ATTR_UPDATE_INTERVAL = "update_interval"
 ATTR_CLEAR_TIMEOUT = "clear_timeout"
 ATTR_ACTIVE_SENSORS = "active_sensors"
+ATTR_LAST_ACTIVE_SENSORS = "last_active_sensors"
 ATTR_FEATURES = "features"
 ATTR_PRESENCE_SENSORS = "presence_sensors"
 
