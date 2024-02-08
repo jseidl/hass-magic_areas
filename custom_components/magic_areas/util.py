@@ -1,6 +1,9 @@
 import logging
 from collections.abc import Iterable
 
+from homeassistant.helpers.area_registry import AreaEntry
+from homeassistant.util import slugify
+
 from custom_components.magic_areas.const import (
     MODULE_DATA,
     DATA_AREA_OBJECT,
@@ -71,4 +74,15 @@ def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn)
         # These sensors need to wait for the area object to be fully initialized
         callback = hass.bus.async_listen(
             EVENT_MAGICAREAS_AREA_READY, load_entities
+        )
+
+def get_meta_area_object(name):
+    
+    return AreaEntry(
+            name=name,
+            normalized_name=slugify(name),
+            aliases=set(),
+            id=slugify(name),
+            picture=None,
+            icon=None,
         )

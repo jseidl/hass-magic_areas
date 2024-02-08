@@ -5,7 +5,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.helpers.area_registry import AreaEntry
+
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
@@ -13,7 +13,7 @@ from homeassistant.helpers.selector import (
     EntitySelectorConfig,
     selector,
 )
-
+from custom_components.magic_areas.util import get_meta_area_object
 from custom_components.magic_areas.const import (
     _DOMAIN_SCHEMA,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
@@ -200,14 +200,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
                 continue
 
             _LOGGER.debug(f"Appending Meta Area {meta_area} to the list of areas")
-            areas.append(
-                AreaEntry(
-                    name=meta_area,
-                    normalized_name=meta_area.lower(),
-                    aliases=set(),
-                    id=meta_area.lower(),
-                )
-            )
+            areas.append(get_meta_area_object(meta_area))
 
         if user_input is not None:
             

@@ -4,9 +4,9 @@ from collections import defaultdict
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.area_registry import AreaEntry
 
 from custom_components.magic_areas.base.magic import MagicArea, MagicMetaArea
+from custom_components.magic_areas.util import get_meta_area_object
 from custom_components.magic_areas.const import (
     CONF_ID,
     CONF_NAME,
@@ -48,14 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             config_entry,
         )
     else:
-        meta_area = AreaEntry(
-            name=area_name,
-            normalized_name=area_id,
-            aliases=set(),
-            id=area_id,
-            picture=None,
-            icon=None,
-        )
+        meta_area = get_meta_area_object(area_name)
         magic_area = MagicMetaArea(hass, meta_area, config_entry)
 
     _LOGGER.debug(
