@@ -26,6 +26,7 @@ from custom_components.magic_areas.const import (
     AREA_STATE_SLEEP,
     ATTR_ACTIVE_AREAS,
     ATTR_ACTIVE_SENSORS,
+    ATTR_LAST_ACTIVE_SENSORS,
     ATTR_AREAS,
     ATTR_CLEAR_TIMEOUT,
     ATTR_FEATURES,
@@ -276,34 +277,25 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def load_attributes(self) -> None:
         # Set attributes
-        self._attributes = {
-            ATTR_PRESENCE_SENSORS: self.sensors,
-            ATTR_FEATURES: [
-                feature_name
-                for feature_name, opts in self.area.config.get(
-                    CONF_ENABLED_FEATURES, {}
-                ).items()
-            ],
-            ATTR_ACTIVE_SENSORS: [],
-            ATTR_CLEAR_TIMEOUT: self.area.config.get(CONF_CLEAR_TIMEOUT),
-            ATTR_UPDATE_INTERVAL: self.area.config.get(CONF_UPDATE_INTERVAL),
-            ATTR_TYPE: self.area.config.get(CONF_TYPE),
-        }
+        self._attributes = {}
 
-        if self.area.is_meta():
+        if not self.area.is_meta():
+            self._attributes.update({ATTR_STATES: self.get_area_states()})
+        else:
             self._attributes.update(
                 {
                     ATTR_AREAS: self.area.get_child_areas(),
                     ATTR_ACTIVE_AREAS: self.area.get_active_areas(),
                 }
             )
-            return
 
-        # Add non-meta attributes
+        # Add common attributes
         self._attributes.update(
             {
-                ATTR_ON_STATES: self.area.config.get(CONF_ON_STATES),
-                ATTR_STATES: self.get_area_states(),
+                ATTR_ACTIVE_SENSORS: [],
+                ATTR_LAST_ACTIVE_SENSORS: [],
+                ATTR_PRESENCE_SENSORS: self.sensors,
+                ATTR_TYPE: self.area.config.get(CONF_TYPE),
             }
         )
 
