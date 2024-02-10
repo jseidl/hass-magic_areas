@@ -53,7 +53,7 @@ def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn)
 
         callback = None
 
-        def load_entities(event):
+        async def load_entities(event):
 
             if config_entry.entry_id not in ma_data.keys():
                 _LOGGER.warn(f"Config entry id {config_entry.entry_id} not in Magic Areas data.")
