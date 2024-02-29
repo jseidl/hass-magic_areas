@@ -1,4 +1,5 @@
 import logging
+import inspect
 from collections.abc import Iterable
 
 from homeassistant.helpers.area_registry import AreaEntry
@@ -80,13 +81,28 @@ def get_meta_area_object(name):
     
     area_slug = slugify(name) 
 
-    return AreaEntry(
-            name=name,
-            normalized_name=area_slug,
-            aliases=set(),
-            id=area_slug,
-            picture=None,
-            icon=None,
-            floor_id=None,
-            labels=set()
-        )
+    params = {
+        'name': name,
+        'normalized_name': area_slug,
+        'aliases': set(),
+        'id': area_slug,
+        'picture': None,
+        'icon': None,
+        'floor_id': None,
+        'labels': set()
+    }
+
+    # We have to introspect the AreaEntry constructor
+    # to know if a given param is available because usually
+    # Home Assistant updates this object with new parameters in
+    # the constructor without defaults and breaks this function
+    # in particular.
+
+    available_params = {}
+    constructor_params = inspect.signature(AreaEntry.__init__).parameters
+
+    for k, v in params.items():
+        if k in constructor_params:
+            available_params[k] = v
+
+    return AreaEntry(**available_params)
