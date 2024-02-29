@@ -109,6 +109,11 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 def setup_climate_group(area, async_add_entities):
+
+    # Check feature availability
+    if not area.has_feature(CONF_FEATURE_CLIMATE_GROUPS):
+        return
+
     # Check if there are any climate entities
     if not area.has_entities(CLIMATE_DOMAIN):
         _LOGGER.debug(f"No {CLIMATE_DOMAIN} entities for area {area.name} ")
