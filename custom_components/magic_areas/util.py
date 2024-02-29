@@ -78,13 +78,15 @@ def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn)
 
 def get_meta_area_object(name):
     
+    area_slug = slugify(name) 
+
     return AreaEntry(
             name=name,
-            normalized_name=slugify(name),
+            normalized_name=area_slug,
             aliases=set(),
-            id=slugify(name),
+            id=area_slug,
             picture=None,
             icon=None,
             floor_id=None,
-            label=None
+            labels=set()
         )
