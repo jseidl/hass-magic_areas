@@ -85,4 +85,6 @@ def get_meta_area_object(name):
             id=slugify(name),
             picture=None,
             icon=None,
+            floor_id=None,
+            label=None
         )
