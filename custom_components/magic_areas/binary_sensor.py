@@ -29,15 +29,11 @@ from custom_components.magic_areas.const import (
     ATTR_LAST_ACTIVE_SENSORS,
     ATTR_AREAS,
     ATTR_CLEAR_TIMEOUT,
-    ATTR_FEATURES,
-    ATTR_ON_STATES,
     ATTR_PRESENCE_SENSORS,
     ATTR_STATES,
     ATTR_TYPE,
-    ATTR_UPDATE_INTERVAL,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
-    CONF_ENABLED_FEATURES,
     CONF_EXTENDED_TIME,
     CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_AGGREGATION,
@@ -124,10 +120,10 @@ def create_aggregate_sensors(area, async_add_entities):
     device_class_count = {}
 
     for entity in area.entities[BINARY_SENSOR_DOMAIN]:
-        if not ATTR_DEVICE_CLASS in entity.keys():
+        if ATTR_DEVICE_CLASS not in entity.keys():
             continue
 
-        if entity[ATTR_DEVICE_CLASS] not in device_class_count.keys():
+        if entity[ATTR_DEVICE_CLASS] not in device_class_count:
             device_class_count[entity[ATTR_DEVICE_CLASS]] = 0
 
         device_class_count[entity[ATTR_DEVICE_CLASS]] += 1
@@ -147,9 +143,9 @@ def create_aggregate_sensors(area, async_add_entities):
 
 
 class AreaPresenceBinarySensor(BinarySensorBase):
+    """Setup & Teardown
     """
-        Setup & Teardown
-    """
+
     def __init__(self, area):
         """Initialize the area presence binary sensor."""
 

@@ -44,7 +44,7 @@ class AreaPresenceHoldSwitch(SwitchBase):
 
         super().__init__(area)
         self._name = f"Area Presence Hold ({self.area.name})"
-        
+
         self.timeout_callback = None
 
     @property

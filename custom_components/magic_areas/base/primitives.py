@@ -35,7 +35,7 @@ class MagicSensorBase(MagicEntity):
     def refresh_states(self, next_interval):
         self.logger.debug(f"Refreshing sensor states {self.name}")
         return self.update_state()
-    
+
     def update(self):
         self.update_state()
 
@@ -96,7 +96,7 @@ class MagicAggregateBase(MagicSensorBase):
 
 class SwitchBase(MagicSwitchEntity):
     pass
-    
+
 class BinarySensorBase(MagicSensorBase, MagicBinarySensorEntity):
     pass
 

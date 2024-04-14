@@ -210,7 +210,7 @@ class AreaLightGroup(MagicLightGroup):
 
         # Handle light category
         return self.state_change_secondary(states_tuple)
-    
+
     def state_change_primary(self, states_tuple):
         new_states, lost_states = states_tuple
 
@@ -279,7 +279,7 @@ class AreaLightGroup(MagicLightGroup):
             and LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE not in self.act_on
         ):
             self.logger.debug(
-                f"Area occupancy change detected but not configured to act on. Skipping."
+                "Area occupancy change detected but not configured to act on. Skipping."
             )
             return False
 
@@ -289,7 +289,7 @@ class AreaLightGroup(MagicLightGroup):
             and LIGHT_GROUP_ACT_ON_STATE_CHANGE not in self.act_on
         ):
             self.logger.debug(
-                f"Area state change detected but not configured to act on. Skipping."
+                "Area state change detected but not configured to act on. Skipping."
             )
             return False
 
@@ -369,7 +369,7 @@ class AreaLightGroup(MagicLightGroup):
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
 
         return True
-    
+
     """ Control Release """
 
     def is_control_enabled(self):
@@ -391,7 +391,7 @@ class AreaLightGroup(MagicLightGroup):
             return entity_object.attributes["controlling"]
 
         return False
-    
+
     def handle_group_state_change_primary(self):
         controlling = False
 

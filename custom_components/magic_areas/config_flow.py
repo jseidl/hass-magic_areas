@@ -99,7 +99,7 @@ _LOGGER = logging.getLogger(__name__)
 
 EMPTY_ENTRY = [""]
 
-class ConfigBase(object):
+class ConfigBase:
 
     # Selector builder
     def _build_selector_select(self, options=[], multiple=False):
@@ -179,7 +179,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
     """Handle a config flow for Magic Areas."""
 
     VERSION = 1
-    
+
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         errors = {}
@@ -203,7 +203,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             areas.append(get_meta_area_object(meta_area))
 
         if user_input is not None:
-            
+
             # Look up area object by name
             area_object = None
 
@@ -223,7 +223,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             # this should never happen in ideal conditions.
             if not area_object:
                 return self.async_abort(reason="invalid_area")
-            
+
             # Reserve unique name / already configured check
             await self.async_set_unique_id(area_object.id)
             self._abort_if_unique_id_configured()
@@ -522,7 +522,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
     async def async_route_feature_config(self, user_input=None):
         """Determine the next feature to be configured or finalize the options
         flow if there are no more features left (i.e. all selected features have
-        been configured)."""
+        been configured).
+        """
         _LOGGER.debug(f"Features yet to configure: {self.features_to_configure}")
         _LOGGER.debug(f"Current config is: {self.area_options}")
         if self.features_to_configure:

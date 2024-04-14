@@ -6,7 +6,6 @@ from datetime import datetime
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.group.light import LightGroup
 from homeassistant.const import STATE_ON, STATE_OFF
 
@@ -104,7 +103,7 @@ class MagicEntity(RestoreEntity, Entity):
         self.update_state()
 
 class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
-    
+
     last_off_time = None
     _state = False
     _mode = "single"
@@ -258,7 +257,7 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
                 ret = mean(sensor_values)
 
         return round(ret, 2)
-    
+
 
 class MagicSwitchEntity(MagicEntity, SwitchEntity):
 
@@ -298,7 +297,7 @@ class MagicSwitchEntity(MagicEntity, SwitchEntity):
         self.schedule_update_ha_state()
 
 class MagicLightGroup(MagicEntity, LightGroup):
-    
+
     def __init__(self, area, entities, init_group=True):
 
         MagicEntity.__init__(self, area)

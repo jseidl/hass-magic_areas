@@ -1,5 +1,4 @@
-"""
-This file is mostly https://github.com/daenny/climate_group,
+"""This file is mostly https://github.com/daenny/climate_group,
 adapted to work with Magic Areas.
 
 Once this goes into the main Home Assistant code it will be phased out.
@@ -14,7 +13,7 @@ import logging
 from typing import Any
 from statistics import mean
 
-from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.core import Event, callback
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.components.climate import (
@@ -34,7 +33,6 @@ from homeassistant.components.climate import (
     ATTR_TARGET_TEMP_LOW,
     ATTR_TARGET_TEMP_STEP,
     DOMAIN as CLIMATE_DOMAIN,
-    PLATFORM_SCHEMA,
     SERVICE_SET_FAN_MODE,
     SERVICE_SET_HVAC_MODE,
     SERVICE_SET_PRESET_MODE,
@@ -58,14 +56,7 @@ from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
-    STATE_OFF,
-    CONF_ENTITIES,
-    CONF_NAME,
-    CONF_TEMPERATURE_UNIT,
-    CONF_UNIQUE_ID,
     STATE_UNAVAILABLE,
-    STATE_UNKNOWN,
-    UnitOfTemperature,
 )
 
 """
@@ -221,7 +212,7 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         if all_hvac_modes:
             # Merge all effects from all effect_lists with a union merge.
             self._attr_hvac_modes = list(set().union(*all_hvac_modes))
-        
+
         current_hvac_modes = [x.state for x in states if x.state != HVACMode.OFF]
         # return the most common hvac mode (what the thermostat is set to do) except OFF
         if current_hvac_modes:
@@ -383,7 +374,7 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
                 f"{self.area.name}: Area clear, turning off Climate {self.entity_id}"
             )
             return self._turn_off()
-        
+
         if self.area.is_occupied() and self._attr_hvac_action == HVACAction.OFF:
             configured_state = self.area.feature_config(
                 CONF_FEATURE_CLIMATE_GROUPS
@@ -412,7 +403,7 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
     def _turn_on(self):
 
         for mode in (HVACMode.HEAT_COOL, HVACMode.HEAT, HVACMode.COOL):
-            
+
             if mode not in self._attr_hvac_modes:
                 continue
 

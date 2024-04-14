@@ -144,7 +144,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             if entity_list:
                 self._tracked_entities.extend(entity_list)
 
-        self.logger.info(f"AreaAwareMediaPlayer loaded.")
+        self.logger.info("AreaAwareMediaPlayer loaded.")
 
     def update_attributes(self):
         self._attributes["areas"] = [

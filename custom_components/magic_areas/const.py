@@ -392,7 +392,7 @@ NON_CONFIGURABLE_FEATURES_META = [
 NON_CONFIGURABLE_FEATURES = {
     feature: {}
     for feature in ALL_FEATURES
-    if feature not in CONFIGURABLE_FEATURES.keys()
+    if feature not in CONFIGURABLE_FEATURES
 }
 
 FEATURES_SCHEMA = vol.Schema(

@@ -18,7 +18,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
 
 def add_sensors(area, async_add_entities):
-    
+
     # Create aggregates
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
         return
@@ -78,7 +78,7 @@ class AreaSensorGroupSensor(SensorGroupBase):
 
         self._mode = "sum" if device_class in AGGREGATE_MODE_SUM else "mean"
         self._unit_of_measurement = unit_of_measurement
-        
+
         device_class_name = " ".join(device_class.split("_")).title()
         self._name = (
             f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"

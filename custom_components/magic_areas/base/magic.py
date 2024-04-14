@@ -4,7 +4,6 @@ from datetime import datetime
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
 from homeassistant.util import slugify
-from homeassistant.helpers.discovery import async_load_platform
 
 from custom_components.magic_areas.util import flatten_entity_list, is_entity_list, areas_loaded
 from custom_components.magic_areas.const import (
@@ -29,7 +28,7 @@ from custom_components.magic_areas.const import (
     MAGIC_DEVICE_ID_PREFIX,
 )
 
-class MagicArea(object):
+class MagicArea:
     def __init__(self, hass, area, config, listen_event = EVENT_HOMEASSISTANT_STARTED, init_on_hass_running=True) -> None:
 
         self.logger = logging.getLogger(__name__)
@@ -124,7 +123,7 @@ class MagicArea(object):
             self.logger.debug(f"{self.name}: No feature config found for {feature}")
 
         return options.get(feature, {})
-    
+
     def available_platforms(self):
 
         available_platforms = []
@@ -146,7 +145,7 @@ class MagicArea(object):
 
     def is_meta(self) -> bool:
         return self.area_type == AREA_TYPE_META
-    
+
     def is_interior(self):
         return self.area_type == AREA_TYPE_INTERIOR
 
@@ -154,7 +153,7 @@ class MagicArea(object):
         return self.area_type == AREA_TYPE_EXTERIOR
 
     def is_valid_entity(self, entity_object) -> bool:
-        
+
         # Ignore our own entities
         if entity_object.device_id:
 

@@ -1,6 +1,6 @@
 """Magic Areas component for Home Assistant."""
 import logging
-from collections import defaultdict 
+from collections import defaultdict
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -22,7 +22,6 @@ from custom_components.magic_areas.const import (
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
-
     """Set up the component."""
     data = hass.data.setdefault(MODULE_DATA, {})
     area_id = config_entry.data[CONF_ID]

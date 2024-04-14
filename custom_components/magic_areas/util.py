@@ -42,7 +42,7 @@ def areas_loaded(hass):
     return True
 
 def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn):
-    
+
     ma_data = hass.data[MODULE_DATA]
     area_data = ma_data[config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
@@ -62,14 +62,14 @@ def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn)
 
             if area.id != event.data.get('id'):
                 return False
-            
+
             # Destroy listener
             if callback:
                 callback()
 
             try:
                 callback_fn(area, async_add_entities)
-            except Exception as e:
+            except Exception:
                 _LOGGER.exception(f"[{area.name}] Error loading platform entities on {str(callback_fn)}.")
 
         # These sensors need to wait for the area object to be fully initialized
@@ -78,8 +78,8 @@ def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn)
         )
 
 def get_meta_area_object(name):
-    
-    area_slug = slugify(name) 
+
+    area_slug = slugify(name)
 
     params = {
         'name': name,

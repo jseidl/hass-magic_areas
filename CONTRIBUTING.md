@@ -1,18 +1,63 @@
-# Contributing to Magic Areas
+# Contribution guidelines
 
-Everybody is invited and welcome to contribute to Magic Areas. There is a lot to do...if you are not a developer perhaps you would like to help with the documentation on [the wiki](https://github.com/jseidl/hass-magic_areas/wiki)? If you are a developer and have ideas for features or a bug you think you can fix, your contribution is immensely appreciated!
+Contributing to this project should be as easy and transparent as possible, whether it's:
 
-If you don't have any bugs or ideas but are willing to contribute to Magic Areas, take a look at the [open issues](https://github.com/jseidl/hass-magic_areas/issues) for inspiration!
+- Reporting a bug
+- Discussing the current state of the code
+- Submitting a fix
+- Proposing new features
 
-The process is straight-forward.
+## Github is used for everything
 
- - Fork the Magic Areas [git repository](https://github.com/jseidl/hass-magic_areas).
- - Write the code for your feature or bug fix.
- - Create a Pull Request against the [**develop**](https://github.com/jseidl/hass-magic_areas/tree/develop) branch of Magic Areas.
- - Ensure tests (GitHub actions workflow) work/pass on your PR.
+Github is used to host code, to track issues and feature requests, as well as accept pull requests.
 
-Questions? Join `#developers` at our [Discord server](https://discord.gg/8vxJpJ2vP4).
+Pull requests are the best way to propose changes to the codebase.
 
-## Feature suggestions & Bug Reports
+1. Fork the repo and create your branch from `main`.
+2. If you've changed something, update the documentation.
+3. Make sure your code lints (using `scripts/lint`).
+4. Test you contribution.
+5. Issue that pull request!
 
-For suggesting new feature ideas or reporting bugs, please create a new [issue](https://github.com/jseidl/hass-magic_areas/issues).
+## Any contributions you make will be under the MIT Software License
+
+In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
+
+## Report bugs using Github's [issues](../../issues)
+
+GitHub issues are used to track public bugs.
+Report a bug by [opening a new issue](../../issues/new/choose); it's that easy!
+
+## Write bug reports with detail, background, and sample code
+
+**Great Bug Reports** tend to have:
+
+- A quick summary and/or background
+- Steps to reproduce
+  - Be specific!
+  - Give sample code if you can.
+- What you expected would happen
+- What actually happens
+- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
+
+People *love* thorough bug reports. I'm not even kidding.
+
+## Use a Consistent Coding Style
+
+Use [black](https://github.com/ambv/black) to make sure the code follows the style.
+
+## Test your code modification
+
+This custom component is based on [integration_blueprint template](https://github.com/ludeeus/integration_blueprint).
+
+It comes with development environment in a container, easy to launch
+if you use Visual Studio Code. With this container you will have a stand alone
+Home Assistant instance running and already configured with the included
+[`configuration.yaml`](./config/configuration.yaml)
+file.
+
+If you need help with your environment or understanding the code, join us at our [Discord #developers channel](https://discord.com/channels/928386239789400065/928386308324335666).
+
+## License
+
+By contributing, you agree that your contributions will be licensed under its MIT License.
