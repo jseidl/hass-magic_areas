@@ -1,14 +1,12 @@
-import logging
 from datetime import datetime, timedelta
+import logging
 
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from homeassistant.const import (
-    ATTR_DEVICE_CLASS,
-    ATTR_ENTITY_ID,
-    STATE_ON,
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
 )
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
 from homeassistant.helpers.dispatcher import dispatcher_send
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -16,8 +14,9 @@ from homeassistant.helpers.event import (
     call_later,
 )
 
-from custom_components.magic_areas.base.primitives import BinarySensorBase, BinarySensorGroupBase
-from custom_components.magic_areas.const import (
+from .base.primitives import BinarySensorBase, BinarySensorGroupBase
+from .const import (
+    AGGREGATE_MODE_ALL,
     AREA_STATE_BRIGHT,
     AREA_STATE_CLEAR,
     AREA_STATE_DARK,
@@ -26,9 +25,9 @@ from custom_components.magic_areas.const import (
     AREA_STATE_SLEEP,
     ATTR_ACTIVE_AREAS,
     ATTR_ACTIVE_SENSORS,
-    ATTR_LAST_ACTIVE_SENSORS,
     ATTR_AREAS,
     ATTR_CLEAR_TIMEOUT,
+    ATTR_LAST_ACTIVE_SENSORS,
     ATTR_PRESENCE_SENSORS,
     ATTR_STATES,
     ATTR_TYPE,
@@ -55,9 +54,8 @@ from custom_components.magic_areas.const import (
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     INVALID_STATES,
-    AGGREGATE_MODE_ALL,
 )
-from custom_components.magic_areas.util import add_entities_when_ready
+from .util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,6 +64,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
 
     add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
+
 
 def add_sensors(area, async_add_entities):
 
@@ -78,6 +77,7 @@ def add_sensors(area, async_add_entities):
 
     if area.has_feature(CONF_FEATURE_HEALTH):
         create_health_sensors(area, async_add_entities)
+
 
 def create_health_sensors(area, async_add_entities):
     if not area.has_feature(CONF_FEATURE_HEALTH):
@@ -143,8 +143,7 @@ def create_aggregate_sensors(area, async_add_entities):
 
 
 class AreaPresenceBinarySensor(BinarySensorBase):
-    """Setup & Teardown
-    """
+    """Setup & Teardown"""
 
     def __init__(self, area):
         """Initialize the area presence binary sensor."""
@@ -259,7 +258,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                     if ATTR_DEVICE_CLASS not in entity.keys():
                         continue
 
-                    if entity[ATTR_DEVICE_CLASS] not in self.area.config.get(CONF_PRESENCE_SENSOR_DEVICE_CLASS):
+                    if entity[ATTR_DEVICE_CLASS] not in self.area.config.get(
+                        CONF_PRESENCE_SENSOR_DEVICE_CLASS
+                    ):
                         continue
 
                 self.sensors.append(entity[ATTR_ENTITY_ID])
@@ -301,7 +302,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         if self.area.is_meta():
             self._attributes[ATTR_ACTIVE_AREAS] = self.area.get_active_areas()
-
 
     """
         State Change Handling
@@ -386,7 +386,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.area.states = list(current_state)
 
         return (new_states, lost_states)
-
 
     def get_occupancy_state(self):
         valid_on_states = (
@@ -482,6 +481,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     """
         Clearing
     """
+
     def get_clear_timeout(self):
         if self.area.has_state(AREA_STATE_SLEEP):
             return self.area.config.get(CONF_SECONDARY_STATES, {}).get(
@@ -532,6 +532,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             return True
 
         return False
+
 
 class AreaSensorGroupBinarySensor(BinarySensorGroupBase):
     def __init__(self, area, device_class):

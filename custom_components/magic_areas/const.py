@@ -1,16 +1,18 @@
 from itertools import chain
 
 import voluptuous as vol
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass
+
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
+)
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.sun import DOMAIN as SUN_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
@@ -390,9 +392,7 @@ NON_CONFIGURABLE_FEATURES_META = [
 ]
 
 NON_CONFIGURABLE_FEATURES = {
-    feature: {}
-    for feature in ALL_FEATURES
-    if feature not in CONFIGURABLE_FEATURES
+    feature: {} for feature in ALL_FEATURES if feature not in CONFIGURABLE_FEATURES
 }
 
 FEATURES_SCHEMA = vol.Schema(

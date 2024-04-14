@@ -1,28 +1,21 @@
-import logging
-
-from statistics import mean
 from datetime import datetime
+import logging
+from statistics import mean
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.group.light import LightGroup
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.components.group.light import LightGroup
-from homeassistant.const import STATE_ON, STATE_OFF
-
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_OFF, STATE_ON
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
-from homeassistant.helpers.device_registry import DeviceInfo
 
-from custom_components.magic_areas.const import (
-    CONF_ON_STATES,
-    INVALID_STATES,
-    DOMAIN,
-    MAGIC_DEVICE_ID_PREFIX,
-)
+from .const import CONF_ON_STATES, DOMAIN, INVALID_STATES, MAGIC_DEVICE_ID_PREFIX
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class MagicEntity(RestoreEntity, Entity):
 
@@ -52,7 +45,7 @@ class MagicEntity(RestoreEntity, Entity):
             },
             name=self.area.name,
             manufacturer="Magic Areas",
-            model="Magic Area"
+            model="Magic Area",
         )
 
     @property
@@ -102,6 +95,7 @@ class MagicEntity(RestoreEntity, Entity):
     async def restore_state(self):
         self.update_state()
 
+
 class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
 
     last_off_time = None
@@ -123,7 +117,9 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
         if not to_state:
             return
 
-        self.logger.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
+        self.logger.debug(
+            f"{self.name}: sensor '{entity_id}' changed to {to_state.state}"
+        )
 
         if to_state.state in INVALID_STATES:
             self.logger.debug(
@@ -191,10 +187,11 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
             self.logger.debug("[Area: {self.area.slug}] Active areas: {active_areas}")
             self._attributes["active_areas"] = active_areas
 
-        if self._mode == 'all':
-            return (len(active_sensors) == len(self.sensors))
+        if self._mode == "all":
+            return len(active_sensors) == len(self.sensors)
         else:
             return len(active_sensors) > 0
+
 
 class MagicSensorEntity(MagicEntity, SensorEntity):
     _mode = "mean"
@@ -205,7 +202,9 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
         return self.get_sensors_state()
 
     def sensor_state_change(self, entity_id, from_state, to_state):
-        self.logger.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
+        self.logger.debug(
+            f"{self.name}: sensor '{entity_id}' changed to {to_state.state}"
+        )
 
         if to_state.state in INVALID_STATES:
             self.logger.debug(
@@ -295,6 +294,7 @@ class MagicSwitchEntity(MagicEntity, SwitchEntity):
         """Turn on presence hold."""
         self._state = STATE_ON
         self.schedule_update_ha_state()
+
 
 class MagicLightGroup(MagicEntity, LightGroup):
 

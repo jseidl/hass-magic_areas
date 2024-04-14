@@ -1,35 +1,42 @@
-import logging
-
 from datetime import datetime
+import logging
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
 from homeassistant.util import slugify
 
-from custom_components.magic_areas.util import flatten_entity_list, is_entity_list, areas_loaded
-from custom_components.magic_areas.const import (
+from .const import (
     AREA_STATE_OCCUPIED,
-    AREA_TYPE_META,
-    AREA_TYPE_INTERIOR,
     AREA_TYPE_EXTERIOR,
+    AREA_TYPE_INTERIOR,
+    AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_INCLUDE_ENTITIES,
     CONF_TYPE,
     CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
+    DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
     MAGIC_AREAS_COMPONENTS_GLOBAL,
     MAGIC_AREAS_COMPONENTS_META,
+    MAGIC_DEVICE_ID_PREFIX,
     META_AREA_GLOBAL,
     MODULE_DATA,
-    DOMAIN,
-    MAGIC_DEVICE_ID_PREFIX,
 )
+from .util import areas_loaded, flatten_entity_list, is_entity_list
+
 
 class MagicArea:
-    def __init__(self, hass, area, config, listen_event = EVENT_HOMEASSISTANT_STARTED, init_on_hass_running=True) -> None:
+    def __init__(
+        self,
+        hass,
+        area,
+        config,
+        listen_event=EVENT_HOMEASSISTANT_STARTED,
+        init_on_hass_running=True,
+    ) -> None:
 
         self.logger = logging.getLogger(__name__)
 
@@ -57,9 +64,7 @@ class MagicArea:
         if self.hass.is_running and init_on_hass_running:
             self.hass.async_create_task(self.initialize())
         else:
-            self.hass.bus.async_listen_once(
-                listen_event, self.initialize
-            )
+            self.hass.bus.async_listen_once(listen_event, self.initialize)
 
         self.logger.debug(f"Area {self.slug} Primed for initialization.")
 
@@ -67,7 +72,7 @@ class MagicArea:
 
         self.initialized = True
 
-        self.hass.bus.async_fire(EVENT_MAGICAREAS_AREA_READY, {'id': self.id})
+        self.hass.bus.async_fire(EVENT_MAGICAREAS_AREA_READY, {"id": self.id})
 
         if not self.is_meta():
             # Check if we finished loading all areas
@@ -165,7 +170,9 @@ class MagicArea:
                 our_device_tuple = (DOMAIN, f"{MAGIC_DEVICE_ID_PREFIX}{self.id}")
 
                 if our_device_tuple in device_object.identifiers:
-                    self.logger.debug(f"{self.name}: Entity {entity_object.entity_id} is ours, skipping.")
+                    self.logger.debug(
+                        f"{self.name}: Entity {entity_object.entity_id} is ours, skipping."
+                    )
                     return False
 
         if entity_object.disabled:
@@ -279,7 +286,13 @@ class MagicArea:
 class MagicMetaArea(MagicArea):
     def __init__(self, hass, area, config) -> None:
 
-        super().__init__(hass, area, config, EVENT_MAGICAREAS_READY, init_on_hass_running=areas_loaded(hass))
+        super().__init__(
+            hass,
+            area,
+            config,
+            EVENT_MAGICAREAS_READY,
+            init_on_hass_running=areas_loaded(hass),
+        )
 
     def areas_loaded(self, hass=None):
 
@@ -309,7 +322,9 @@ class MagicMetaArea(MagicArea):
                 if entity.state == STATE_ON:
                     active_areas.append(area)
             except Exception as e:
-                self.logger.error(f"Unable to get active area state for {area}: {str(e)}")
+                self.logger.error(
+                    f"Unable to get active area state for {area}: {str(e)}"
+                )
                 pass
 
         return active_areas
@@ -336,7 +351,9 @@ class MagicMetaArea(MagicArea):
 
         # Meta-areas need to wait until other magic areas are loaded.
         if not self.areas_loaded():
-            self.logger.warn(f"Meta-Area {self.name}: Non-meta areas not loaded. This shouldn't happen.")
+            self.logger.warn(
+                f"Meta-Area {self.name}: Non-meta areas not loaded. This shouldn't happen."
+            )
             return False
 
         self.logger.debug(f"Initializing meta area {self.slug}...")

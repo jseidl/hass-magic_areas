@@ -4,8 +4,12 @@ import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.group.media_player import MediaPlayerGroup
-from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA
-from homeassistant.components.media_player import MediaPlayerEntity, MediaPlayerEntityFeature
+from homeassistant.components.media_player import (
+    DOMAIN as MEDIA_PLAYER_DOMAIN,
+    SERVICE_PLAY_MEDIA,
+    MediaPlayerEntity,
+    MediaPlayerEntityFeature,
+)
 from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_ID,
     ATTR_MEDIA_CONTENT_TYPE,
@@ -14,8 +18,8 @@ from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, ST
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from custom_components.magic_areas.base.entities import MagicEntity
-from custom_components.magic_areas.const import (
+from .base.entities import MagicEntity
+from .const import (
     AREA_STATE_CLEAR,
     AREA_STATE_SLEEP,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
@@ -29,7 +33,7 @@ from custom_components.magic_areas.const import (
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
-from custom_components.magic_areas.util import add_entities_when_ready
+from .util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +41,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, config_entry, async_add_entities):
 
     add_entities_when_ready(hass, async_add_entities, config_entry, add_media_players)
+
 
 def add_media_players(area, async_add_entities):
 
@@ -205,7 +210,9 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             area_binary_sensor_state = self.hass.states.get(area_binary_sensor_name)
 
             if not area_binary_sensor_state:
-                self.logger.debug(f"No state found for entity {area_binary_sensor_name}")
+                self.logger.debug(
+                    f"No state found for entity {area_binary_sensor_name}"
+                )
                 continue
 
             # Ignore not occupied areas
@@ -303,7 +310,9 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
         self.logger.debug(f"Media Player group {self.name} detected area state change")
 
         if AREA_STATE_CLEAR in new_states:
-            self.logger.debug(f"{self.area.name}: Area clear, turning off media players")
+            self.logger.debug(
+                f"{self.area.name}: Area clear, turning off media players"
+            )
             self._turn_off()
 
     def _turn_off(self):

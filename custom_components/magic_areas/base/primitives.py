@@ -1,20 +1,19 @@
 from datetime import timedelta
 
+from homeassistant.components.sensor.const import SensorStateClass
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
 )
-from homeassistant.components.sensor.const import SensorStateClass
 
-from custom_components.magic_areas.base.entities import (
+from .base.entities import (
+    MagicBinarySensorEntity,
     MagicEntity,
-    MagicSwitchEntity,
     MagicSensorEntity,
-    MagicBinarySensorEntity
+    MagicSwitchEntity,
 )
-from custom_components.magic_areas.const import (
-    CONF_UPDATE_INTERVAL
-)
+from .const import CONF_UPDATE_INTERVAL
+
 
 class MagicSensorBase(MagicEntity):
 
@@ -67,6 +66,7 @@ class MagicSensorBase(MagicEntity):
             async_track_time_interval(self.hass, self.refresh_states, delta)
         )
 
+
 class MagicAggregateBase(MagicSensorBase):
     def load_sensors(self, domain, unit_of_measurement=None):
         # Fetch sensors
@@ -94,17 +94,22 @@ class MagicAggregateBase(MagicSensorBase):
         else:
             self._attributes = {"sensors": self.sensors, "active_sensors": []}
 
+
 class SwitchBase(MagicSwitchEntity):
     pass
+
 
 class BinarySensorBase(MagicSensorBase, MagicBinarySensorEntity):
     pass
 
+
 class BinarySensorGroupBase(MagicAggregateBase, MagicBinarySensorEntity):
     pass
 
+
 class SensorBase(MagicSensorBase, MagicSensorEntity):
     _state_class = SensorStateClass.MEASUREMENT
+
 
 class SensorGroupBase(MagicAggregateBase, MagicSensorEntity):
     _state_class = SensorStateClass.MEASUREMENT

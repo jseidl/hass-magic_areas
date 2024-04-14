@@ -1,8 +1,8 @@
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.helpers.event import call_later
 
-from custom_components.magic_areas.base.primitives import SwitchBase
-from custom_components.magic_areas.const import (
+from .base.primitives import SwitchBase
+from .const import (
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_PRESENCE_HOLD_TIMEOUT,
@@ -10,12 +10,14 @@ from custom_components.magic_areas.const import (
     ICON_LIGHT_CONTROL,
     ICON_PRESENCE_HOLD,
 )
-from custom_components.magic_areas.util import add_entities_when_ready
+from .util import add_entities_when_ready
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
 
     add_entities_when_ready(hass, async_add_entities, config_entry, add_switches)
+
 
 def add_switches(area, async_add_entities):
 
@@ -37,6 +39,7 @@ class AreaLightControlSwitch(SwitchBase):
     def icon(self):
         """Return the icon to be used for this entity."""
         return ICON_LIGHT_CONTROL
+
 
 class AreaPresenceHoldSwitch(SwitchBase):
     def __init__(self, area):

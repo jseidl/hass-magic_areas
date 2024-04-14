@@ -1,19 +1,16 @@
-import logging
-import inspect
 from collections.abc import Iterable
+import inspect
+import logging
 
 from homeassistant.helpers.area_registry import AreaEntry
 from homeassistant.util import slugify
 
-from custom_components.magic_areas.const import (
-    MODULE_DATA,
-    DATA_AREA_OBJECT,
-    EVENT_MAGICAREAS_AREA_READY,
-)
+from .const import DATA_AREA_OBJECT, EVENT_MAGICAREAS_AREA_READY, MODULE_DATA
 
 _LOGGER = logging.getLogger(__name__)
 
 basestring = (str, bytes)
+
 
 def is_entity_list(item):
     return isinstance(item, Iterable) and not isinstance(item, basestring)
@@ -26,6 +23,7 @@ def flatten_entity_list(input_list):
                 yield sublist
         else:
             yield i
+
 
 def areas_loaded(hass):
 
@@ -40,6 +38,7 @@ def areas_loaded(hass):
                 return False
 
     return True
+
 
 def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn):
 
@@ -57,10 +56,12 @@ def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn)
         async def load_entities(event):
 
             if config_entry.entry_id not in ma_data.keys():
-                _LOGGER.warn(f"Config entry id {config_entry.entry_id} not in Magic Areas data.")
+                _LOGGER.warn(
+                    f"Config entry id {config_entry.entry_id} not in Magic Areas data."
+                )
                 return False
 
-            if area.id != event.data.get('id'):
+            if area.id != event.data.get("id"):
                 return False
 
             # Destroy listener
@@ -70,26 +71,27 @@ def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn)
             try:
                 callback_fn(area, async_add_entities)
             except Exception:
-                _LOGGER.exception(f"[{area.name}] Error loading platform entities on {str(callback_fn)}.")
+                _LOGGER.exception(
+                    f"[{area.name}] Error loading platform entities on {str(callback_fn)}."
+                )
 
         # These sensors need to wait for the area object to be fully initialized
-        callback = hass.bus.async_listen(
-            EVENT_MAGICAREAS_AREA_READY, load_entities
-        )
+        callback = hass.bus.async_listen(EVENT_MAGICAREAS_AREA_READY, load_entities)
+
 
 def get_meta_area_object(name):
 
     area_slug = slugify(name)
 
     params = {
-        'name': name,
-        'normalized_name': area_slug,
-        'aliases': set(),
-        'id': area_slug,
-        'picture': None,
-        'icon': None,
-        'floor_id': None,
-        'labels': set()
+        "name": name,
+        "normalized_name": area_slug,
+        "aliases": set(),
+        "id": area_slug,
+        "picture": None,
+        "icon": None,
+        "floor_id": None,
+        "labels": set(),
     }
 
     # We have to introspect the AreaEntry constructor

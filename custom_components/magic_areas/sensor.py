@@ -2,20 +2,22 @@ import logging
 
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 
-from custom_components.magic_areas.base.primitives import SensorGroupBase
-from custom_components.magic_areas.const import (
+from .base.primitives import SensorGroupBase
+from .const import (
     AGGREGATE_MODE_SUM,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
 )
-from custom_components.magic_areas.util import add_entities_when_ready
+from .util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Demo config entry."""
 
     add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
+
 
 def add_sensors(area, async_add_entities):
 
@@ -69,6 +71,7 @@ def add_sensors(area, async_add_entities):
         )
 
     async_add_entities(aggregates)
+
 
 class AreaSensorGroupSensor(SensorGroupBase):
     def __init__(self, area, device_class, unit_of_measurement):

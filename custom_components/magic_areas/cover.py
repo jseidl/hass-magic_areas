@@ -5,9 +5,9 @@ import logging
 import homeassistant.components.cover as cover
 from homeassistant.components.group.cover import CoverGroup
 
-from custom_components.magic_areas.base.entities import MagicEntity
-from custom_components.magic_areas.const import CONF_FEATURE_COVER_GROUPS
-from custom_components.magic_areas.util import add_entities_when_ready
+from .base.entities import MagicEntity
+from .const import CONF_FEATURE_COVER_GROUPS
+from .util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,6 +16,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Area config entry."""
 
     add_entities_when_ready(hass, async_add_entities, config_entry, add_cover_groups)
+
 
 def add_cover_groups(area, async_add_entities):
 

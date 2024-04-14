@@ -1,20 +1,20 @@
 import logging
 
-import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+
 from homeassistant import config_entries
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
     selector,
 )
-from custom_components.magic_areas.util import get_meta_area_object
-from custom_components.magic_areas.const import (
+
+from .const import (
     _DOMAIN_SCHEMA,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
@@ -47,8 +47,8 @@ from custom_components.magic_areas.const import (
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
     CONF_FEATURE_PRESENCE_HOLD,
-    CONF_ID,
     CONF_ICON,
+    CONF_ID,
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
@@ -77,9 +77,9 @@ from custom_components.magic_areas.const import (
     DEFAULT_ICON,
     DOMAIN,
     LIGHT_GROUP_ACT_ON_OPTIONS,
-    META_AREAS,
     META_AREA_GLOBAL,
     META_AREA_SCHEMA,
+    META_AREAS,
     MODULE_DATA,
     NON_CONFIGURABLE_FEATURES_META,
     OPTIONS_AGGREGATES,
@@ -94,10 +94,12 @@ from custom_components.magic_areas.const import (
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
 )
+from .util import get_meta_area_object
 
 _LOGGER = logging.getLogger(__name__)
 
 EMPTY_ENTRY = [""]
+
 
 class ConfigBase:
 
@@ -147,14 +149,18 @@ class ConfigBase:
             vol.Optional(
                 name,
                 description={
-                    "suggested_value": saved_options.get(name)
-                    if saved_options.get(name) is not None
-                    else default
+                    "suggested_value": (
+                        saved_options.get(name)
+                        if saved_options.get(name) is not None
+                        else default
+                    )
                 },
                 default=default,
-            ): selectors[name]
-            if name in selectors.keys()
-            else dynamic_validators.get(name, validation)
+            ): (
+                selectors[name]
+                if name in selectors.keys()
+                else dynamic_validators.get(name, validation)
+            )
             for name, default, validation in options
         }
 
@@ -165,11 +171,12 @@ class ConfigBase:
         else:
             return vol.Schema(schema)
 
+
 class NullableEntitySelector(EntitySelector):
     def __call__(self, data):
         """Validate the passed selection, if passed."""
 
-        if data in (None, ''):
+        if data in (None, ""):
             return data
 
         return super().__call__(data)
@@ -196,7 +203,9 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
 
             # Prevent conflicts between meta areas and existing areas
             if meta_area.lower() in area_ids:
-                _LOGGER.warn(f"You have an area with a reserved name {meta_area}. This will prevent from using the {meta_area} Meta area.")
+                _LOGGER.warn(
+                    f"You have an area with a reserved name {meta_area}. This will prevent from using the {meta_area} Meta area."
+                )
                 continue
 
             _LOGGER.debug(f"Appending Meta Area {meta_area} to the list of areas")
@@ -213,7 +222,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
 
                 # Handle meta area name append
                 if area_name.startswith("(Meta)"):
-                    area_name = ' '.join(area_name.split(' ')[1:])
+                    area_name = " ".join(area_name.split(" ")[1:])
 
                 if area.name == area_name:
                     area_object = area
@@ -230,10 +239,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
 
             # Create area entry with default config
             config_entry = _DOMAIN_SCHEMA({f"{area.id}": {}})[area.id]
-            extra_opts = {
-                CONF_NAME: area.name,
-                CONF_ID: area.id
-            }
+            extra_opts = {CONF_NAME: area.name, CONF_ID: area.id}
             config_entry.update(extra_opts)
 
             # Handle Meta area
@@ -241,11 +247,15 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
                 _LOGGER.debug(f"Meta area {area.name} found, setting correct type.")
                 config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
-            return self.async_create_entry(title=user_input[CONF_NAME], data=config_entry)
+            return self.async_create_entry(
+                title=user_input[CONF_NAME], data=config_entry
+            )
 
         # Filter out already-configured areas
         configured_areas = []
-        ma_data = self.hass.data[MODULE_DATA] if MODULE_DATA in self.hass.data.keys() else {}
+        ma_data = (
+            self.hass.data[MODULE_DATA] if MODULE_DATA in self.hass.data.keys() else {}
+        )
 
         for config_id, config_data in ma_data.items():
             configured_areas.append(config_data[DATA_AREA_OBJECT].id)
@@ -256,16 +266,28 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             return self.async_abort(reason="no_more_areas")
 
         # Slight ordering trick so Meta areas are at the bottom
-        available_area_names = sorted([area.name for area in available_areas if area.normalized_name not in reserved_names])
-        available_area_names.extend(sorted([f"(Meta) {area.name}" for area in available_areas if area.normalized_name in reserved_names]))
+        available_area_names = sorted(
+            [
+                area.name
+                for area in available_areas
+                if area.normalized_name not in reserved_names
+            ]
+        )
+        available_area_names.extend(
+            sorted(
+                [
+                    f"(Meta) {area.name}"
+                    for area in available_areas
+                    if area.normalized_name in reserved_names
+                ]
+            )
+        )
 
-        schema = vol.Schema({
-            vol.Required(CONF_NAME): vol.In(available_area_names)
-        })
+        schema = vol.Schema({vol.Required(CONF_NAME): vol.In(available_area_names)})
 
         return self.async_show_form(
             step_id="user",
-            data_schema = schema,
+            data_schema=schema,
             errors=errors,
         )
 
@@ -623,9 +645,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         return await self.do_feature_config(
             name=CONF_FEATURE_CLIMATE_GROUPS,
-            options=OPTIONS_CLIMATE_GROUP
-            if not self.area.is_meta()
-            else OPTIONS_CLIMATE_GROUP_META,
+            options=(
+                OPTIONS_CLIMATE_GROUP
+                if not self.area.is_meta()
+                else OPTIONS_CLIMATE_GROUP_META
+            ),
             dynamic_validators={
                 CONF_CLIMATE_GROUPS_TURN_ON_STATE: vol.In(
                     EMPTY_ENTRY + available_states

@@ -3,6 +3,7 @@ adapted to work with Magic Areas.
 
 Once this goes into the main Home Assistant code it will be phased out.
 """
+
 from __future__ import annotations
 
 import logging
@@ -10,12 +11,9 @@ import logging
 """
     Climate Group Imports
 """
-from typing import Any
 from statistics import mean
+from typing import Any
 
-from homeassistant.core import Event, callback
-from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.components.climate import (
     ATTR_CURRENT_TEMPERATURE,
     ATTR_FAN_MODE,
@@ -43,35 +41,35 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-
-from homeassistant.components.group import GroupEntity
+from homeassistant.components.grou.entity import GroupEntity
 from homeassistant.components.group.util import (
     find_state_attributes,
     most_frequent_attribute,
     reduce_attribute,
     states_equal,
 )
-
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
     STATE_UNAVAILABLE,
 )
+from homeassistant.core import Event, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.event import async_track_state_change_event
 
 """
     Magic Area Imports
 """
-from custom_components.magic_areas.base.entities import MagicEntity
-from custom_components.magic_areas.const import (
+from .base.entities import MagicEntity
+from .const import (
     AREA_STATE_CLEAR,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_FEATURE_CLIMATE_GROUPS,
     DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
 )
-
-from custom_components.magic_areas.util import add_entities_when_ready
+from .util import add_entities_when_ready
 
 """
     Climate Group Constants
@@ -112,6 +110,7 @@ def setup_climate_group(area, async_add_entities):
 
     climate_entities = [e["entity_id"] for e in area.entities[CLIMATE_DOMAIN]]
     async_add_entities([AreaClimateGroup(area, climate_entities)])
+
 
 class ClimateGroup(GroupEntity, ClimateEntity):
     """Representation of a climate group."""
@@ -216,7 +215,9 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         current_hvac_modes = [x.state for x in states if x.state != HVACMode.OFF]
         # return the most common hvac mode (what the thermostat is set to do) except OFF
         if current_hvac_modes:
-            self._attr_hvac_mode = max(set(current_hvac_modes), key=current_hvac_modes.count)
+            self._attr_hvac_mode = max(
+                set(current_hvac_modes), key=current_hvac_modes.count
+            )
         # return off if all are off
         elif all(x.state == HVACMode.OFF for x in states):
             self._attr_hvac_mode = HVACMode.OFF
@@ -229,7 +230,9 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         current_hvac_actions = [a for a in hvac_actions if a != HVACAction.OFF]
         # return the most common action if it is not off
         if current_hvac_actions:
-            self._attr_hvac_action = max(set(current_hvac_actions), key=current_hvac_actions.count)
+            self._attr_hvac_action = max(
+                set(current_hvac_actions), key=current_hvac_actions.count
+            )
         # return action off if all are off
         elif all(a == HVACAction.OFF for a in hvac_actions):
             self._attr_hvac_action = HVACAction.OFF
@@ -293,7 +296,11 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         _LOGGER.debug("Setting temperature: %s", data)
 
         await self.hass.services.async_call(
-            CLIMATE_DOMAIN, SERVICE_SET_TEMPERATURE, data, blocking=True, context=self._context
+            CLIMATE_DOMAIN,
+            SERVICE_SET_TEMPERATURE,
+            data,
+            blocking=True,
+            context=self._context,
         )
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
@@ -301,7 +308,11 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         data = {ATTR_ENTITY_ID: self._entity_ids, ATTR_HVAC_MODE: hvac_mode}
         _LOGGER.debug("Setting hvac mode: %s", data)
         await self.hass.services.async_call(
-            CLIMATE_DOMAIN, SERVICE_SET_HVAC_MODE, data, blocking=True, context=self._context
+            CLIMATE_DOMAIN,
+            SERVICE_SET_HVAC_MODE,
+            data,
+            blocking=True,
+            context=self._context,
         )
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
@@ -309,7 +320,11 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         data = {ATTR_ENTITY_ID: self._entity_ids, ATTR_FAN_MODE: fan_mode}
         _LOGGER.debug("Setting fan mode: %s", data)
         await self.hass.services.async_call(
-            CLIMATE_DOMAIN, SERVICE_SET_FAN_MODE, data, blocking=True, context=self._context
+            CLIMATE_DOMAIN,
+            SERVICE_SET_FAN_MODE,
+            data,
+            blocking=True,
+            context=self._context,
         )
 
     async def async_set_swing_mode(self, swing_mode: str) -> None:
