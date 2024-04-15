@@ -1,3 +1,5 @@
+"""Constants for Magic Areas."""
+
 from itertools import chain
 
 import voluptuous as vol
@@ -126,10 +128,13 @@ CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
 (
     CONF_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
-) = "presence_device_platforms", [
-    MEDIA_PLAYER_DOMAIN,
-    BINARY_SENSOR_DOMAIN,
-]  # cv.ensure_list
+) = (
+    "presence_device_platforms",
+    [
+        MEDIA_PLAYER_DOMAIN,
+        BINARY_SENSOR_DOMAIN,
+    ],
+)  # cv.ensure_list
 ALL_PRESENCE_DEVICE_PLATFORMS = [
     MEDIA_PLAYER_DOMAIN,
     BINARY_SENSOR_DOMAIN,
@@ -138,15 +143,21 @@ ALL_PRESENCE_DEVICE_PLATFORMS = [
 (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
-) = "presence_sensor_device_class", [
-    BinarySensorDeviceClass.MOTION,
-    BinarySensorDeviceClass.OCCUPANCY,
-    BinarySensorDeviceClass.PRESENCE,
-]  # cv.ensure_list
-CONF_ON_STATES, DEFAULT_ON_STATES = "on_states", [
-    STATE_ON,
-    STATE_OPEN,
-]  # cv.ensure_list
+) = (
+    "presence_sensor_device_class",
+    [
+        BinarySensorDeviceClass.MOTION,
+        BinarySensorDeviceClass.OCCUPANCY,
+        BinarySensorDeviceClass.PRESENCE,
+    ],
+)  # cv.ensure_list
+CONF_ON_STATES, DEFAULT_ON_STATES = (
+    "on_states",
+    [
+        STATE_ON,
+        STATE_OPEN,
+    ],
+)  # cv.ensure_list
 CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
     "aggregates_min_entities",
     2,
@@ -158,9 +169,12 @@ CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (
     "notification_devices",
     [],
 )  # cv.entity_ids
-CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES = "notification_states", [
-    AREA_STATE_EXTENDED,
-]  # cv.ensure_list
+CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES = (
+    "notification_states",
+    [
+        AREA_STATE_EXTENDED,
+    ],
+)  # cv.ensure_list
 
 # Secondary states options
 CONF_DARK_ENTITY = "dark_entity"

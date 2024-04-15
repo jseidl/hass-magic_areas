@@ -1,3 +1,5 @@
+"""Platform file for Magic Area's switch entities."""
+
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.helpers.event import call_later
 
@@ -20,6 +22,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 def add_switches(area, async_add_entities):
+    """Add all the switch entities for all features that have one."""
 
     if area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
         async_add_entities([AreaPresenceHoldSwitch(area)])
@@ -29,6 +32,8 @@ def add_switches(area, async_add_entities):
 
 
 class AreaLightControlSwitch(SwitchBase):
+    """Switch used to enable/disable light control."""
+
     def __init__(self, area):
         """Initialize the area light control switch."""
 
@@ -42,6 +47,8 @@ class AreaLightControlSwitch(SwitchBase):
 
 
 class AreaPresenceHoldSwitch(SwitchBase):
+    """Switch used to enable/disable presence hold."""
+
     def __init__(self, area):
         """Initialize the area presence hold switch."""
 
@@ -56,6 +63,7 @@ class AreaPresenceHoldSwitch(SwitchBase):
         return ICON_PRESENCE_HOLD
 
     def timeout_turn_off(self, next_interval):
+        """Turn off light if on."""
         if self._state == STATE_ON:
             self.turn_off()
 

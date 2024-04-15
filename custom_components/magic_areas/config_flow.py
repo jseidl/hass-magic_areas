@@ -1,3 +1,5 @@
+"""Config Flow for Magic Area."""
+
 import logging
 
 import voluptuous as vol
@@ -94,7 +96,7 @@ from .const import (
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
 )
-from .util import get_meta_area_object
+from .util import basic_area_from_name, basic_area_from_object
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -102,28 +104,38 @@ EMPTY_ENTRY = [""]
 
 
 class ConfigBase:
+    """Base class for config flow."""
+
+    config_entry = None
 
     # Selector builder
-    def _build_selector_select(self, options=[], multiple=False):
+    def _build_selector_select(self, options=None, multiple=False):
+        """Build a <select> selector."""
+        if not options:
+            options = []
         return selector(
             {"select": {"options": options, "multiple": multiple, "mode": "dropdown"}}
         )
 
     def _build_selector_entity_simple(
-        self, options=[], multiple=False, force_include=False
+        self, options=None, multiple=False, force_include=False
     ):
+        """Build a <select> selector with predefined settings."""
+        if not options:
+            options = []
         return NullableEntitySelector(
             EntitySelectorConfig(include_entities=options, multiple=multiple)
         )
 
     def _build_selector_number(
-        self, min=0, max=9999, mode="box", unit_of_measurement="seconds"
+        self, min_value=0, max_value=9999, mode="box", unit_of_measurement="seconds"
     ):
+        """Build a number selector."""
         return selector(
             {
                 "number": {
-                    "min": min,
-                    "max": max,
+                    "min": min_value,
+                    "max": max_value,
                     "mode": mode,
                     "unit_of_measurement": unit_of_measurement,
                 }
@@ -134,16 +146,28 @@ class ConfigBase:
         self,
         options,
         saved_options=None,
-        dynamic_validators={},
-        selectors={},
+        dynamic_validators=None,
+        selectors=None,
         raw=False,
     ):
+        """Build schema for configuration options."""
         _LOGGER.debug(
-            f"Building schema from options: {options} - dynamic_validators: {dynamic_validators}"
+            "ConfigFlow: Building schema from options: %s - dynamic_validators: %s",
+            str(options),
+            str(dynamic_validators),
         )
+
+        if not dynamic_validators:
+            dynamic_validators = {}
+
+        if not selectors:
+            selectors = {}
+
         if saved_options is None:
             saved_options = self.config_entry.options
-        _LOGGER.debug(f"Data for pre-populating fields: {saved_options}")
+        _LOGGER.debug(
+            "ConfigFlow: Data for pre-populating fields: %s", str(saved_options)
+        )
 
         schema = {
             vol.Optional(
@@ -158,13 +182,13 @@ class ConfigBase:
                 default=default,
             ): (
                 selectors[name]
-                if name in selectors.keys()
+                if name in selectors
                 else dynamic_validators.get(name, validation)
             )
             for name, default, validation in options
         }
 
-        _LOGGER.debug(f"Built schema: {schema}")
+        _LOGGER.debug("ConfigFlow: Built schema: %s", str(schema))
 
         if raw:
             return schema
@@ -173,6 +197,8 @@ class ConfigBase:
 
 
 class NullableEntitySelector(EntitySelector):
+    """Entity selector that supports null values."""
+
     def __call__(self, data):
         """Validate the passed selection, if passed."""
 
@@ -195,29 +221,32 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
 
         # Load registries
         area_registry = self.hass.helpers.area_registry.async_get(self.hass)
-        areas = list(area_registry.async_list_areas())
+        areas = [
+            basic_area_from_object(area) for area in area_registry.async_list_areas()
+        ]
         area_ids = [area.id for area in areas]
 
         # Add Meta Areas to area list
         for meta_area in META_AREAS:
-
             # Prevent conflicts between meta areas and existing areas
             if meta_area.lower() in area_ids:
-                _LOGGER.warn(
-                    f"You have an area with a reserved name {meta_area}. This will prevent from using the {meta_area} Meta area."
+                _LOGGER.warning(
+                    "ConfigFlow: You have an area with a reserved name '%s'. This will prevent from using the %s Meta area.",
+                    meta_area,
+                    meta_area,
                 )
                 continue
 
-            _LOGGER.debug(f"Appending Meta Area {meta_area} to the list of areas")
-            areas.append(get_meta_area_object(meta_area))
+            _LOGGER.debug(
+                "ConfigFlow: Appending Meta Area %s to the list of areas", meta_area
+            )
+            areas.append(basic_area_from_name(meta_area))
 
         if user_input is not None:
-
             # Look up area object by name
             area_object = None
 
             for area in areas:
-
                 area_name = user_input[CONF_NAME]
 
                 # Handle meta area name append
@@ -238,13 +267,16 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             self._abort_if_unique_id_configured()
 
             # Create area entry with default config
-            config_entry = _DOMAIN_SCHEMA({f"{area.id}": {}})[area.id]
-            extra_opts = {CONF_NAME: area.name, CONF_ID: area.id}
+            config_entry = _DOMAIN_SCHEMA({f"{area_object.id}": {}})[area_object.id]
+            extra_opts = {CONF_NAME: area_object.name, CONF_ID: area_object.id}
             config_entry.update(extra_opts)
 
             # Handle Meta area
-            if area.normalized_name in reserved_names:
-                _LOGGER.debug(f"Meta area {area.name} found, setting correct type.")
+            if area_object.normalized_name in reserved_names:
+                _LOGGER.debug(
+                    "ConfigFlow: Meta area %s found, setting correct type.",
+                    area_object.name,
+                )
                 config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
             return self.async_create_entry(
@@ -253,11 +285,9 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
 
         # Filter out already-configured areas
         configured_areas = []
-        ma_data = (
-            self.hass.data[MODULE_DATA] if MODULE_DATA in self.hass.data.keys() else {}
-        )
+        ma_data = self.hass.data.get(MODULE_DATA, {})
 
-        for config_id, config_data in ma_data.items():
+        for config_data in ma_data.values():
             configured_areas.append(config_data[DATA_AREA_OBJECT].id)
 
         available_areas = [area for area in areas if area.id not in configured_areas]
@@ -313,14 +343,21 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         self.all_media_players = []
         self.selected_features = []
         self.features_to_configure = None
+        self.area_options = {}
 
     async def async_step_init(self, user_input=None):
-        """Initialize the options flow"""
+        """Initialize the options flow."""
         self.data = self.hass.data[MODULE_DATA][self.config_entry.entry_id]
         self.area = self.data[DATA_AREA_OBJECT]
 
-        _LOGGER.debug(f"Initializing options flow for area {self.area.name}")
-        _LOGGER.debug(f"Options in config entry: {self.config_entry.options}")
+        _LOGGER.debug(
+            "OptionsFlow: Initializing options flow for area %s", self.area.name
+        )
+        _LOGGER.debug(
+            "OptionsFlow: Options in config entry for area %s: %s",
+            self.area.name,
+            str(self.config_entry.options),
+        )
 
         # Return all relevant entities
         self.all_entities = sorted(
@@ -382,7 +419,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         """Gather basic settings for the area."""
         errors = {}
         if user_input is not None:
-            _LOGGER.debug(f"Validating area base config: {user_input}")
+            _LOGGER.debug(
+                "OptionsFlow: Validating area %s base config: %s",
+                self.area.name,
+                str(user_input),
+            )
             area_schema = (
                 META_AREA_SCHEMA if self.area.is_meta() else REGULAR_AREA_SCHEMA
             )
@@ -390,15 +431,29 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 self.area_options = area_schema(user_input)
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
-                _LOGGER.debug(f"Found the following errors: {errors}")
+                _LOGGER.debug(
+                    "OptionsFlow: Found the following errors for area %s: %s",
+                    self.area.name,
+                    str(errors),
+                )
+            # Adding pylint exception because this is a last-resort hail-mary catch-all
+            # pylint: disable-next=broad-exception-caught
             except Exception as e:
-                _LOGGER.warning(f"Unexpected error caught: {str(e)}")
+                _LOGGER.warning(
+                    "OptionsFlow: Unexpected error caught on area %s: %s",
+                    self.area.name,
+                    str(e),
+                )
             else:
-                _LOGGER.debug(f"Saving area base config: {self.area_options}")
+                _LOGGER.debug(
+                    "OptionsFlow: Saving area %s base config: %s",
+                    self.area.name,
+                    str(self.area_options),
+                )
                 if self.area.is_meta():
                     return await self.async_step_select_features()
-                else:
-                    return await self.async_step_secondary_states()
+
+                return await self.async_step_secondary_states()
 
         icon_selector = selector({"icon": {"placeholder": DEFAULT_ICON}})
 
@@ -446,20 +501,36 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         """Gather secondary states settings for the area."""
         errors = {}
         if user_input is not None:
-            _LOGGER.debug(f"Validating area secondary states config: {user_input}")
-            AREA_state_schema = SECONDARY_STATES_SCHEMA
+            _LOGGER.debug(
+                "OptionsFlow: Validating area %s secondary states config: %s",
+                self.area.name,
+                str(user_input),
+            )
+            area_state_schema = SECONDARY_STATES_SCHEMA
             try:
                 self.area_options[CONF_SECONDARY_STATES].update(
-                    AREA_state_schema(user_input)
+                    area_state_schema(user_input)
                 )
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
-                _LOGGER.debug(f"Found the following errors: {errors}")
+                _LOGGER.debug(
+                    "OptionsFlow: Found the following errors for area %s: %s",
+                    self.area.name,
+                    str(errors),
+                )
+            # Adding pylint exception because this is a last-resort hail-mary catch-all
+            # pylint: disable-next=broad-exception-caught
             except Exception as e:
-                _LOGGER.warning(f"Unexpected error caught: {str(e)}")
+                _LOGGER.warning(
+                    "OptionsFlow: Unexpected error caught for area %s: %s",
+                    self.area.name,
+                    str(e),
+                )
             else:
                 _LOGGER.debug(
-                    f"Saving area secondary state config: {self.area_options}"
+                    "OptionsFlow: Saving area secondary state config for area %s: %s",
+                    self.area.name,
+                    str(self.area_options),
                 )
                 return await self.async_step_select_features()
 
@@ -508,7 +579,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             self.features_to_configure = list(
                 set(self.selected_features) & set(filtered_configurable_features)
             )
-            _LOGGER.debug(f"Selected features: {self.selected_features}")
+            _LOGGER.debug(
+                "OptionsFlow: Selected features for area %s: %s",
+                self.area.name,
+                str(self.selected_features),
+            )
             self.area_options[CONF_ENABLED_FEATURES].update(
                 {
                     feature: {}
@@ -525,7 +600,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         if self.area.id == META_AREA_GLOBAL.lower():
             feature_list = CONF_FEATURE_LIST_GLOBAL
 
-        _LOGGER.debug(f"Selecting features from {feature_list}")
+        _LOGGER.debug(
+            "OptionsFlow: Selecting features for area %s from %s",
+            self.area.name,
+            feature_list,
+        )
 
         return self.async_show_form(
             step_id="select_features",
@@ -542,16 +621,28 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
     async def async_route_feature_config(self, user_input=None):
-        """Determine the next feature to be configured or finalize the options
+        """Route to next configurable feature.
+
+        Determine the next feature to be configured or finalize the options
         flow if there are no more features left (i.e. all selected features have
         been configured).
         """
-        _LOGGER.debug(f"Features yet to configure: {self.features_to_configure}")
-        _LOGGER.debug(f"Current config is: {self.area_options}")
+        _LOGGER.debug(
+            "OptionsFlow: Features yet to configure for area %s: %s",
+            self.area.name,
+            str(self.features_to_configure),
+        )
+        _LOGGER.debug(
+            "OptionsFlow: Current config for area %s is: %s",
+            self.area.name,
+            str(self.area_options),
+        )
         if self.features_to_configure:
             current_feature = self.features_to_configure.pop()
             _LOGGER.debug(
-                f"Initiating configuration step for feature {current_feature}"
+                "OptionsFlow: Initiating configuration step on area %s for feature %s",
+                self.area.name,
+                current_feature,
             )
             feature_conf_step = getattr(
                 self, f"async_step_feature_conf_{current_feature}"
@@ -559,21 +650,24 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             return await feature_conf_step()
         else:
             _LOGGER.debug(
-                f"All features configured, saving config: {self.area_options}"
+                "OptionsFlow: All features configured for area %s, saving config: %s",
+                self.area.name,
+                str(self.area_options),
             )
             return self.async_create_entry(title="", data=self.area_options)
 
     async def async_step_feature_conf_light_groups(self, user_input=None):
-        """Configure the light groups feature"""
+        """Configure the light groups feature."""
 
         available_states = BUILTIN_AREA_STATES.copy()
 
-        LIGHT_GROUP_STATE_EXEMPT = [AREA_STATE_DARK]
+        light_group_state_exempt = [AREA_STATE_DARK]
         for extra_state, extra_state_opts in CONFIGURABLE_AREA_STATE_MAP.items():
             # Skip AREA_STATE_DARK because lights can't be tied to this state
-            if extra_state in LIGHT_GROUP_STATE_EXEMPT:
+            if extra_state in light_group_state_exempt:
                 continue
 
+            # pylint: disable-next=unused-variable
             extra_state_entity, extra_state_state = extra_state_opts
             if self.area_options[CONF_SECONDARY_STATES].get(extra_state_entity, None):
                 available_states.append(extra_state)
@@ -639,7 +733,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
     async def async_step_feature_conf_climate_groups(self, user_input=None):
-        """Configure the climate groups feature"""
+        """Configure the climate groups feature."""
 
         available_states = [AREA_STATE_OCCUPIED, AREA_STATE_EXTENDED]
 
@@ -664,7 +758,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
     async def async_step_feature_conf_area_aware_media_player(self, user_input=None):
-        """Configure the area aware media player feature"""
+        """Configure the area aware media player feature."""
 
         available_states = [AREA_STATE_OCCUPIED, AREA_STATE_EXTENDED, AREA_STATE_SLEEP]
 
@@ -687,7 +781,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
     async def async_step_feature_conf_aggregates(self, user_input=None):
-        """Configure the sensor aggregates feature"""
+        """Configure the sensor aggregates feature."""
 
         selectors = {
             CONF_AGGREGATES_MIN_ENTITIES: self._build_selector_number(
@@ -703,7 +797,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
     async def async_step_feature_conf_presence_hold(self, user_input=None):
-        """Configure the sensor presence_hold feature"""
+        """Configure the sensor presence_hold feature."""
 
         selectors = {CONF_PRESENCE_HOLD_TIMEOUT: self._build_selector_number()}
 
@@ -715,31 +809,52 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
     async def do_feature_config(
-        self, name, options, dynamic_validators={}, selectors={}, user_input=None
+        self, name, options, dynamic_validators=None, selectors=None, user_input=None
     ):
-        """Execute step for a generic feature"""
+        """Execute step for a generic feature."""
         errors = {}
+
+        if not dynamic_validators:
+            dynamic_validators = {}
+
+        if not selectors:
+            selectors = {}
+
         if user_input is not None:
-            _LOGGER.debug(f"Validating {name} feature config: {user_input}")
+            _LOGGER.debug(
+                "OptionsFlow: Validating %s feature config for area %s: %s",
+                name,
+                self.area.name,
+                str(user_input),
+            )
             try:
                 validated_input = CONFIGURABLE_FEATURES[name](user_input)
             except vol.MultipleInvalid as validation:
                 errors = {
                     error.path[0]: "malformed_input" for error in validation.errors
                 }
-                _LOGGER.debug(f"Found the following errors: {errors}")
+                _LOGGER.debug("OptionsFlow: Found the following errors: %s", errors)
             else:
-                _LOGGER.debug(f"Saving {name} feature config: {validated_input}")
+                _LOGGER.debug(
+                    "OptionsFlow: Saving %s feature config for area %s: %s",
+                    name,
+                    self.area.name,
+                    str(validated_input),
+                )
                 self.area_options[CONF_ENABLED_FEATURES][name] = validated_input
                 return await self.async_route_feature_config()
 
-        _LOGGER.debug(f"Config entry options: {self.config_entry.options}")
+        _LOGGER.debug(
+            "OptionsFlow: Config entry options for area %s: %s",
+            self.area.name,
+            str(self.config_entry.options),
+        )
 
         saved_options = self.config_entry.options.get(CONF_ENABLED_FEATURES, {})
 
         # Handle legacy options somewhat-gracefully
         # @REMOVEME on 4.x.x, users shall be updated by then
-        if type(saved_options) is not dict:
+        if not isinstance(saved_options, dict):
             saved_options = {}
 
         return self.async_show_form(

@@ -29,7 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     area_id = config_entry.data[CONF_ID]
     area_name = config_entry.data[CONF_NAME]
 
-    _LOGGER.debug(f"Setting up entry for {area_name}")
+    _LOGGER.debug("%s: Setting up entry.", area_name)
 
     meta_ids = [meta_area.lower() for meta_area in META_AREAS]
 
@@ -38,10 +38,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         area = area_registry.async_get_area(area_id)
 
         if not area:
-            _LOGGER.debug(f"Could not find {area_name} ({area_id}) on registry")
+            _LOGGER.debug("%s: ID '%s' not found on registry", area_name, area_id)
             return False
 
-        _LOGGER.debug(f"Got area {area_name} from registry: {area}")
+        _LOGGER.debug("%s: Got area from registry: %s", area_name, str(area))
 
         magic_area = MagicArea(
             hass,
@@ -53,7 +53,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         magic_area = MagicMetaArea(hass, meta_area, config_entry)
 
     _LOGGER.debug(
-        f"Magic Area {magic_area.name} ({magic_area.id}) created: {magic_area.config}"
+        "%s: Magic Area (%s) created: %s",
+        magic_area.name,
+        magic_area.id,
+        str(magic_area.config),
     )
 
     undo_listener = config_entry.add_update_listener(async_update_options)
@@ -65,15 +68,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     # Setup platforms
     for platform in magic_area.available_platforms():
-        _LOGGER.debug(f"Area {magic_area.name}: Loading platform '{platform}'...")
+        _LOGGER.debug("%s: Loading platform '%s'...", magic_area.name, platform)
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(config_entry, platform)
         )
         magic_area.loaded_platforms.append(platform)
 
-    """
-        Conditional reload of related meta-areas
-    """
+    # Conditional reload of related meta-areas
 
     # Populate dict with all meta-areas with ID as key
     meta_areas = defaultdict()
@@ -85,15 +86,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     # Handle non-meta areas
     if not magic_area.is_meta():
-
         meta_area_key = (
             META_AREA_EXTERIOR.lower()
             if magic_area.is_exterior()
             else META_AREA_INTERIOR.lower()
         )
 
-        if meta_area_key in meta_areas.keys():
-
+        if meta_area_key in meta_areas:
             meta_area_object = meta_areas[meta_area_key]
 
             if meta_area_object.initialized:
@@ -101,15 +100,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                     meta_area_object.hass_config.entry_id
                 )
     else:
-        META_AREA_GLOBAL_ID = META_AREA_GLOBAL.lower()
+        meta_area_global_id = META_AREA_GLOBAL.lower()
 
-        if (
-            magic_area.id != META_AREA_GLOBAL_ID
-            and META_AREA_GLOBAL_ID in meta_areas.keys()
-        ):
-            if meta_areas[META_AREA_GLOBAL_ID].initialized:
+        if magic_area.id != meta_area_global_id and meta_area_global_id in meta_areas:
+            if meta_areas[meta_area_global_id].initialized:
                 await hass.config_entries.async_reload(
-                    meta_areas[META_AREA_GLOBAL_ID].hass_config.entry_id
+                    meta_areas[meta_area_global_id].hass_config.entry_id
                 )
 
     return True

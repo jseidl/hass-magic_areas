@@ -1,3 +1,5 @@
+"""Platform file for Magic Area's binary_sensor entities."""
+
 from datetime import datetime, timedelta
 import logging
 
@@ -67,6 +69,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 def add_sensors(area, async_add_entities):
+    """Add all the binary_sensor entities for all features that have one."""
 
     # Create basic presence sensor
     async_add_entities([AreaPresenceBinarySensor(area)])
@@ -80,16 +83,17 @@ def add_sensors(area, async_add_entities):
 
 
 def create_health_sensors(area, async_add_entities):
+    """Create health sensors."""
     if not area.has_feature(CONF_FEATURE_HEALTH):
         return
 
-    if BINARY_SENSOR_DOMAIN not in area.entities.keys():
+    if BINARY_SENSOR_DOMAIN not in area.entities:
         return
 
     distress_entities = []
 
     for entity in area.entities[BINARY_SENSOR_DOMAIN]:
-        if ATTR_DEVICE_CLASS not in entity.keys():
+        if ATTR_DEVICE_CLASS not in entity:
             continue
 
         if entity[ATTR_DEVICE_CLASS] not in DISTRESS_SENSOR_CLASSES:
@@ -102,11 +106,12 @@ def create_health_sensors(area, async_add_entities):
     ):
         return
 
-    _LOGGER.debug(f"Creating health sensor for area ({area.slug})")
+    _LOGGER.debug("%s: Creating health sensor for area.", area.name)
     async_add_entities([AreaDistressBinarySensor(area)])
 
 
 def create_aggregate_sensors(area, async_add_entities):
+    """Create aggregate sensors."""
     # Create aggregates
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
         return
@@ -114,13 +119,13 @@ def create_aggregate_sensors(area, async_add_entities):
     aggregates = []
 
     # Check BINARY_SENSOR_DOMAIN entities, count by device_class
-    if BINARY_SENSOR_DOMAIN not in area.entities.keys():
+    if BINARY_SENSOR_DOMAIN not in area.entities:
         return
 
     device_class_count = {}
 
     for entity in area.entities[BINARY_SENSOR_DOMAIN]:
-        if ATTR_DEVICE_CLASS not in entity.keys():
+        if ATTR_DEVICE_CLASS not in entity:
             continue
 
         if entity[ATTR_DEVICE_CLASS] not in device_class_count:
@@ -135,7 +140,10 @@ def create_aggregate_sensors(area, async_add_entities):
             continue
 
         _LOGGER.debug(
-            f"Creating aggregate sensor for device_class '{device_class}' with {entity_count} entities ({area.slug})"
+            "%s: Creating aggregate sensor for device_class '%s' with %s entities",
+            area.name,
+            device_class,
+            entity_count,
         )
         aggregates.append(AreaSensorGroupBinarySensor(area, device_class))
 
@@ -143,7 +151,7 @@ def create_aggregate_sensors(area, async_add_entities):
 
 
 class AreaPresenceBinarySensor(BinarySensorBase):
-    """Setup & Teardown"""
+    """Main area presence sensor."""
 
     def __init__(self, area):
         """Initialize the area presence binary sensor."""
@@ -168,23 +176,20 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return self.area.has_state(AREA_STATE_OCCUPIED)
 
     async def restore_state(self):
-
+        """Update state when restoring entity."""
         last_state = await self.async_get_last_state()
         is_new_entry = last_state is None  # newly added to HA
 
         if is_new_entry:
-            self.logger.debug(f"New sensor created: {self.name}")
+            self.logger.debug("%s: New sensor created.", self.name)
             self.update_state()
         else:
-            _LOGGER.debug(f"Sensor {self.name} restored [state={last_state.state}]")
-            if ATTR_STATES in last_state.attributes.keys():
-                self.area.states = last_state.attributes[ATTR_STATES]
-            else:
-                self.area.states = []
+            _LOGGER.debug("%s: Sensor restored [state=%s]", self.name, last_state.state)
+            self.area.states = last_state.attributes.get(ATTR_STATES, [])
             self.schedule_update_ha_state()
 
     async def _initialize(self, _=None) -> None:
-        self.logger.debug(f"{self.name} Sensor initializing.")
+        self.logger.debug("%s: Sensor initializing.", self.name)
 
         self.load_presence_sensors()
         self.load_attributes()
@@ -192,7 +197,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         # Setup the listeners
         await self._setup_listeners()
 
-        _LOGGER.debug(f"{self.name} Sensor initialized.")
+        _LOGGER.debug("%s: Sensor initialized.", self.name)
 
     async def _setup_listeners(self, _=None) -> None:
         self.logger.debug("%s: Called '_setup_listeners'", self.name)
@@ -210,7 +215,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         for configurable_state in self.get_configured_secondary_states():
             (
                 configurable_state_entity,
-                configurable_state_value,
+                configurable_state_value,  # pylint: disable=unused-variable
             ) = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
             tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
                 configurable_state_entity, None
@@ -219,7 +224,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             if not tracked_entity:
                 continue
 
-            self.logger.debug(f"Secondary state tracking: {tracked_entity}")
+            self.logger.debug(
+                "%s: Secondary state tracking: %s", self.name, tracked_entity
+            )
 
             self.async_on_remove(
                 async_track_state_change(
@@ -234,6 +241,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
     def load_presence_sensors(self) -> None:
+        """Load sensors that are relevant for presence sensing."""
         if self.area.is_meta():
             # MetaAreas track their children
             child_areas = self.area.get_child_areas()
@@ -255,7 +263,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                     continue
 
                 if component == BINARY_SENSOR_DOMAIN:
-                    if ATTR_DEVICE_CLASS not in entity.keys():
+                    if ATTR_DEVICE_CLASS not in entity:
                         continue
 
                     if entity[ATTR_DEVICE_CLASS] not in self.area.config.get(
@@ -273,6 +281,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self.sensors.append(presence_hold_switch_id)
 
     def load_attributes(self) -> None:
+        """Set initial entity attributes."""
         # Set attributes
         self._attributes = {}
 
@@ -297,17 +306,17 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
     def update_attributes(self):
+        """Update entity attributes."""
         self._attributes[ATTR_STATES] = self.area.states
         self._attributes[ATTR_CLEAR_TIMEOUT] = self.get_clear_timeout()
 
         if self.area.is_meta():
             self._attributes[ATTR_ACTIVE_AREAS] = self.area.get_active_areas()
 
-    """
-        State Change Handling
-    """
+    # State Change Handling
 
     def get_area_states(self):
+        """Return states for the area."""
         states = []
 
         # Get Main occupancy state
@@ -318,7 +327,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         if current_state != last_state:
             self.area.last_changed = datetime.utcnow()
             self.logger.debug(
-                f"{self.area.name}: State changed to {current_state} at {self.area.last_changed}"
+                "%s: State changed to %s at %s",
+                self.name,
+                current_state,
+                self.area.last_changed,
             )
 
         seconds_since_last_change = (
@@ -358,7 +370,11 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
             if entity.state.lower() == secondary_state_value.lower():
                 self.logger.debug(
-                    f"{self.area.name}: Secondary state: {secondary_state_entity} is at {secondary_state_value}, adding {configurable_state}"
+                    "%s: Secondary state: %s is at %s, adding %s",
+                    self.name,
+                    secondary_state_entity,
+                    secondary_state_value,
+                    configurable_state,
                 )
                 states.append(configurable_state)
 
@@ -369,6 +385,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return states
 
     def update_area_states(self):
+        """Return new and lost states for this area."""
         last_state = set(self.area.states.copy())
         # self.update_state()
         current_state = set(self.get_area_states())
@@ -380,7 +397,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         new_states = current_state - last_state
         lost_states = last_state - current_state
         self.logger.debug(
-            f"{self.name}: Current state: {current_state}, last state: {last_state} -> new states {new_states} / lost states {lost_states}"
+            "%s: Current state: %s, last state: %s -> new states %s / lost states %s",
+            self.name,
+            str(current_state),
+            str(last_state),
+            str(new_states),
+            str(lost_states),
         )
 
         self.area.states = list(current_state)
@@ -388,6 +410,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return (new_states, lost_states)
 
     def get_occupancy_state(self):
+        """Return occupancy state for an area."""
         valid_on_states = (
             [STATE_ON] if self.area.is_meta() else self.area.config.get(CONF_ON_STATES)
         )
@@ -398,13 +421,13 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 return False
 
             if self.is_on_clear_timeout():
-                self.logger.debug(f"{self.area.name}: Area is on timeout")
+                self.logger.debug("%s: Area is on timeout", self.name)
                 if self.timeout_exceeded():
                     return False
             else:
                 if self.area.is_occupied() and not area_state:
                     self.logger.debug(
-                        f"{self.area.name}: Area not on timeout, setting call_later"
+                        "%s: Area not on timeout, setting call_later", self.name
                     )
                     self.set_clear_timeout()
         else:
@@ -413,6 +436,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return True
 
     def update_state(self):
+        """Update area occupancy state."""
         states_tuple = self.update_area_states()
         new_states, lost_states = states_tuple
 
@@ -421,7 +445,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
         self.logger.debug(
-            f"{self.area.name}: States updated. New states: {new_states} / Lost states: {lost_states}"
+            "%s: States updated. New states: %s / Lost states: %s",
+            self.name,
+            str(new_states),
+            str(lost_states),
         )
 
         self.update_attributes()
@@ -434,28 +461,41 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.report_state_change(states_tuple)
 
     def report_state_change(self, states_tuple=([], [])):
+        """Fire an event reporting area state change."""
         new_states, lost_states = states_tuple
         self.logger.debug(
-            f"Reporting state change for {self.area.name} (new states: {new_states}/lost states: {lost_states})"
+            "%s: Reporting state change for %s (new states: %s/lost states: %s)",
+            self.name,
+            self.area.name,
+            str(new_states),
+            str(lost_states),
         )
         dispatcher_send(
             self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, states_tuple
         )
 
     def secondary_state_change(self, entity_id, from_state, to_state):
+        """Handle area secondary state change event."""
         self.logger.debug(
-            f"{self.name}: Secondary state change: entity '{entity_id}' changed to {to_state.state}"
+            "%s: Secondary state change: entity '%s' changed to %s",
+            self.name,
+            entity_id,
+            to_state.state,
         )
 
         if to_state.state in INVALID_STATES:
             self.logger.debug(
-                f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}"
+                "%s: sensor '%s' has invalid state %s",
+                self.name,
+                entity_id,
+                to_state.state,
             )
             return None
 
         self.update_state()
 
     def get_configured_secondary_states(self):
+        """Return configured secondary states."""
         secondary_states = []
 
         for (
@@ -464,7 +504,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         ) in CONFIGURABLE_AREA_STATE_MAP.items():
             (
                 configurable_state_entity,
-                configurable_state_value,
+                configurable_state_value,  # pylint: disable=unused-variable
             ) = configurable_state_opts
 
             secondary_state_entity = self.area.config.get(
@@ -478,11 +518,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         return secondary_states
 
-    """
-        Clearing
-    """
+    # Clearing
 
     def get_clear_timeout(self):
+        """Return configured clear timeout value."""
         if self.area.has_state(AREA_STATE_SLEEP):
             return self.area.config.get(CONF_SECONDARY_STATES, {}).get(
                 CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT
@@ -496,17 +535,19 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         return self.area.config.get(CONF_CLEAR_TIMEOUT)
 
     def set_clear_timeout(self):
+        """Set clear timeout."""
         if not self.area.is_occupied():
             return False
 
         timeout = self.get_clear_timeout()
 
-        self.logger.debug(f"{self.area.name}: Scheduling clear in {timeout} seconds")
+        self.logger.debug("%s: Scheduling clear in %s seconds", self.name, timeout)
         self.clear_timeout_callback = call_later(
             self.hass, timeout, self.refresh_states
         )
 
     def remove_clear_timeout(self):
+        """Remove clear timeout timer."""
         if not self.clear_timeout_callback:
             return False
 
@@ -514,9 +555,11 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.clear_timeout_callback = None
 
     def is_on_clear_timeout(self):
+        """Check if area is on clear timeout."""
         return self.clear_timeout_callback is not None
 
     def timeout_exceeded(self):
+        """Check if clear timeout is exceeded."""
         if not self.area.is_occupied():
             return False
 
@@ -527,7 +570,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         time_now = datetime.utcnow()
 
         if time_now >= clear_time:
-            self.logger.debug(f"{self.area.name}: Clear Timeout exceeded.")
+            self.logger.debug("%s: Clear Timeout exceeded.", self.name)
             self.remove_clear_timeout()
             return True
 
@@ -535,6 +578,8 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
 
 class AreaSensorGroupBinarySensor(BinarySensorGroupBase):
+    """Sensor group."""
+
     def __init__(self, area, device_class):
         """Initialize an area sensor group binary sensor."""
 
@@ -546,7 +591,7 @@ class AreaSensorGroupBinarySensor(BinarySensorGroupBase):
         self._name = f"Area {device_class_name} ({self.area.name})"
 
     async def _initialize(self, _=None) -> None:
-        self.logger.debug(f"{self.name} Sensor initializing.")
+        self.logger.debug("%s: Sensor initializing.", self.name)
 
         self.load_sensors(BINARY_SENSOR_DOMAIN)
 
@@ -556,10 +601,12 @@ class AreaSensorGroupBinarySensor(BinarySensorGroupBase):
         # Refresh state
         self.update_state()
 
-        self.logger.debug(f"{self.name} Sensor initialized.")
+        self.logger.debug("%s: Sensor initialized.", self.name)
 
 
 class AreaDistressBinarySensor(BinarySensorGroupBase):
+    """Area health sensor."""
+
     def __init__(self, area):
         """Initialize an area sensor group binary sensor."""
 
@@ -568,21 +615,22 @@ class AreaDistressBinarySensor(BinarySensorGroupBase):
         self._name = f"Area Health ({self.area.name})"
 
     async def _initialize(self, _=None) -> None:
-        self.logger.debug(f"{self.name} Sensor initializing.")
+        self.logger.debug("%s: Sensor initializing.", self.name)
 
         self.load_sensors()
 
         # Setup the listeners
         await self._setup_listeners()
 
-        self.logger.debug(f"{self.name} Sensor initialized.")
+        self.logger.debug("%s: Sensor initialized.", self.name)
 
-    def load_sensors(self):
+    def load_sensors(self, domain=BINARY_SENSOR_DOMAIN, unit_of_measurement=None):
+        """Load sensors related to health tracking."""
         # Fetch sensors
         self.sensors = []
 
         for entity in self.area.entities[BINARY_SENSOR_DOMAIN]:
-            if ATTR_DEVICE_CLASS not in entity.keys():
+            if ATTR_DEVICE_CLASS not in entity:
                 continue
 
             if entity[ATTR_DEVICE_CLASS] not in DISTRESS_SENSOR_CLASSES:

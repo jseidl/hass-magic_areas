@@ -1,4 +1,4 @@
-DEPENDENCIES = ["magic_areas"]
+"""Platform file for Magic Area's cover entities."""
 
 import logging
 
@@ -19,14 +19,14 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 def add_cover_groups(area, async_add_entities):
-
+    """Add all the cover entities for all features that have one."""
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_COVER_GROUPS):
         return
 
     # Check if there are any covers
     if not area.has_entities(cover.DOMAIN):
-        _LOGGER.debug(f"No {cover.DOMAIN} entities for area {area.name} ")
+        _LOGGER.debug("%s: No %s entities for area.", area.name, cover.DOMAIN)
         return
 
     entities_to_add = []
@@ -42,14 +42,20 @@ def add_cover_groups(area, async_add_entities):
 
         if any(covers_in_device_class):
             _LOGGER.debug(
-                f"Creating {device_class or ''} cover group for {area.name} with covers: {covers_in_device_class}"
+                "%s: Creating %s cover group for with covers: %s",
+                area.name,
+                device_class or "",
+                str(covers_in_device_class),
             )
             entities_to_add.append(AreaCoverGroup(area, device_class))
     async_add_entities(entities_to_add)
 
 
 class AreaCoverGroup(MagicEntity, CoverGroup):
+    """Cover group."""
+
     def __init__(self, area, device_class):
+        """Initialize cover group."""
 
         MagicEntity.__init__(self, area)
 
@@ -73,4 +79,5 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
 
     @property
     def device_class(self):
+        """Return the cover device class."""
         return self._device_class
