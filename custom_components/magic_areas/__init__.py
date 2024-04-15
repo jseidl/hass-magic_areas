@@ -23,6 +23,10 @@ from .util import basic_area_from_name
 _LOGGER = logging.getLogger(__name__)
 
 
+async def async_setup(hass: HomeAssistant, config: dict):
+    """Set up the component."""
+    return True
+
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Set up the component."""
     data = hass.data.setdefault(MODULE_DATA, {})
@@ -38,7 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         area = area_registry.async_get_area(area_id)
 
         if not area:
-            _LOGGER.debug("%s: ID '%s' not found on registry", area_name, area_id)
+            _LOGGER.warning("%s: ID '%s' not found on registry", area_name, area_id)
             return False
 
         _LOGGER.debug("%s: Got area from registry: %s", area_name, str(area))

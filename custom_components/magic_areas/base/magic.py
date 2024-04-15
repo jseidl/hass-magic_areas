@@ -1,6 +1,6 @@
 """Classes for Magic Areas and Meta Areas."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
@@ -62,7 +62,7 @@ class MagicArea:
 
         self.entities = {}
 
-        self.last_changed = datetime.utcnow()
+        self.last_changed = datetime.now(UTC)
         self.states = []
 
         self.loaded_platforms = []

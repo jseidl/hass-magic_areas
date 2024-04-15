@@ -1,6 +1,6 @@
 """Platform file for Magic Area's binary_sensor entities."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import logging
 
 from homeassistant.components.binary_sensor import (
@@ -160,7 +160,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         self._name = f"Area ({self.area.name})"
 
-        self.last_off_time = datetime.utcnow()
+        self.last_off_time = datetime.now(UTC)
         self.clear_timeout_callback = None
 
     @property
@@ -325,7 +325,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         states.append(AREA_STATE_OCCUPIED if current_state else AREA_STATE_CLEAR)
         if current_state != last_state:
-            self.area.last_changed = datetime.utcnow()
+            self.area.last_changed = datetime.now(UTC)
             self.logger.debug(
                 "%s: State changed to %s at %s",
                 self.name,
@@ -334,7 +334,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             )
 
         seconds_since_last_change = (
-            datetime.utcnow() - self.area.last_changed
+            datetime.now(UTC) - self.area.last_changed
         ).total_seconds()
 
         extended_time = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
@@ -567,7 +567,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         last_clear = self.last_off_time
         clear_time = last_clear + clear_delta
-        time_now = datetime.utcnow()
+        time_now = datetime.now(UTC)
 
         if time_now >= clear_time:
             self.logger.debug("%s: Clear Timeout exceeded.", self.name)
