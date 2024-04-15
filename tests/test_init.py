@@ -1,23 +1,22 @@
 """Tests for Magic Areas integration."""
 
-from custom_components.magic_areas.util import basic_area_from_object
-from custom_components.magic_areas.const import (
-    DOMAIN,
-    MODULE_DATA,
-    _DOMAIN_SCHEMA,
-    DATA_UNDO_UPDATE_LISTENER,
-)
-from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import CONF_NAME, CONF_ID
+import logging
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-import logging
-import time
+from custom_components.magic_areas.const import (
+    _DOMAIN_SCHEMA,
+    DATA_UNDO_UPDATE_LISTENER,
+    DOMAIN,
+    MODULE_DATA,
+)
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import CONF_ID, CONF_NAME
 
 LOGGER = logging.getLogger(__name__)
 
-MOCK_AREA_NAME = 'MagicAreas Test Area'
+MOCK_AREA_NAME = "MagicAreas Test Area"
+
 
 async def test_successful_config_entry(hass):
     """Test that Magic Areas is configured successfully."""
@@ -31,10 +30,7 @@ async def test_successful_config_entry(hass):
     LOGGER.info("Got mock area: %s", mock_area.name)
 
     config_entry_data = _DOMAIN_SCHEMA({f"{mock_area.id}": {}})[mock_area.id]
-    extra_opts = {
-                CONF_ID: mock_area.id,
-                CONF_NAME: mock_area.name
-            }
+    extra_opts = {CONF_ID: mock_area.id, CONF_NAME: mock_area.name}
     config_entry_data.update(extra_opts)
 
     entry = MockConfigEntry(
@@ -64,10 +60,7 @@ async def test_unload_entry(hass):
     LOGGER.info("Got mock area: %s", mock_area.name)
 
     config_entry_data = _DOMAIN_SCHEMA({f"{mock_area.id}": {}})[mock_area.id]
-    extra_opts = {
-                CONF_ID: mock_area.id,
-                CONF_NAME: mock_area.name
-            }
+    extra_opts = {CONF_ID: mock_area.id, CONF_NAME: mock_area.name}
     config_entry_data.update(extra_opts)
 
     entry = MockConfigEntry(

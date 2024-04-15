@@ -1,6 +1,6 @@
 """Platform file for Magic Area's binary_sensor entities."""
 
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 import logging
 
 from homeassistant.components.binary_sensor import (

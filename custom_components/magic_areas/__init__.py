@@ -27,6 +27,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the component."""
     return True
 
+
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Set up the component."""
     data = hass.data.setdefault(MODULE_DATA, {})

@@ -1,6 +1,6 @@
 """Classes for Magic Areas and Meta Areas."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 import logging
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
