@@ -43,7 +43,7 @@ class MagicSensorBase(MagicEntity):
         """Update sensor state."""
         self.update_state()
 
-    def get_sensors_state(self):
+    def get_sensors_state(self, valid_states=None):
         """Return tracked sensors' state."""
         return []
 

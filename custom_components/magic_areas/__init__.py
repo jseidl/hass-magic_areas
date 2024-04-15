@@ -18,7 +18,7 @@ from .const import (
     META_AREAS,
     MODULE_DATA,
 )
-from .util import get_meta_area_object
+from .util import basic_area_from_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             config_entry,
         )
     else:
-        meta_area = get_meta_area_object(area_name)
+        meta_area = basic_area_from_name(area_name)
         magic_area = MagicMetaArea(hass, meta_area, config_entry)
 
     _LOGGER.debug(

@@ -227,11 +227,6 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
     _mode = "mean"
     sensors = []
 
-    @property
-    def state(self):
-        """Return the state of the entity."""
-        return self.get_sensors_state()
-
     def sensor_state_change(self, entity_id, from_state, to_state):
         """Handle change in state of tracked sensors."""
 
@@ -348,15 +343,14 @@ class MagicSwitchEntity(MagicEntity, SwitchEntity):
 class MagicLightGroup(MagicEntity, LightGroup):
     """Basic Magic Areas Light Group Entity."""
 
-    def __init__(self, area, entities, init_group=True):
+    def __init__(self, area, entities, name=None):
         """Initialize parent class and state."""
         MagicEntity.__init__(self, area)
 
         self._entities = entities
 
-        self._name = f"{self.area.name} Lights"
+        self._name = name if name else f"{self.area.name} Lights"
 
-        if init_group:
-            LightGroup.__init__(
-                self, self.unique_id, self._name, self._entities, mode=False
-            )
+        LightGroup.__init__(
+            self, self.unique_id, self._name, self._entities, mode=False
+        )

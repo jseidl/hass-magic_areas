@@ -104,14 +104,15 @@ class AreaLightGroup(MagicLightGroup):
 
     def __init__(self, area, entities, category=None, child_ids=None):
         """Initialize light group."""
-        MagicLightGroup.__init__(self, area, entities, init_group=False)
+
+        name_override = None
 
         if not child_ids:
             child_ids = []
 
         if category:
             category_title = " ".join(category.split("_")).title()
-            self._name = f"{category_title} ({self.area.name})"
+            name_override = f"{category_title} ({area.name})"
 
         self._child_ids = child_ids
 
@@ -122,7 +123,7 @@ class AreaLightGroup(MagicLightGroup):
         self.controlling = True
         self.controlled = False
 
-        self.init_group()
+        MagicLightGroup.__init__(self, area, entities, name_override)
 
         self._icon = LIGHT_GROUP_DEFAULT_ICON
 
