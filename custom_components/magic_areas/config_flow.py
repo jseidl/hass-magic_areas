@@ -192,8 +192,8 @@ class ConfigBase:
 
         if raw:
             return schema
-        else:
-            return vol.Schema(schema)
+
+        return vol.Schema(schema)
 
 
 class NullableEntitySelector(EntitySelector):
@@ -648,13 +648,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 self, f"async_step_feature_conf_{current_feature}"
             )
             return await feature_conf_step()
-        else:
-            _LOGGER.debug(
-                "OptionsFlow: All features configured for area %s, saving config: %s",
-                self.area.name,
-                str(self.area_options),
-            )
-            return self.async_create_entry(title="", data=self.area_options)
+
+        _LOGGER.debug(
+            "OptionsFlow: All features configured for area %s, saving config: %s",
+            self.area.name,
+            str(self.area_options),
+        )
+        return self.async_create_entry(title="", data=self.area_options)
 
     async def async_step_feature_conf_light_groups(self, user_input=None):
         """Configure the light groups feature."""

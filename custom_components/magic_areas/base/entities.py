@@ -217,8 +217,8 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
 
         if self._mode == "all":
             return len(active_sensors) == len(self.sensors)
-        else:
-            return len(active_sensors) > 0
+
+        return len(active_sensors) > 0
 
 
 class MagicSensorEntity(MagicEntity, SensorEntity):

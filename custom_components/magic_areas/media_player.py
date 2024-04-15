@@ -149,8 +149,8 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
         self.area = area
         self._tracked_entities = []
 
-        for area in self.areas:
-            entity_list = self.get_media_players_for_area(area)
+        for area_obj in self.areas:
+            entity_list = self.get_media_players_for_area(area_obj)
             if entity_list:
                 self._tracked_entities.extend(entity_list)
 

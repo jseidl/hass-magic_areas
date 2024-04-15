@@ -9,7 +9,6 @@ Once this goes into the main Home Assistant code it will be phased out.
 from __future__ import annotations
 
 import logging
-
 from statistics import mean
 from typing import Any
 
@@ -66,7 +65,6 @@ from .const import (
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
 )
 from .util import add_entities_when_ready
-
 
 # Climate Group Constants
 

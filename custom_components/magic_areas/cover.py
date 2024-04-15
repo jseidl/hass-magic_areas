@@ -2,7 +2,7 @@
 
 import logging
 
-import homeassistant.components.cover as cover
+from homeassistant.components import cover
 from homeassistant.components.group.cover import CoverGroup
 
 from .base.entities import MagicEntity
