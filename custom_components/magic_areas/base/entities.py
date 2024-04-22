@@ -231,7 +231,7 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
         """Handle change in state of tracked sensors."""
 
         self.logger.debug(
-            "%s: sensor '%s' changed to '%s'", self.name, entity_id, to_state.state
+            "%s: Sensor '%s' changed to '%s'", self.name, entity_id, to_state.state
         )
 
         if to_state.state in INVALID_STATES:

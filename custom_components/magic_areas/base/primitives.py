@@ -47,10 +47,6 @@ class MagicSensorBase(MagicEntity):
         """Return tracked sensors' state."""
         return []
 
-    def sensor_state_change(self, from_state, to_state):
-        """Handle change in tracked sensors' state."""
-        return False
-
     def update_state(self):
         """Update sensor state."""
         self._state = self.get_sensors_state()
@@ -72,6 +68,7 @@ class MagicSensorBase(MagicEntity):
 
         # Track presence sensors
         self.async_on_remove(
+            # pylint: disable-next=no-member
             async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
         )
 
