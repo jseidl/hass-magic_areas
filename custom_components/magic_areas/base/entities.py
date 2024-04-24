@@ -1,6 +1,6 @@
 """Base classes for Magic Areas variants of Home Assistant entities."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 from statistics import mean
 
@@ -131,21 +131,25 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
         if not to_state:
             return
 
+        # Ignore state reports taht aren't really a state change
+        if to_state.state == from_state.state:
+            return
+
         self.logger.debug(
-            "%s: sensor '%s' changed to '%s'", self.name, entity_id, to_state.state
+            "%s: Sensor '%s' changed to '%s'", self.name, entity_id, to_state.state
         )
 
         if to_state.state in INVALID_STATES:
             self.logger.debug(
-                "%s: sensor '%s' has invalid state '%s'",
+                "%s: Sensor '%s' has invalid state '%s'",
                 self.name,
                 entity_id,
                 to_state.state,
             )
             return
 
-        if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
-            self.last_off_time = datetime.utcnow()  # Update last_off_time
+        if to_state.state not in self.area.config.get(CONF_ON_STATES):
+            self.last_off_time = datetime.now(UTC)  # Update last_off_time
 
         return self.update_state()
 

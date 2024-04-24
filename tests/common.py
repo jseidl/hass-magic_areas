@@ -1,25 +1,33 @@
-"""Shared functions for tests"""
+"""Shared functions for tests."""
 
 import logging
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.magic_areas.const import (
-    _DOMAIN_SCHEMA,
-    DOMAIN,
+from custom_components.magic_areas.const import _DOMAIN_SCHEMA, DOMAIN
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
 )
-
-from homeassistant.const import CONF_ID, CONF_NAME
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN, BinarySensorDeviceClass
+from homeassistant.const import CONF_ID, CONF_NAME
 from homeassistant.setup import async_setup_component
-from homeassistant.util import slugify
 
-from .const import MOCK_AREA_NAME, MOCK_PRESENCE_SENSOR_NAME, MOCK_AREA_PRESENCE_SENSOR_ENTITY_ID, MOCK_PRESENCE_BINARY_SENSOR_UNIQUEID, NOCK_PRESENCE_INPUT_BOOLEAN_ID, MOCK_PRESENCE_SENSOR_SLUG, NOCK_PRESENCE_BINARY_SENSOR_ID
+from .const import (
+    MOCK_AREA_NAME,
+    MOCK_AREA_PRESENCE_SENSOR_ENTITY_ID,
+    MOCK_PRESENCE_BINARY_SENSOR_UNIQUEID,
+    MOCK_PRESENCE_SENSOR_NAME,
+    MOCK_PRESENCE_SENSOR_SLUG,
+    NOCK_PRESENCE_BINARY_SENSOR_ID,
+    NOCK_PRESENCE_INPUT_BOOLEAN_ID,
+)
 
 LOGGER = logging.getLogger(__name__)
 
+
 async def setup_area_with_presence_sensor(hass, extra_opts=None):
+    """Create an area and corresponding Magic Areas entry with a presence sensor."""
 
     # Create mock input boolean and presence sensor
     input_boolean_opts = {
@@ -34,11 +42,13 @@ async def setup_area_with_presence_sensor(hass, extra_opts=None):
         "sensors": {
             f"{MOCK_PRESENCE_SENSOR_SLUG}": {
                 "friendly_name": MOCK_PRESENCE_SENSOR_NAME,
-                "value_template": value_template.replace("EID", NOCK_PRESENCE_INPUT_BOOLEAN_ID),
+                "value_template": value_template.replace(
+                    "EID", NOCK_PRESENCE_INPUT_BOOLEAN_ID
+                ),
                 "device_class": BinarySensorDeviceClass.PRESENCE,
-                "unique_id": MOCK_PRESENCE_BINARY_SENSOR_UNIQUEID
+                "unique_id": MOCK_PRESENCE_BINARY_SENSOR_UNIQUEID,
             }
-        }
+        },
     }
 
     await async_setup_component(
@@ -64,9 +74,7 @@ async def setup_area_with_presence_sensor(hass, extra_opts=None):
     # Add presence sensor to new area
     entity_registry = hass.helpers.entity_registry.async_get(hass)
     entity = entity_registry.async_get_or_create(
-        BINARY_SENSOR_DOMAIN,
-        "template",
-        MOCK_PRESENCE_BINARY_SENSOR_UNIQUEID
+        BINARY_SENSOR_DOMAIN, "template", MOCK_PRESENCE_BINARY_SENSOR_UNIQUEID
     )
     entity_registry.async_update_entity(
         entity.entity_id,
@@ -80,11 +88,13 @@ async def setup_area_with_presence_sensor(hass, extra_opts=None):
     # Check that presence sensor is added
     state = hass.states.get(MOCK_AREA_PRESENCE_SENSOR_ENTITY_ID)
 
-    assert entity.entity_id in state.attributes['presence_sensors']
+    assert entity.entity_id in state.attributes["presence_sensors"]
 
     return entry
 
-async def setup_area(hass, test_area = None, extra_opts=None):
+
+async def setup_area(hass, test_area=None, extra_opts=None):
+    """Create an area and corresponding Magic Areas entry."""
 
     if not test_area:
         area_registry = hass.helpers.area_registry.async_get(hass)

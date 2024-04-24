@@ -43,12 +43,9 @@ class MagicSensorBase(MagicEntity):
         """Update sensor state."""
         self.update_state()
 
-    def get_sensors_state(self, valid_states=None):
-        """Return tracked sensors' state."""
-        return []
-
     def update_state(self):
         """Update sensor state."""
+        # pylint: disable-next=no-member
         self._state = self.get_sensors_state()
         self.schedule_update_ha_state()
 
