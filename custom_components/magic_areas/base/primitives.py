@@ -73,7 +73,9 @@ class MagicSensorBase(MagicEntity):
 
         # Timed self update
         self.async_on_remove(
-            async_track_time_interval(self.hass, self.refresh_states, delta)
+            async_track_time_interval(
+                self.hass, self.refresh_states, delta, cancel_on_shutdown=True
+            )
         )
 
 

@@ -237,7 +237,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         # Timed self update
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
         self.async_on_remove(
-            async_track_time_interval(self.hass, self.refresh_states, delta)
+            async_track_time_interval(
+                self.hass, self.refresh_states, delta, cancel_on_shutdown=True
+            )
         )
 
     def load_presence_sensors(self) -> None:
@@ -545,6 +547,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.clear_timeout_callback = call_later(
             self.hass, timeout, self.refresh_states
         )
+
+        # Schedule task for cancellation on removal
+        self.async_on_remove(self.clear_timeout_callback)
 
     def remove_clear_timeout(self):
         """Remove clear timeout timer."""
