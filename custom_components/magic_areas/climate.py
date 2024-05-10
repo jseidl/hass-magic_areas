@@ -46,7 +46,7 @@ from homeassistant.components.climate import (
     HVACMode,
 )
 
-from homeassistant.components.group.entity import GroupEntity
+from homeassistant.components.group import GroupEntity
 from homeassistant.components.group.util import (
     find_state_attributes,
     most_frequent_attribute,
