@@ -116,6 +116,7 @@ class AreaLightGroup(MagicLightGroup):
 
         self.controlling = True
         self.controlled = False
+        self.force_on_occupied = True
 
         self.init_group()
 
@@ -236,6 +237,10 @@ class AreaLightGroup(MagicLightGroup):
                 self.controlled = True
                 self._turn_off()
             return False
+
+        # Force on, if set, for occupied state only.
+        if  self.force_on_occupied and self.has_state(AREA_STATE_OCCUPIED):
+            new_states.append(AREA_STATE_OCCUPIED)
 
         # Only react to actual secondary state changes
         if not new_states and not lost_states:
