@@ -6,6 +6,7 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
+    ATTR_BRIGHTNESS_PCT,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
     STATE_OFF,
@@ -22,6 +23,9 @@ from custom_components.magic_areas.const import (
     AREA_STATE_DARK,
     AREA_STATE_OCCUPIED,
     CONF_FEATURE_LIGHT_GROUPS,
+    CONF_BRIGHT_DIM_LEVEL,
+    CONF_SLEEP_DIM_LEVEL,
+    CONF_SECONDARY_STATES,
     DEFAULT_LIGHT_GROUP_ACT_ON,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     LIGHT_GROUP_ACT_ON,
@@ -231,16 +235,10 @@ class AreaLightGroup(MagicLightGroup):
             self.reset_control()
             return False
 
-        if self.area.has_state(AREA_STATE_BRIGHT):
-            # Only turn off lights when bright if the room was already occupied
-            if AREA_STATE_BRIGHT in new_states and AREA_STATE_OCCUPIED not in new_states:
-                self.controlled = True
-                self._turn_off()
-            return False
-
         # Force on, if set, for occupied state only.
-        if  self.force_on_occupied and self.has_state(AREA_STATE_OCCUPIED):
-            new_states.append(AREA_STATE_OCCUPIED)
+        if  self.force_on_occupied and self.area.is_occupied():
+            self.logger.debug(f"{self.name}: Force on lights!")
+            new_states.add(AREA_STATE_OCCUPIED)
 
         # Only react to actual secondary state changes
         if not new_states and not lost_states:
@@ -310,11 +308,6 @@ class AreaLightGroup(MagicLightGroup):
             self.controlled = True
             return self._turn_on()
 
-        # Only turn lights off if not going into dark state
-        if AREA_STATE_DARK in new_states:
-            self.logger.debug(f"{self.name}: Entering {AREA_STATE_DARK} state, noop.")
-            return False
-
         # Turn off if we're a PRIORITY_STATE and we're coming out of it
         out_of_priority_states = [
             state
@@ -353,12 +346,22 @@ class AreaLightGroup(MagicLightGroup):
         if not self.controlling:
             return False
 
-        if self.is_on:
+        if self.is_on and not self.force_on_occupied:
             return False
 
         self.controlled = True
 
-        service_data = {ATTR_ENTITY_ID: self.entity_id}
+        bright = 0
+        if self.area.is_dark():
+            bright = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+                CONF_SLEEP_DIM_LEVEL, 0
+            )
+        else:
+            bright = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+                CONF_BRIGHT_DIM_LEVEL, 100
+            )
+
+        service_data = {ATTR_ENTITY_ID: self.entity_id, ATTR_BRIGHTNESS_PCT: bright}
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
 
         return True

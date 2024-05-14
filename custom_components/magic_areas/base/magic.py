@@ -1,6 +1,6 @@
 import logging
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
 from homeassistant.util import slugify
@@ -11,6 +11,7 @@ from homeassistant.helpers.device_registry import async_get as async_get_dr
 from custom_components.magic_areas.util import flatten_entity_list, is_entity_list, areas_loaded
 from custom_components.magic_areas.const import (
     AREA_STATE_OCCUPIED,
+    AREA_STATE_DARK,
     AREA_TYPE_META,
     AREA_TYPE_INTERIOR,
     AREA_TYPE_EXTERIOR,
@@ -51,7 +52,7 @@ class MagicArea(object):
 
         self.entities = {}
 
-        self.last_changed = datetime.utcnow()
+        self.last_changed = datetime.now(timezone.utc)
         self.states = []
 
         self.loaded_platforms = []
@@ -82,6 +83,9 @@ class MagicArea(object):
 
     def is_occupied(self) -> bool:
         return self.has_state(AREA_STATE_OCCUPIED)
+
+    def is_dark(self) -> bool:
+        return self.has_state(AREA_STATE_DARK)
 
     def has_state(self, state) -> bool:
         return state in self.states
@@ -156,7 +160,6 @@ class MagicArea(object):
         return self.area_type == AREA_TYPE_EXTERIOR
 
     def is_valid_entity(self, entity_object) -> bool:
-        
         # Ignore our own entities
         if entity_object.device_id:
 

@@ -40,6 +40,8 @@ from custom_components.magic_areas.const import (
     CONF_EXTENDED_TIME,
     CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_AGGREGATION,
+    CONF_BRIGHT_DIM_LEVEL,
+    CONF_SLEEP_DIM_LEVEL,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_CLIMATE_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
@@ -75,6 +77,8 @@ from custom_components.magic_areas.const import (
     CONFIGURABLE_FEATURES,
     DATA_AREA_OBJECT,
     DEFAULT_ICON,
+    DEFAULT_BRIGHT_DIM_LEVEL,
+    DEFAULT_SLEEP_DIM_LEVEL,
     DOMAIN,
     LIGHT_GROUP_ACT_ON_OPTIONS,
     META_AREAS,
@@ -115,11 +119,12 @@ class ConfigBase(object):
         )
 
     def _build_selector_number(
-        self, min=0, max=9999, mode="box", unit_of_measurement="seconds"
+        self, min=0, max=9999, mode="box", unit_of_measurement="seconds", initial=0
     ):
         return selector(
             {
                 "number": {
+                    "initial": initial,
                     "min": min,
                     "max": max,
                     "mode": mode,
@@ -461,6 +466,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     CONF_ACCENT_ENTITY: self._build_selector_entity_simple(
                         self.all_entities
                     ),
+                    CONF_BRIGHT_DIM_LEVEL: self._build_selector_number(
+                        min = 0, max= 100, unit_of_measurement="%%", initial=DEFAULT_BRIGHT_DIM_LEVEL),
+                    CONF_SLEEP_DIM_LEVEL: self._build_selector_number(
+                        min = 0, max= 100, unit_of_measurement="%%", initial=DEFAULT_SLEEP_DIM_LEVEL),
                     CONF_SLEEP_TIMEOUT: self._build_selector_number(),
                     CONF_EXTENDED_TIME: self._build_selector_number(),
                     CONF_EXTENDED_TIMEOUT: self._build_selector_number(),
