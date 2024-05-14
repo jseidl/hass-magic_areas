@@ -32,7 +32,7 @@ from custom_components.magic_areas.const import (
     ATTR_FEATURES,
     ATTR_ON_STATES,
     ATTR_PRESENCE_SENSORS,
-    ATTR_STATES,
+    ATTR_STATE,
     ATTR_TYPE,
     ATTR_UPDATE_INTERVAL,
     CONF_AGGREGATES_MIN_ENTITIES,
@@ -170,7 +170,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     @property
     def is_on(self):
         """Return true if the area is occupied."""
-        return self.area.has_state(AREA_STATE_OCCUPIED)
+        return self.area.is_occupied()
 
     async def restore_state(self):
 
@@ -182,10 +182,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self.update_state()
         else:
             _LOGGER.debug(f"Sensor {self.name} restored [state={last_state.state}]")
-            if ATTR_STATES in last_state.attributes.keys():
-                self.area.states = last_state.attributes[ATTR_STATES]
+            if ATTR_STATE in last_state.attributes.keys():
+                self.area.state = last_state.attributes[ATTR_STATE]
             else:
-                self.area.states = []
+                self.area.state = AREA_STATE_CLEAR
             self.schedule_update_ha_state()
 
     async def _initialize(self, _=None) -> None:
@@ -280,7 +280,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self._attributes = {}
 
         if not self.area.is_meta():
-            self._attributes.update({ATTR_STATES: self.get_area_states()})
+            self._attributes.update({ATTR_STATE: self.get_area_state()})
         else:
             self._attributes.update(
                 {
@@ -300,7 +300,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
     def update_attributes(self):
-        self._attributes[ATTR_STATES] = self.area.states
+        self._attributes[ATTR_STATE] = self.area.state
         self._attributes[ATTR_CLEAR_TIMEOUT] = self.get_clear_timeout()
 
         if self.area.is_meta():
@@ -311,19 +311,10 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         State Change Handling
     """
 
-    def get_area_states(self):
-        states = []
+    def get_current_area_state(self):
 
         # Get Main occupancy state
-        current_state = self.get_occupancy_state()
-        last_state = self.area.is_occupied()
-
-        states.append(AREA_STATE_OCCUPIED if current_state else AREA_STATE_CLEAR)
-        if current_state != last_state:
-            self.area.last_changed = datetime.utcnow()
-            self.logger.debug(
-                f"{self.area.name}: State changed to {current_state} at {self.area.last_changed}"
-            )
+        occupied_state = self.get_occupancy_state()
 
         seconds_since_last_change = (
             datetime.utcnow() - self.area.last_changed
@@ -333,14 +324,16 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME
         )
 
-        if AREA_STATE_OCCUPIED in states and seconds_since_last_change >= extended_time:
-            states.append(AREA_STATE_EXTENDED)
+        if not occupied_state:
+            if seconds_since_last_change >= extended_time:
+                return AREA_STATE_EXTENDED
+            else:
+                return AREA_STATE_CLEAR
+            
+        # If it is not occupied, then set the override state or leave as just occupied.
+        state = AREA_STATE_OCCUPIED
 
         configurable_states = self.get_configured_secondary_states()
-
-        # Assume AREA_STATE_DARK if not configured
-        if AREA_STATE_DARK not in configurable_states:
-            states.append(AREA_STATE_DARK)
 
         for configurable_state in configurable_states:
             (
@@ -364,32 +357,23 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 self.logger.debug(
                     f"{self.area.name}: Secondary state: {secondary_state_entity} is at {secondary_state_value}, adding {configurable_state}"
                 )
-                states.append(configurable_state)
+                state = configurable_state
 
-        # Meta-state bright
-        if AREA_STATE_DARK in configurable_states and AREA_STATE_DARK not in states:
-            states.append(AREA_STATE_BRIGHT)
-
-        return states
+        return state
 
     def update_area_states(self):
-        last_state = set(self.area.states.copy())
-        # self.update_state()
-        current_state = set(self.get_area_states())
+        last_state = self.area.state
+        current_state = self.get_current_area_state()
 
         if last_state == current_state:
-            return ([], [])
+            return None
 
         # Calculate what's new
-        new_states = current_state - last_state
-        lost_states = last_state - current_state
         self.logger.debug(
-            f"{self.name}: Current state: {current_state}, last state: {last_state} -> new states {new_states} / lost states {lost_states}"
+            f"{self.name}: Current state: {current_state}, last state: {last_state}"
         )
 
-        self.area.states = list(current_state)
-
-        return (new_states, lost_states)
+        return (current_state,  last_state )
 
 
     def get_occupancy_state(self):

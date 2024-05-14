@@ -11,7 +11,10 @@ from homeassistant.helpers.device_registry import async_get as async_get_dr
 from custom_components.magic_areas.util import flatten_entity_list, is_entity_list, areas_loaded
 from custom_components.magic_areas.const import (
     AREA_STATE_OCCUPIED,
-    AREA_STATE_DARK,
+    AREA_STATE_CLEAR,
+    AREA_STATE_BRIGHT,
+    AREA_STATE_SLEEP,
+    AREA_STATE_EXTENDED,
     AREA_TYPE_META,
     AREA_TYPE_INTERIOR,
     AREA_TYPE_EXTERIOR,
@@ -53,7 +56,7 @@ class MagicArea(object):
         self.entities = {}
 
         self.last_changed = datetime.now(timezone.utc)
-        self.states = []
+        self.state = AREA_STATE_CLEAR
 
         self.loaded_platforms = []
 
@@ -82,13 +85,16 @@ class MagicArea(object):
         self.logger.debug(f"{area_type} {self.slug} initialized.")
 
     def is_occupied(self) -> bool:
-        return self.has_state(AREA_STATE_OCCUPIED)
+        return self.state != AREA_STATE_CLEAR
 
-    def is_dark(self) -> bool:
-        return self.has_state(AREA_STATE_DARK)
+    def is_bright(self) -> bool:
+        return self.state == AREA_STATE_BRIGHT
 
-    def has_state(self, state) -> bool:
-        return state in self.states
+    def is_sleep(self) -> bool:
+        return self.state == AREA_STATE_SLEEP
+
+    def is_extended(self) -> bool:
+        return self.state == AREA_STATE_EXTENDED
 
     def has_configured_state(self, state) -> bool:
         state_opts = CONFIGURABLE_AREA_STATE_MAP.get(state, None)
@@ -105,10 +111,6 @@ class MagicArea(object):
 
     def has_feature(self, feature) -> bool:
         enabled_features = self.config.get(CONF_ENABLED_FEATURES)
-
-        # Deal with legacy
-        if type(enabled_features) is list:
-            return feature in enabled_features
 
         # Handle everything else
         if type(enabled_features) is not dict:

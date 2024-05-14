@@ -18,7 +18,7 @@ from custom_components.magic_areas.const import (
     _DOMAIN_SCHEMA,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
-    AREA_STATE_DARK,
+    AREA_STATE_BRIGHT,
     AREA_STATE_EXTENDED,
     AREA_STATE_OCCUPIED,
     AREA_STATE_SLEEP,
@@ -27,20 +27,19 @@ from custom_components.magic_areas.const import (
     AREA_TYPE_META,
     AVAILABLE_ON_STATES,
     BUILTIN_AREA_STATES,
-    CONF_ACCENT_ENTITY,
-    CONF_ACCENT_LIGHTS,
-    CONF_ACCENT_LIGHTS_ACT_ON,
-    CONF_ACCENT_LIGHTS_STATES,
+    CONF_NORMAL_LIGHTS,
+    CONF_NORMAL_LIGHTS_ACT_ON,
+    CONF_NORMAL_LIGHTS_STATES,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
-    CONF_DARK_ENTITY,
+    CONF_BRIGHT_ENTITY,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_EXTENDED_TIME,
     CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_AGGREGATION,
-    CONF_BRIGHT_DIM_LEVEL,
+    CONF_NORMAL_DIM_LEVEL,
     CONF_SLEEP_DIM_LEVEL,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_CLIMATE_GROUPS,
@@ -55,9 +54,9 @@ from custom_components.magic_areas.const import (
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
     CONF_ON_STATES,
-    CONF_OVERHEAD_LIGHTS,
-    CONF_OVERHEAD_LIGHTS_ACT_ON,
-    CONF_OVERHEAD_LIGHTS_STATES,
+    CONF_NORMAL_LIGHTS,
+    CONF_NORMAL_LIGHTS_ACT_ON,
+    CONF_NORMAL_LIGHTS_STATES,
     CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_HOLD_TIMEOUT,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -67,9 +66,9 @@ from custom_components.magic_areas.const import (
     CONF_SLEEP_LIGHTS_ACT_ON,
     CONF_SLEEP_LIGHTS_STATES,
     CONF_SLEEP_TIMEOUT,
-    CONF_TASK_LIGHTS,
-    CONF_TASK_LIGHTS_ACT_ON,
-    CONF_TASK_LIGHTS_STATES,
+    CONF_BRIGHT_LIGHTS,
+    CONF_BRIGHT_LIGHTS_ACT_ON,
+    CONF_BRIGHT_LIGHTS_STATES,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     CONFIG_FLOW_ENTITY_FILTER_EXT,
@@ -452,21 +451,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 options=(OPTIONS_SECONDARY_STATES),
                 saved_options=self.config_entry.options.get(CONF_SECONDARY_STATES, {}),
                 dynamic_validators={
-                    CONF_DARK_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
+                    CONF_BRIGHT_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
                     CONF_SLEEP_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
-                    CONF_ACCENT_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
                 },
                 selectors={
-                    CONF_DARK_ENTITY: self._build_selector_entity_simple(
+                    CONF_BRIGHT_ENTITY: self._build_selector_entity_simple(
                         self.all_entities
                     ),
                     CONF_SLEEP_ENTITY: self._build_selector_entity_simple(
                         self.all_entities
                     ),
-                    CONF_ACCENT_ENTITY: self._build_selector_entity_simple(
-                        self.all_entities
-                    ),
-                    CONF_BRIGHT_DIM_LEVEL: self._build_selector_number(
+                    CONF_NORMAL_DIM_LEVEL: self._build_selector_number(
                         min = 0, max= 100, unit_of_measurement="%%", initial=DEFAULT_BRIGHT_DIM_LEVEL),
                     CONF_SLEEP_DIM_LEVEL: self._build_selector_number(
                         min = 0, max= 100, unit_of_measurement="%%", initial=DEFAULT_SLEEP_DIM_LEVEL),
@@ -554,12 +549,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         available_states = BUILTIN_AREA_STATES.copy()
 
-        LIGHT_GROUP_STATE_EXEMPT = [AREA_STATE_DARK]
         for extra_state, extra_state_opts in CONFIGURABLE_AREA_STATE_MAP.items():
-            # Skip AREA_STATE_DARK because lights can't be tied to this state
-            if extra_state in LIGHT_GROUP_STATE_EXEMPT:
-                continue
-
             extra_state_entity, extra_state_state = extra_state_opts
             if self.area_options[CONF_SECONDARY_STATES].get(extra_state_entity, None):
                 available_states.append(extra_state)
@@ -568,29 +558,26 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             name=CONF_FEATURE_LIGHT_GROUPS,
             options=OPTIONS_LIGHT_GROUP,
             dynamic_validators={
-                CONF_OVERHEAD_LIGHTS: cv.multi_select(self.all_lights),
-                CONF_OVERHEAD_LIGHTS_STATES: cv.multi_select(available_states),
-                CONF_OVERHEAD_LIGHTS_ACT_ON: cv.multi_select(
+                CONF_NORMAL_LIGHTS: cv.multi_select(self.all_lights),
+                CONF_NORMAL_LIGHTS_STATES: cv.multi_select(available_states),
+                CONF_NORMAL_LIGHTS_ACT_ON: cv.multi_select(
                     LIGHT_GROUP_ACT_ON_OPTIONS
                 ),
                 CONF_SLEEP_LIGHTS: cv.multi_select(self.all_lights),
                 CONF_SLEEP_LIGHTS_STATES: cv.multi_select(available_states),
                 CONF_SLEEP_LIGHTS_ACT_ON: cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
-                CONF_ACCENT_LIGHTS: cv.multi_select(self.all_lights),
-                CONF_ACCENT_LIGHTS_STATES: cv.multi_select(available_states),
-                CONF_ACCENT_LIGHTS_ACT_ON: cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
-                CONF_TASK_LIGHTS: cv.multi_select(self.all_lights),
-                CONF_TASK_LIGHTS_STATES: cv.multi_select(available_states),
-                CONF_TASK_LIGHTS_ACT_ON: cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
+                CONF_BRIGHT_LIGHTS: cv.multi_select(self.all_lights),
+                CONF_BRIGHT_LIGHTS_STATES: cv.multi_select(available_states),
+                CONF_BRIGHT_LIGHTS_ACT_ON: cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
             },
             selectors={
-                CONF_OVERHEAD_LIGHTS: self._build_selector_entity_simple(
+                CONF_NORMAL_LIGHTS: self._build_selector_entity_simple(
                     self.all_lights, multiple=True
                 ),
-                CONF_OVERHEAD_LIGHTS_STATES: self._build_selector_select(
+                CONF_NORMAL_LIGHTS_STATES: self._build_selector_select(
                     available_states, multiple=True
                 ),
-                CONF_OVERHEAD_LIGHTS_ACT_ON: self._build_selector_select(
+                CONF_NORMAL_LIGHTS_ACT_ON: self._build_selector_select(
                     LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
                 ),
                 CONF_SLEEP_LIGHTS: self._build_selector_entity_simple(
@@ -600,24 +587,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     available_states, multiple=True
                 ),
                 CONF_SLEEP_LIGHTS_ACT_ON: self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
-                ),
-                CONF_ACCENT_LIGHTS: self._build_selector_entity_simple(
-                    self.all_lights, multiple=True
-                ),
-                CONF_ACCENT_LIGHTS_STATES: self._build_selector_select(
-                    available_states, multiple=True
-                ),
-                CONF_ACCENT_LIGHTS_ACT_ON: self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
-                ),
-                CONF_TASK_LIGHTS: self._build_selector_entity_simple(
-                    self.all_lights, multiple=True
-                ),
-                CONF_TASK_LIGHTS_STATES: self._build_selector_select(
-                    available_states, multiple=True
-                ),
-                CONF_TASK_LIGHTS_ACT_ON: self._build_selector_select(
                     LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
                 ),
             },

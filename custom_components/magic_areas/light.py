@@ -104,7 +104,7 @@ def add_lights(area, async_add_entities):
 
 class AreaLightGroup(MagicLightGroup):
 
-    def __init__(self, area, entities, category=None, child_ids=[]):
+    def __init__(self, area, entities, dim_level, category=None, child_ids=[]):
 
         MagicLightGroup.__init__(self, area, entities, init_group=False)
 
@@ -121,6 +121,7 @@ class AreaLightGroup(MagicLightGroup):
         self.controlling = True
         self.controlled = False
         self.force_on_occupied = True
+        self.dim_level = dim_level
 
         self.init_group()
 
@@ -217,10 +218,10 @@ class AreaLightGroup(MagicLightGroup):
         return self.state_change_secondary(states_tuple)
     
     def state_change_primary(self, states_tuple):
-        new_states, lost_states = states_tuple
+        new_state, last_state = states_tuple
 
         # If area clear
-        if AREA_STATE_CLEAR in new_states:
+        if AREA_STATE_CLEAR == new_state:
             self.logger.debug(f"{self.name}: Area is clear, should turn off lights!")
             self.reset_control()
             return self._turn_off()
@@ -228,115 +229,34 @@ class AreaLightGroup(MagicLightGroup):
         return False
 
     def state_change_secondary(self, states_tuple):
-        new_states, lost_states = states_tuple
+        new_state, last_state = states_tuple
 
-        if AREA_STATE_CLEAR in new_states:
+        if AREA_STATE_CLEAR == new_state:
             self.logger.debug(f"{self.name}: Area is clear, reset control state and Noop!")
             self.reset_control()
-            return False
-
-        # Force on, if set, for occupied state only.
-        if  self.force_on_occupied and self.area.is_occupied():
-            self.logger.debug(f"{self.name}: Force on lights!")
-            new_states.add(AREA_STATE_OCCUPIED)
-
-        # Only react to actual secondary state changes
-        if not new_states and not lost_states:
-            self.logger.debug(f"{self.name}: No new or lost states, noop.")
             return False
 
         # Do not handle lights that are not tied to a state
         if not self.assigned_states:
             self.logger.debug(f"{self.name}: No assigned states. Noop.")
             return False
-
-        # If area clear, do nothing (main group will)
-        if not self.area.is_occupied():
-            self.logger.debug(f"Light group {self.name}: Area not occupied, ignoring.")
+        
+        # Do not handle lights that are not in our state set.
+        if not new_state in self.assigned_states:
+            self.logger.debug(f"{self.name}: Not for this light group {self.assigned_states}. Noop.")
             return False
 
         self.logger.debug(
-            f"Light group {self.name} assigned states: {self.assigned_states}. New states: {new_states} / Lost states {lost_states}"
+            f"Light group {self.name} assigned states: {self.assigned_states}. New state: {new_state} / Last state {last_state}"
         )
 
-        # Calculate valid states (if area has states we listen to)
-        # and check if area is under one or more priority state
-        valid_states = [
-            state for state in self.assigned_states if self.area.has_state(state)
-        ]
-        has_priority_states = any(
-            [self.area.has_state(state) for state in AREA_PRIORITY_STATES]
-        )
-        non_priority_states = [
-            state for state in valid_states if state not in AREA_PRIORITY_STATES
-        ]
-
-        self.logger.debug(
-            f"{self.name} Has priority states? {has_priority_states}. Non-priority states: {non_priority_states}"
-        )
-
-        ## ACT ON Control
-        # Do not act on occupancy change if not defined on act_on
-        if (
-            AREA_STATE_OCCUPIED in new_states
-            and LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE not in self.act_on
-        ):
-            self.logger.debug(
-                f"Area occupancy change detected but not configured to act on. Skipping."
-            )
-            return False
-
-        # Do not act on state change if not defined on act_on
-        if (
-            AREA_STATE_OCCUPIED not in new_states
-            and LIGHT_GROUP_ACT_ON_STATE_CHANGE not in self.act_on
-        ):
-            self.logger.debug(
-                f"Area state change detected but not configured to act on. Skipping."
-            )
-            return False
-
-        # Prefer priority states when present
-        if has_priority_states:
-            for non_priority_state in non_priority_states:
-                valid_states.remove(non_priority_state)
-
-        if valid_states:
-            self.logger.debug(
-                f"Area has valid states ({valid_states}), {self.name} SHOULD TURN ON!"
-            )
-            self.controlled = True
-            return self._turn_on()
-
-        # Turn off if we're a PRIORITY_STATE and we're coming out of it
-        out_of_priority_states = [
-            state
-            for state in AREA_PRIORITY_STATES
-            if state in self.assigned_states and state in lost_states
-        ]
-        if out_of_priority_states:
-            self.controlled = True
-            return self._turn_off()
-
-        # Do not turn off if no new PRIORITY_STATES
-        new_priority_states = [
-            state for state in AREA_PRIORITY_STATES if state in new_states
-        ]
-        if not new_priority_states:
-            self.logger.debug(f"{self.name}: No new priority states. Noop.")
-            return False
-
-        self.controlled = True
-        return self._turn_off()
+        return self._turn_on()
 
     def relevant_states(self):
         relevant_states = self.area.states.copy()
 
         if self.area.is_occupied():
             relevant_states.append(AREA_STATE_OCCUPIED)
-
-        if AREA_STATE_DARK in relevant_states:
-            relevant_states.remove(AREA_STATE_DARK)
 
         return relevant_states
 
@@ -351,17 +271,11 @@ class AreaLightGroup(MagicLightGroup):
 
         self.controlled = True
 
-        bright = 0
-        if self.area.is_dark():
-            bright = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                CONF_SLEEP_DIM_LEVEL, 0
-            )
-        else:
-            bright = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                CONF_BRIGHT_DIM_LEVEL, 100
-            )
+        if self.dim_level == 0:
+            self._turn_off()
 
-        service_data = {ATTR_ENTITY_ID: self.entity_id, ATTR_BRIGHTNESS_PCT: bright}
+        self.controlled = True
+        service_data = {ATTR_ENTITY_ID: self.entity_id, ATTR_BRIGHTNESS_PCT: self.dim_level}
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
 
         return True
@@ -373,6 +287,7 @@ class AreaLightGroup(MagicLightGroup):
         if not self.is_on:
             return False
 
+        self.controlled = True
         service_data = {ATTR_ENTITY_ID: self.entity_id}
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
 
@@ -420,6 +335,9 @@ class AreaLightGroup(MagicLightGroup):
             # If not, it was manually controlled, stop controlling
             self.controlling = False
             self.logger.debug(f"{self.name}: Group controlled by something else.")
+            # Reset to non-occupied if occupied, so if the room is entered again
+            # we control again.
+            self.area.state = AREA_STATE_CLEAR
 
     def group_state_changed(self, event):
         # If area is not occupied, ignore
