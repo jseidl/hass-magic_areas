@@ -1,25 +1,23 @@
 {
-  "domain": "magic_areas",
-  "name": "Magic Areas",
-  "after_dependencies": [
-    "template",
-    "group",
-    "binary_sensor",
-    "sensor",
-    "light",
-    "media_player",
-    "device_tracker",
-    "discovery",
-    "camera"
-  ],
-  "codeowners": [
-    "@ddt"
-  ],
-  "config_flow": true,
-  "dependencies": [],
-  "documentation": "https://github.com/pinkfish/hass-magic_areas/wiki",
-  "iot_class": "calculated",
-  "issue_tracker": "https://github.com/pinkfish/hass-magic_areas/issues",
-  "requirements": [],
-  "version": "3.1.0"
+    "domain": "magic_areas",
+    "name": "Magic Areas",
+    "after_dependencies": [
+        "template",
+        "group",
+        "binary_sensor",
+        "sensor",
+        "light",
+        "media_player",
+        "device_tracker",
+        "discovery",
+        "camera",
+    ],
+    "codeowners": ["@ddt"],
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/pinkfish/hass-magic_areas/wiki",
+    "iot_class": "calculated",
+    "issue_tracker": "https://github.com/pinkfish/hass-magic_areas/issues",
+    "requirements": [],
+    "version": "3.1.0",
 }

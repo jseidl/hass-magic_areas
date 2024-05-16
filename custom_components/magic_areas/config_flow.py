@@ -149,14 +149,18 @@ class ConfigBase(object):
             vol.Optional(
                 name,
                 description={
-                    "suggested_value": saved_options.get(name)
-                    if saved_options.get(name) is not None
-                    else default
+                    "suggested_value": (
+                        saved_options.get(name)
+                        if saved_options.get(name) is not None
+                        else default
+                    )
                 },
                 default=default,
-            ): selectors[name]
-            if name in selectors
-            else dynamic_validators.get(name, validation)
+            ): (
+                selectors[name]
+                if name in selectors
+                else dynamic_validators.get(name, validation)
+            )
             for name, default, validation in options
         }
 
@@ -621,9 +625,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         return await self.do_feature_config(
             name=CONF_FEATURE_CLIMATE_GROUPS,
-            options=OPTIONS_CLIMATE_GROUP
-            if not self.area.is_meta()
-            else OPTIONS_CLIMATE_GROUP_META,
+            options=(
+                OPTIONS_CLIMATE_GROUP
+                if not self.area.is_meta()
+                else OPTIONS_CLIMATE_GROUP_META
+            ),
             dynamic_validators={
                 CONF_CLIMATE_GROUPS_TURN_ON_STATE: vol.In(
                     EMPTY_ENTRY + available_states
