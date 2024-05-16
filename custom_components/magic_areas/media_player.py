@@ -20,7 +20,6 @@ from custom_components.magic_areas.const import (
 )
 from custom_components.magic_areas.util import add_entities_when_ready
 
-from homeassistant.helpers.area_registry import AreaEntry, async_get as async_get_ar
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.group.media_player import MediaPlayerGroup
 from homeassistant.components.media_player import (
@@ -36,6 +35,7 @@ from homeassistant.components.media_player.const import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, STATE_ON
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.area_registry import AreaEntry, async_get as async_get_ar
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity

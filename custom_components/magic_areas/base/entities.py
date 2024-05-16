@@ -23,7 +23,6 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
-from homeassistant.helpers.area_registry import async_get as async_get_ar, AreaEntry
 
 _LOGGER = logging.getLogger(__name__)
 
