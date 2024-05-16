@@ -1,4 +1,6 @@
-from datetime import datetime
+"""The device setup for the magic areas."""
+
+from datetime import UTC, datetime
 import logging
 
 from custom_components.magic_areas.const import (
@@ -28,7 +30,6 @@ from custom_components.magic_areas.util import (
     flatten_entity_list,
     is_entity_list,
 )
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
 from homeassistant.core import HomeAssistant
@@ -71,7 +72,7 @@ class MagicArea(object):  # noqa: UP004
 
         self.entities = {}
 
-        self.last_changed = datetime.now(datetime.UTC)
+        self.last_changed = datetime.now(UTC)
         self.state = AreaState.AREA_STATE_CLEAR
 
         self.loaded_platforms = []
@@ -136,10 +137,10 @@ class MagicArea(object):  # noqa: UP004
 
     def has_feature(self, feature: str) -> bool:
         """If the area has the specified feature."""
-        enabled_features = self.config.get(CONF_ENABLED_FEATURES)
+        enabled_features = self.config.get(CONF_ENABLED_FEATURES, {})
 
         # Handle everything else
-        if isinstance(enabled_features, dict):
+        if not isinstance(enabled_features, dict):
             self.logger.warning(
                 "%s: Invalid configuration for %s",
                 self.name,

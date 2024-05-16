@@ -1,15 +1,16 @@
+"""The basic entities for magic areas."""
+
 from datetime import datetime
 import logging
 from statistics import mean
 
-from custom_components.magic_areas.base.magic import MagicArea
+from .magic import MagicArea
 from custom_components.magic_areas.const import (
     CONF_ON_STATES,
     DOMAIN,
     INVALID_STATES,
     MAGIC_DEVICE_ID_PREFIX,
 )
-
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,

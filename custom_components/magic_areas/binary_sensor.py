@@ -1,6 +1,6 @@
 """Binary sensor control for magic areas."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import logging
 
 from custom_components.magic_areas.base.magic import MagicArea
@@ -36,6 +36,7 @@ from custom_components.magic_areas.const import (
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     INVALID_STATES,
     AreaState,
+    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
     LightEntityConf,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
@@ -159,7 +160,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         self._name = f"Area ({self.area.name})"
 
-        self.last_off_time = datetime.now(datetime.UTC)
+        self.last_off_time = datetime.now(UTC)
         self._clear_timeout_callback = None
         self.attributes = {}
 
@@ -222,9 +223,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             if not conf.has_entity:
                 continue
 
-            tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                conf.state_name(), None
-            )
+            tracked_entity = self.area.config.get(conf.entity_name(), None)
 
             if not tracked_entity:
                 continue
@@ -287,7 +286,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         self.attributes = {}
 
         if not self.area.is_meta():
-            self.attributes.update({ATTR_STATE: self.get_area_state()})
+            self.attributes.update({ATTR_STATE: self.area.state})
         else:
             self.attributes.update(
                 {
@@ -321,7 +320,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         occupied_state = self._get_occupancy_state()
 
         seconds_since_last_change = (
-            datetime.now(datetime.UTC) - self.area.last_changed
+            datetime.now(UTC) - self.area.last_changed
         ).total_seconds()
 
         conf = self.area.state_config(AreaState.AREA_STATE_EXTENDED)
@@ -341,9 +340,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             if not conf.has_entity:
                 continue
 
-            secondary_state_entity = self.area.config.get(
-                CONF_SECONDARY_STATES, {}
-            ).get(conf.entity_name(), None)
+            secondary_state_entity = self.area.config.get(conf.entity_name(), None)
             secondary_state_value = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
                 conf.state_name(), None
             )
@@ -494,7 +491,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
         last_clear = self.last_off_time
         clear_time = last_clear + clear_delta
-        time_now = datetime.now(datetime.UTC)
+        time_now = datetime.now(UTC)
 
         if time_now >= clear_time:
             self.logger.debug("%s: Clear Timeout exceeded", self.area.name)

@@ -20,8 +20,11 @@ from custom_components.magic_areas.util import get_meta_area_object
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
+from homeassistant.const import Platform
 
 _LOGGER = logging.getLogger(__name__)
+
+PLATFORMS = []
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):

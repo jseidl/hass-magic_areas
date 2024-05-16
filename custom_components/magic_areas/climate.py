@@ -15,11 +15,11 @@ from typing import Any
 from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
-    AREA_STATE_CLEAR,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_FEATURE_CLIMATE_GROUPS,
     DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
+    AreaState,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
 from homeassistant.components.climate import (
@@ -50,7 +50,7 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.components.group import GroupEntity
+from homeassistant.components.group.entity import GroupEntity
 from homeassistant.components.group.util import (
     find_state_attributes,
     most_frequent_attribute,
@@ -100,17 +100,24 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ):
-    add_entities_when_ready(hass, async_add_entities, config_entry, setup_climate_group)
+    """Create the climate group entry on startup."""
+    add_entities_when_ready(
+        hass, async_add_entities, config_entry, _setup_climate_group
+    )
 
 
-def setup_climate_group(area: MagicArea, async_add_entities: AddEntitiesCallback):
+def _setup_climate_group(area: MagicArea, async_add_entities: AddEntitiesCallback):
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_CLIMATE_GROUPS):
         return
 
     # Check if there are any climate entities
     if not area.has_entities(CLIMATE_DOMAIN):
-        _LOGGER.debug(f"No {CLIMATE_DOMAIN} entities for area {area.name} ")
+        _LOGGER.debug(
+            "No %s entities for area %s",
+            CLIMATE_DOMAIN,
+            area.name,
+        )
         return
 
     climate_entities = [e["entity_id"] for e in area.entities[CLIMATE_DOMAIN]]
@@ -388,7 +395,10 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
         _LOGGER.debug(f"Climate group {self.name} detected area state change")
 
-        if AREA_STATE_CLEAR in new_states and self._attr_hvac_action != HVACAction.OFF:
+        if (
+            AreaState.AREA_STATE_CLEAR in new_states
+            and self._attr_hvac_action != HVACAction.OFF
+        ):
             _LOGGER.debug(
                 f"{self.area.name}: Area clear, turning off Climate {self.entity_id}"
             )

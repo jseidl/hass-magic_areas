@@ -30,6 +30,9 @@ from homeassistant.const import (
     STATE_UNKNOWN,
 )
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.selector import EntitySelectorConfig, selector
+
+from .nullable_entity_selector import NullableEntitySelector
 
 DOMAIN = "magic_areas"
 MODULE_DATA = f"{DOMAIN}_data"
@@ -76,6 +79,7 @@ class AreaState(StrEnum):
     AREA_STATE_EXTENDED = "extended"  # Timeout after main occupied
     AREA_STATE_BRIGHT = "bright"  # Bright state, high lumens
     AREA_STATE_SLEEP = "sleep"  # Sleep state (night)
+    AREA_STATE_ACCENTED = "accented"  # If the state is accented
 
 
 # MagicAreas Components
@@ -190,111 +194,170 @@ CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES = (
 )  # cv.ensure_list
 
 
+# Act on types.
+class ActOn(StrEnum):
+    """The types of things the light can act on."""
+
+    OCCUPANCY_CHANGE = "occupancy"
+    STATE_CHANGE = "state"
+
+
 # Secondary states options
 @dataclass
 class LightEntityConf:
     """LightEntityConf configures how the light setups are used in the group."""
 
     name: str
-    default_state: AreaState
     default_dim_level: int
-    enable_state: list[AreaState]
+    enable_state: AreaState
     icon: str
     has_entity: bool
-    timeout: int
 
-    def entity_name(self):
+    def entity_name(self) -> str:
         """Return the name of the entity to lookup."""
         return self.name + "_entity"
 
-    def state_name(self):
-        """Return the name of the state to save in the config."""
-        return self.name + "_state"
-
-    def state_timeout(self):
-        """Return the name in the state to lookup the timeout."""
-        return self.name + "_state_timeout"
-
-    def state_dim_level(self):
+    def state_dim_level(self) -> str:
         """Return the name in the state to lookup the dim level."""
         return self.name + "_state_dim"
 
-    def lights_name(self):
-        """Return the name of the entity to create."""
+    def lights_to_control(self) -> str:
+        """Return the name of the state to track the entities to use."""
         return self.name + "_lights"
 
-    def lights_state_name(self):
-        """Return the state name of the light group."""
-        return self.name + "_lights_state"
+    def advanced_act_on(self) -> str:
+        """Return the details for the advanced act on pieces from the setup."""
+        return self.name + "_act_on"
 
-    def config_setup(self):
-        """Return the config setup for the main section allowing it to be enabled."""
+    def advanced_state_check(self) -> str:
+        """Return the advanced state check for the setup, defaults to STATE_ON."""
+        return self.name + "_state_check"
+
+    def advanced_activate_states(self) -> str:
+        """Return the advance states to activate on."""
+        return self.name + "_state_activate"
+
+    def config_flow_schema(self) -> vol.Schema:
+        """Return the options for the schema for the magic areas."""
         return {
-            vol.Optional(self.lights_name(), default=[]): cv.entity_ids,
-            vol.Optional(
-                self.state_name(),
-                default=self.enable_state,
-            ): cv.ensure_list,
-            vol.Optional(self.entity_name(), default=[]): cv.entity_ids,
+            vol.Optional(self.entity_name(), default=[]): cv.entity_id,
+            vol.Optional(self.state_dim_level(), default=self.default_dim_level): int,
+            vol.Optional(self.lights_to_control(), default=[]): cv.entity_ids,
         }
 
-    def main_config_enties(self):
+    def config_flow_dynamic_validators(
+        self, all_entities: list[str], all_lights: list[str]
+    ) -> dict:
+        """Return the dynamic validators to use in the config flow."""
+        return {
+            self.entity_name(): vol.In(["", *all_entities]),
+            self.state_dim_level(): vol.Range(min=0, max=100),
+            self.lights_to_control(): cv.multi_select(all_entities),
+        }
+
+    def config_flow_selectors(self, all_entities: list[str]) -> dict:
         """Return the config for the main section with the timeouts and name bits."""
         return {
-            vol.Optional(self.entity_name(), default=""): vol.Any("", cv.entity_id),
-            vol.Optional(self.state_timeout(), default=self.timeout): cv.positive_int,
+            self.entity_name(): NullableEntitySelector(
+                EntitySelectorConfig(include_entities=all_entities, multiple=False)
+            ),
+            self.state_dim_level(): selector(
+                {
+                    "number": {
+                        "initial": self.default_dim_level,
+                        "min": 0,
+                        "max": 100,
+                        "mode": "%%",
+                        "unit_of_measurement": "percent",
+                    }
+                }
+            ),
+            self.lights_to_control(): NullableEntitySelector(
+                EntitySelectorConfig(include_entities=all_entities, multiple=True)
+            ),
+        }
+
+    def advanced_config_flow_schema(self) -> vol.Schema:
+        """Return the options for the schema for the magic areas."""
+        return {
             vol.Optional(
-                self.state_dim_level(), default=self.default_dim_level
-            ): cv.positive_int,
+                self.advanced_act_on(),
+                default=[ActOn.OCCUPANCY_CHANGE, ActOn.STATE_CHANGE],
+            ): cv.ensure_list,
+            vol.Optional(self.advanced_state_check(), default=[STATE_ON]): str,
+            vol.Optional(
+                self.advanced_activate_states(), default=[self.enable_state]
+            ): cv.ensure_list,
+        }
+
+    def advanced_config_flow_dynamic_validators(self) -> dict:
+        """Return the dynamic validators to use in the config flow."""
+        return {
+            self.advanced_act_on(): vol.In(),
+            self.advanced_state_check(): str,
+            self.advanced_activate_states(): [vol.In(list(AreaState))],
+        }
+
+    def advanced_config_flow_selectors(self) -> dict:
+        """Return the config for the main section with the timeouts and name bits."""
+        return {
+            self.advanced_act_on(): cv.multi_select(list(ActOn)),
+            self.advanced_state_check(): cv.string,
+            self.advanced_activate_states(): cv.multi_select(list(AreaState)),
         }
 
 
 # Setups to control all the lights, items to create
-brightLights = LightEntityConf(
+bright_lights = LightEntityConf(
     name="bright",
-    default_state=STATE_ON,
     default_dim_level=0,
     enable_state=AreaState.AREA_STATE_BRIGHT,
     icon="mdi:ceiling-light",
     has_entity=True,
-    timeout=120,
 )
-sleepLights = LightEntityConf(
+sleep_lights = LightEntityConf(
     name="sleep",
-    default_state=STATE_ON,
     default_dim_level=30,
     enable_state=AreaState.AREA_STATE_SLEEP,
     icon="mdi:sleep",
     has_entity=True,
-    timeout=120,
 )
-occupiedLights = LightEntityConf(
+occupied_lights = LightEntityConf(
     name="occupied",
-    default_state=STATE_ON,
     default_dim_level=30,
     enable_state=AreaState.AREA_STATE_OCCUPIED,
     icon="mdi:desk-lamp",
-    timeout=1800,
     has_entity=False,
 )
-extendedLights = LightEntityConf(
+extended_lights = LightEntityConf(
     name="extended",
-    default_state=STATE_ON,
     default_dim_level=0,
     enable_state=AreaState.AREA_STATE_EXTENDED,
-    timeout=120,
+    has_entity=False,
+    icon="mdi:desk-lamp",
+)
+accented_lights = LightEntityConf(
+    name="accented",
+    default_dim_level=0,
+    enable_state=AreaState.AREA_STATE_ACCENTED,
     has_entity=False,
     icon="mdi:desk-lamp",
 )
 
 # All the light setup pieces.
-ALL_LIGHT_ENTITIES = [sleepLights, brightLights, extendedLights, occupiedLights]
+ALL_LIGHT_ENTITIES = [
+    sleep_lights,
+    bright_lights,
+    extended_lights,
+    occupied_lights,
+    accented_lights,
+]
 
 # features
 CONF_FEATURE_CLIMATE_GROUPS = "climate_groups"
 CONF_FEATURE_IMMUMINANCE_GROUPS = "illuminance_groups"
 CONF_FEATURE_MEDIA_PLAYER_GROUPS = "media_player_groups"
-CONF_FEATURE_LIGHT_GROUPS = "light_groups"
+CONF_FEATURE_ADVANCED_LIGHT_GROUPS = "advanced_light_groups"
 CONF_FEATURE_COVER_GROUPS = "cover_groups"
 CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER = "area_aware_media_player"
 CONF_FEATURE_AGGREGATION = "aggregates"
@@ -303,7 +366,7 @@ CONF_FEATURE_PRESENCE_HOLD = "presence_hold"
 
 CONF_FEATURE_LIST_META = [
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
-    CONF_FEATURE_LIGHT_GROUPS,
+    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
     CONF_FEATURE_COVER_GROUPS,
     CONF_FEATURE_CLIMATE_GROUPS,
     CONF_FEATURE_AGGREGATION,
@@ -401,9 +464,13 @@ CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
     }
 )
 
-LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema({})
-for l_g in ALL_LIGHT_ENTITIES:
-    LIGHT_GROUP_FEATURE_SCHEMA = LIGHT_GROUP_FEATURE_SCHEMA.extend(l_g.config_setup())
+ADVANCED_LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
+    {
+        k: v
+        for lg in ALL_LIGHT_ENTITIES
+        for k, v in lg.advanced_config_flow_schema().items()
+    }
+)
 
 
 AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA = vol.Schema(
@@ -416,7 +483,7 @@ AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA = vol.Schema(
 ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
 
 CONFIGURABLE_FEATURES = {
-    CONF_FEATURE_LIGHT_GROUPS: LIGHT_GROUP_FEATURE_SCHEMA,
+    CONF_FEATURE_ADVANCED_LIGHT_GROUPS: ADVANCED_LIGHT_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_CLIMATE_GROUPS: CLIMATE_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_AGGREGATION: AGGREGATE_FEATURE_SCHEMA,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA,
@@ -424,7 +491,7 @@ CONFIGURABLE_FEATURES = {
 }
 
 NON_CONFIGURABLE_FEATURES_META = [
-    CONF_FEATURE_LIGHT_GROUPS,
+    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
     CONF_FEATURE_CLIMATE_GROUPS,
 ]
 
@@ -441,9 +508,9 @@ FEATURES_SCHEMA = vol.Schema(
     }
 )
 
-SECONDARY_STATES_SCHEMA = vol.Schema({})
-for l_g in ALL_LIGHT_ENTITIES:
-    SECONDARY_STATES_SCHEMA = SECONDARY_STATES_SCHEMA.extend(l_g.main_config_enties())
+SECONDARY_STATES_SCHEMA = vol.Schema(
+    {k: v for lg in ALL_LIGHT_ENTITIES for k, v in lg.config_flow_schema().items()}
+)
 
 # Magic Areas
 REGULAR_AREA_SCHEMA = vol.Schema(

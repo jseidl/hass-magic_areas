@@ -1,21 +1,21 @@
 """Switches for magic areas."""
 
-from custom_components.magic_areas.base.magic import MagicArea
-from custom_components.magic_areas.base.primitives import SwitchBase
-from custom_components.magic_areas.const import (
-    CONF_FEATURE_LIGHT_GROUPS,
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import call_later
+
+from .base.magic import MagicArea
+from .base.primitives import SwitchBase
+from .const import (
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_PRESENCE_HOLD_TIMEOUT,
     DEFAULT_PRESENCE_HOLD_TIMEOUT,
     ICON_LIGHT_CONTROL,
     ICON_PRESENCE_HOLD,
 )
-from custom_components.magic_areas.util import add_entities_when_ready
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_OFF, STATE_ON
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import call_later
+from .util import add_entities_when_ready
 
 
 async def async_setup_entry(
@@ -29,15 +29,19 @@ async def async_setup_entry(
 
 
 def add_switches(area: MagicArea, async_add_entities: AddEntitiesCallback):
+    """Add the swithces for the area."""
     if area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
         async_add_entities([AreaPresenceHoldSwitch(area)])
 
-    if area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
-        async_add_entities([AreaLightControlSwitch(area)])
+    async_add_entities(
+        [AreaLightControlSwitch(area), AreaLightsManualOverrideActiveSwitch(area)]
+    )
 
 
 class AreaLightControlSwitch(SwitchBase):
-    def __init__(self, area):
+    """Controls if the system is running and watching state."""
+
+    def __init__(self, area: MagicArea) -> None:
         """Initialize the area light control switch."""
 
         super().__init__(area)
@@ -49,8 +53,25 @@ class AreaLightControlSwitch(SwitchBase):
         return ICON_LIGHT_CONTROL
 
 
+class AreaLightsManualOverrideActiveSwitch(SwitchBase):
+    """Keeps track of a manual override was enabled due to switch change."""
+
+    def __init__(self, area: MagicArea) -> None:
+        """Initialize the area manual override switch."""
+
+        super().__init__(area)
+        self._name = f"Area Manual Override Active ({self.area.name})"
+
+    @property
+    def icon(self):
+        """Return the icon to be used for this entity."""
+        return ICON_LIGHT_CONTROL
+
+
 class AreaPresenceHoldSwitch(SwitchBase):
-    def __init__(self, area):
+    """Control the presense/state from being changed for the device."""
+
+    def __init__(self, area: MagicArea) -> None:
         """Initialize the area presence hold switch."""
 
         super().__init__(area)
@@ -64,6 +85,7 @@ class AreaPresenceHoldSwitch(SwitchBase):
         return ICON_PRESENCE_HOLD
 
     def timeout_turn_off(self, next_interval):
+        """Turn off the presence hold after the timeout."""
         if self._state == STATE_ON:
             self.turn_off()
 
