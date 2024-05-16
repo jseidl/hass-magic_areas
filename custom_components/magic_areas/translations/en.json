@@ -44,7 +44,7 @@
           "sleep_lights_act_on": "When should sleep lights be controlled?",
           "bright_lights": "Bright lights",
           "bright_lights_states": "States which bright lights are turned on",
-          "bright_lights_act_on": "When should bright lights be controlled?",
+          "bright_lights_act_on": "When should bright lights be controlled?"
         }
       },
       "feature_conf_presence_hold": {
@@ -110,4 +110,4 @@
       "malformed_input": "This field is invalid:"
     }
   }
-} 
+}

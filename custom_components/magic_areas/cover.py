@@ -2,23 +2,31 @@ DEPENDENCIES = ["magic_areas"]
 
 import logging
 
-import homeassistant.components.cover as cover
-from homeassistant.components.group.cover import CoverGroup
-
 from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import CONF_FEATURE_COVER_GROUPS
 from custom_components.magic_areas.util import add_entities_when_ready
+
+import homeassistant.components.cover as cover
+from homeassistant.components.group.cover import CoverGroup
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+):
     """Set up the Area config entry."""
 
     add_entities_when_ready(hass, async_add_entities, config_entry, add_cover_groups)
 
-def add_cover_groups(area, async_add_entities):
 
+def add_cover_groups(area: MagicArea, async_add_entities: AddEntitiesCallback):
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_COVER_GROUPS):
         return
@@ -48,8 +56,7 @@ def add_cover_groups(area, async_add_entities):
 
 
 class AreaCoverGroup(MagicEntity, CoverGroup):
-    def __init__(self, area, device_class):
-
+    def __init__(self, area: MagicArea, device_class):
         MagicEntity.__init__(self, area)
 
         if device_class:

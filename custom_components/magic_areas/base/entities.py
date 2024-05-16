@@ -1,46 +1,50 @@
-import logging
-
-from statistics import mean
 from datetime import datetime
+import logging
+from statistics import mean
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.switch import SwitchEntity
-from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.group.light import LightGroup
-from homeassistant.const import STATE_ON, STATE_OFF
-
-from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.util import slugify
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
-from homeassistant.helpers.device_registry import DeviceInfo
-
+from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
     CONF_ON_STATES,
-    INVALID_STATES,
     DOMAIN,
+    INVALID_STATES,
     MAGIC_DEVICE_ID_PREFIX,
 )
 
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
+from homeassistant.components.group.light import LightGroup
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_OFF, STATE_ON
+from homeassistant.core import State
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.util import slugify
+from homeassistant.helpers.area_registry import async_get as async_get_ar, AreaEntry
+
 _LOGGER = logging.getLogger(__name__)
 
+
 class MagicEntity(RestoreEntity, Entity):
+    """MagicEntity is the base entity for use with all the magic classes."""
 
-    area = None
-    _state = None
-    _name = None
-    logger = None
-    _attributes = {}
+    area: MagicArea = None
+    _state: str = None
+    _name: str = None
+    logger: logging.Logger = None
+    _attributes: dict = {}
 
-    def __init__(self, area):
-
+    def __init__(self, area: MagicArea) -> None:
+        """Initialize the magic area."""
         # Avoiding using super() due multiple inheritance issues
         Entity.__init__(self)
         RestoreEntity.__init__(self)
 
         self.logger = logging.getLogger(type(self).__module__)
-        self._attributes = dict()
+        self._attributes = {}
         self.area = area
 
     @property
@@ -53,27 +57,27 @@ class MagicEntity(RestoreEntity, Entity):
             },
             name=self.area.name,
             manufacturer="Magic Areas",
-            model="Magic Area"
+            model="Magic Area",
         )
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         name_slug = slugify(self._name)
         return f"{name_slug}"
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of the device if any."""
         return self._name
 
     @property
-    def should_poll(self):
+    def should_poll(self) -> str:
         """If entity should be polled."""
         return False
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> str:
         """Return the attributes of the entity."""
         return self._attributes
 
@@ -83,7 +87,7 @@ class MagicEntity(RestoreEntity, Entity):
     async def _shutdown(self) -> None:
         pass
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""
         if self.hass.is_running:
             await self._initialize()
@@ -94,23 +98,26 @@ class MagicEntity(RestoreEntity, Entity):
 
         await super().async_added_to_hass()
 
-    async def async_will_remove_from_hass(self):
+    async def async_will_remove_from_hass(self) -> None:
         """Remove the listeners upon removing the component."""
 
         await self._shutdown()
         await super().async_will_remove_from_hass()
 
-    async def restore_state(self):
+    async def restore_state(self) -> None:
+        """Restores the state when the object is reloaded."""
         self.update_state()
 
+
 class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
-    
+    """Base class for the binary sensors to use in the system."""
+
     last_off_time = None
     _state = False
     _mode = "single"
 
-    def __init__(self, area, device_class):
-
+    def __init__(self, area: MagicArea, device_class: BinarySensorDeviceClass) -> None:
+        """Create a new binary sensor entity."""
         MagicEntity.__init__(self, area)
         BinarySensorEntity.__init__(self, device_class)
 
@@ -119,28 +126,42 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
         """Return true if the area is occupied."""
         return self._state
 
-    def sensor_state_change(self, entity_id, from_state, to_state):
-
+    def sensor_state_change(self, entity_id: str, from_state: State, to_state: State):
+        """Actions when the sensor state has changed."""
         if not to_state:
             return
 
-        self.logger.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
+        self.logger.debug(
+            "%s: sensor '%s' changed to {%s}",
+            self.name,
+            entity_id,
+            to_state.state,
+        )
 
         if to_state.state in INVALID_STATES:
             self.logger.debug(
-                f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}"
+                "%s: sensor '%s' has invalid state %s",
+                self.name,
+                entity_id,
+                to_state.state,
             )
             return
 
         if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
-            self.last_off_time = datetime.utcnow()  # Update last_off_time
+            self.last_off_time = datetime.now(datetime.UTC)  # Update last_off_time
 
         return self.update_state()
 
-    def get_sensors_state(self, valid_states=[STATE_ON]):
+    def get_sensors_state(self, valid_states: list | None = None) -> int:
+        """Get the current state of the sensor."""
         self.logger.debug(
-            f"[Area: {self.area.slug}] Updating state. (Valid states: {valid_states})"
+            "[Area: %s] Updating state. (Valid states: %s)",
+            self.area.slug,
+            valid_states,
         )
+
+        if valid_states is None:
+            valid_states = [STATE_ON]
 
         active_sensors = []
         active_areas = set()
@@ -152,32 +173,43 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
 
                 if not entity:
                     self.logger.info(
-                        f"[Area: {self.area.slug}] Could not get sensor state: {sensor} entity not found, skipping"
+                        "[Area: %s] Could not get sensor state: %s entity not found, skipping",
+                        self.area.slug,
+                        sensor,
                     )
                     continue
 
                 self.logger.debug(
-                    f"[Area: {self.area.slug}] Sensor {sensor} state: {entity.state}"
+                    "[Area: %s] Sensor %s state: %s",
+                    self.area.slug,
+                    sensor,
+                    entity.state,
                 )
 
                 # Skip unavailable entities
                 if entity.state in INVALID_STATES:
                     self.logger.debug(
-                        f"[Area: {self.area.slug}] Sensor '{sensor}' is unavailable, skipping..."
+                        "[Area: %s] Sensor '%s' is unavailable, skipping.",
+                        self.area.slug,
+                        sensor,
                     )
                     continue
 
                 if entity.state in valid_states:
                     self.logger.debug(
-                        f"[Area: {self.area.slug}] Valid presence sensor found: {sensor}."
+                        "[Area: %s] Valid presence sensor found: %s.",
+                        self.area.slug,
+                        sensor,
                     )
                     active_sensors.append(sensor)
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.logger.error(
-                    f"[{self.name}] Error getting entity state for '{sensor}': {str(e)}"
+                    "[%s] Error getting entity state for '%s': %s",
+                    self.area.slug,
+                    sensor,
+                    str(e),
                 )
-                pass
 
         self._attributes["active_sensors"] = active_sensors
 
@@ -185,38 +217,55 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
         if active_sensors:
             self._attributes["last_active_sensors"] = active_sensors
 
-        self.logger.debug(f"[Area: {self.area.slug}] Active sensors: {active_sensors}")
+        self.logger.debug(
+            "[Area: %s] Active sensors: %s",
+            self.area.slug,
+            active_sensors,
+        )
 
         if self.area.is_meta():
             active_areas = self.area.get_active_areas()
-            self.logger.debug("[Area: {self.area.slug}] Active areas: {active_areas}")
+            self.logger.debug(
+                "[Area: %s] Active areas: %s",
+                self.area.slug,
+                active_areas,
+            )
             self._attributes["active_areas"] = active_areas
 
-        if self._mode == 'all':
-            return (len(active_sensors) == len(self.sensors))
-        else:
-            return len(active_sensors) > 0
+        if self._mode == "all":
+            return len(active_sensors) == len(self.sensors)
+        return len(active_sensors) > 0
+
 
 class MagicSensorEntity(MagicEntity, SensorEntity):
+    """Basic class for a magic sensor entity."""
+
     _mode = "mean"
 
     @property
     def state(self):
-        """Return the state of the entity"""
+        """Return the state of the entity."""
         return self.get_sensors_state()
 
-    def sensor_state_change(self, entity_id, from_state, to_state):
-        self.logger.debug(f"{self.name}: sensor '{entity_id}' changed to {to_state.state}")
+    def sensor_state_change(self, entity_id: str, from_state: State, to_state: State):
+        """Call when the sensor state changes to update the system."""
+        self.logger.debug(
+            "%s: sensor '%s' changed to %s", self.name, entity_id, to_state.state
+        )
 
         if to_state.state in INVALID_STATES:
             self.logger.debug(
-                f"{self.name}: sensor '{entity_id}' has invalid state {to_state.state}"
+                "%s: sensor '%s' has invalid state %s",
+                self.name,
+                entity_id,
+                to_state.state,
             )
             return None
 
         return self.update_state()
 
     def get_sensors_state(self):
+        """Get the current state of the sensor."""
         sensor_values = []
 
         # Loop over all entities and check their state
@@ -226,7 +275,9 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
 
                 if not entity:
                     self.logger.info(
-                        f"[{self.name}] Could not get sensor state: {sensor} entity not found, skipping"
+                        "[%s] Could not get sensor state: %s entity not found, skipping",
+                        self.name,
+                        sensor,
                     )
                     continue
 
@@ -234,9 +285,12 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
                 if entity.state in INVALID_STATES:
                     continue
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.logger.error(
-                    f"[{self.name}] Error getting entity state for '{sensor}': {str(e)}"
+                    "[%s] Error getting entity state for '%s': %s",
+                    self.name,
+                    sensor,
+                    str(e),
                 )
                 continue
 
@@ -245,7 +299,10 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
             except ValueError as e:
                 err_str = str(e)
                 self.logger.info(
-                    f"[{self.name}] Non-numeric sensor value ({err_str}) for entity {entity.entity_id}, skipping"
+                    "[%s] Non-numeric sensor value (%s) for entity {%s}, skipping",
+                    self.name,
+                    err_str,
+                    entity.entity_id,
                 )
                 continue
 
@@ -258,14 +315,15 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
                 ret = mean(sensor_values)
 
         return round(ret, 2)
-    
+
 
 class MagicSwitchEntity(MagicEntity, SwitchEntity):
+    """A switch for use as a magic area, this controls the lights on/off and other things."""
 
-    _state = STATE_OFF
+    _state: str = STATE_OFF
 
-    def __init__(self, area):
-
+    def __init__(self, area: MagicArea) -> None:
+        """Initialize the system."""
         super().__init__(area)
         self._state = STATE_OFF
 
@@ -274,18 +332,21 @@ class MagicSwitchEntity(MagicEntity, SwitchEntity):
         """Return true if the area is occupied."""
         return self._state == STATE_ON
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""
 
         last_state = await self.async_get_last_state()
 
         if last_state:
-            self.logger.debug(f"Switch {self.name} restored [state={last_state.state}]")
+            self.logger.debug(
+                "Switch %s restored [state=%s]", self.name, last_state.state
+            )
             self._state = last_state.state
         else:
             self._state = STATE_OFF
 
         self.schedule_update_ha_state()
+        await super().async_added_to_hass()
 
     def turn_off(self, **kwargs):
         """Turn off presence hold."""
@@ -297,20 +358,20 @@ class MagicSwitchEntity(MagicEntity, SwitchEntity):
         self._state = STATE_ON
         self.schedule_update_ha_state()
 
+
 class MagicLightGroup(MagicEntity, LightGroup):
-    
-    def __init__(self, area, entities, init_group=True):
+    """Controls the lights with the specific setup."""
 
-        MagicEntity.__init__(self, area)
-
+    def __init__(self, area: MagicArea, entities: list) -> None:
+        """Create a new light group."""
         self._entities = entities
 
         self._name = f"{self.area.name} Lights"
-
-        if init_group:
-            self.init_group()
-
-    def init_group(self):
+        MagicEntity.__init__(self, area)
         LightGroup.__init__(
-            self, self.unique_id, self._name, self._entities, mode=False
+            self,
+            unique_id=self.unique_id,
+            name=self._name,
+            entity_ids=self._entities,
+            mode=False,
         )

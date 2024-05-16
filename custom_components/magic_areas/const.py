@@ -1,16 +1,20 @@
+from dataclasses import dataclass
+from enum import StrEnum
 from itertools import chain
 
 import voluptuous as vol
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass
+
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
+)
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.sun import DOMAIN as SUN_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
@@ -54,22 +58,23 @@ ATTR_ACTIVE_SENSORS = "active_sensors"
 ATTR_LAST_ACTIVE_SENSORS = "last_active_sensors"
 ATTR_FEATURES = "features"
 ATTR_PRESENCE_SENSORS = "presence_sensors"
+ATTR_BRIGHTNESS_PCT = "brightness_pct"
 
 # Icons
 ICON_PRESENCE_HOLD = "mdi:car-brake-hold"
 ICON_LIGHT_CONTROL = "mdi:lightbulb-auto-outline"
 
+
 # Area States
-AREA_STATE_CLEAR = "clear"
-AREA_STATE_OCCUPIED = "occupied"
-AREA_STATE_EXTENDED = "extended"
-AREA_STATE_BRIGHT = "bright"
-AREA_STATE_SLEEP = "sleep"
+class AreaState(StrEnum):
+    """The states the area can be in."""
 
-AREA_PRIORITY_STATES = [AREA_STATE_SLEEP, ]
+    AREA_STATE_CLEAR = "clear"  # Clear state, not occupied.
+    AREA_STATE_OCCUPIED = "occupied"  # main occupied state
+    AREA_STATE_EXTENDED = "extended"  # Timeout after main occupied
+    AREA_STATE_BRIGHT = "bright"  # Bright state, high lumens
+    AREA_STATE_SLEEP = "sleep"  # Sleep state (night)
 
-BUILTIN_AREA_STATES = [AREA_STATE_OCCUPIED, AREA_STATE_EXTENDED]
-CONFIGURABLE_AREA_STATES = [AREA_STATE_BRIGHT, AREA_STATE_SLEEP]
 
 # MagicAreas Components
 MAGIC_AREAS_COMPONENTS = [
@@ -122,10 +127,13 @@ CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
 (
     CONF_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
-) = "presence_device_platforms", [
-    MEDIA_PLAYER_DOMAIN,
-    BINARY_SENSOR_DOMAIN,
-]  # cv.ensure_list
+) = (
+    "presence_device_platforms",
+    [
+        MEDIA_PLAYER_DOMAIN,
+        BINARY_SENSOR_DOMAIN,
+    ],
+)  # cv.ensure_list
 ALL_PRESENCE_DEVICE_PLATFORMS = [
     MEDIA_PLAYER_DOMAIN,
     BINARY_SENSOR_DOMAIN,
@@ -134,15 +142,33 @@ ALL_PRESENCE_DEVICE_PLATFORMS = [
 (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
-) = "presence_sensor_device_class", [
-    BinarySensorDeviceClass.MOTION,
-    BinarySensorDeviceClass.OCCUPANCY,
-    BinarySensorDeviceClass.PRESENCE,
-]  # cv.ensure_list
-CONF_ON_STATES, DEFAULT_ON_STATES = "on_states", [
-    STATE_ON,
-    STATE_OPEN,
-]  # cv.ensure_list
+) = (
+    "presence_sensor_device_class",
+    [
+        BinarySensorDeviceClass.MOTION,
+        BinarySensorDeviceClass.OCCUPANCY,
+        BinarySensorDeviceClass.PRESENCE,
+    ],
+)  # cv.ensure_list
+ILLUMINANCE_DEVICE_PLATFORMS = [
+    SENSOR_DOMAIN,
+]
+(
+    CONF_ILLUMINANCE_DEVICE_CLASS,
+    DEFAULT_ILLUMINANCE_DEVICE_SENSOR_CLASS,
+) = (
+    "illuminance_sensor_device_class",
+    [
+        SensorDeviceClass.ILLUMINANCE,
+    ],
+)  # cv.ensure_list
+CONF_ON_STATES, DEFAULT_ON_STATES = (
+    "on_states",
+    [
+        STATE_ON,
+        STATE_OPEN,
+    ],
+)  # cv.ensure_list
 CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
     "aggregates_min_entities",
     2,
@@ -154,32 +180,121 @@ CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (
     "notification_devices",
     [],
 )  # cv.entity_ids
-CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES = "notification_states", [
-    AREA_STATE_EXTENDED,
-]  # cv.ensure_list
+CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES = (
+    "notification_states",
+    [
+        AreaState.AREA_STATE_EXTENDED,
+    ],
+)  # cv.ensure_list
+
 
 # Secondary states options
-CONF_BRIGHT_ENTITY = "bright_entity"
-CONF_BRIGHT_STATE, DEFAULT_BRIGHT_STATE = "bright_state", STATE_ON
-CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT = (
-    "sleep_timeout",
-    DEFAULT_CLEAR_TIMEOUT,
-)  # int
-CONF_NORMAL_DIM_LEVEL, DEFAULT_NORMAL_DIM_LEVEL = "bright_level", 100 # int
-CONF_SLEEP_DIM_LEVEL, DEFAULT_SLEEP_DIM_LEVEL = "sleep_level", 0 # int
-CONF_SLEEP_ENTITY = "sleep_entity"
-CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE = "sleep_state", STATE_ON
-CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME = "extended_time", 120  # cv.positive_int
-CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT = "extended_timeout", 300  # int
+@dataclass
+class LightEntityConf:
+    """LightEntityConf configures how the light setups are used in the group."""
 
-CONFIGURABLE_AREA_STATE_MAP = {
-    AREA_STATE_SLEEP: (CONF_SLEEP_ENTITY, CONF_SLEEP_STATE),
-    AREA_STATE_BRIGHT: (CONF_BRIGHT_ENTITY, CONF_BRIGHT_STATE),
-}
+    name: str
+    default_state: AreaState
+    default_dim_level: int
+    enable_state: list[AreaState]
+    icon: str
+    has_entity: bool
+    timeout: int
+
+    def entity_name(self):
+        """Return the name of the entity to lookup."""
+        return self.name + "_entity"
+
+    def state_name(self):
+        """Return the name of the state to save in the config."""
+        return self.name + "_state"
+
+    def state_timeout(self):
+        """Return the name in the state to lookup the timeout."""
+        return self.name + "_state_timeout"
+
+    def state_dim_level(self):
+        """Return the name in the state to lookup the dim level."""
+        return self.name + "_state_dim"
+
+    def act_on(self):
+        """Return the name in the state to lookup the act on type."""
+        return self.name + "_lights_act_on"
+
+    def lights_name(self):
+        """Return the name of the entity to create."""
+        return self.name + "_lights"
+
+    def lights_state_name(self):
+        """Return the state name of the light group."""
+        return self.name + "_lights_state"
+
+    def config_setup(self):
+        """Return the config setup for the main section allowing it to be enabled."""
+        return {
+            vol.Optional(self.lights_name(), default=[]): cv.entity_ids,
+            vol.Optional(
+                self.state_name(),
+                default=self.enable_state,
+            ): cv.ensure_list,
+            vol.Optional(self.entity_name(), default=[]): cv.entity_ids,
+        }
+
+    def main_config_enties(self):
+        """Return the config for the main section with the timeouts and name bits."""
+        return {
+            vol.Optional(self.entity_name(), default=""): vol.Any("", cv.entity_id),
+            vol.Optional(self.state_timeout(), default=self.timeout): cv.positive_int,
+            vol.Optional(
+                self.state_dim_level(), default=self.default_dim_level
+            ): cv.positive_int,
+        }
+
+
+# Setups to control all the lights, items to create
+brightLights = LightEntityConf(
+    name="bright",
+    default_state=STATE_ON,
+    default_dim_level=0,
+    enable_state=AreaState.AREA_STATE_BRIGHT,
+    icon="mdi:ceiling-light",
+    has_entity=True,
+    timeout=120,
+)
+sleepLights = LightEntityConf(
+    name="sleep",
+    default_state=STATE_ON,
+    default_dim_level=30,
+    enable_state=AreaState.AREA_STATE_SLEEP,
+    icon="mdi:sleep",
+    has_entity=True,
+    timeout=120,
+)
+occupiedLights = LightEntityConf(
+    name="occupied",
+    default_state=STATE_ON,
+    default_dim_level=30,
+    enable_state=AreaState.AREA_STATE_OCCUPIED,
+    icon="mdi:desk-lamp",
+    timeout=1800,
+    has_entity=False,
+)
+extendedLights = LightEntityConf(
+    name="extended",
+    default_state=STATE_ON,
+    default_dim_level=0,
+    enable_state=AreaState.AREA_STATE_EXTENDED,
+    timeout=120,
+    has_entity=False,
+    icon="mdi:desk-lamp",
+)
+
+# All the light setup pieces.
+ALL_LIGHT_ENTITIES = [sleepLights, brightLights, extendedLights, occupiedLights]
 
 # features
 CONF_FEATURE_CLIMATE_GROUPS = "climate_groups"
-
+CONF_FEATURE_IMMUMINANCE_GROUPS = "illuminance_groups"
 CONF_FEATURE_MEDIA_PLAYER_GROUPS = "media_player_groups"
 CONF_FEATURE_LIGHT_GROUPS = "light_groups"
 CONF_FEATURE_COVER_GROUPS = "cover_groups"
@@ -197,7 +312,8 @@ CONF_FEATURE_LIST_META = [
     CONF_FEATURE_HEALTH,
 ]
 
-CONF_FEATURE_LIST = CONF_FEATURE_LIST_META + [
+CONF_FEATURE_LIST = [
+    *CONF_FEATURE_LIST_META,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_PRESENCE_HOLD,
 ]
@@ -216,53 +332,10 @@ CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = (
     AREA_STATE_EXTENDED,
 )
 
-# Light group options
-CONF_NORMAL_LIGHTS = "normal_lights"  # cv.entity_ids
-CONF_NORMAL_LIGHTS_STATES = "normal_lights_states"  # cv.ensure_list
-CONF_NORMAL_LIGHTS_ACT_ON = "normal_lights_act_on"  # cv.ensure_list
-CONF_SLEEP_LIGHTS = "sleep_lights"
-CONF_SLEEP_LIGHTS_STATES = "sleep_lights_states"
-CONF_SLEEP_LIGHTS_ACT_ON = "sleep_lights_act_on"
-CONF_BRIGHT_LIGHTS = "bright_lights"
-CONF_BRIGHT_LIGHTS_STATES = "bright_lights_states"
-CONF_BRIGHT_LIGHTS_ACT_ON = "bright_lights_act_on"
-
-LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE = "occupancy"
-LIGHT_GROUP_ACT_ON_STATE_CHANGE = "state"
-DEFAULT_LIGHT_GROUP_ACT_ON = [
-    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
-    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
-]
-LIGHT_GROUP_ACT_ON_OPTIONS = [
-    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
-    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
-]
-
 LIGHT_GROUP_DEFAULT_ICON = "mdi:lightbulb-group"
 
-LIGHT_GROUP_ICONS = {
-    CONF_BRIGHT_LIGHTS: "mdi:ceiling-light",
-    CONF_SLEEP_LIGHTS: "mdi:sleep",
-    CONF_NORMAL_LIGHTS:  "mdi:desk-lamp",
-}
+LIGHT_GROUP_ICONS = {}
 
-LIGHT_GROUP_STATES = {
-    CONF_NORMAL_LIGHTS: CONF_NORMAL_LIGHTS_STATES,
-    CONF_SLEEP_LIGHTS: CONF_SLEEP_LIGHTS_STATES,
-    CONF_BRIGHT_LIGHTS: CONF_BRIGHT_LIGHTS_STATES,
-}
-
-LIGHT_GROUP_ACT_ON = {
-    CONF_NORMAL_LIGHTS: CONF_NORMAL_LIGHTS_ACT_ON,
-    CONF_SLEEP_LIGHTS: CONF_SLEEP_LIGHTS_ACT_ON,
-    CONF_BRIGHT_LIGHTS: CONF_BRIGHT_LIGHTS_ACT_ON,
-}
-
-LIGHT_GROUP_CATEGORIES = [
-    CONF_NORMAL_LIGHTS,
-    CONF_SLEEP_LIGHTS,
-    CONF_BRIGHT_LIGHTS,
-]
 
 AGGREGATE_BINARY_SENSOR_CLASSES = [
     BinarySensorDeviceClass.WINDOW,
@@ -330,27 +403,10 @@ CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
     }
 )
 
-LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_NORMAL_LIGHTS, default=[]): cv.entity_ids,
-        vol.Optional(
-            CONF_NORMAL_LIGHTS_STATES, default=[AREA_STATE_OCCUPIED]
-        ): cv.ensure_list,
-        vol.Optional(
-            CONF_NORMAL_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON
-        ): cv.ensure_list,
-        vol.Optional(CONF_SLEEP_LIGHTS, default=[]): cv.entity_ids,
-        vol.Optional(CONF_SLEEP_LIGHTS_STATES, default=[]): cv.ensure_list,
-        vol.Optional(
-            CONF_SLEEP_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON
-        ): cv.ensure_list,
-        vol.Optional(CONF_BRIGHT_LIGHTS, default=[]): cv.entity_ids,
-        vol.Optional(CONF_BRIGHT_LIGHTS_STATES, default=[]): cv.ensure_list,
-        vol.Optional(
-            CONF_BRIGHT_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON
-        ): cv.ensure_list,
-    }
-)
+LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema({})
+for l_g in ALL_LIGHT_ENTITIES:
+    LIGHT_GROUP_FEATURE_SCHEMA = LIGHT_GROUP_FEATURE_SCHEMA.extend(l_g.config_setup())
+
 
 AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA = vol.Schema(
     {
@@ -375,9 +431,7 @@ NON_CONFIGURABLE_FEATURES_META = [
 ]
 
 NON_CONFIGURABLE_FEATURES = {
-    feature: {}
-    for feature in ALL_FEATURES
-    if feature not in CONFIGURABLE_FEATURES.keys()
+    feature: {} for feature in ALL_FEATURES if feature not in CONFIGURABLE_FEATURES
 }
 
 FEATURES_SCHEMA = vol.Schema(
@@ -389,25 +443,9 @@ FEATURES_SCHEMA = vol.Schema(
     }
 )
 
-SECONDARY_STATES_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_SLEEP_ENTITY, default=""): vol.Any("", cv.entity_id),
-        vol.Optional(CONF_SLEEP_STATE, default=DEFAULT_SLEEP_STATE): str,
-        vol.Optional(
-            CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT
-        ): cv.positive_int,
-        vol.Optional(CONF_BRIGHT_ENTITY, default=""): vol.Any("", cv.entity_id),
-        vol.Optional(CONF_BRIGHT_STATE, default=DEFAULT_BRIGHT_STATE): str,
-        vol.Optional(CONF_NORMAL_DIM_LEVEL, default=DEFAULT_NORMAL_DIM_LEVEL): cv.positive_int,
-        vol.Optional(CONF_SLEEP_DIM_LEVEL, default=DEFAULT_SLEEP_DIM_LEVEL): cv.positive_int,
-        vol.Optional(
-            CONF_EXTENDED_TIME, default=DEFAULT_EXTENDED_TIME
-        ): cv.positive_int,
-        vol.Optional(
-            CONF_EXTENDED_TIMEOUT, default=DEFAULT_EXTENDED_TIMEOUT
-        ): cv.positive_int,
-    }
-)
+SECONDARY_STATES_SCHEMA = vol.Schema({})
+for l_g in ALL_LIGHT_ENTITIES:
+    SECONDARY_STATES_SCHEMA = SECONDARY_STATES_SCHEMA.extend(l_g.main_config_enties())
 
 # Magic Areas
 REGULAR_AREA_SCHEMA = vol.Schema(
@@ -490,27 +528,6 @@ OPTIONS_AREA_META = [
     (CONF_ICON, DEFAULT_ICON, str),
 ]
 
-OPTIONS_SECONDARY_STATES = [
-    (CONF_SLEEP_ENTITY, "", cv.entity_id),
-    (CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE, str),
-    (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
-    (CONF_BRIGHT_ENTITY, "", cv.entity_id),
-    (CONF_BRIGHT_STATE, DEFAULT_BRIGHT_STATE, str),
-    (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
-    (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),
-]
-
-OPTIONS_LIGHT_GROUP = [
-    (CONF_NORMAL_LIGHTS, [], cv.entity_ids),
-    (CONF_NORMAL_LIGHTS_STATES, [AREA_STATE_OCCUPIED], cv.ensure_list),
-    (CONF_NORMAL_LIGHTS_ACT_ON, DEFAULT_LIGHT_GROUP_ACT_ON, cv.ensure_list),
-    (CONF_SLEEP_LIGHTS, [], cv.entity_ids),
-    (CONF_SLEEP_LIGHTS_STATES, [], cv.ensure_list),
-    (CONF_SLEEP_LIGHTS_ACT_ON, DEFAULT_LIGHT_GROUP_ACT_ON, cv.ensure_list),
-    (CONF_BRIGHT_LIGHTS, [], cv.entity_ids),
-    (CONF_BRIGHT_LIGHTS_STATES, [], cv.ensure_list),
-    (CONF_BRIGHT_LIGHTS_ACT_ON, DEFAULT_LIGHT_GROUP_ACT_ON, cv.ensure_list),
-]
 
 OPTIONS_AGGREGATES = [
     (CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES, int),
@@ -540,7 +557,8 @@ CONFIG_FLOW_ENTITY_FILTER = [
     SWITCH_DOMAIN,
     INPUT_BOOLEAN_DOMAIN,
 ]
-CONFIG_FLOW_ENTITY_FILTER_EXT = CONFIG_FLOW_ENTITY_FILTER + [
+CONFIG_FLOW_ENTITY_FILTER_EXT = [
+    *CONFIG_FLOW_ENTITY_FILTER,
     LIGHT_DOMAIN,
     MEDIA_PLAYER_DOMAIN,
     CLIMATE_DOMAIN,

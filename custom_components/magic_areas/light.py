@@ -1,36 +1,19 @@
 DEPENDENCIES = ["magic_areas"]
 
 import logging
-
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from homeassistant.const import (
-    ATTR_ENTITY_ID,
-    ATTR_BRIGHTNESS_PCT,
-    SERVICE_TURN_OFF,
-    SERVICE_TURN_ON,
-    STATE_OFF,
-    STATE_ON,
-)
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.event import async_track_state_change_event
+from typing import Optional
 
 from custom_components.magic_areas.base.entities import MagicLightGroup
+from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
-    AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,
     AREA_STATE_CLEAR,
-    AREA_STATE_DARK,
     AREA_STATE_OCCUPIED,
     CONF_FEATURE_LIGHT_GROUPS,
-    CONF_BRIGHT_DIM_LEVEL,
-    CONF_SLEEP_DIM_LEVEL,
     CONF_SECONDARY_STATES,
     DEFAULT_LIGHT_GROUP_ACT_ON,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     LIGHT_GROUP_ACT_ON,
-    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
-    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
     LIGHT_GROUP_CATEGORIES,
     LIGHT_GROUP_DEFAULT_ICON,
     LIGHT_GROUP_ICONS,
@@ -38,16 +21,36 @@ from custom_components.magic_areas.const import (
 )
 from custom_components.magic_areas.util import add_entities_when_ready
 
+from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import (
+    ATTR_BRIGHTNESS_PCT,
+    ATTR_ENTITY_ID,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
+    STATE_OFF,
+    STATE_ON,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_state_change_event
+
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+):
     """Set up the Area config entry."""
 
     add_entities_when_ready(hass, async_add_entities, config_entry, add_lights)
 
-def add_lights(area, async_add_entities):
 
+def add_lights(area: MagicArea, async_add_entities: AddEntitiesCallback):
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
         return
@@ -63,11 +66,7 @@ def add_lights(area, async_add_entities):
 
     # Create light groups
     if area.is_meta():
-        light_groups.append(
-            MagicLightGroup(
-                area, light_entities
-            )
-        )
+        light_groups.append(MagicLightGroup(area, light_entities))
     else:
         light_group_ids = []
 
@@ -81,9 +80,7 @@ def add_lights(area, async_add_entities):
                 _LOGGER.debug(
                     f"Creating {category} group for area {area.name} with lights: {category_lights}"
                 )
-                light_group_object = AreaLightGroup(
-                    area, category_lights, category
-                )
+                light_group_object = AreaLightGroup(area, category_lights, category)
                 light_groups.append(light_group_object)
 
                 # Infer light group entity id from name
@@ -102,17 +99,28 @@ def add_lights(area, async_add_entities):
     # Create all groups
     async_add_entities(light_groups)
 
+
 class AreaLightGroup(MagicLightGroup):
+    """The light group to control the area lights specifically.
 
-    def __init__(self, area, entities, dim_level, category=None, child_ids=[]):
+    One of these will be created for each type of light group, occupied,
+    bright, sleep, accent, ...
+    """
 
-        MagicLightGroup.__init__(self, area, entities, init_group=False)
+    def __init__(
+        self, area, entities, dim_level, category=None, child_ids: list | None = None
+    ) -> None:
+        """Init the light group for the area."""
+        MagicLightGroup.__init__(self, area, entities)
 
         if category:
             category_title = " ".join(category.split("_")).title()
             self._name = f"{category_title} ({self.area.name})"
 
-        self._child_ids = child_ids
+        if child_ids is None:
+            self._child_ids = []
+        else:
+            self._child_ids = child_ids
 
         self.category = category
         self.assigned_states = []
@@ -120,7 +128,6 @@ class AreaLightGroup(MagicLightGroup):
 
         self.controlling = True
         self.controlled = False
-        self.force_on_occupied = True
         self.dim_level = dim_level
 
         self.init_group()
@@ -216,7 +223,7 @@ class AreaLightGroup(MagicLightGroup):
 
         # Handle light category
         return self.state_change_secondary(states_tuple)
-    
+
     def state_change_primary(self, states_tuple):
         new_state, last_state = states_tuple
 
@@ -232,7 +239,9 @@ class AreaLightGroup(MagicLightGroup):
         new_state, last_state = states_tuple
 
         if AREA_STATE_CLEAR == new_state:
-            self.logger.debug(f"{self.name}: Area is clear, reset control state and Noop!")
+            self.logger.debug(
+                f"{self.name}: Area is clear, reset control state and Noop!"
+            )
             self.reset_control()
             return False
 
@@ -240,10 +249,12 @@ class AreaLightGroup(MagicLightGroup):
         if not self.assigned_states:
             self.logger.debug(f"{self.name}: No assigned states. Noop.")
             return False
-        
+
         # Do not handle lights that are not in our state set.
         if not new_state in self.assigned_states:
-            self.logger.debug(f"{self.name}: Not for this light group {self.assigned_states}. Noop.")
+            self.logger.debug(
+                f"{self.name}: Not for this light group {self.assigned_states}. Noop."
+            )
             return False
 
         self.logger.debug(
@@ -275,7 +286,10 @@ class AreaLightGroup(MagicLightGroup):
             self._turn_off()
 
         self.controlled = True
-        service_data = {ATTR_ENTITY_ID: self.entity_id, ATTR_BRIGHTNESS_PCT: self.dim_level}
+        service_data = {
+            ATTR_ENTITY_ID: self.entity_id,
+            ATTR_BRIGHTNESS_PCT: self.dim_level,
+        }
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
 
         return True
@@ -292,7 +306,7 @@ class AreaLightGroup(MagicLightGroup):
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
 
         return True
-    
+
     """ Control Release """
 
     def is_control_enabled(self):
@@ -314,7 +328,7 @@ class AreaLightGroup(MagicLightGroup):
             return entity_object.attributes["controlling"]
 
         return False
-    
+
     def handle_group_state_change_primary(self):
         controlling = False
 

@@ -1,5 +1,6 @@
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.helpers.event import call_later
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.magic_areas.base.primitives import SwitchBase
 from custom_components.magic_areas.const import (
@@ -11,14 +12,22 @@ from custom_components.magic_areas.const import (
     ICON_PRESENCE_HOLD,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
+from custom_components.magic_areas.base.magic import MagicArea
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+):
     """Set up the Area config entry."""
 
     add_entities_when_ready(hass, async_add_entities, config_entry, add_switches)
 
-def add_switches(area, async_add_entities):
 
+def add_switches(area: MagicArea, async_add_entities: AddEntitiesCallback):
     if area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
         async_add_entities([AreaPresenceHoldSwitch(area)])
 
@@ -38,13 +47,14 @@ class AreaLightControlSwitch(SwitchBase):
         """Return the icon to be used for this entity."""
         return ICON_LIGHT_CONTROL
 
+
 class AreaPresenceHoldSwitch(SwitchBase):
     def __init__(self, area):
         """Initialize the area presence hold switch."""
 
         super().__init__(area)
         self._name = f"Area Presence Hold ({self.area.name})"
-        
+
         self.timeout_callback = None
 
     @property

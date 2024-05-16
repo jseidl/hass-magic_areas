@@ -1,45 +1,49 @@
 from datetime import timedelta
+from enum import StrEnum
 
+from custom_components.magic_areas.base.entities import (
+    MagicBinarySensorEntity,
+    MagicEntity,
+    MagicSensorEntity,
+    MagicSwitchEntity,
+)
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import CONF_UPDATE_INTERVAL
+
+from homeassistant.components.sensor import SensorStateClass
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
 )
-from homeassistant.components.sensor.const import SensorStateClass
 
-from custom_components.magic_areas.base.entities import (
-    MagicEntity,
-    MagicSwitchEntity,
-    MagicSensorEntity,
-    MagicBinarySensorEntity
-)
-from custom_components.magic_areas.const import (
-    CONF_UPDATE_INTERVAL
-)
 
 class MagicSensorBase(MagicEntity):
+    """The base class for all the sensors int he magic area code."""
 
     sensors = []
     _device_class = None
 
-    def __init__(self, area, device_class):
-
+    def __init__(self, area: MagicArea, device_class: StrEnum) -> None:
+        """Initialize the magic sensor base with the area and device class."""
         MagicEntity.__init__(self, area)
-        self.sensors = list()
+        self.sensors = []
         self._device_class = device_class
+        self._state = 0
 
     @property
     def device_class(self):
         """Return the class of this binary_sensor."""
         return self._device_class
 
-    def refresh_states(self, next_interval):
-        self.logger.debug(f"Refreshing sensor states {self.name}")
-        return self.update_state()
-    
+    def _refresh_states(self, next_interval: int):
+        self.logger.debug("Refreshing sensor states %s", self.name)
+        return self._update_state()
+
     def update(self):
+        """Update the state for this sensor."""
         self.update_state()
 
-    def update_state(self):
+    def _update_state(self):
         self._state = self.get_sensors_state()
         self.schedule_update_ha_state()
 
@@ -47,7 +51,7 @@ class MagicSensorBase(MagicEntity):
         # Setup the listeners
         await self._setup_listeners()
 
-        self.update_state()
+        self._update_state()
 
     async def _setup_listeners(self, _=None) -> None:
         self.logger.debug("%s: Called '_setup_listeners'", self._name)
@@ -64,22 +68,31 @@ class MagicSensorBase(MagicEntity):
 
         # Timed self update
         self.async_on_remove(
-            async_track_time_interval(self.hass, self.refresh_states, delta)
+            async_track_time_interval(self.hass, self._refresh_states, delta)
         )
 
+
 class MagicAggregateBase(MagicSensorBase):
-    def load_sensors(self, domain, unit_of_measurement=None):
+    """Aggregate base for the sensors."""
+
+    def __init__(self, area: MagicArea, device_class: StrEnum) -> None:
+        """Initialize the state for the aggregate sensor."""
+        MagicSensorBase.__init__(area, device_class)
+        self.attributes = {}
+
+    def load_sensors(self, domain: str, unit_of_measurement: str | None = None):
+        """Load the sensors for this element."""
         # Fetch sensors
         self.sensors = []
         for entity in self.area.entities[domain]:
-            if "device_class" not in entity.keys():
+            if "device_class" not in entity:
                 continue
 
             if entity["device_class"] != self._device_class:
                 continue
 
             if unit_of_measurement:
-                if "unit_of_measurement" not in entity.keys():
+                if "unit_of_measurement" not in entity:
                     continue
                 if entity["unit_of_measurement"] != unit_of_measurement:
                     continue
@@ -87,24 +100,33 @@ class MagicAggregateBase(MagicSensorBase):
             self.sensors.append(entity["entity_id"])
 
         if unit_of_measurement:
-            self._attributes = {
+            self.attributes = {
                 "sensors": self.sensors,
                 "unit_of_measurement": unit_of_measurement,
             }
         else:
-            self._attributes = {"sensors": self.sensors, "active_sensors": []}
+            self.attributes = {"sensors": self.sensors, "active_sensors": []}
+
 
 class SwitchBase(MagicSwitchEntity):
-    pass
-    
+    """Base for the switches used in the magic area."""
+
+
 class BinarySensorBase(MagicSensorBase, MagicBinarySensorEntity):
-    pass
+    """Base for the binary sensor used in the magic area."""
+
 
 class BinarySensorGroupBase(MagicAggregateBase, MagicBinarySensorEntity):
-    pass
+    """Base for the binary sensor group used in the magic area."""
+
 
 class SensorBase(MagicSensorBase, MagicSensorEntity):
+    """Base for the sensors used in the magic area."""
+
     _state_class = SensorStateClass.MEASUREMENT
 
+
 class SensorGroupBase(MagicAggregateBase, MagicSensorEntity):
+    """Base for the sensor groups used in the magic area."""
+
     _state_class = SensorStateClass.MEASUREMENT
