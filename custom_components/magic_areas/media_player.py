@@ -1,12 +1,10 @@
-DEPENDENCIES = ["media_player"]
+"""Media player pieces for the system."""
 
 import logging
 
 from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
-    AREA_STATE_CLEAR,
-    AREA_STATE_SLEEP,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_NOTIFICATION_DEVICES,
@@ -19,7 +17,6 @@ from custom_components.magic_areas.const import (
     MODULE_DATA,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
-
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.group.media_player import MediaPlayerGroup
 from homeassistant.components.media_player import (
@@ -39,6 +36,8 @@ from homeassistant.helpers.area_registry import AreaEntry, async_get as async_ge
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
+
+DEPENDENCIES = ["media_player"]
 
 _LOGGER = logging.getLogger(__name__)
 

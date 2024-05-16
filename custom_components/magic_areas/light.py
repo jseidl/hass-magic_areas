@@ -1,31 +1,21 @@
-DEPENDENCIES = ["magic_areas"]
+"""Light controls for magic areas."""
 
 import logging
-from typing import Optional
 
 from custom_components.magic_areas.base.entities import MagicLightGroup
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
-    AREA_STATE_BRIGHT,
-    AREA_STATE_CLEAR,
-    AREA_STATE_OCCUPIED,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_SECONDARY_STATES,
-    DEFAULT_LIGHT_GROUP_ACT_ON,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
-    LIGHT_GROUP_ACT_ON,
-    LIGHT_GROUP_CATEGORIES,
     LIGHT_GROUP_DEFAULT_ICON,
     LIGHT_GROUP_ICONS,
-    LIGHT_GROUP_STATES,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
-
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    ATTR_BRIGHTNESS_PCT,
     ATTR_ENTITY_ID,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
@@ -38,6 +28,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
 _LOGGER = logging.getLogger(__name__)
+DEPENDENCIES = ["magic_areas"]
 
 
 async def async_setup_entry(

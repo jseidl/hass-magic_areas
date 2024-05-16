@@ -1,7 +1,6 @@
-from homeassistant.const import STATE_OFF, STATE_ON
-from homeassistant.helpers.event import call_later
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+"""Switches for magic areas."""
 
+from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.base.primitives import SwitchBase
 from custom_components.magic_areas.const import (
     CONF_FEATURE_LIGHT_GROUPS,
@@ -12,9 +11,11 @@ from custom_components.magic_areas.const import (
     ICON_PRESENCE_HOLD,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
-from custom_components.magic_areas.base.magic import MagicArea
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import call_later
 
 
 async def async_setup_entry(

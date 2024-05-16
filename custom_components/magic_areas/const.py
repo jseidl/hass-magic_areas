@@ -1,3 +1,5 @@
+"""Constants for the magic areas code."""
+
 from dataclasses import dataclass
 from enum import StrEnum
 from itertools import chain
@@ -216,10 +218,6 @@ class LightEntityConf:
     def state_dim_level(self):
         """Return the name in the state to lookup the dim level."""
         return self.name + "_state_dim"
-
-    def act_on(self):
-        """Return the name in the state to lookup the act on type."""
-        return self.name + "_lights_act_on"
 
     def lights_name(self):
         """Return the name of the entity to create."""

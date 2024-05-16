@@ -1,4 +1,5 @@
-"""
+"""Climate controls for magic areas.
+
 This file is mostly https://github.com/daenny/climate_group,
 adapted to work with Magic Areas.
 
@@ -8,7 +9,6 @@ Once this goes into the main Home Assistant code it will be phased out.
 from __future__ import annotations
 
 import logging
-
 from statistics import mean
 from typing import Any
 
@@ -22,7 +22,6 @@ from custom_components.magic_areas.const import (
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
-
 from homeassistant.components.climate import (
     ATTR_CURRENT_TEMPERATURE,
     ATTR_FAN_MODE,

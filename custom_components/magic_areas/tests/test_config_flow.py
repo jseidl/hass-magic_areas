@@ -3,7 +3,6 @@
 from unittest.mock import patch
 
 from custom_components.magic_areas.const import CONF_NAME, DOMAIN
-
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
@@ -15,10 +14,10 @@ async def test_form(hass: HomeAssistant) -> None:
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
     assert result["type"] == FlowResultType.FORM
-    assert result["errors"] is None
+    assert result["errors"] == {}
 
     with patch(
-        "custom_components.minecraft_profile.async_setup_entry",
+        "custom_components.magic_areas.async_setup_entry",
         return_value=True,
     ) as mock_setup_entry:
         result2 = await hass.config_entries.flow.async_configure(

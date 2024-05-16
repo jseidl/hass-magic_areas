@@ -1,3 +1,5 @@
+"""Sensor controls for magic areas."""
+
 from enum import StrEnum
 import logging
 
@@ -9,7 +11,6 @@ from custom_components.magic_areas.const import (
     CONF_FEATURE_AGGREGATION,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
-
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant

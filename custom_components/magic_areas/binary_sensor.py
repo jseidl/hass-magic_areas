@@ -1,3 +1,5 @@
+"""Binary sensor control for magic areas."""
+
 from datetime import datetime, timedelta
 import logging
 
@@ -37,7 +39,6 @@ from custom_components.magic_areas.const import (
     LightEntityConf,
 )
 from custom_components.magic_areas.util import add_entities_when_ready
-
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,

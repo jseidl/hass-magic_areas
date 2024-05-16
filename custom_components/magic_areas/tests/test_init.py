@@ -1,10 +1,8 @@
 """Test for integration init."""
 
-from typing import Any
-
-from custom_components.magic_areas.const import DOMAIN
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.magic_areas.const import DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 

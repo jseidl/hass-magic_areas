@@ -1,0 +1,19 @@
+# Generic python dependencies
+black==24.4.2
+mypy==1.10.0
+pip==24.0.0
+pre-commit==3.6.0
+pytest==8.1.1
+ruff==0.4.4
+
+# Home Assistant testing dependencies
+pytest-asyncio==0.23.6
+pytest-homeassistant-custom-component==0.13.123
+syrupy==4.6.1
+
+# Component dependencies
+hassil>=1.7.0
+home-assistant-intents>=2024.4.3
+
+aiohttp_cors==0.7.0
+MinePI==0.5.0

@@ -1,8 +1,13 @@
+"""Configuration flow for the magic areas component."""
+
 import logging
+
+import voluptuous as vol
 
 from custom_components.magic_areas.const import (
     _DOMAIN_SCHEMA,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
+    ALL_LIGHT_ENTITIES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
     AREA_TYPE_EXTERIOR,
     AREA_TYPE_INTERIOR,
@@ -59,8 +64,6 @@ from custom_components.magic_areas.const import (
     sleepLights,
 )
 from custom_components.magic_areas.util import get_meta_area_object
-import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
@@ -78,7 +81,7 @@ _LOGGER = logging.getLogger(__name__)
 EMPTY_ENTRY = [""]
 
 
-class ConfigBase(object):
+class ConfigBase:
     """Base object for the magic areas config."""
 
     # Selector builder
@@ -149,18 +152,14 @@ class ConfigBase(object):
             vol.Optional(
                 name,
                 description={
-                    "suggested_value": (
-                        saved_options.get(name)
-                        if saved_options.get(name) is not None
-                        else default
-                    )
+                    "suggested_value": saved_options.get(name)
+                    if saved_options.get(name) is not None
+                    else default
                 },
                 default=default,
-            ): (
-                selectors[name]
-                if name in selectors
-                else dynamic_validators.get(name, validation)
-            )
+            ): selectors[name]
+            if name in selectors
+            else dynamic_validators.get(name, validation)
             for name, default, validation in options
         }
 
@@ -465,7 +464,21 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         return self.async_show_form(
             step_id="secondary_states",
             data_schema=self._build_options_schema(
-                options=(OPTIONS_SECONDARY_STATES),
+                options=[
+                    *(
+                        [
+                            (lg.entity_name(), "", cv.entity_id),
+                            (lg.state_name(), lg.default_state, str),
+                            (lg.state_timeout(), lg.timeout, int),
+                        ]
+                        if lg.has_enity
+                        else [
+                            (lg.state_name(), lg.default_state, str),
+                            (lg.state_timeout(), lg.timeout, int),
+                        ]
+                        for lg in ALL_LIGHT_ENTITIES
+                    )
+                ],
                 saved_options=self.config_entry.options.get(CONF_SECONDARY_STATES, {}),
                 dynamic_validators={
                     brightLights.entity_name(): vol.In(EMPTY_ENTRY + self.all_entities),
@@ -514,7 +527,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             self.features_to_configure = list(
                 set(self.selected_features) & set(filtered_configurable_features)
             )
-            _LOGGER.debug(f"Selected features: {self.selected_features}")
+            _LOGGER.debug("Selected features: %s", self.selected_features)
             self.area_options[CONF_ENABLED_FEATURES].update(
                 {
                     feature: {}
@@ -531,7 +544,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         if self.area.id == META_AREA_GLOBAL.lower():
             feature_list = CONF_FEATURE_LIST_GLOBAL
 
-        _LOGGER.debug(f"Selecting features from {feature_list}")
+        _LOGGER.debug("Selecting features from %s", feature_list)
 
         return self.async_show_form(
             step_id="select_features",
@@ -549,14 +562,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
     async def async_route_feature_config(self, user_input=None):
         """Determine the next feature to be configured or finalize the options
-        flow if there are no more features left (i.e. all selected features have
-        been configured)."""
+        flow if there are no more features left.
+
+           (i.e. all selected features have
+        been configured).
+        """
         _LOGGER.debug(f"Features yet to configure: {self.features_to_configure}")
         _LOGGER.debug(f"Current config is: {self.area_options}")
         if self.features_to_configure:
             current_feature = self.features_to_configure.pop()
             _LOGGER.debug(
-                f"Initiating configuration step for feature {current_feature}"
+                "Initiating configuration step for feature %s", current_feature
             )
             feature_conf_step = getattr(
                 self, f"async_step_feature_conf_{current_feature}"
@@ -564,59 +580,51 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             return await feature_conf_step()
         else:
             _LOGGER.debug(
-                f"All features configured, saving config: {self.area_options}"
+                "All features configured, saving config: %s", self.area_options
             )
             return self.async_create_entry(title="", data=self.area_options)
 
     async def async_step_feature_conf_light_groups(self, user_input=None):
-        """Configure the light groups feature"""
-
-        available_states = BUILTIN_AREA_STATES.copy()
-
-        for extra_state, extra_state_opts in CONFIGURABLE_AREA_STATE_MAP.items():
-            extra_state_entity, extra_state_state = extra_state_opts
-            if self.area_options[CONF_SECONDARY_STATES].get(extra_state_entity, None):
-                available_states.append(extra_state)
+        """Configure the light groups feature."""
 
         return await self.do_feature_config(
             name=CONF_FEATURE_LIGHT_GROUPS,
-            options=OPTIONS_LIGHT_GROUP,
+            options=[
+                *(
+                    [
+                        (lg.lights_name(), [], cv.entity_ids),
+                        (lg.lights_state_name(), lg.enable_state, cv.enum(AreaState)),
+                    ]
+                    for lg in ALL_LIGHT_ENTITIES
+                )
+            ],
             dynamic_validators={
                 occupiedLights.lights_name(): cv.multi_select(self.all_lights),
-                occupiedLights.lights_state_name(): cv.multi_select(available_states),
-                occupiedLights.act_on(): cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
+                occupiedLights.lights_state_name(): cv.enum(AreaState),
                 sleepLights.lights_name(): cv.multi_select(self.all_lights),
-                sleepLights.lights_state_name(): cv.multi_select(available_states),
-                sleepLights.act_on(): cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
+                sleepLights.lights_state_name(): cv.enum(AreaState),
                 brightLights.lights_name(): cv.multi_select(self.all_lights),
-                brightLights.lights_state_name(): cv.multi_select(available_states),
-                brightLights.act_on(): cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
+                brightLights.lights_state_name(): cv.enum(AreaState),
             },
             selectors={
                 occupiedLights.lights_name(): self._build_selector_entity_simple(
                     self.all_lights, multiple=True
                 ),
                 occupiedLights.lights_state_name(): self._build_selector_select(
-                    available_states, multiple=True
-                ),
-                occupiedLights.act_on(): self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                    list(AreaState), multiple=True
                 ),
                 sleepLights.lights_name(): self._build_selector_entity_simple(
                     self.all_lights, multiple=True
                 ),
                 sleepLights.lights_state_name(): self._build_selector_select(
-                    available_states, multiple=True
-                ),
-                sleepLights.act_on(): self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                    list(AreaState), multiple=True
                 ),
             },
             user_input=user_input,
         )
 
     async def async_step_feature_conf_climate_groups(self, user_input=None):
-        """Configure the climate groups feature"""
+        """Configure the climate groups feature."""
 
         available_states = [
             AreaState.AREA_STATE_OCCUPIED,
@@ -625,11 +633,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         return await self.do_feature_config(
             name=CONF_FEATURE_CLIMATE_GROUPS,
-            options=(
-                OPTIONS_CLIMATE_GROUP
-                if not self.area.is_meta()
-                else OPTIONS_CLIMATE_GROUP_META
-            ),
+            options=OPTIONS_CLIMATE_GROUP
+            if not self.area.is_meta()
+            else OPTIONS_CLIMATE_GROUP_META,
             dynamic_validators={
                 CONF_CLIMATE_GROUPS_TURN_ON_STATE: vol.In(
                     EMPTY_ENTRY + available_states
