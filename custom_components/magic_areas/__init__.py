@@ -16,11 +16,10 @@ from custom_components.magic_areas.const import (
     MODULE_DATA,
 )
 from custom_components.magic_areas.util import get_meta_area_object
-
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
-from homeassistant.const import Platform
 
 _LOGGER = logging.getLogger(__name__)
 

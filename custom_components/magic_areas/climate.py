@@ -12,16 +12,6 @@ import logging
 from statistics import mean
 from typing import Any
 
-from custom_components.magic_areas.base.entities import MagicEntity
-from custom_components.magic_areas.base.magic import MagicArea
-from custom_components.magic_areas.const import (
-    CONF_CLIMATE_GROUPS_TURN_ON_STATE,
-    CONF_FEATURE_CLIMATE_GROUPS,
-    DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
-    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
-    AreaState,
-)
-from custom_components.magic_areas.util import add_entities_when_ready
 from homeassistant.components.climate import (
     ATTR_CURRENT_TEMPERATURE,
     ATTR_FAN_MODE,
@@ -75,6 +65,17 @@ from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
+
+from .add_entities_when_ready import add_entities_when_ready
+from .base.entities import MagicEntity
+from .base.magic import MagicArea
+from .const import (
+    CONF_CLIMATE_GROUPS_TURN_ON_STATE,
+    CONF_FEATURE_CLIMATE_GROUPS,
+    DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
+    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
+    AreaState,
+)
 
 ###    Climate Group Constants
 

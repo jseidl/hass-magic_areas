@@ -15,7 +15,7 @@ from .const import (
     ICON_LIGHT_CONTROL,
     ICON_PRESENCE_HOLD,
 )
-from .util import add_entities_when_ready
+from .add_entities_when_ready import add_entities_when_ready
 
 
 async def async_setup_entry(

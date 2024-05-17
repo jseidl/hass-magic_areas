@@ -4,7 +4,6 @@ from datetime import datetime
 import logging
 from statistics import mean
 
-from .magic import MagicArea
 from custom_components.magic_areas.const import (
     CONF_ON_STATES,
     DOMAIN,
@@ -24,6 +23,8 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
+
+from .magic import MagicArea
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -362,16 +363,16 @@ class MagicSwitchEntity(MagicEntity, SwitchEntity):
 class MagicLightGroup(MagicEntity, LightGroup):
     """Controls the lights with the specific setup."""
 
-    def __init__(self, area: MagicArea, entities: list) -> None:
+    def __init__(self, area: MagicArea, entities: list[str]) -> None:
         """Create a new light group."""
-        self._entities = entities
-
-        self._name = f"{self.area.name} Lights"
         MagicEntity.__init__(self, area)
         LightGroup.__init__(
             self,
             unique_id=self.unique_id,
             name=self._name,
-            entity_ids=self._entities,
+            entity_ids=entities,
             mode=False,
         )
+        self.area = area
+
+        self._name = f"{self.area.name} Lights"

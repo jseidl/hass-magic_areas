@@ -1,14 +1,27 @@
 """Binary sensor control for magic areas."""
 
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 import logging
 
-from custom_components.magic_areas.base.magic import MagicArea
-from custom_components.magic_areas.base.primitives import (
-    BinarySensorBase,
-    BinarySensorGroupBase,
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
 )
-from custom_components.magic_areas.const import (
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.dispatcher import dispatcher_send
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import (
+    async_track_state_change,
+    async_track_time_interval,
+    call_later,
+)
+
+from .base.magic import MagicArea
+from .base.primitives import BinarySensorBase, BinarySensorGroupBase
+from .const import (
     AGGREGATE_MODE_ALL,
     ALL_LIGHT_ENTITIES,
     ATTR_ACTIVE_AREAS,
@@ -36,25 +49,8 @@ from custom_components.magic_areas.const import (
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     INVALID_STATES,
     AreaState,
-    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
-    LightEntityConf,
 )
-from custom_components.magic_areas.util import add_entities_when_ready
-from homeassistant.components.binary_sensor import (
-    DOMAIN as BINARY_SENSOR_DOMAIN,
-    BinarySensorDeviceClass,
-)
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.dispatcher import dispatcher_send
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import (
-    async_track_state_change,
-    async_track_time_interval,
-    call_later,
-)
+from .add_entities_when_ready import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 

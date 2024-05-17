@@ -215,7 +215,7 @@ class MagicArea(object):  # noqa: UP004
         if entity_object.disabled:
             return False
 
-        if entity_object.entity_id in self.config.get(CONF_EXCLUDE_ENTITIES):
+        if entity_object.entity_id in self.config.get(CONF_EXCLUDE_ENTITIES, []):
             return False
 
         return True
@@ -234,14 +234,14 @@ class MagicArea(object):  # noqa: UP004
                     return True
 
         # Check if entity_id is in CONF_INCLUDE_ENTITIES
-        if entity_object.entity_id in self.config.get(CONF_INCLUDE_ENTITIES):
+        if entity_object.entity_id in self.config.get(CONF_INCLUDE_ENTITIES, []):
             return True
 
         return False
 
     async def _load_entities(self) -> None:
         entity_list = []
-        include_entities = self.config.get(CONF_INCLUDE_ENTITIES)
+        include_entities = self.config.get(CONF_INCLUDE_ENTITIES, [])
 
         entity_registry = async_get_er(self.hass)
 
@@ -431,7 +431,7 @@ class MagicMetaArea(MagicArea):
 
                         # Skip excluded entities
                         if entity["entity_id"] in self.config.get(
-                            CONF_EXCLUDE_ENTITIES
+                            CONF_EXCLUDE_ENTITIES, []
                         ):
                             continue
 

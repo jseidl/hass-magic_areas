@@ -340,7 +340,7 @@ accented_lights = LightEntityConf(
     name="accented",
     default_dim_level=0,
     enable_state=AreaState.AREA_STATE_ACCENTED,
-    has_entity=False,
+    has_entity=True,
     icon="mdi:desk-lamp",
 )
 

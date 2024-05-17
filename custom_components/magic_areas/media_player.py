@@ -16,7 +16,9 @@ from custom_components.magic_areas.const import (
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
-from custom_components.magic_areas.util import add_entities_when_ready
+from custom_components.magic_areas.add_entities_when_ready import (
+    add_entities_when_ready,
+)
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.group.media_player import MediaPlayerGroup
 from homeassistant.components.media_player import (

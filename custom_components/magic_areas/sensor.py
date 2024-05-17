@@ -10,7 +10,9 @@ from custom_components.magic_areas.const import (
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
 )
-from custom_components.magic_areas.util import add_entities_when_ready
+from custom_components.magic_areas.add_entities_when_ready import (
+    add_entities_when_ready,
+)
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
