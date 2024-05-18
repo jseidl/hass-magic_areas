@@ -17,3 +17,4 @@ home-assistant-intents>=2024.4.3
 
 aiohttp_cors==0.7.0
 MinePI==0.5.0
+async-solipsism==0.6

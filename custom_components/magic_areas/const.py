@@ -180,6 +180,7 @@ CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
     2,
 )  # cv.positive_int
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
+CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT = "clear_timeout", 60  # cv.positive_int
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
 CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
 CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (

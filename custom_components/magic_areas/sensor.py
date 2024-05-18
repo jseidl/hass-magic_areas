@@ -3,20 +3,19 @@
 from enum import StrEnum
 import logging
 
-from custom_components.magic_areas.base.magic import MagicArea
-from custom_components.magic_areas.base.primitives import SensorGroupBase
-from custom_components.magic_areas.const import (
-    AGGREGATE_MODE_SUM,
-    CONF_AGGREGATES_MIN_ENTITIES,
-    CONF_FEATURE_AGGREGATION,
-)
-from custom_components.magic_areas.add_entities_when_ready import (
-    add_entities_when_ready,
-)
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .add_entities_when_ready import add_entities_when_ready
+from .base.magic import MagicArea
+from .base.primitives import SensorGroupBase
+from .const import (
+    AGGREGATE_MODE_SUM,
+    CONF_AGGREGATES_MIN_ENTITIES,
+    CONF_FEATURE_AGGREGATION,
+)
 
 _LOGGER = logging.getLogger(__name__)
 

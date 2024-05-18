@@ -7,6 +7,7 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
+from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
@@ -19,8 +20,10 @@ from homeassistant.helpers.event import (
     call_later,
 )
 
+from .add_entities_when_ready import add_entities_when_ready
 from .base.magic import MagicArea
 from .base.primitives import BinarySensorBase, BinarySensorGroupBase
+from .base.entities import MagicSelectEntity
 from .const import (
     AGGREGATE_MODE_ALL,
     ALL_LIGHT_ENTITIES,
@@ -34,6 +37,8 @@ from .const import (
     ATTR_TYPE,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
+    CONF_EXTENDED_TIMEOUT,
+    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
     CONF_FEATURE_PRESENCE_HOLD,
@@ -44,13 +49,14 @@ from .const import (
     CONF_SECONDARY_STATES,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
+    DEFAULT_EXTENDED_TIMEOUT,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     INVALID_STATES,
     AreaState,
 )
-from .add_entities_when_ready import add_entities_when_ready
+from homeassistant.core import State
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -146,19 +152,20 @@ def create_aggregate_sensors(area: MagicArea, async_add_entities: AddEntitiesCal
     async_add_entities(aggregates)
 
 
-class AreaPresenceBinarySensor(BinarySensorBase):
+class AreaPresenceBinarySensor(MagicSelectEntity):
     """Create an area presence binary sensor that tracks the current occupied state."""
 
     def __init__(self, area: MagicArea) -> None:
         """Initialize the area presence binary sensor."""
 
-        super().__init__(area, BinarySensorDeviceClass.OCCUPANCY)
+        super().__init__(area, list(AreaState))
 
         self._name = f"Area ({self.area.name})"
 
         self.last_off_time = datetime.now(UTC)
         self._clear_timeout_callback = None
-        self.attributes = {}
+        self._attributes = {}
+        self.sensors = []
 
     @property
     def icon(self) -> str | None:
@@ -166,11 +173,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         if self.area.config.get(CONF_ICON):
             return self.area.config.get(CONF_ICON)
         return None
-
-    @property
-    def is_on(self) -> bool:
-        """Return true if the area is occupied."""
-        return self.area.is_occupied()
 
     async def restore_state(self) -> None:
         """Restore the state of the sensor on initialize."""
@@ -279,12 +281,12 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def _load_attributes(self) -> None:
         # Set attributes
-        self.attributes = {}
+        self._attributes = {}
 
         if not self.area.is_meta():
-            self.attributes.update({ATTR_STATE: self.area.state})
+            self._attributes.update({ATTR_STATE: self.area.state})
         else:
-            self.attributes.update(
+            self._attributes.update(
                 {
                     ATTR_AREAS: self.area.get_child_areas(),
                     ATTR_ACTIVE_AREAS: self.area.get_active_areas(),
@@ -292,7 +294,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             )
 
         # Add common attributes
-        self.attributes.update(
+        self._attributes.update(
             {
                 ATTR_ACTIVE_SENSORS: [],
                 ATTR_LAST_ACTIVE_SENSORS: [],
@@ -302,11 +304,11 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         )
 
     def _update_attributes(self):
-        self.attributes[ATTR_STATE] = self.area.state
-        self.attributes[ATTR_CLEAR_TIMEOUT] = self._get_clear_timeout()
+        self._attributes[ATTR_STATE] = self.area.state
+        self._attributes[ATTR_CLEAR_TIMEOUT] = self._get_clear_timeout()
 
         if self.area.is_meta():
-            self.attributes[ATTR_ACTIVE_AREAS] = self.area.get_active_areas()
+            self._attributes[ATTR_ACTIVE_AREAS] = self.area.get_active_areas()
 
     ####
     ####     State Change Handling
@@ -320,10 +322,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
         ).total_seconds()
 
         conf = self.area.state_config(AreaState.AREA_STATE_EXTENDED)
-        extended_time = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-            conf.state_timeout(), conf.timeout
+        extended_time = self.area.config.get(
+            CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT
         )
-
         if not occupied_state:
             if seconds_since_last_change >= extended_time:
                 return AreaState.AREA_STATE_EXTENDED
@@ -337,9 +338,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
                 continue
 
             secondary_state_entity = self.area.config.get(conf.entity_name(), None)
-            secondary_state_value = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                conf.state_name(), None
-            )
+            secondary_state_value = self.area.config.get(
+                CONF_FEATURE_ADVANCED_LIGHT_GROUPS, {}
+            ).get(conf.advanced_state_check(), None)
 
             if not secondary_state_entity:
                 continue
@@ -388,7 +389,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
             if self._is_on_clear_timeout():
                 self.logger.debug("%s: Area is on timeout", self.area.name)
-                if self.timeout_exceeded():
+                if self._timeout_exceeded():
                     return False
             elif self.area.is_occupied() and not area_state:
                 self.logger.debug(
@@ -402,13 +403,17 @@ class AreaPresenceBinarySensor(BinarySensorBase):
 
     def _update_state(self):
         states_tuple = self._update_area_states()
-        new_states, lost_states = states_tuple
+        if states_tuple is None:
+            return
+        new_state, last_state = states_tuple
+        # Update the state so the on/off works correctly.
+        self.area.state = new_state
 
         self.logger.debug(
-            "%s: States updated. New states: %s / Lost states: %s",
+            "%s: States updated. New states: %s / Last states: %s",
             self.area.name,
-            new_states,
-            lost_states,
+            new_state,
+            last_state,
         )
 
         self._update_attributes()
@@ -428,7 +433,9 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, states_tuple
         )
 
-    def _secondary_state_change(self, entity_id, from_state, to_state):
+    def _secondary_state_change(
+        self, entity_id: str, from_state: AreaState, to_state: AreaState
+    ):
         self.logger.debug(
             "%s: Secondary state change: entity '%s' changed to %s",
             self.area.name,
@@ -450,12 +457,6 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     ###       Clearing
 
     def _get_clear_timeout(self):
-        conf = self.area.state_config()
-        if conf.has_entity:
-            return self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                conf.state_timeout(), conf.timeout
-            )
-
         return self.area.config.get(CONF_CLEAR_TIMEOUT)
 
     def _set_clear_timeout(self):
@@ -479,6 +480,20 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     def _is_on_clear_timeout(self):
         return self._clear_timeout_callback is not None
 
+    #### Sensor controls.
+
+    def _refresh_states(self, next_interval: int):
+        self.logger.debug("Refreshing sensor states %s", self.name)
+        return self._update_state()
+
+    def update(self):
+        """Update the state for this sensor."""
+        self._update_state()
+
+    def _update_state(self):
+        self._state = self.get_sensors_state()
+        self.schedule_update_ha_state()
+
     def _timeout_exceeded(self):
         if not self.area.is_occupied():
             return False
@@ -495,6 +510,119 @@ class AreaPresenceBinarySensor(BinarySensorBase):
             return True
 
         return False
+
+    def sensor_state_change(self, entity_id: str, from_state: State, to_state: State):
+        """Actions when the sensor state has changed."""
+        _LOGGER.warning(
+            "Sensor state change %s from %s to %s", entity_id, from_state, to_state
+        )
+        if not to_state:
+            return
+
+        self.logger.debug(
+            "%s: sensor '%s' changed to {%s}",
+            self.name,
+            entity_id,
+            to_state.state,
+        )
+
+        if to_state.state in INVALID_STATES:
+            self.logger.debug(
+                "%s: sensor '%s' has invalid state %s",
+                self.name,
+                entity_id,
+                to_state.state,
+            )
+            return
+
+        if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
+            self.last_off_time = datetime.now(UTC)  # Update last_off_time
+
+        return self._update_state()
+
+    def get_sensors_state(self, valid_states: list | None = None) -> int:
+        """Get the current state of the sensor."""
+        self.logger.debug(
+            "[Area: %s] Updating state. (Valid states: %s)",
+            self.area.slug,
+            valid_states,
+        )
+
+        if valid_states is None:
+            valid_states = [STATE_ON]
+
+        active_sensors = []
+        active_areas = set()
+
+        # Loop over all entities and check their state
+        for sensor in self.sensors:
+            try:
+                entity = self.hass.states.get(sensor)
+
+                if not entity:
+                    self.logger.info(
+                        "[Area: %s] Could not get sensor state: %s entity not found, skipping",
+                        self.area.slug,
+                        sensor,
+                    )
+                    continue
+
+                self.logger.debug(
+                    "[Area: %s] Sensor %s state: %s",
+                    self.area.slug,
+                    sensor,
+                    entity.state,
+                )
+
+                # Skip unavailable entities
+                if entity.state in INVALID_STATES:
+                    self.logger.debug(
+                        "[Area: %s] Sensor '%s' is unavailable, skipping.",
+                        self.area.slug,
+                        sensor,
+                    )
+                    continue
+
+                if entity.state in valid_states:
+                    self.logger.debug(
+                        "[Area: %s] Valid presence sensor found: %s.",
+                        self.area.slug,
+                        sensor,
+                    )
+                    active_sensors.append(sensor)
+
+            except Exception as e:  # noqa: BLE001
+                self.logger.error(
+                    "[%s] Error getting entity state for '%s': %s",
+                    self.area.slug,
+                    sensor,
+                    str(e),
+                )
+
+        self._attributes["active_sensors"] = active_sensors
+
+        # Make a copy that doesn't gets cleared out, for debugging
+        if active_sensors:
+            self._attributes["last_active_sensors"] = active_sensors
+
+        self.logger.debug(
+            "[Area: %s] Active sensors: %s",
+            self.area.slug,
+            active_sensors,
+        )
+
+        if self.area.is_meta():
+            active_areas = self.area.get_active_areas()
+            self.logger.debug(
+                "[Area: %s] Active areas: %s",
+                self.area.slug,
+                active_areas,
+            )
+            self._attributes["active_areas"] = active_areas
+
+        if self._mode == "all":
+            return len(active_sensors) == len(self.sensors)
+        return len(active_sensors) > 0
 
 
 class AreaSensorGroupBinarySensor(BinarySensorGroupBase):
@@ -558,4 +686,4 @@ class AreaDistressBinarySensor(BinarySensorGroupBase):
 
             self.sensors.append(entity["entity_id"])
 
-        self.attributes = {"sensors": self.sensors, "active_sensors": []}
+        self._attributes = {"sensors": self.sensors, "active_sensors": []}

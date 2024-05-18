@@ -1,6 +1,6 @@
 """The basic entities for magic areas."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 from statistics import mean
 
@@ -23,6 +23,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
+from homeassistant.components.select import SelectEntity
 
 from .magic import MagicArea
 
@@ -107,7 +108,7 @@ class MagicEntity(RestoreEntity, Entity):
 
     async def restore_state(self) -> None:
         """Restores the state when the object is reloaded."""
-        self.update_state()
+        self._update_state()
 
 
 class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
@@ -129,6 +130,9 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
 
     def sensor_state_change(self, entity_id: str, from_state: State, to_state: State):
         """Actions when the sensor state has changed."""
+        _LOGGER.warning(
+            "Sensor state change %s from %s to %s", entity_id, from_state, to_state
+        )
         if not to_state:
             return
 
@@ -149,9 +153,9 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
             return
 
         if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
-            self.last_off_time = datetime.now(datetime.UTC)  # Update last_off_time
+            self.last_off_time = datetime.now(UTC)  # Update last_off_time
 
-        return self.update_state()
+        return self._update_state()
 
     def get_sensors_state(self, valid_states: list | None = None) -> int:
         """Get the current state of the sensor."""
@@ -263,7 +267,7 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
             )
             return None
 
-        return self.update_state()
+        return self._update_state()
 
     def get_sensors_state(self):
         """Get the current state of the sensor."""
@@ -376,3 +380,17 @@ class MagicLightGroup(MagicEntity, LightGroup):
         self.area = area
 
         self._name = f"{self.area.name} Lights"
+
+
+class MagicSelectEntity(MagicEntity, SelectEntity):
+    """A select entity for fun."""
+
+    def __init__(self, area: MagicArea, available_states: list[str]) -> None:
+        """Create a select entity for the system."""
+        MagicEntity.__init__(self, area)
+        SelectEntity.__init__(self)
+        self.area = area
+        self._attr_options = available_states
+        self._attr_current_option = available_states[0]
+
+        self._name = f"{self.area.name} State"

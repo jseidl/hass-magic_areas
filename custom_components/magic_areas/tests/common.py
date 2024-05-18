@@ -4,10 +4,13 @@ from collections.abc import Generator, Sequence
 import logging
 import pathlib
 from typing import Any, NoReturn, TypeVar
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+from asyncio import get_running_loop
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+import voluptuous as vol
+import functools
 
 from custom_components.magic_areas.const import (
     CONF_ID,
@@ -17,9 +20,19 @@ from custom_components.magic_areas.const import (
 )
 from homeassistant import auth, bootstrap, config_entries, loader
 from homeassistant.components import light
+from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import (
+    CoreState,
+    Event,
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    State,
+    SupportsResponse,
+    callback,
+)
 from homeassistant.helpers.area_registry import async_get as async_get_ar
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -27,7 +40,7 @@ from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.setup import async_setup_component
 
-from .mocks import MockLight, MockModule, MockPlatform
+from .mocks import MockEntity, MockLight, MockModule, MockPlatform
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -78,9 +91,11 @@ def mock_integration(
     """Mock an integration."""
     integration = loader.Integration(
         hass,
-        f"{loader.PACKAGE_BUILTIN}.{module.DOMAIN}"
-        if built_in
-        else f"{loader.PACKAGE_CUSTOM_COMPONENTS}.{module.DOMAIN}",
+        (
+            f"{loader.PACKAGE_BUILTIN}.{module.DOMAIN}"
+            if built_in
+            else f"{loader.PACKAGE_CUSTOM_COMPONENTS}.{module.DOMAIN}"
+        ),
         pathlib.Path(""),
         module.mock_manifest(),
         set(),
@@ -121,6 +136,92 @@ def mock_platform(
     if domain not in integration_cache:
         mock_integration(hass, MockModule(domain), built_in=built_in)
 
-    integration_cache[domain]._top_level_files.add(f"{platform_name}.py")  # noqa: SLF001
+    integration_cache[domain]._top_level_files.add(
+        f"{platform_name}.py"
+    )  # noqa: SLF001
     _LOGGER.info("Adding mock integration platform: %s", platform_path)
     module_cache[platform_path] = module or Mock()
+
+
+def async_mock_service(
+    hass: HomeAssistant,
+    domain: str,
+    service: str,
+    schema: vol.Schema | None = None,
+    response: ServiceResponse = None,
+    supports_response: SupportsResponse | None = None,
+    raise_exception: Exception | None = None,
+) -> list[ServiceCall]:
+    """Set up a fake service & return a calls log list to this service."""
+    calls = []
+
+    @callback
+    def mock_service_log(call):  # pylint: disable=unnecessary-lambda
+        """Mock service call."""
+        calls.append(call)
+        if raise_exception is not None:
+            raise raise_exception
+        return response
+
+    if supports_response is None:
+        if response is not None:
+            supports_response = SupportsResponse.OPTIONAL
+        else:
+            supports_response = SupportsResponse.NONE
+
+    hass.services.async_register(
+        domain,
+        service,
+        mock_service_log,
+        schema=schema,
+        supports_response=supports_response,
+    )
+
+    return calls
+
+
+class VirtualClock:
+    """Provide a virtual clock for an asyncio event loop.
+
+    This makes timing-based tests deterministic and instantly completed.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the clock with a simple time."""
+        self.vtime = 0.0
+
+    def virtual_time(self) -> float:
+        """Return the current virtual time."""
+        return self.vtime
+
+    def _virtual_select(self, orig_select, timeout):
+        if timeout is not None:
+            self.vtime += timeout
+        return orig_select(0)  # override the timeout to zero
+
+    def patch_loop(self):
+        """Override some methods of the current event loop.
+
+        This is so that sleep instantly returns while proceeding the virtual clock.
+        """
+        loop = get_running_loop()
+        with (
+            patch.object(
+                loop._selector,  # noqa: SLF001
+                "select",
+                new=functools.partial(
+                    self._virtual_select, loop._selector.select
+                ),  # noqa: SLF001
+            ),
+            patch.object(
+                loop,
+                "time",
+                new=self.virtual_time,
+            ),
+            patch.object(
+                loop,
+                "_clock_resolution",
+                new=0.1,
+            ),
+        ):
+            yield

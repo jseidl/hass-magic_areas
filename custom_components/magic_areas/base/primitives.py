@@ -1,20 +1,20 @@
 from datetime import timedelta
 from enum import StrEnum
 
-from custom_components.magic_areas.base.entities import (
-    MagicBinarySensorEntity,
-    MagicEntity,
-    MagicSensorEntity,
-    MagicSwitchEntity,
-)
-from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import CONF_UPDATE_INTERVAL
-
 from homeassistant.components.sensor import SensorStateClass
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
 )
+
+from .entities import (
+    MagicBinarySensorEntity,
+    MagicEntity,
+    MagicSensorEntity,
+    MagicSwitchEntity,
+)
+from .magic import MagicArea
 
 
 class MagicSensorBase(MagicEntity):
@@ -41,7 +41,7 @@ class MagicSensorBase(MagicEntity):
 
     def update(self):
         """Update the state for this sensor."""
-        self.update_state()
+        self._update_state()
 
     def _update_state(self):
         self._state = self.get_sensors_state()
