@@ -3,12 +3,7 @@
 from datetime import UTC, datetime, timedelta
 import logging
 
-from homeassistant.components.binary_sensor import (
-    DOMAIN as BINARY_SENSOR_DOMAIN,
-    BinarySensorDeviceClass,
-)
-from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
 from homeassistant.core import HomeAssistant, State
@@ -23,10 +18,7 @@ from homeassistant.helpers.event import (
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicSelectEntity
 from .base.magic import MagicArea, StateConfigData
-from .base.primitives import BinarySensorBase, BinarySensorGroupBase
 from .const import (
-    AGGREGATE_MODE_ALL,
-    ALL_LIGHT_ENTITIES,
     ATTR_ACTIVE_AREAS,
     ATTR_ACTIVE_SENSORS,
     ATTR_AREAS,
@@ -35,24 +27,16 @@ from .const import (
     ATTR_PRESENCE_SENSORS,
     ATTR_STATE,
     ATTR_TYPE,
-    CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_EXTENDED_TIMEOUT,
-    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
-    CONF_FEATURE_AGGREGATION,
-    CONF_FEATURE_HEALTH,
-    CONF_FEATURE_PRESENCE_HOLD,
-    DEFAULT_CLEAR_TIMEOUT,
     CONF_ICON,
     CONF_ON_STATES,
     CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
-    CONF_SECONDARY_STATES,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     DEFAULT_EXTENDED_TIMEOUT,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
-    DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     INVALID_STATES,
     AreaState,

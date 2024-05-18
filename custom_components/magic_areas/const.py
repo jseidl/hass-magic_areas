@@ -64,7 +64,6 @@ ATTR_ACTIVE_SENSORS = "active_sensors"
 ATTR_LAST_ACTIVE_SENSORS = "last_active_sensors"
 ATTR_FEATURES = "features"
 ATTR_PRESENCE_SENSORS = "presence_sensors"
-ATTR_BRIGHTNESS_PCT = "brightness_pct"
 
 # Icons
 ICON_PRESENCE_HOLD = "mdi:car-brake-hold"
@@ -307,6 +306,13 @@ class LightEntityConf:
 
 
 # Setups to control all the lights, items to create
+clear_lights = LightEntityConf(
+    name="clear",
+    default_dim_level=0,
+    enable_state=AreaState.AREA_STATE_CLEAR,
+    icon="mdi:off",
+    has_entity=False,
+)
 bright_lights = LightEntityConf(
     name="bright",
     default_dim_level=0,
@@ -345,6 +351,7 @@ accented_lights = LightEntityConf(
 
 # All the light setup pieces.
 ALL_LIGHT_ENTITIES = [
+    clear_lights,
     sleep_lights,
     bright_lights,
     extended_lights,
