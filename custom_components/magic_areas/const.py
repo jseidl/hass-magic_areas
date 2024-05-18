@@ -16,6 +16,7 @@ from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAI
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
+from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.sun import DOMAIN as SUN_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
@@ -84,6 +85,7 @@ class AreaState(StrEnum):
 
 # MagicAreas Components
 MAGIC_AREAS_COMPONENTS = [
+    SELECT_DOMAIN,
     BINARY_SENSOR_DOMAIN,
     MEDIA_PLAYER_DOMAIN,
     COVER_DOMAIN,
@@ -225,10 +227,6 @@ class LightEntityConf:
     def lights_to_control(self) -> str:
         """Return the name of the state to track the entities to use."""
         return self.name + "_lights"
-
-    def advanced_act_on(self) -> str:
-        """Return the details for the advanced act on pieces from the setup."""
-        return self.name + "_act_on"
 
     def advanced_state_check(self) -> str:
         """Return the advanced state check for the setup, defaults to STATE_ON."""

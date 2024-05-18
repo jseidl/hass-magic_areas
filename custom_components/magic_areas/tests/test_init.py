@@ -28,7 +28,7 @@ async def test_init_no_devices(
     manual_override_entity = hass.states.get(
         f"{SWITCH_DOMAIN}.area_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{BINARY_SENSOR_DOMAIN}.area_kitchen")
+    area_binary_sensor = hass.states.get(f"{DOMAIN}.area_kitchen")
     occupied_lights = hass.states.get(f"{LIGHT_DOMAIN}.extended_kitchen")
     extended_lights = hass.states.get(f"{LIGHT_DOMAIN}.occupied_kitchen")
 
@@ -62,7 +62,7 @@ async def test_init_with_lights(
     manual_override_entity = hass.states.get(
         f"{SWITCH_DOMAIN}.area_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{BINARY_SENSOR_DOMAIN}.area_kitchen")
+    area_binary_sensor = hass.states.get(f"{DOMAIN}.area_kitchen")
     occupied_lights = hass.states.get(f"{LIGHT_DOMAIN}.extended_kitchen")
     extended_lights = hass.states.get(f"{LIGHT_DOMAIN}.occupied_kitchen")
 

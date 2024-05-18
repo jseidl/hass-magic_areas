@@ -6,6 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import call_later
 
+from .add_entities_when_ready import add_entities_when_ready
 from .base.magic import MagicArea
 from .base.primitives import SwitchBase
 from .const import (
@@ -15,7 +16,6 @@ from .const import (
     ICON_LIGHT_CONTROL,
     ICON_PRESENCE_HOLD,
 )
-from .add_entities_when_ready import add_entities_when_ready
 
 
 async def async_setup_entry(

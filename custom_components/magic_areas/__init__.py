@@ -3,8 +3,15 @@
 from collections import defaultdict
 import logging
 
-from custom_components.magic_areas.base.magic import MagicArea, MagicMetaArea
-from custom_components.magic_areas.const import (
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.area_registry import async_get as async_get_ar
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .add_entities_when_ready import add_entities_when_ready
+from .base.magic import MagicArea, MagicMetaArea
+from .const import (
     CONF_ID,
     CONF_NAME,
     DATA_AREA_OBJECT,
@@ -15,18 +22,17 @@ from custom_components.magic_areas.const import (
     META_AREAS,
     MODULE_DATA,
 )
-from custom_components.magic_areas.util import get_meta_area_object
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.area_registry import async_get as async_get_ar
+from .util import get_meta_area_object
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = []
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+):
     """Set up the component."""
     data = hass.data.setdefault(MODULE_DATA, {})
     area_id = config_entry.data[CONF_ID]

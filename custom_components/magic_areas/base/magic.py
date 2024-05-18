@@ -1,5 +1,6 @@
 """The device setup for the magic areas."""
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 import logging
 
@@ -10,6 +11,7 @@ from custom_components.magic_areas.const import (
     AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
+    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
     CONF_INCLUDE_ENTITIES,
     CONF_TYPE,
     DATA_AREA_OBJECT,
@@ -30,6 +32,8 @@ from custom_components.magic_areas.util import (
     flatten_entity_list,
     is_entity_list,
 )
+from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
 from homeassistant.core import HomeAssistant
@@ -41,6 +45,21 @@ from homeassistant.helpers.entity_registry import (
 )
 from homeassistant.util import slugify
 from homeassistant.util.event_type import EventType
+
+
+@dataclass
+class StateConfigData:
+    """The read config data about the light for each state."""
+
+    group_entity_id: str
+    entity: str | None
+    entity_state_on: str
+    dim_level: int
+    for_state: AreaState
+    icon: str
+    manual_entity: str
+    control_entity: str
+    lights: list[str]
 
 
 class MagicArea(object):  # noqa: UP004
@@ -74,6 +93,7 @@ class MagicArea(object):  # noqa: UP004
 
         self.last_changed = datetime.now(UTC)
         self.state = AreaState.AREA_STATE_CLEAR
+        self._state_config: dict[AreaState, StateConfigData] = {}
 
         self.loaded_platforms = []
 
@@ -114,26 +134,17 @@ class MagicArea(object):  # noqa: UP004
         """IF the area is in the extended state."""
         return self.state == AreaState.AREA_STATE_EXTENDED
 
-    def state_config(self, state: AreaState | None = None) -> LightEntityConf | None:
+    def state_config(self, state: AreaState) -> StateConfigData | None:
         """Return the light entity config for the current state."""
-        if state is None:
-            return self._get_opts_from_state(self.state)
-        return self._get_opts_from_state(state)
+        return self._state_config[state]
 
-    def _get_opts_from_state(self, state: AreaState) -> LightEntityConf | None:
-        for lg in ALL_LIGHT_ENTITIES:
-            if lg.enable_state == state:
-                return lg
-        return None
+    def all_state_configs(self) -> dict[AreaState, StateConfigData]:
+        """Return the dictionary with all the currently configured state configs."""
+        return self._state_config
 
     def has_configured_state(self, state: AreaState) -> bool:
         """If the area has the specified configured state."""
-        state_opts = self._get_opts_from_state(state)
-
-        if not state_opts:
-            return False
-
-        return not state_opts.has_entity
+        return state in self._state_config
 
     def has_feature(self, feature: str) -> bool:
         """If the area has the specified feature."""
@@ -318,11 +329,37 @@ class MagicArea(object):  # noqa: UP004
 
         await self._load_entities()
 
+        await self._load_state_config()
+
         self._finalize_init()
 
     def has_entities(self, domain: str) -> bool:
         """Check and see if this areas has entites with the specified domain."""
         return domain in self.entities
+
+    async def _load_state_config(self) -> None:
+        light_entities = [e["entity_id"] for e in self.entities[LIGHT_DOMAIN]]
+
+        for lg in ALL_LIGHT_ENTITIES:
+            entity_ob: str | None = None
+            if lg.has_entity:
+                entity_ob = self.config.get(lg.entity_name())
+                if entity_ob is None:
+                    continue
+
+            self._state_config[lg.enable_state] = StateConfigData(
+                group_entity_id=f"{LIGHT_DOMAIN}.{lg.name.lower()}_{self.slug}",
+                entity=entity_ob,
+                entity_state_on=self.area.config.get(
+                    CONF_FEATURE_ADVANCED_LIGHT_GROUPS, {}
+                ).get(lg.advanced_state_check(), "on"),
+                dim_level=int(self.config.get(lg.state_dim_level(), 0)),
+                for_state=lg.enable_state,
+                icon=lg.icon,
+                control_entity=f"{SWITCH_DOMAIN}.area_light_control_{self.area.slug}",
+                manual_entity=f"{SWITCH_DOMAIN}.area_manual_override_active_{self.area.slug}",
+                lights=self.config.get(lg.lights_to_control(), light_entities),
+            )
 
 
 class MagicMetaArea(MagicArea):
