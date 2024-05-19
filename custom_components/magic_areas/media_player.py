@@ -18,11 +18,7 @@ from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, ST
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers.area_registry import AreaEntry, async_get as async_get_ar
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import (
-    async_track_state_change,
-    async_track_time_interval,
-    call_later,
-)
+from homeassistant.helpers.event import async_track_state_change
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .add_entities_when_ready import add_entities_when_ready
@@ -33,11 +29,9 @@ from .const import (
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
-    DATA_AREA_OBJECT,
     DEFAULT_NOTIFICATION_DEVICES,
     DEFAULT_NOTIFY_STATES,
     META_AREA_GLOBAL,
-    MODULE_DATA,
 )
 
 DEPENDENCIES = ["media_player"]
@@ -146,7 +140,8 @@ async def setup_area_aware_media_player(
 class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
     """Media player that is area aware."""
 
-    def __init__(self, area: MagicArea, areas: list[AreaEntry]):
+    def __init__(self, area: MagicArea, areas: list[AreaEntry]) -> None:
+        """Initialize the area aware media player."""
         super().__init__(area)
 
         self._name = "Area-Aware Media Player"

@@ -25,7 +25,6 @@ from custom_components.magic_areas.const import (
     META_AREA_GLOBAL,
     MODULE_DATA,
     AreaState,
-    LightEntityConf,
 )
 from custom_components.magic_areas.util import (
     areas_loaded,

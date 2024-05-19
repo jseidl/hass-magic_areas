@@ -1,46 +1,29 @@
 """Common code for running the tests."""
 
-from collections.abc import Generator, Sequence
+from asyncio import get_running_loop
+from collections.abc import Sequence
+import functools
 import logging
 import pathlib
-from typing import Any, NoReturn, TypeVar
+from typing import NoReturn
 from unittest.mock import Mock, patch
-from asyncio import get_running_loop
 
-import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 import voluptuous as vol
-import functools
 
-from custom_components.magic_areas.const import (
-    CONF_ID,
-    CONF_NAME,
-    CONF_UPDATE_INTERVAL,
-    DOMAIN,
-)
-from homeassistant import auth, bootstrap, config_entries, loader
-from homeassistant.components import light
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant import loader
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_OFF, Platform
 from homeassistant.core import (
-    CoreState,
-    Event,
     HomeAssistant,
     ServiceCall,
     ServiceResponse,
-    State,
     SupportsResponse,
     callback,
 )
-from homeassistant.helpers.area_registry import async_get as async_get_ar
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-from homeassistant.setup import async_setup_component
 
-from .mocks import MockEntity, MockLight, MockModule, MockPlatform
+from .mocks import MockModule, MockPlatform
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -136,9 +119,7 @@ def mock_platform(
     if domain not in integration_cache:
         mock_integration(hass, MockModule(domain), built_in=built_in)
 
-    integration_cache[domain]._top_level_files.add(
-        f"{platform_name}.py"
-    )  # noqa: SLF001
+    integration_cache[domain]._top_level_files.add(f"{platform_name}.py")  # noqa: SLF001
     _LOGGER.info("Adding mock integration platform: %s", platform_path)
     module_cache[platform_path] = module or Mock()
 
@@ -209,9 +190,7 @@ class VirtualClock:
             patch.object(
                 loop._selector,  # noqa: SLF001
                 "select",
-                new=functools.partial(
-                    self._virtual_select, loop._selector.select
-                ),  # noqa: SLF001
+                new=functools.partial(self._virtual_select, loop._selector.select),  # noqa: SLF001
             ),
             patch.object(
                 loop,

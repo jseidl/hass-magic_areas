@@ -16,7 +16,6 @@ from custom_components.magic_areas.const import (
     CONF_UPDATE_INTERVAL,
     DOMAIN,
 )
-from homeassistant.components import light
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
@@ -26,25 +25,14 @@ from homeassistant.components.light import (
     DOMAIN as LIGHT_DOMAIN,
     ColorMode,
 )
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    ATTR_DEVICE_CLASS,
-    ATTR_ENTITY_ID,
-    CONF_PLATFORM,
-    SERVICE_TURN_OFF,
-    STATE_OFF,
-    STATE_ON,
-    Platform,
-)
+from homeassistant.const import CONF_PLATFORM, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import async_get as async_get_er
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.setup import async_setup_component
 
 from .common import setup_test_component_platform
-from .mocks import MockBinarySensor, MockLight
+from .mocks import MockBinarySensor
 
 AREA_NAME = "kitchen"
 _LOGGER = logging.getLogger(__name__)

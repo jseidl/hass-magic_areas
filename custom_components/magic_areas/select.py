@@ -8,7 +8,6 @@ from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
 from homeassistant.core import HomeAssistant, State
-from homeassistant.helpers.dispatcher import dispatcher_send
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -18,7 +17,7 @@ from homeassistant.helpers.event import (
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicSelectEntity
-from .base.magic import MagicArea, StateConfigData
+from .base.magic import MagicArea
 from .const import (
     ATTR_ACTIVE_AREAS,
     ATTR_ACTIVE_SENSORS,
@@ -37,7 +36,6 @@ from .const import (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
-    DEFAULT_EXTENDED_TIMEOUT,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     INVALID_STATES,
     AreaState,

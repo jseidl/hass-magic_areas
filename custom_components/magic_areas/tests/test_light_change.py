@@ -1,7 +1,6 @@
 """Test for integration init."""
 
 import asyncio
-import contextlib
 import logging
 
 import pytest
@@ -15,8 +14,8 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_ON, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
-from .common import VirtualClock, async_mock_service
-from .mocks import MockBinarySensor, MockLight
+from .common import async_mock_service
+from .mocks import MockBinarySensor
 
 _LOGGER = logging.getLogger(__name__)
 
