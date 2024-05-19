@@ -5,11 +5,11 @@ import logging
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.magic_areas.const import DOMAIN
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.const import STATE_OFF
 from homeassistant.core import HomeAssistant
 
 from .mocks import MockLight
@@ -28,15 +28,17 @@ async def test_init_no_devices(
     manual_override_entity = hass.states.get(
         f"{SWITCH_DOMAIN}.area_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{DOMAIN}.area_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
     occupied_lights = hass.states.get(f"{LIGHT_DOMAIN}.extended_kitchen")
     extended_lights = hass.states.get(f"{LIGHT_DOMAIN}.occupied_kitchen")
+    clear_lights = hass.states.get(f"{LIGHT_DOMAIN}.clear_kitchen")
 
     assert control_entity is not None
     assert manual_override_entity is not None
     assert area_binary_sensor is not None
     assert occupied_lights is None
     assert extended_lights is None
+    assert clear_lights is None
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"
@@ -62,15 +64,17 @@ async def test_init_with_lights(
     manual_override_entity = hass.states.get(
         f"{SWITCH_DOMAIN}.area_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{DOMAIN}.area_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
     occupied_lights = hass.states.get(f"{LIGHT_DOMAIN}.extended_kitchen")
     extended_lights = hass.states.get(f"{LIGHT_DOMAIN}.occupied_kitchen")
+    clear_lights = hass.states.get(f"{LIGHT_DOMAIN}.clear_kitchen")
 
     assert control_entity is not None
     assert manual_override_entity is not None
     assert area_binary_sensor is not None
     assert occupied_lights is not None
     assert extended_lights is not None
+    assert clear_lights is not None
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"
@@ -97,7 +101,7 @@ async def test_init_with_lights_and_sensor(
     manual_override_entity = hass.states.get(
         f"{SWITCH_DOMAIN}.area_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{BINARY_SENSOR_DOMAIN}.area_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
     occupied_lights = hass.states.get(f"{LIGHT_DOMAIN}.extended_kitchen")
     extended_lights = hass.states.get(f"{LIGHT_DOMAIN}.occupied_kitchen")
 

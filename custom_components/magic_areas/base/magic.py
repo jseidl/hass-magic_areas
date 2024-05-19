@@ -51,6 +51,7 @@ from homeassistant.util.event_type import EventType
 class StateConfigData:
     """The read config data about the light for each state."""
 
+    name: str
     group_entity_id: str
     entity: str | None
     entity_state_on: str
@@ -338,7 +339,9 @@ class MagicArea(object):  # noqa: UP004
         return domain in self.entities
 
     async def _load_state_config(self) -> None:
-        light_entities = [e["entity_id"] for e in self.entities[LIGHT_DOMAIN]]
+        light_entities = []
+        if LIGHT_DOMAIN in self.entities:
+            light_entities = [e["entity_id"] for e in self.entities[LIGHT_DOMAIN]]
 
         for lg in ALL_LIGHT_ENTITIES:
             entity_ob: str | None = None
@@ -348,17 +351,20 @@ class MagicArea(object):  # noqa: UP004
                     continue
 
             self._state_config[lg.enable_state] = StateConfigData(
+                name=lg.name,
                 group_entity_id=f"{LIGHT_DOMAIN}.{lg.name.lower()}_{self.slug}",
                 entity=entity_ob,
-                entity_state_on=self.area.config.get(
+                entity_state_on=self.config.get(
                     CONF_FEATURE_ADVANCED_LIGHT_GROUPS, {}
                 ).get(lg.advanced_state_check(), "on"),
-                dim_level=int(self.config.get(lg.state_dim_level(), 0)),
+                dim_level=int(
+                    self.config.get(lg.state_dim_level(), lg.default_dim_level)
+                ),
                 for_state=lg.enable_state,
                 icon=lg.icon,
-                control_entity=f"{SWITCH_DOMAIN}.area_light_control_{self.area.slug}",
-                manual_entity=f"{SWITCH_DOMAIN}.area_manual_override_active_{self.area.slug}",
-                lights=self.config.get(lg.lights_to_control(), light_entities),
+                control_entity=f"{SWITCH_DOMAIN}.area_light_control_{self.slug}",
+                manual_entity=f"{SWITCH_DOMAIN}.area_manual_override_active_{self.slug}",
+                lights=self.config.get(lg.advanced_lights_to_control(), light_entities),
             )
 
 

@@ -7,13 +7,14 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.magic_areas.const import (
+    CONF_CLEAR_TIMEOUT,
+    CONF_EXTENDED_TIMEOUT,
     CONF_ID,
     CONF_NAME,
     CONF_ON_STATES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_UPDATE_INTERVAL,
     DOMAIN,
-    CONF_CLEAR_TIMEOUT,
 )
 from homeassistant.components import light
 from homeassistant.components.binary_sensor import (
@@ -30,10 +31,10 @@ from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
     CONF_PLATFORM,
+    SERVICE_TURN_OFF,
     STATE_OFF,
     STATE_ON,
     Platform,
-    SERVICE_TURN_OFF,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
@@ -68,6 +69,25 @@ def mock_config_entry() -> MockConfigEntry:
         CONF_PRESENCE_SENSOR_DEVICE_CLASS: [BinarySensorDeviceClass.MOTION],
         CONF_ON_STATES: [STATE_ON],
         CONF_CLEAR_TIMEOUT: 3,
+        CONF_EXTENDED_TIMEOUT: 2,
+    }
+    return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="config_entry_entities")
+def mock_config_entry_entities() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = {
+        CONF_NAME: AREA_NAME,
+        CONF_ID: AREA_NAME,
+        CONF_UPDATE_INTERVAL: 60,
+        CONF_PRESENCE_SENSOR_DEVICE_CLASS: [BinarySensorDeviceClass.MOTION],
+        CONF_ON_STATES: [STATE_ON],
+        CONF_CLEAR_TIMEOUT: 30,
+        CONF_EXTENDED_TIMEOUT: 20,
+        "bright_entity": "binary_sensor.bright",
+        "accented_entity": "binary_sensor.accent",
+        "sleep_entity": "binary_sensor.sleep",
     }
     return MockConfigEntry(domain=DOMAIN, data=data)
 
@@ -81,7 +101,25 @@ async def setup_one_sensor(hass: HomeAssistant) -> list[MockBinarySensor]:
             is_on=True,
             unique_id="unique_motion",
             device_class=BinarySensorDeviceClass.MOTION,
-        )
+        ),
+        MockBinarySensor(
+            name="sleep",
+            is_on=True,
+            unique_id="sleep",
+            device_class=BinarySensorDeviceClass.BATTERY,
+        ),
+        MockBinarySensor(
+            name="bright",
+            is_on=True,
+            unique_id="bright",
+            device_class=BinarySensorDeviceClass.BATTERY,
+        ),
+        MockBinarySensor(
+            name="accent",
+            is_on=True,
+            unique_id="accent",
+            device_class=BinarySensorDeviceClass.BATTERY,
+        ),
     ]
     setup_test_component_platform(
         hass, BINARY_SENSOR_DOMAIN, mock_binary_sensor_entities
@@ -173,5 +211,19 @@ async def setup_integration(
     registry.async_get_or_create(AREA_NAME)
 
     config_entry.add_to_hass(hass)
+    assert await async_setup_component(hass, DOMAIN, {})
+    await hass.async_block_till_done()
+
+
+@pytest.fixture(name="_setup_integration_entities")
+async def setup_entities_integration(
+    hass: HomeAssistant,
+    config_entry_entities: MockConfigEntry,
+) -> None:
+    """Set up the integration."""
+    registry = async_get_ar(hass)
+    registry.async_get_or_create(AREA_NAME)
+
+    config_entry_entities.add_to_hass(hass)
     assert await async_setup_component(hass, DOMAIN, {})
     await hass.async_block_till_done()

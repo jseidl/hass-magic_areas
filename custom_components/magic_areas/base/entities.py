@@ -1,6 +1,6 @@
 """The basic entities for magic areas."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 import logging
 from statistics import mean
 
@@ -15,6 +15,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.components.group.light import LightGroup
+from homeassistant.components.select import SelectEntity
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_OFF, STATE_ON
@@ -23,7 +24,6 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
-from homeassistant.components.select import SelectEntity
 
 from .magic import MagicArea
 

@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
 from homeassistant.core import HomeAssistant, State
@@ -23,6 +24,7 @@ from .const import (
     ATTR_ACTIVE_SENSORS,
     ATTR_AREAS,
     ATTR_CLEAR_TIMEOUT,
+    ATTR_EXTENDED_TIMEOUT,
     ATTR_LAST_ACTIVE_SENSORS,
     ATTR_PRESENCE_SENSORS,
     ATTR_STATE,
@@ -37,7 +39,6 @@ from .const import (
     CONF_UPDATE_INTERVAL,
     DEFAULT_EXTENDED_TIMEOUT,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
-    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     INVALID_STATES,
     AreaState,
 )
@@ -73,6 +74,7 @@ class AreaStateSelect(MagicSelectEntity):
 
         self.last_off_time = datetime.now(UTC)
         self._clear_timeout_callback = None
+        self._extended_timeout_callback = None
         self._attributes = {}
         self.sensors = []
         self._mode = "some"
@@ -127,22 +129,24 @@ class AreaStateSelect(MagicSelectEntity):
         )
 
         # Track secondary states
-        for _state, conf in self.area.all_state_configs():
-            if not conf.has_entity:
+        for state in self.area.all_state_configs():
+            conf = self.area.all_state_configs()[state]
+
+            if not conf.entity:
                 continue
 
-            self.logger.debug("Secondary state tracking: %s", conf.entity)
+            self.logger.debug("State entity tracking: %s", conf.entity)
 
             self.async_on_remove(
                 async_track_state_change(
-                    self.hass, conf.entity, self._secondary_state_change
+                    self.hass, conf.entity, self._group_entity_state_change
                 )
             )
 
         # Timed self update
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
         self.async_on_remove(
-            async_track_time_interval(self.hass, self._refresh_states, delta)
+            async_track_time_interval(self.hass, self._update_state, delta)
         )
 
     def _load_presence_sensors(self) -> None:
@@ -150,7 +154,7 @@ class AreaStateSelect(MagicSelectEntity):
             # MetaAreas track their children
             child_areas = self.area.get_child_areas()
             for child_area in child_areas:
-                entity_id = f"{BINARY_SENSOR_DOMAIN}.area_{child_area}"
+                entity_id = f"{SELECT_DOMAIN}.area_{child_area}"
                 self.sensors.append(entity_id)
             return
 
@@ -204,6 +208,7 @@ class AreaStateSelect(MagicSelectEntity):
     def _update_attributes(self):
         self._attributes[ATTR_STATE] = self.area.state
         self._attributes[ATTR_CLEAR_TIMEOUT] = self._get_clear_timeout()
+        self._attributes[ATTR_EXTENDED_TIMEOUT] = self._get_extended_timeout()
 
         if self.area.is_meta():
             self._attributes[ATTR_ACTIVE_AREAS] = self.area.get_active_areas()
@@ -213,28 +218,50 @@ class AreaStateSelect(MagicSelectEntity):
     def get_current_area_state(self) -> AreaState:
         """Get the current state for the area based on the various entities and controls."""
         # Get Main occupancy state
-        occupied_state = self._get_occupancy_state()
+        occupied_state = self._get_sensors_state()
 
         seconds_since_last_change = (
             datetime.now(UTC) - self.area.last_changed
         ).total_seconds()
 
-        extended_time = self.area.config.get(
-            CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT
+        extended_timeout = self._get_extended_timeout()
+        clear_timeout = self._get_clear_timeout()
+        _LOGGER.debug(
+            "Update state seconds since %s timout %s, extended %s, is_on_clear %s, is_on_extended %s",
+            seconds_since_last_change,
+            clear_timeout,
+            extended_timeout,
+            self._is_on_clear_timeout(),
+            self._is_on_extended_timeout(),
         )
         if not occupied_state:
-            if seconds_since_last_change <= extended_time:
+            if not self._is_on_clear_timeout():
+                self._set_clear_timeout()
+            if seconds_since_last_change >= clear_timeout:
+                if seconds_since_last_change >= extended_timeout:
+                    self._remove_extended_timeout()
+                    return AreaState.AREA_STATE_CLEAR
+                _LOGGER.debug("Clearing teimput, state extended")
+                self._remove_clear_timeout()
+                if not self._is_on_extended_timeout():
+                    self._set_extended_timeout()
                 return AreaState.AREA_STATE_EXTENDED
-            return AreaState.AREA_STATE_CLEAR
+        else:
+            self._remove_clear_timeout()
+            self._remove_extended_timeout()
 
         # If it is not occupied, then set the override state or leave as just occupied.
-        state = AreaState.AREA_STATE_OCCUPIED
+        new_state = AreaState.AREA_STATE_OCCUPIED
 
-        for state, conf in self.area.all_state_configs():
+        for state in self.area.all_state_configs():
+            conf = self.area.all_state_configs()[state]
             if conf.entity is None:
                 continue
 
             entity = self.hass.states.get(conf.entity)
+
+            if entity is None:
+                continue
 
             if entity.state.lower() == conf.entity_state_on:
                 self.logger.debug(
@@ -242,37 +269,13 @@ class AreaStateSelect(MagicSelectEntity):
                     self.area.name,
                     conf.entity,
                     conf.entity_state_on,
-                    conf.enable_state,
+                    conf.for_state,
                 )
-                state = conf.enable_state
+                new_state = conf.for_state
 
-        return state
+        return new_state
 
-    def _get_occupancy_state(self) -> AreaState:
-        valid_on_states = (
-            [STATE_ON] if self.area.is_meta() else self.area.config.get(CONF_ON_STATES)
-        )
-        area_state = self.get_sensors_state(valid_states=valid_on_states)
-
-        if not area_state:
-            if not self.area.is_occupied():
-                return False
-
-            if self._is_on_clear_timeout():
-                self.logger.debug("%s: Area is on timeout", self.area.name)
-                if self._timeout_exceeded():
-                    return False
-            else:
-                self.logger.debug(
-                    "%s: Area not on timeout, setting call_later", self.area.name
-                )
-                self._set_clear_timeout()
-        else:
-            self._remove_clear_timeout()
-
-        return True
-
-    def _update_state(self):
+    def _update_state(self, extra=None) -> None:
         last_state = self.area.state
         new_state = self.get_current_area_state()
 
@@ -289,38 +292,21 @@ class AreaStateSelect(MagicSelectEntity):
 
         # Update the state so the on/off works correctly.
         self.area.state = new_state
+        self._attr_current_option = new_state
+
+        self._update_attributes()
+        self.schedule_update_ha_state()
 
         self.logger.debug(
-            "%s: States updated. New states: %s / Last states: %s",
+            "Reporting state change for %s (new state: %s/last state: %s)",
             self.area.name,
             new_state,
             last_state,
         )
 
-        self._update_attributes()
-        self.schedule_update_ha_state()
-
-        self._report_state_change(
-            (new_state, last_state, self.area.state_config(last_state))
-        )
-
-    def _report_state_change(
-        self, states_tuple: tuple[AreaState, AreaState, StateConfigData | None]
-    ):
-        new_states, lost_states = states_tuple
-        self.logger.debug(
-            "Reporting state change for %s (new state: %s/last state: %s)",
-            self.area.name,
-            new_states,
-            lost_states,
-        )
-        dispatcher_send(
-            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area.id, states_tuple
-        )
-
-    def _secondary_state_change(
+    def _group_entity_state_change(
         self, entity_id: str, from_state: State, to_state: State
-    ):
+    ) -> None:
         self.logger.debug(
             "%s: Secondary state change: entity '%s' changed to %s",
             self.area.name,
@@ -341,44 +327,75 @@ class AreaStateSelect(MagicSelectEntity):
 
     ###       Clearing
 
-    def _get_clear_timeout(self):
-        return self.area.config.get(CONF_CLEAR_TIMEOUT)
+    def _get_clear_timeout(self) -> int:
+        return int(self.area.config.get(CONF_CLEAR_TIMEOUT, 60))
 
-    def _set_clear_timeout(self):
-        if not self.area.is_occupied():
-            return False
+    def _set_clear_timeout(self) -> None:
+        if self._clear_timeout_callback:
+            self._remove_clear_timeout()
 
         timeout = self._get_clear_timeout()
 
         self.logger.debug("%s: Scheduling clear in %s seconds", self.area.name, timeout)
         self._clear_timeout_callback = call_later(
-            self.hass, timeout, self._refresh_states
+            self.hass, timeout, self._update_state
         )
 
-    def _remove_clear_timeout(self):
+    def _remove_clear_timeout(self) -> None:
         if not self._clear_timeout_callback:
             return False
+
+        self.logger.debug(
+            "%s: Clearing timeout",
+            self.area.name,
+        )
 
         self._clear_timeout_callback()
         self._clear_timeout_callback = None
 
-    def _is_on_clear_timeout(self):
+    def _is_on_clear_timeout(self) -> None:
         return self._clear_timeout_callback is not None
+
+    ###       Extended
+
+    def _get_extended_timeout(self) -> int:
+        return (
+            int(self.area.config.get(CONF_EXTENDED_TIMEOUT, 60))
+            + self._get_clear_timeout()
+        )
+
+    def _set_extended_timeout(self) -> None:
+        if self._extended_timeout_callback:
+            self._remove_extended_timeout()
+
+        timeout = self._get_extended_timeout()
+
+        self.logger.debug(
+            "%s: Scheduling extended in %s seconds", self.area.name, timeout
+        )
+        self._extended_timeout_callback = call_later(
+            self.hass, timeout, self._update_state
+        )
+
+    def _remove_extended_timeout(self) -> None:
+        if not self._extended_timeout_callback:
+            return False
+
+        self._extended_timeout_callback()
+        self._extended_timeout_callback = None
+
+    def _is_on_extended_timeout(self) -> None:
+        return self._extended_timeout_callback is not None
 
     #### Sensor controls.
 
-    def _refresh_states(self, next_interval: int):
-        self.logger.debug("Refreshing sensor states %s", self.name)
-        return self._update_state()
-
-    def _timeout_exceeded(self):
+    def _clear_timeout_exceeded(self) -> bool:
         if not self.area.is_occupied():
             return False
 
         clear_delta = timedelta(seconds=self._get_clear_timeout())
 
-        last_clear = self.last_off_time
-        clear_time = last_clear + clear_delta
+        clear_time = self.last_off_time + clear_delta
         time_now = datetime.now(UTC)
 
         if time_now >= clear_time:
@@ -388,9 +405,27 @@ class AreaStateSelect(MagicSelectEntity):
 
         return False
 
-    def _sensor_state_change(self, entity_id: str, from_state: State, to_state: State):
+    def _extended_timeout_exceeded(self) -> bool:
+        if not self.area.is_occupied():
+            return False
+
+        extended_delta = timedelta(seconds=self._get_extended_timeout())
+
+        extended_time = self.last_off_time + extended_delta
+        time_now = datetime.now(UTC)
+
+        if time_now >= extended_time:
+            self.logger.debug("%s: Extended Timeout exceeded", self.area.name)
+            self._remove_extended_timeout()
+            return True
+
+        return False
+
+    def _sensor_state_change(
+        self, entity_id: str, from_state: State, to_state: State
+    ) -> None:
         """Actions when the sensor state has changed."""
-        _LOGGER.warning(
+        _LOGGER.debug(
             "Sensor state change %s from %s to %s", entity_id, from_state, to_state
         )
         if not to_state:
@@ -413,12 +448,21 @@ class AreaStateSelect(MagicSelectEntity):
             return
 
         if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
+            _LOGGER.debug("Setting last off time")
             self.last_off_time = datetime.now(UTC)  # Update last_off_time
+            # Clear the timeout
+            self._remove_clear_timeout()
 
-        return self._update_state()
+        self._update_state()
 
-    def _get_sensors_state(self, valid_states: list | None = None) -> bool:
+    def _get_sensors_state(self) -> bool:
         """Get the current state of the sensor."""
+        valid_states = (
+            [STATE_ON]
+            if self.area.is_meta()
+            else self.area.config.get(CONF_ON_STATES, [STATE_ON])
+        )
+
         self.logger.debug(
             "[Area: %s] Updating state. (Valid states: %s)",
             self.area.slug,

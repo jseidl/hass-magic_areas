@@ -390,9 +390,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 _LOGGER.warning("Unexpected error caught: %s", str(e))
             else:
                 _LOGGER.debug("Saving area base config: %s", self.area_options)
-                if self.area.is_meta():
-                    return await self.async_step_select_features()
-                return await self.async_step_secondary_states()
+                return await self.async_step_select_features()
 
         icon_selector = selector({"icon": {"placeholder": DEFAULT_ICON}})
 
@@ -435,54 +433,18 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         option_keys = [option[0] for option in options]
         for option_key in option_keys:
             selectors[option_key] = all_selectors[option_key]
+        if not self.area.is_meta():
+            for lg in ALL_LIGHT_ENTITIES:
+                options = options.append(lg.config_flow_schema())
+                selectors = selectors.append(lg.config_flow_selectors())
 
+        _LOGGER.warning("Froggy %s", options)
+        _LOGGER.warning("Womble %s", selectors)
         data_schema = self._build_options_schema(options=options, selectors=selectors)
 
         return self.async_show_form(
             step_id="area_config",
             data_schema=data_schema,
-            errors=errors,
-        )
-
-    async def async_step_secondary_states(
-        self, user_input: dict[str, Any] | None = None
-    ):
-        """Gather secondary states settings for the area."""
-        errors = {}
-        if user_input is not None:
-            _LOGGER.debug("Validating area secondary states config: %s", user_input)
-            AREA_state_schema = SECONDARY_STATES_SCHEMA
-            try:
-                self.area_options[CONF_SECONDARY_STATES].update(
-                    AREA_state_schema(user_input)
-                )
-            except vol.MultipleInvalid as validation:
-                errors = {error.path[0]: error.msg for error in validation.errors}
-                _LOGGER.debug("Found the following errors: %s", errors)
-            except Exception as e:
-                _LOGGER.warning("Unexpected error caught: %s", str(e))
-            else:
-                _LOGGER.debug(
-                    "Saving area secondary state config: %s", self.area_options
-                )
-                return await self.async_step_select_features()
-
-        return self.async_show_form(
-            step_id="secondary_states",
-            data_schema=self._build_options_schema(
-                options=[*(lg.config_flow_options() for lg in ALL_LIGHT_ENTITIES)],
-                saved_options=self.config_entry.options.get(CONF_SECONDARY_STATES, {}),
-                dynamic_validators={
-                    k: v
-                    for lg in ALL_LIGHT_ENTITIES
-                    for k, v in lg.config_flow_dynamic_validators().items()
-                },
-                selectors={
-                    k: v
-                    for lg in ALL_LIGHT_ENTITIES
-                    for k, v in lg.config_flow_selectors().items()
-                },
-            ),
             errors=errors,
         )
 

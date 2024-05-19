@@ -2,9 +2,33 @@
 
 import logging
 
-from custom_components.magic_areas.base.entities import MagicEntity
-from custom_components.magic_areas.base.magic import MagicArea
-from custom_components.magic_areas.const import (
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.group.media_player import MediaPlayerGroup
+from homeassistant.components.media_player import (
+    ATTR_MEDIA_CONTENT_ID,
+    ATTR_MEDIA_CONTENT_TYPE,
+    DOMAIN as MEDIA_PLAYER_DOMAIN,
+    SERVICE_PLAY_MEDIA,
+    MediaPlayerEntity,
+    MediaPlayerEntityFeature,
+)
+from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, STATE_ON
+from homeassistant.core import HomeAssistant, State
+from homeassistant.helpers.area_registry import AreaEntry, async_get as async_get_ar
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import (
+    async_track_state_change,
+    async_track_time_interval,
+    call_later,
+)
+from homeassistant.helpers.restore_state import RestoreEntity
+
+from .add_entities_when_ready import add_entities_when_ready
+from .base.entities import MagicEntity
+from .base.magic import MagicArea
+from .const import (
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_NOTIFICATION_DEVICES,
@@ -12,32 +36,9 @@ from custom_components.magic_areas.const import (
     DATA_AREA_OBJECT,
     DEFAULT_NOTIFICATION_DEVICES,
     DEFAULT_NOTIFY_STATES,
-    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
-from custom_components.magic_areas.add_entities_when_ready import (
-    add_entities_when_ready,
-)
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.group.media_player import MediaPlayerGroup
-from homeassistant.components.media_player import (
-    DOMAIN as MEDIA_PLAYER_DOMAIN,
-    SERVICE_PLAY_MEDIA,
-    MediaPlayerEntity,
-    MediaPlayerEntityFeature,
-)
-from homeassistant.components.media_player.const import (
-    ATTR_MEDIA_CONTENT_ID,
-    ATTR_MEDIA_CONTENT_TYPE,
-)
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, STATE_ON
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.area_registry import AreaEntry, async_get as async_get_ar
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.restore_state import RestoreEntity
 
 DEPENDENCIES = ["media_player"]
 
@@ -313,7 +314,9 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
             f"Media Player group {self._name} created with entities: {self._entities}"
         )
 
-    def area_state_changed(self, area_id, states_tuple):
+    def _area_state_changed(
+        self, entity_id: str, from_state: State, to_state: State
+    ) -> None:
         new_states, lost_states = states_tuple
 
         if area_id != self.area.id:
@@ -337,8 +340,11 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
 
-        async_dispatcher_connect(
-            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed
+        self.async_on_remove(
+            async_track_state_change(
+                self.hass,
+                [f"{SELECT_DOMAIN}.area_{self.area.slug}"],
+                self._area_state_change,
+            )
         )
-
         await super().async_added_to_hass()

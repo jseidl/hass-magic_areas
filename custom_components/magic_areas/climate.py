@@ -73,7 +73,6 @@ from .const import (
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_FEATURE_CLIMATE_GROUPS,
     DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
-    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     AreaState,
 )
 
@@ -442,13 +441,3 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
             self.hass.services.call(CLIMATE_DOMAIN, SERVICE_SET_HVAC_MODE, service_data)
             break
-
-    async def async_added_to_hass(self) -> None:
-        """Register callbacks."""
-
-        if not self.area.is_meta():
-            async_dispatcher_connect(
-                self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed
-            )
-
-        await super().async_added_to_hass()

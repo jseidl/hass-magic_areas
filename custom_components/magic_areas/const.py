@@ -42,9 +42,6 @@ MODULE_DATA = f"{DOMAIN}_data"
 EVENT_MAGICAREAS_STARTED = "magicareas_start"
 EVENT_MAGICAREAS_READY = "magicareas_ready"
 EVENT_MAGICAREAS_AREA_READY = "magicareas_area_ready"
-EVENT_MAGICAREAS_AREA_OCCUPIED = "magicareas_area_occupied"
-EVENT_MAGICAREAS_AREA_CLEAR = "magicareas_area_clear"
-EVENT_MAGICAREAS_AREA_STATE_CHANGED = "magicareas_area_state_changed"
 
 ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]
 
@@ -60,6 +57,7 @@ ATTR_ACTIVE_AREAS = "active_areas"
 ATTR_TYPE = "type"
 ATTR_UPDATE_INTERVAL = "update_interval"
 ATTR_CLEAR_TIMEOUT = "clear_timeout"
+ATTR_EXTENDED_TIMEOUT = "extended_timeout"
 ATTR_ACTIVE_SENSORS = "active_sensors"
 ATTR_LAST_ACTIVE_SENSORS = "last_active_sensors"
 ATTR_FEATURES = "features"
@@ -182,6 +180,7 @@ CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
 )  # cv.positive_int
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
 CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT = "clear_timeout", 60  # cv.positive_int
+CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT = "manual_timeout", 60  # cv.positive_int
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
 CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
 CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (
@@ -223,7 +222,7 @@ class LightEntityConf:
         """Return the name in the state to lookup the dim level."""
         return self.name + "_state_dim"
 
-    def lights_to_control(self) -> str:
+    def advanced_lights_to_control(self) -> str:
         """Return the name of the state to track the entities to use."""
         return self.name + "_lights"
 
@@ -238,19 +237,15 @@ class LightEntityConf:
     def config_flow_schema(self) -> vol.Schema:
         """Return the options for the schema for the magic areas."""
         return {
-            vol.Optional(self.entity_name(), default=[]): cv.entity_id,
+            vol.Optional(self.entity_name(), default=""): cv.entity_id,
             vol.Optional(self.state_dim_level(), default=self.default_dim_level): int,
-            vol.Optional(self.lights_to_control(), default=[]): cv.entity_ids,
         }
 
-    def config_flow_dynamic_validators(
-        self, all_entities: list[str], all_lights: list[str]
-    ) -> dict:
+    def config_flow_dynamic_validators(self, all_entities: list[str]) -> dict:
         """Return the dynamic validators to use in the config flow."""
         return {
             self.entity_name(): vol.In(["", *all_entities]),
             self.state_dim_level(): vol.Range(min=0, max=100),
-            self.lights_to_control(): cv.multi_select(all_entities),
         }
 
     def config_flow_selectors(self, all_entities: list[str]) -> dict:
@@ -270,36 +265,32 @@ class LightEntityConf:
                     }
                 }
             ),
-            self.lights_to_control(): NullableEntitySelector(
-                EntitySelectorConfig(include_entities=all_entities, multiple=True)
-            ),
         }
 
     def advanced_config_flow_schema(self) -> vol.Schema:
         """Return the options for the schema for the magic areas."""
         return {
-            vol.Optional(
-                self.advanced_act_on(),
-                default=[ActOn.OCCUPANCY_CHANGE, ActOn.STATE_CHANGE],
-            ): cv.ensure_list,
+            vol.Optional(self.advanced_lights_to_control(), default=[]): cv.entity_ids,
             vol.Optional(self.advanced_state_check(), default=[STATE_ON]): str,
             vol.Optional(
                 self.advanced_activate_states(), default=[self.enable_state]
             ): cv.ensure_list,
         }
 
-    def advanced_config_flow_dynamic_validators(self) -> dict:
+    def advanced_config_flow_dynamic_validators(self, all_lights: list[str]) -> dict:
         """Return the dynamic validators to use in the config flow."""
         return {
-            self.advanced_act_on(): vol.In(),
+            self.advanced_lights_to_control(): cv.multi_select(all_lights),
             self.advanced_state_check(): str,
             self.advanced_activate_states(): [vol.In(list(AreaState))],
         }
 
-    def advanced_config_flow_selectors(self) -> dict:
+    def advanced_config_flow_selectors(self, all_lights: list[str]) -> dict:
         """Return the config for the main section with the timeouts and name bits."""
         return {
-            self.advanced_act_on(): cv.multi_select(list(ActOn)),
+            self.advanced_lights_to_control(): NullableEntitySelector(
+                EntitySelectorConfig(include_entities=all_lights, multiple=True)
+            ),
             self.advanced_state_check(): cv.string,
             self.advanced_activate_states(): cv.multi_select(list(AreaState)),
         }
@@ -329,7 +320,7 @@ sleep_lights = LightEntityConf(
 )
 occupied_lights = LightEntityConf(
     name="occupied",
-    default_dim_level=30,
+    default_dim_level=100,
     enable_state=AreaState.AREA_STATE_OCCUPIED,
     icon="mdi:desk-lamp",
     has_entity=False,

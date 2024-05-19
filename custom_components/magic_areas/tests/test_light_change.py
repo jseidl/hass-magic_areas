@@ -8,8 +8,8 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.magic_areas.const import DOMAIN
-from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_ON, STATE_OFF, STATE_ON
@@ -30,7 +30,6 @@ async def test_light_on_off(
     _setup_integration,
     automated: bool,
     state: str,
-    event_loop_policy,
 ) -> None:
     """Test loading the integration."""
     assert config_entry.state is ConfigEntryState.LOADED
@@ -85,13 +84,77 @@ async def test_light_on_off(
     # Delay for a while and it should go into extended mode.
     one_motion[0].turn_off()
     await hass.async_block_till_done()
-    await asyncio.sleep(5)
+    await asyncio.sleep(4)
     await hass.async_block_till_done()
     area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
-    assert area_binary_sensor.state == STATE_OFF
+    assert area_binary_sensor.state == "extended"
+    await asyncio.sleep(3)
+    await hass.async_block_till_done()
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
+    assert area_binary_sensor.state == "clear"
 
     await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done()
 
     assert not hass.data.get(DOMAIN)
     assert config_entry.state is ConfigEntryState.NOT_LOADED
+
+
+async def test_light_entity_change(
+    hass: HomeAssistant,
+    config_entry_entities: MockConfigEntry,
+    one_light: list[str],
+    one_motion: list[MockBinarySensor],
+    _setup_integration_entities,
+) -> None:
+    """Test loading the integration."""
+    assert config_entry_entities.state is ConfigEntryState.LOADED
+
+    # Validate the right enties were created.
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
+    service_data = {
+        ATTR_ENTITY_ID: f"{SWITCH_DOMAIN}.area_light_control_kitchen",
+    }
+    await hass.services.async_call(SWITCH_DOMAIN, SERVICE_TURN_ON, service_data)
+
+    calls = async_mock_service(hass, LIGHT_DOMAIN, "turn_on")
+    await hass.async_block_till_done()
+
+    # Reload the sensors and they should have changed.
+    one_motion[0].turn_on()
+    await hass.async_block_till_done()
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
+    assert area_binary_sensor.state == "occupied"
+    assert len(calls) == 1
+    assert calls[0].data == {
+        "entity_id": f"{LIGHT_DOMAIN}.occupied_kitchen",
+        "brightness": 255,
+    }
+    assert calls[0].service == SERVICE_TURN_ON
+    await hass.async_block_till_done()
+
+    # Set the sleep entity on.
+    one_motion[1].turn_on()
+    await hass.async_block_till_done()
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
+    assert area_binary_sensor.state == "sleep"
+
+    # Set the bright entity on.
+    one_motion[1].turn_off()
+    one_motion[2].turn_on()
+    await hass.async_block_till_done()
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
+    assert area_binary_sensor.state == "bright"
+
+    # Set the bright entity on.
+    one_motion[2].turn_off()
+    one_motion[3].turn_on()
+    await hass.async_block_till_done()
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
+    assert area_binary_sensor.state == "accented"
+
+    await hass.config_entries.async_unload(config_entry_entities.entry_id)
+    await hass.async_block_till_done()
+
+    assert not hass.data.get(DOMAIN)
+    assert config_entry_entities.state is ConfigEntryState.NOT_LOADED
