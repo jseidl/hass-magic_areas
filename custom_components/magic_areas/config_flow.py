@@ -45,7 +45,6 @@ from .const import (
     CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_HOLD_TIMEOUT,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
-    CONF_SECONDARY_STATES,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     CONFIG_FLOW_ENTITY_FILTER_EXT,
@@ -60,13 +59,13 @@ from .const import (
     NON_CONFIGURABLE_FEATURES_META,
     OPTIONS_AGGREGATES,
     OPTIONS_AREA,
+    OPTIONS_AREA_ADVANCED,
     OPTIONS_AREA_AWARE_MEDIA_PLAYER,
     OPTIONS_AREA_META,
     OPTIONS_CLIMATE_GROUP,
     OPTIONS_CLIMATE_GROUP_META,
     OPTIONS_PRESENCE_HOLD,
     REGULAR_AREA_SCHEMA,
-    SECONDARY_STATES_SCHEMA,
     AreaState,
 )
 from .nullable_entity_selector import NullableEntitySelector
@@ -124,7 +123,7 @@ class ConfigBase:
         return selector(
             {
                 "number": {
-                    "initial": initial,
+                    # "initial": initial,
                     "min": min,
                     "max": max,
                     "mode": mode,
@@ -135,7 +134,7 @@ class ConfigBase:
 
     def _build_options_schema(
         self,
-        options: list[str],
+        options: list[tuple[str, any, any]],
         saved_options: list[str] | None = None,
         dynamic_validators: dict | None = None,
         selectors: dict | None = None,
@@ -161,11 +160,9 @@ class ConfigBase:
                     )
                 },
                 default=default,
-            ): (
-                selectors[name]
-                if name in selectors
-                else dynamic_validators.get(name, validation)
-            )
+            ): selectors[name]
+            if name in (selectors or [])
+            else (dynamic_validators or {}).get(name, validation)
             for name, default, validation in options
         }
 
@@ -242,6 +239,8 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
                     "Meta area %s found, setting correct type", area_object.name
                 )
                 config_entry.update({CONF_TYPE: AREA_TYPE_META})
+            else:
+                config_entry.update({CONF_TYPE: "interior"})
 
             return self.async_create_entry(
                 title=user_input[CONF_NAME], data=config_entry
@@ -357,6 +356,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 if entity["entity_id"] in self.all_entities
             )
         )
+        _LOGGER.debug("Check area config: %s", self.config_entry.options)
 
         return await self.async_step_area_config()
 
@@ -367,7 +367,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         for item in raw_list:
             if isinstance(item, list):
                 for item_child in item:
-                    resolved_list.append(item_child)
+                    resolved_list = [*resolved_list, *item_child]
                 continue
             resolved_list.append(item)
 
@@ -376,6 +376,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
     async def async_step_area_config(self, user_input: str | None = None) -> None:
         """Gather basic settings for the area."""
         errors = {}
+        _LOGGER.debug("Options in user entry: %s", user_input)
+
         if user_input is not None:
             _LOGGER.debug("Validating area base config: %s", user_input)
             area_schema = (
@@ -385,7 +387,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 self.area_options = area_schema(user_input)
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
-                _LOGGER.debug("Found the following errors: %s", errors)
+                _LOGGER.debug(
+                    "Found the following errors: %s (((%s)))", errors, user_input
+                )
             except Exception as e:
                 _LOGGER.warning("Unexpected error caught: %s", str(e))
             else:
@@ -401,30 +405,25 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             CONF_ICON: icon_selector,
             CONF_UPDATE_INTERVAL: self._build_selector_number(),
             CONF_CLEAR_TIMEOUT: self._build_selector_number(),
+            CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(
+                self.all_entities, multiple=True
+            ),
+            CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(
+                self.all_area_entities, multiple=True
+            ),
+            CONF_ON_STATES: self._build_selector_select(
+                sorted(AVAILABLE_ON_STATES), multiple=True
+            ),
+            CONF_PRESENCE_DEVICE_PLATFORMS: self._build_selector_select(
+                sorted(ALL_PRESENCE_DEVICE_PLATFORMS), multiple=True
+            ),
+            CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(
+                sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
+            ),
         }
 
-        if self.show_advanced_options:
-            all_selectors[CONF_INCLUDE_ENTITIES] = (
-                self._build_selector_entity_simple(self.all_entities, multiple=True),
-            )
-            all_selectors[CONF_EXCLUDE_ENTITIES] = (
-                self._build_selector_entity_simple(
-                    self.all_area_entities, multiple=True
-                ),
-            )
-            all_selectors[CONF_ON_STATES] = self._build_selector_select(
-                sorted(AVAILABLE_ON_STATES), multiple=True
-            )
-            all_selectors[CONF_PRESENCE_DEVICE_PLATFORMS] = (
-                self._build_selector_select(
-                    sorted(ALL_PRESENCE_DEVICE_PLATFORMS), multiple=True
-                ),
-            )
-            all_selectors[CONF_PRESENCE_SENSOR_DEVICE_CLASS] = (
-                self._build_selector_select(
-                    sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
-                ),
-            )
+        for item in ALL_LIGHT_ENTITIES:
+            all_selectors.update(item.config_flow_schema())
 
         options = OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA
         selectors = {}
@@ -435,12 +434,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             selectors[option_key] = all_selectors[option_key]
         if not self.area.is_meta():
             for lg in ALL_LIGHT_ENTITIES:
-                options = options.append(lg.config_flow_schema())
-                selectors = selectors.append(lg.config_flow_selectors())
+                selectors.update(lg.config_flow_selectors(self.all_entities))
 
-        _LOGGER.warning("Froggy %s", options)
-        _LOGGER.warning("Womble %s", selectors)
         data_schema = self._build_options_schema(options=options, selectors=selectors)
+        _LOGGER.warning("Schema %s %s", [o[0] for o in options], selectors.keys())
 
         return self.async_show_form(
             step_id="area_config",
@@ -525,28 +522,46 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             )
             return await feature_conf_step()
         _LOGGER.debug("All features configured, saving config: %s", self.area_options)
-        return self.async_create_entry(title="", data=self.area_options)
+        return self.async_create_entry(title=self.area.name, data=self.area_options)
 
     async def async_step_feature_conf_advanced_light_groups(
         self, user_input: dict[str, Any] | None = None
     ):
         """Configure the advanced light groups bits."""
+        options = OPTIONS_AREA_ADVANCED
+        selectors = {
+            CONF_UPDATE_INTERVAL: self._build_selector_number(),
+            CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(
+                self.all_entities, multiple=True
+            ),
+            CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(
+                self.all_area_entities, multiple=True
+            ),
+            CONF_ON_STATES: self._build_selector_select(
+                sorted(AVAILABLE_ON_STATES), multiple=True
+            ),
+            CONF_PRESENCE_DEVICE_PLATFORMS: self._build_selector_select(
+                sorted(ALL_PRESENCE_DEVICE_PLATFORMS), multiple=True
+            ),
+            CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(
+                sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
+            ),
+        }
+        for lg in ALL_LIGHT_ENTITIES:
+            options.extend(lg.advanced_config_flow_options())
+            selectors.update(lg.advanced_config_flow_selectors(self.all_lights))
 
         return await self.do_feature_config(
             name=CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
-            options=[
-                *([lg.advanced_config_flow_schema() for lg in ALL_LIGHT_ENTITIES])
-            ],
+            options=options,
             dynamic_validators={
                 k: v
                 for lg in ALL_LIGHT_ENTITIES
-                for k, v in lg.advanced_config_flow_dynamic_validators().items()
+                for k, v in lg.advanced_config_flow_dynamic_validators(
+                    self.all_lights
+                ).items()
             },
-            selectors={
-                k: v
-                for lg in ALL_LIGHT_ENTITIES
-                for k, v in lg.advanced_config_flow_selectors().items()
-            },
+            selectors=selectors,
             user_input=user_input,
         )
 
@@ -644,7 +659,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
     async def do_feature_config(
         self,
         name: str,
-        options: dict[str, Any],
+        options: list[str, any, any],
         dynamic_validators: dict[str, Any] | None = None,
         selectors: dict[str, Selector] | None = None,
         user_input: dict[str, Any] | None = None,

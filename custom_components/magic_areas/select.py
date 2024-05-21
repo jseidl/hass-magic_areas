@@ -30,13 +30,17 @@ from .const import (
     ATTR_TYPE,
     CONF_CLEAR_TIMEOUT,
     CONF_EXTENDED_TIMEOUT,
+    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
     CONF_ICON,
     CONF_ON_STATES,
     CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
+    DEFAULT_ON_STATES,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
+    DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
+    DEFAULT_UPDATE_INTERVAL,
     INVALID_STATES,
     AreaState,
 )
@@ -142,7 +146,11 @@ class AreaStateSelect(MagicSelectEntity):
             )
 
         # Timed self update
-        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+        delta = timedelta(
+            seconds=self.area.feature_config(CONF_FEATURE_ADVANCED_LIGHT_GROUPS).get(
+                CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL
+            )
+        )
         self.async_on_remove(
             async_track_time_interval(self.hass, self._update_state, delta)
         )
@@ -156,9 +164,9 @@ class AreaStateSelect(MagicSelectEntity):
                 self.sensors.append(entity_id)
             return
 
-        valid_presence_platforms = self.area.config.get(
-            CONF_PRESENCE_DEVICE_PLATFORMS, DEFAULT_PRESENCE_DEVICE_PLATFORMS
-        )
+        valid_presence_platforms = self.area.feature_config(
+            CONF_FEATURE_ADVANCED_LIGHT_GROUPS
+        ).get(CONF_PRESENCE_DEVICE_PLATFORMS, DEFAULT_PRESENCE_DEVICE_PLATFORMS)
 
         for component, entities in self.area.entities.items():
             if component not in valid_presence_platforms:
@@ -172,8 +180,11 @@ class AreaStateSelect(MagicSelectEntity):
                     if ATTR_DEVICE_CLASS not in entity:
                         continue
 
-                    if entity[ATTR_DEVICE_CLASS] not in self.area.config.get(
-                        CONF_PRESENCE_SENSOR_DEVICE_CLASS
+                    if entity[ATTR_DEVICE_CLASS] not in self.area.feature_config(
+                        CONF_FEATURE_ADVANCED_LIGHT_GROUPS
+                    ).get(
+                        CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+                        DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
                     ):
                         continue
 
@@ -445,7 +456,9 @@ class AreaStateSelect(MagicSelectEntity):
             )
             return
 
-        if to_state and to_state.state not in self.area.config.get(CONF_ON_STATES):
+        if to_state and to_state.state not in self.area.feature_config(
+            CONF_FEATURE_ADVANCED_LIGHT_GROUPS
+        ).get(CONF_ON_STATES, DEFAULT_ON_STATES):
             _LOGGER.debug("Setting last off time")
             self.last_off_time = datetime.now(UTC)  # Update last_off_time
             # Clear the timeout
@@ -458,7 +471,9 @@ class AreaStateSelect(MagicSelectEntity):
         valid_states = (
             [STATE_ON]
             if self.area.is_meta()
-            else self.area.config.get(CONF_ON_STATES, [STATE_ON])
+            else self.area.feature_config(CONF_FEATURE_ADVANCED_LIGHT_GROUPS).get(
+                CONF_ON_STATES, DEFAULT_ON_STATES
+            )
         )
 
         self.logger.debug(

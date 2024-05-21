@@ -165,11 +165,12 @@ class AreaLightGroup(MagicLightGroup):
 
     ### State Change Handling
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:
-        origin_event = event.context.origin_event
-        if origin_event.event_type != "state_changed":
+        if event.event_type != "state_changed":
             return
-        from_state = origin_event.data["old_state"].state
-        to_state = origin_event.data["new_state"].state
+        if event.data["old_state"] is None or event.data["new_state"] is None:
+            return
+        from_state = event.data["old_state"].state
+        to_state = event.data["new_state"].state
         if to_state != self.conf.for_state:
             self.logger.debug(
                 "Area state change event not for us. Skipping. (req: %s/self: %s)",

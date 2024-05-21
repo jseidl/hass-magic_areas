@@ -7,12 +7,17 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.magic_areas.const import (
+    AREA_TYPE_INTERIOR,
     CONF_CLEAR_TIMEOUT,
     CONF_EXTENDED_TIMEOUT,
+    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
     CONF_ID,
+    CONF_INCLUDE_ENTITIES,
     CONF_NAME,
     CONF_ON_STATES,
+    CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     DOMAIN,
 )
@@ -25,6 +30,7 @@ from homeassistant.components.light import (
     DOMAIN as LIGHT_DOMAIN,
     ColorMode,
 )
+from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.const import CONF_PLATFORM, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
@@ -53,11 +59,44 @@ def mock_config_entry() -> MockConfigEntry:
     data = {
         CONF_NAME: AREA_NAME,
         CONF_ID: AREA_NAME,
-        CONF_UPDATE_INTERVAL: 60,
-        CONF_PRESENCE_SENSOR_DEVICE_CLASS: [BinarySensorDeviceClass.MOTION],
-        CONF_ON_STATES: [STATE_ON],
         CONF_CLEAR_TIMEOUT: 3,
         CONF_EXTENDED_TIMEOUT: 2,
+        CONF_TYPE: AREA_TYPE_INTERIOR,
+        "accented_entity": "",
+        "accented_state_dim": 0,
+        "bright_entity": "",
+        "bright_state_dim": 0,
+        "sleep_entity": "",
+        "sleep_state_dim": 30,
+        "extended_state_dim": 0,
+        "clear_state_dim": 0,
+        "occupied_state_dim": 100,
+        CONF_FEATURE_ADVANCED_LIGHT_GROUPS: {
+            CONF_UPDATE_INTERVAL: 60,
+            CONF_INCLUDE_ENTITIES: [],
+            CONF_ON_STATES: [STATE_ON],
+            CONF_PRESENCE_DEVICE_PLATFORMS: [
+                MEDIA_PLAYER_DOMAIN,
+                BINARY_SENSOR_DOMAIN,
+            ],
+            CONF_PRESENCE_SENSOR_DEVICE_CLASS: [
+                BinarySensorDeviceClass.MOTION,
+                BinarySensorDeviceClass.OCCUPANCY,
+                BinarySensorDeviceClass.PRESENCE,
+            ],
+            "accented_lights": [],
+            "accented_state_check": STATE_ON,
+            "bright_lights": [],
+            "bright_state_check": STATE_ON,
+            "clear_lights": [],
+            "clear_state_check": STATE_ON,
+            "sleep_lights": [],
+            "sleep_state_check": STATE_ON,
+            "extended_lights": [],
+            "extended_state_check": STATE_ON,
+            "occupied_lights": [],
+            "occupied_state_check": STATE_ON,
+        },
     }
     return MockConfigEntry(domain=DOMAIN, data=data)
 
@@ -68,14 +107,17 @@ def mock_config_entry_entities() -> MockConfigEntry:
     data = {
         CONF_NAME: AREA_NAME,
         CONF_ID: AREA_NAME,
-        CONF_UPDATE_INTERVAL: 60,
-        CONF_PRESENCE_SENSOR_DEVICE_CLASS: [BinarySensorDeviceClass.MOTION],
-        CONF_ON_STATES: [STATE_ON],
         CONF_CLEAR_TIMEOUT: 30,
         CONF_EXTENDED_TIMEOUT: 20,
+        CONF_TYPE: AREA_TYPE_INTERIOR,
         "bright_entity": "binary_sensor.bright",
         "accented_entity": "binary_sensor.accent",
         "sleep_entity": "binary_sensor.sleep",
+        CONF_FEATURE_ADVANCED_LIGHT_GROUPS: {
+            CONF_UPDATE_INTERVAL: 60,
+            CONF_PRESENCE_SENSOR_DEVICE_CLASS: [BinarySensorDeviceClass.MOTION],
+            CONF_ON_STATES: [STATE_ON],
+        },
     }
     return MockConfigEntry(domain=DOMAIN, data=data)
 

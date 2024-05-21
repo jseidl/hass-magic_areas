@@ -226,7 +226,9 @@ class MagicArea(object):  # noqa: UP004
         if entity_object.disabled:
             return False
 
-        if entity_object.entity_id in self.config.get(CONF_EXCLUDE_ENTITIES, []):
+        if entity_object.entity_id in self.feature_config(
+            CONF_FEATURE_ADVANCED_LIGHT_GROUPS
+        ).get(CONF_EXCLUDE_ENTITIES, []):
             return False
 
         return True
@@ -245,14 +247,18 @@ class MagicArea(object):  # noqa: UP004
                     return True
 
         # Check if entity_id is in CONF_INCLUDE_ENTITIES
-        if entity_object.entity_id in self.config.get(CONF_INCLUDE_ENTITIES, []):
+        if entity_object.entity_id in self.feature_config(
+            CONF_FEATURE_ADVANCED_LIGHT_GROUPS
+        ).get(CONF_INCLUDE_ENTITIES, []):
             return True
 
         return False
 
     async def _load_entities(self) -> None:
         entity_list = []
-        include_entities = self.config.get(CONF_INCLUDE_ENTITIES, [])
+        include_entities = self.feature_config(CONF_FEATURE_ADVANCED_LIGHT_GROUPS).get(
+            CONF_INCLUDE_ENTITIES, []
+        )
 
         entity_registry = async_get_er(self.hass)
 
@@ -353,8 +359,8 @@ class MagicArea(object):  # noqa: UP004
                 name=lg.name,
                 group_entity_id=f"{LIGHT_DOMAIN}.{lg.name.lower()}_{self.slug}",
                 entity=entity_ob,
-                entity_state_on=self.config.get(
-                    CONF_FEATURE_ADVANCED_LIGHT_GROUPS, {}
+                entity_state_on=self.feature_config(
+                    CONF_FEATURE_ADVANCED_LIGHT_GROUPS
                 ).get(lg.advanced_state_check(), "on"),
                 dim_level=int(
                     self.config.get(lg.state_dim_level(), lg.default_dim_level)
@@ -472,9 +478,9 @@ class MagicMetaArea(MagicArea):
                             continue
 
                         # Skip excluded entities
-                        if entity["entity_id"] in self.config.get(
-                            CONF_EXCLUDE_ENTITIES, []
-                        ):
+                        if entity["entity_id"] in self.self.feature_config(
+                            CONF_FEATURE_ADVANCED_LIGHT_GROUPS
+                        ).get(CONF_EXCLUDE_ENTITIES, []):
                             continue
 
                         entity_list.append(entity["entity_id"])

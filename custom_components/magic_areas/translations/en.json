@@ -24,7 +24,7 @@
         "data": {
           "climate_groups": "Create climate groups",
           "media_player_groups": "Create media player groups",
-          "light_groups": "Create light groups",
+          "advanced_light_groups": "Advanced light group options",
           "cover_groups": "Create cover groups",
           "area_aware_media_player": "Area aware media player",
           "aggregates": "Create aggregate sensors",
@@ -76,17 +76,18 @@
           "turn_on_state": "State to turn on the climate group."
         }
       },
-      "secondary_states": {
-        "title": "Secondary states",
-        "description": "Map an entity state to an area's secondary state which are used by features to more precisely control devices automatically.",
+      "feature_conf_advanced_light_groups": {
+        "title": "Advanced light states",
+        "description": "More settings for controlling the lights.",
         "data": {
-          "bright_entity": "Entity used to track area bright state",
-          "bright_state": "State of bright state entity",
-          "sleep_entity": "Entity used to track area sleep state",
-          "sleep_state": "State of sleep state entity",
-          "sleep_timeout": "How long area will wait before clearing the state when on sleep state",
-          "extended_time": "Area will be marked as 'extended' after being occupied for this long",
-          "extended_timeout": "How long area will wait before clearing the state when on extended state"
+          "bright_state": "State of bright state entity (for on)",
+          "bright_lights": "The lights to control in the bright mode",
+          "sleep_state": "State of sleep state entity (for on)",
+          "sleep_lights": "The lights to control in the sleep mode",
+          "accented_state": "State of sleep state entity (for on)",
+          "accented_lights": "The lights to control in the accented mode",
+          "clear_lights": "The lights to control in the clear mode",
+          "occupied_lights": "The lights to control in the occupied mode"
         }
       },
       "area_config": {
@@ -101,7 +102,15 @@
           "icon": "Icon",
           "update_interval": "Interval for checking missed events",
           "clear_timeout": "How long since last presence event should it wait before clearing the area",
-          "type": "Area type (interior/exterior)"
+          "type": "Area type (interior/exterior)",
+          "bright_entity": "Entity used to put area into bright when occupied",
+          "bright_state_dim": "Dim level to use when the area is bright (0 for off)",
+          "sleep_entity": "Entity used to put area into sleep when occupied",
+          "sleep_state_dim": "Dim level to use when the area is sleep (0 for off)",
+          "accented_entity": "Entity used to put area into accented when occupied",
+          "accented_state_dim": "Dim level to use when the area is accented (0 for off)",
+          "occupied_state_dim": "Dim level to use when the area is occupied (0 for off)",
+          "clear_state_dim": "Dim level to use when the area is clear (0 for off)"
         }
       }
     },

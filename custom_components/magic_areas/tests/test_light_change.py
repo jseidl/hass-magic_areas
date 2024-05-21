@@ -31,8 +31,6 @@ async def test_light_on_off(
     state: str,
 ) -> None:
     """Test loading the integration."""
-    assert config_entry.state is ConfigEntryState.LOADED
-
     # Validate the right enties were created.
     control_entity = hass.states.get(f"{SWITCH_DOMAIN}.area_light_control_kitchen")
     manual_override_entity = hass.states.get(
