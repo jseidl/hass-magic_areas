@@ -13,14 +13,24 @@ from homeassistant.const import (
     STATE_OFF,
     STATE_ON,
 )
-from homeassistant.core import Event, EventStateChangedData, HomeAssistant
+from homeassistant.core import (
+    CALLBACK_TYPE,
+    Event,
+    EventStateChangedData,
+    HomeAssistant,
+)
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event, call_later
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicLightGroup
-from .base.magic import MagicArea, StateConfigData
-from .const import CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT
+from .base.magic import MagicArea, MagicEvent, StateConfigData
+from .const import (
+    CONF_MANUAL_TIMEOUT,
+    DEFAULT_MANUAL_TIMEOUT,
+    EVENT_MAGICAREAS_ENTITY_UPDATE,
+)
 
 _LOGGER = logging.getLogger(__name__)
 DEPENDENCIES = ["magic_areas"]
@@ -87,20 +97,18 @@ class AreaLightGroup(MagicLightGroup):
         """Init the light group for the area."""
         MagicLightGroup.__init__(self, area, conf.lights)
 
-        category_title = " ".join(conf.for_state.split("_")).title()
-        self._name = f"{category_title} ({self.area.name})"
+        category_title: str = " ".join(conf.for_state.split("_")).title()
+        self._name: str = f"{category_title} ({self.area.name})"
 
-        self.conf = conf
-        self.assigned_states = []
-        self.act_on = []
-        self._manual_timeout_cb = None
+        self.conf: StateConfigData = conf
+        self._manual_timeout_cb: CALLBACK_TYPE | None = None
 
         self._set_controlled_by_this_entity(True)
 
-        self._icon = conf.icon
+        self._icon: str = conf.icon
 
         # Add static attributes
-        self.last_update_from_entity = False
+        self.last_update_from_entity: bool = False
         self._attributes["lights"] = self._entity_ids
         self._attributes["last_update_from_entity"] = False
 
@@ -162,6 +170,19 @@ class AreaLightGroup(MagicLightGroup):
                 self._area_state_change,
             )
         )
+
+        # Track changes to the registry to find areas updated to us
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass, EVENT_MAGICAREAS_ENTITY_UPDATE, self._async_registry_updated
+            )
+        )
+
+    def _async_registry_updated(self, event: Event[MagicEvent]):
+        if event.data["id"] == self.area.id:
+            # Event is for us.
+            self._load_presence_sensors()
+            self._setup_presence_listeners()
 
     ### State Change Handling
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:

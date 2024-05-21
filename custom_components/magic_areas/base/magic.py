@@ -4,6 +4,11 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import logging
 
+from homeassistand.helpers.entity_registry import (
+    EVENT_ENTITY_REGISTRY_UPDATED,
+    EventEntityRegistryUpdatedData,
+)
+
 from custom_components.magic_areas.const import (
     ALL_LIGHT_ENTITIES,
     AREA_TYPE_EXTERIOR,
@@ -17,6 +22,7 @@ from custom_components.magic_areas.const import (
     DATA_AREA_OBJECT,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
+    EVENT_MAGICAREAS_ENTITY_UPDATE,
     EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
     MAGIC_AREAS_COMPONENTS_GLOBAL,
@@ -35,15 +41,23 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers.area_registry import AreaEntry
 from homeassistant.helpers.device_registry import async_get as async_get_dr
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_registry import (
     RegistryEntry,
     async_get as async_get_er,
 )
 from homeassistant.util import slugify
 from homeassistant.util.event_type import EventType
+
+
+@dataclass
+class MagicEvent:
+    """The data for magic area events."""
+
+    id: str
 
 
 @dataclass
@@ -76,12 +90,14 @@ class MagicArea(object):  # noqa: UP004
         """Initialize the magic area with alll the stuff."""
         self.logger = logging.getLogger(__name__)
 
-        self.hass = hass
-        self.name = area.name
-        self.id = area.id
-        self.slug = slugify(self.name)
-        self.hass_config = config
-        self.initialized = False
+        self.hass: HomeAssistant = hass
+        self.name: str = area.name
+        # Default to the icon for the area.
+        self.icon: str = area.icon
+        self.id: str = area.id
+        self.slug: str = slugify(self.name)
+        self.hass_config: ConfigEntry = config
+        self.initialized: bool = False
 
         # Merged options
         area_config = dict(config.data)
@@ -91,11 +107,11 @@ class MagicArea(object):  # noqa: UP004
 
         self.entities = {}
 
-        self.last_changed = datetime.now(UTC)
-        self.state = AreaState.AREA_STATE_CLEAR
+        self.last_changed: int = datetime.now(UTC)
+        self.state: AreaState = AreaState.AREA_STATE_CLEAR
         self._state_config: dict[AreaState, StateConfigData] = {}
 
-        self.loaded_platforms = []
+        self.loaded_platforms: list[str] = []
 
         # Add callback for initialization
         if self.hass.is_running and init_on_hass_running:
@@ -330,14 +346,35 @@ class MagicArea(object):  # noqa: UP004
                     str(err),
                 )
 
+    def _async_registry_updated(
+        self, event: Event[EventEntityRegistryUpdatedData]
+    ) -> None:
+        if event.action != "update":
+            return
+        if "area_id" in event.changes:
+            # Reload entities and then update the other pieces of the system.
+            self._reload_entities()
+
     async def _initialize(self, _=None) -> None:
         self.logger.debug("Initializing area %s", self.slug)
+
+        # Watch for area changes.
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass, EVENT_ENTITY_REGISTRY_UPDATED, self._async_registry_updated
+            )
+        )
 
         await self._load_entities()
 
         await self._load_state_config()
 
         self._finalize_init()
+
+    async def _reload_entities(self) -> None:
+        """Reload the entities and tell the system they changed."""
+        await self._load_entities()
+        self.hass.bus.async_fire(EVENT_MAGICAREAS_ENTITY_UPDATE, {"id": self.id})
 
     def has_entities(self, domain: str) -> bool:
         """Check and see if this areas has entites with the specified domain."""

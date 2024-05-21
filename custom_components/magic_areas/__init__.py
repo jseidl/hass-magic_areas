@@ -1,5 +1,6 @@
 """Magic Areas component for Home Assistant."""
 
+import asyncio
 from collections import defaultdict
 import logging
 

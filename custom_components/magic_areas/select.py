@@ -7,7 +7,8 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
-from homeassistant.core import HomeAssistant, State
+from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, State
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -17,7 +18,7 @@ from homeassistant.helpers.event import (
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicSelectEntity
-from .base.magic import MagicArea
+from .base.magic import MagicArea, MagicEvent
 from .const import (
     ATTR_ACTIVE_AREAS,
     ATTR_ACTIVE_SENSORS,
@@ -41,6 +42,7 @@ from .const import (
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
     DEFAULT_UPDATE_INTERVAL,
+    EVENT_MAGICAREAS_ENTITY_UPDATE,
     INVALID_STATES,
     AreaState,
 )
@@ -72,14 +74,15 @@ class AreaStateSelect(MagicSelectEntity):
 
         super().__init__(area, list(AreaState))
 
-        self._name = f"Area ({self.area.name})"
+        self._name: str = f"Area ({self.area.name})"
 
-        self.last_off_time = datetime.now(UTC)
+        self.last_off_time: int = datetime.now(UTC)
         self._clear_timeout_callback = None
         self._extended_timeout_callback = None
-        self._attributes = {}
-        self.sensors = []
-        self._mode = "some"
+        self._attributes: dict[str, any] = {}
+        self.sensors: list[str] = []
+        self._mode: str = "some"
+        self._sensor_remove_callback: CALLBACK_TYPE | None = None
 
     @property
     def icon(self) -> str | None:
@@ -118,16 +121,27 @@ class AreaStateSelect(MagicSelectEntity):
 
         _LOGGER.debug("%s Sensor initialized", self.name)
 
+    def _async_registry_updated(self, event: Event[MagicEvent]):
+        if event.data["id"] == self.area.id:
+            # Event is for us.
+            self._load_presence_sensors()
+            self._setup_presence_listeners()
+
     async def _setup_listeners(self, _=None) -> None:
         self.logger.debug("%s: Called '_setup_listeners'", self.name)
         if not self.hass.is_running:
             self.logger.debug("%s: Cancelled '_setup_listeners'", self.name)
             return
 
-        # Track presence sensors
-        assert self.hass
+        # Track presence sensor
+        self._setup_presence_listeners()
+        self.async_on_remove(self._sensor_remove_callback)
+
+        # Track changes to the registry to find areas updated to us
         self.async_on_remove(
-            async_track_state_change(self.hass, self.sensors, self._sensor_state_change)
+            async_dispatcher_connect(
+                self.hass, EVENT_MAGICAREAS_ENTITY_UPDATE, self._async_registry_updated
+            )
         )
 
         # Track secondary states
@@ -153,6 +167,15 @@ class AreaStateSelect(MagicSelectEntity):
         )
         self.async_on_remove(
             async_track_time_interval(self.hass, self._update_state, delta)
+        )
+
+    def _setup_presence_listeners(self):
+        # Cleanup the old listeners first.
+        if self._sensor_remove_callback is not None:
+            self.__sensor_remove_callback()
+
+        self._sensor_remove_callback = async_track_state_change(
+            self.hass, self.sensors, self._sensor_state_change
         )
 
     def _load_presence_sensors(self) -> None:
