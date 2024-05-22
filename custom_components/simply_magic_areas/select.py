@@ -107,7 +107,6 @@ class AreaStateSelect(MagicSelectEntity):
         self.logger.debug("%s Sensor initializing", self.name)
 
         self._load_presence_sensors()
-        self._load_illuminance_sensors()
         self._load_attributes()
 
         # Setup the listeners
