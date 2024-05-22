@@ -7,18 +7,17 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
-from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, State
+from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
     call_later,
 )
-from homeassistant.util.async_ import run_callback_threadsafe
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicSelectEntity
-from .base.magic import MagicArea, MagicEvent
+from .base.magic import MagicArea
 from .const import (
     ATTR_ACTIVE_AREAS,
     ATTR_ACTIVE_SENSORS,
@@ -32,7 +31,6 @@ from .const import (
     CONF_CLEAR_TIMEOUT,
     CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
-    CONF_ICON,
     CONF_ON_STATES,
     CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -75,12 +73,13 @@ class AreaStateSelect(MagicSelectEntity):
 
         self._name: str = f"Area magic ({self.area.name})"
 
-        self.last_off_time: int = datetime.now(UTC)
+        self._last_off_time: int = datetime.now(UTC)
         self._clear_timeout_callback = None
         self._extended_timeout_callback = None
         self._attributes: dict[str, any] = {}
-        self.sensors: list[str] = []
+        self._sensors: list[str] = []
         self._mode: str = "some"
+        self._illuminance_sensors: list[str] = []
 
     @property
     def icon(self) -> str | None:
@@ -108,6 +107,7 @@ class AreaStateSelect(MagicSelectEntity):
         self.logger.debug("%s Sensor initializing", self.name)
 
         self._load_presence_sensors()
+        self._load_illuminance_sensors()
         self._load_attributes()
 
         # Setup the listeners
@@ -123,7 +123,9 @@ class AreaStateSelect(MagicSelectEntity):
 
         # Track presence sensor
         self.async_on_remove(
-            async_track_state_change(self.hass, self.sensors, self._sensor_state_change)
+            async_track_state_change(
+                self.hass, self._sensors, self._sensor_state_change
+            )
         )
 
         # Track secondary states
@@ -157,7 +159,7 @@ class AreaStateSelect(MagicSelectEntity):
             child_areas = self.area.get_child_areas()
             for child_area in child_areas:
                 entity_id = f"{SELECT_DOMAIN}.area_{child_area}"
-                self.sensors.append(entity_id)
+                self._sensors.append(entity_id)
             return
 
         valid_presence_platforms = self.area.feature_config(
@@ -184,7 +186,7 @@ class AreaStateSelect(MagicSelectEntity):
                     ):
                         continue
 
-                self.sensors.append(entity[ATTR_ENTITY_ID])
+                self._sensors.append(entity[ATTR_ENTITY_ID])
 
     def _load_attributes(self) -> None:
         # Set attributes
@@ -205,7 +207,7 @@ class AreaStateSelect(MagicSelectEntity):
             {
                 ATTR_ACTIVE_SENSORS: [],
                 ATTR_LAST_ACTIVE_SENSORS: [],
-                ATTR_PRESENCE_SENSORS: self.sensors,
+                ATTR_PRESENCE_SENSORS: self._sensors,
                 ATTR_TYPE: self.area.config.get(CONF_TYPE),
             }
         )
@@ -226,7 +228,7 @@ class AreaStateSelect(MagicSelectEntity):
         occupied_state = self._get_sensors_state()
 
         seconds_since_last_change = (
-            datetime.now(UTC) - self.last_off_time
+            datetime.now(UTC) - self._last_off_time
         ).total_seconds()
 
         clear_timeout = self._get_clear_timeout()
@@ -393,7 +395,7 @@ class AreaStateSelect(MagicSelectEntity):
 
         clear_delta = timedelta(seconds=self._get_clear_timeout())
 
-        clear_time = self.last_off_time + clear_delta
+        clear_time = self._last_off_time + clear_delta
         time_now = datetime.now(UTC)
 
         if time_now >= clear_time:
@@ -409,7 +411,7 @@ class AreaStateSelect(MagicSelectEntity):
 
         extended_delta = timedelta(seconds=self._get_extended_timeout())
 
-        extended_time = self.last_off_time + extended_delta
+        extended_time = self._last_off_time + extended_delta
         time_now = datetime.now(UTC)
 
         if time_now >= extended_time:
@@ -449,7 +451,7 @@ class AreaStateSelect(MagicSelectEntity):
             CONF_FEATURE_ADVANCED_LIGHT_GROUPS
         ).get(CONF_ON_STATES, DEFAULT_ON_STATES):
             _LOGGER.debug("Setting last non-normal time")
-            self.last_off_time = datetime.now(UTC)  # Update last_off_time
+            self._last_off_time = datetime.now(UTC)  # Update last_off_time
             # Clear the timeout
             self._remove_clear_timeout()
 
@@ -478,7 +480,7 @@ class AreaStateSelect(MagicSelectEntity):
         active_areas = set()
 
         # Loop over all entities and check their state
-        for sensor in self.sensors:
+        for sensor in self._sensors:
             try:
                 entity = self.hass.states.get(sensor)
 
@@ -544,5 +546,5 @@ class AreaStateSelect(MagicSelectEntity):
             self._attributes[ATTR_ACTIVE_AREAS] = active_areas
 
         if self._mode == "all":
-            return len(active_sensors) == len(self.sensors)
+            return len(active_sensors) == len(self._sensors)
         return len(active_sensors) > 0

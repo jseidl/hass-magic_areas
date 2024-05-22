@@ -4,9 +4,11 @@ import logging
 
 from homeassistant.components.light import ATTR_BRIGHTNESS, DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
@@ -20,9 +22,7 @@ from homeassistant.core import (
     HomeAssistant,
 )
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.entity_registry import (
-    async_get as async_get_er,
-)
+from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.helpers.event import async_track_state_change_event, call_later
 
 from .add_entities_when_ready import add_entities_when_ready
@@ -98,12 +98,11 @@ class AreaLightGroup(MagicLightGroup):
 
         category_title: str = "Simple Magic Areas Light"
         self._name: str = f"{category_title} ({self.area.name})"
-
         self._manual_timeout_cb: CALLBACK_TYPE | None = None
+        self._icon: str = "mdi:ceiling-light"
+        self._luminance_sensors: list[str] = []
 
         self._set_controlled_by_this_entity(True)
-
-        self._icon: str = "mdi:ceiling-light"
 
         # Add static attributes
         self.last_update_from_entity: bool = False
@@ -145,6 +144,7 @@ class AreaLightGroup(MagicLightGroup):
         else:
             self._attr_is_on = False
 
+        self._load_illuminance_sensors()
         self.schedule_update_ha_state()
 
         # Setup state change listeners
@@ -167,6 +167,20 @@ class AreaLightGroup(MagicLightGroup):
                 self._area_state_change,
             )
         )
+
+    def _load_illuminance_sensors(self) -> None:
+        if SensorDeviceClass.IMMUMINANCE not in self.area.enties:
+            return
+        for component, entities in self.area.entities[SensorDeviceClass.ILLUMINANCE]:
+            for entity in entities:
+                if not entity:
+                    continue
+
+                if component == SENSOR_DOMAIN:
+                    if ATTR_DEVICE_CLASS not in entity:
+                        continue
+
+                self._illuminance_sensors.append(entity[ATTR_ENTITY_ID])
 
     ### State Change Handling
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:
