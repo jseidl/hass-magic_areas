@@ -26,11 +26,7 @@ from homeassistant.helpers.event import async_track_state_change_event, call_lat
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicLightGroup
 from .base.magic import MagicArea, MagicEvent, StateConfigData
-from .const import (
-    CONF_MANUAL_TIMEOUT,
-    DEFAULT_MANUAL_TIMEOUT,
-    EVENT_MAGICAREAS_ENTITY_UPDATE,
-)
+from .const import CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT
 
 _LOGGER = logging.getLogger(__name__)
 DEPENDENCIES = ["magic_areas"]
@@ -170,19 +166,6 @@ class AreaLightGroup(MagicLightGroup):
                 self._area_state_change,
             )
         )
-
-        # Track changes to the registry to find areas updated to us
-        self.async_on_remove(
-            async_dispatcher_connect(
-                self.hass, EVENT_MAGICAREAS_ENTITY_UPDATE, self._async_registry_updated
-            )
-        )
-
-    def _async_registry_updated(self, event: Event[MagicEvent]):
-        if event.data["id"] == self.area.id:
-            # Event is for us.
-            self._load_presence_sensors()
-            self._setup_presence_listeners()
 
     ### State Change Handling
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:

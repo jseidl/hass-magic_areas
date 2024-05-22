@@ -42,7 +42,6 @@ MODULE_DATA = f"{DOMAIN}_data"
 EVENT_MAGICAREAS_STARTED = "magicareas_start"
 EVENT_MAGICAREAS_READY = "magicareas_ready"
 EVENT_MAGICAREAS_AREA_READY = "magicareas_area_ready"
-EVENT_MAGICAREAS_ENTITY_UPDATE = "magicareas_entity_update"
 
 ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]
 

@@ -4,11 +4,6 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import logging
 
-from homeassistand.helpers.entity_registry import (
-    EVENT_ENTITY_REGISTRY_UPDATED,
-    EventEntityRegistryUpdatedData,
-)
-
 from custom_components.magic_areas.const import (
     ALL_LIGHT_ENTITIES,
     AREA_TYPE_EXTERIOR,
@@ -22,7 +17,6 @@ from custom_components.magic_areas.const import (
     DATA_AREA_OBJECT,
     DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
-    EVENT_MAGICAREAS_ENTITY_UPDATE,
     EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
     MAGIC_AREAS_COMPONENTS_GLOBAL,
@@ -46,6 +40,8 @@ from homeassistant.helpers.area_registry import AreaEntry
 from homeassistant.helpers.device_registry import async_get as async_get_dr
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_registry import (
+    EVENT_ENTITY_REGISTRY_UPDATED,
+    EventEntityRegistryUpdatedData,
     RegistryEntry,
     async_get as async_get_er,
 )
@@ -353,16 +349,20 @@ class MagicArea(object):  # noqa: UP004
             return
         if "area_id" in event.changes:
             # Reload entities and then update the other pieces of the system.
-            self._reload_entities()
+            self.logger.debug(
+                "[%s] Updateing entity from area change %s", self.slug, event.changes
+            )
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                data={**self.config_entry.data, "entity_ts": datetime.now(UTC)},
+            )
 
     async def _initialize(self, _=None) -> None:
         self.logger.debug("Initializing area %s", self.slug)
 
         # Watch for area changes.
-        self.async_on_remove(
-            async_dispatcher_connect(
-                self.hass, EVENT_ENTITY_REGISTRY_UPDATED, self._async_registry_updated
-            )
+        async_dispatcher_connect(
+            self.hass, EVENT_ENTITY_REGISTRY_UPDATED, self._async_registry_updated
         )
 
         await self._load_entities()
@@ -370,11 +370,6 @@ class MagicArea(object):  # noqa: UP004
         await self._load_state_config()
 
         self._finalize_init()
-
-    async def _reload_entities(self) -> None:
-        """Reload the entities and tell the system they changed."""
-        await self._load_entities()
-        self.hass.bus.async_fire(EVENT_MAGICAREAS_ENTITY_UPDATE, {"id": self.id})
 
     def has_entities(self, domain: str) -> bool:
         """Check and see if this areas has entites with the specified domain."""
