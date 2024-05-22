@@ -1,7 +1,7 @@
 from datetime import timedelta
 from enum import StrEnum
 
-from custom_components.magic_areas.const import CONF_UPDATE_INTERVAL
+from custom_components.simply_magic_areas.const import CONF_UPDATE_INTERVAL
 from homeassistant.components.sensor import SensorStateClass
 from homeassistant.helpers.event import (
     async_track_state_change,

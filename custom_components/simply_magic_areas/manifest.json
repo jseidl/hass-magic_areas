@@ -1,6 +1,6 @@
 {
-    "domain": "magic_areas",
-    "name": "Magic Areas",
+    "domain": "simply_magic_areas",
+    "name": "Simply Magic Areas",
     "after_dependencies": [
         "template",
         "group",
@@ -21,5 +21,5 @@
     "iot_class": "calculated",
     "issue_tracker": "https://github.com/pinkfish/hass-magic_areas/issues",
     "requirements": [],
-    "version": "3.2.0"
+    "version": "1.0.0"
 }

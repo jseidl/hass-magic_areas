@@ -2,10 +2,10 @@
 
 import logging
 
-from custom_components.magic_areas.base.entities import MagicEntity
-from custom_components.magic_areas.base.magic import MagicArea
-from custom_components.magic_areas.const import CONF_FEATURE_COVER_GROUPS
-from custom_components.magic_areas.add_entities_when_ready import (
+from .base.entities import MagicEntity
+from .base.magic import MagicArea
+from .const import CONF_FEATURE_COVER_GROUPS
+from .add_entities_when_ready import (
     add_entities_when_ready,
 )
 import homeassistant.components.cover as cover

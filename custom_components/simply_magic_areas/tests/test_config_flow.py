@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.magic_areas.const import (
+from custom_components.simply_magic_areas.const import (
     AREA_TYPE_INTERIOR,
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,

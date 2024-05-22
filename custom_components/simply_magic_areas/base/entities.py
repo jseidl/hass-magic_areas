@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 import logging
 from statistics import mean
 
-from custom_components.magic_areas.const import (
+from custom_components.simply_magic_areas.const import (
     CONF_ON_STATES,
     DOMAIN,
     INVALID_STATES,

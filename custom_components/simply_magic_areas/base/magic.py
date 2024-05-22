@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import logging
 
-from custom_components.magic_areas.const import (
+from custom_components.simply_magic_areas.const import (
     ALL_LIGHT_ENTITIES,
     AREA_TYPE_EXTERIOR,
     AREA_TYPE_INTERIOR,
@@ -26,7 +26,7 @@ from custom_components.magic_areas.const import (
     MODULE_DATA,
     AreaState,
 )
-from custom_components.magic_areas.util import (
+from custom_components.simply_magic_areas.util import (
     areas_loaded,
     flatten_entity_list,
     is_entity_list,
