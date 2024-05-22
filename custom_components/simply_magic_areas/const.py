@@ -228,10 +228,6 @@ class LightEntityConf:
         """Return the advanced state check for the setup, defaults to STATE_ON."""
         return self.name + "_state_check"
 
-    def advanced_activate_states(self) -> str:
-        """Return the advance states to activate on."""
-        return self.name + "_state_activate"
-
     def number_selector(self) -> dict[str, any]:
         """Return a number selector to use for the dim percentage."""
         return {
