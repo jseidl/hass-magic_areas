@@ -169,7 +169,7 @@ class AreaLightGroup(MagicLightGroup):
         )
 
     def _load_illuminance_sensors(self) -> None:
-        if SensorDeviceClass.IMMUMINANCE not in self.area.enties:
+        if SensorDeviceClass.ILLUMINANCE not in self.area.enties:
             return
         for component, entities in self.area.entities[SensorDeviceClass.ILLUMINANCE]:
             for entity in entities:
