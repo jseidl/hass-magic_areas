@@ -1,21 +1,23 @@
 """Magic Areas component for Home Assistant."""
 
-import asyncio
 from collections import defaultdict
+from datetime import UTC, datetime
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.area_registry import async_get as async_get_ar
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_registry import (
+    EVENT_ENTITY_REGISTRY_UPDATED,
+    EventEntityRegistryUpdatedData,
+)
 
-from .add_entities_when_ready import add_entities_when_ready
 from .base.magic import MagicArea, MagicMetaArea
 from .const import (
     CONF_ID,
     CONF_NAME,
     DATA_AREA_OBJECT,
+    DATA_ENTITY_LISTENER,
     DATA_UNDO_UPDATE_LISTENER,
     META_AREA_EXTERIOR,
     META_AREA_GLOBAL,
@@ -35,6 +37,25 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
 ):
     """Set up the component."""
+
+    def _async_registry_updated(
+        self, event: Event[EventEntityRegistryUpdatedData]
+    ) -> None:
+        _LOGGER.warning(
+            "%s: Updateing action %s entity %s", self.slug, event.action, event.changes
+        )
+        if event.action != "update":
+            return
+        if "area_id" in event.changes:
+            # Reload entities and then update the other pieces of the system.
+            _LOGGER.debug(
+                "%s: Updateing entity from area change %s", self.slug, event.changes
+            )
+            self.hass.config_entries.async_update_entry(
+                config_entry,
+                data={**self.config_entry.data, "entity_ts": datetime.now(UTC)},
+            )
+
     data = hass.data.setdefault(MODULE_DATA, {})
     area_id = config_entry.data[CONF_ID]
     area_name = config_entry.data[CONF_NAME]
@@ -71,9 +92,17 @@ async def async_setup_entry(
 
     undo_listener = config_entry.add_update_listener(async_update_options)
 
+    # Watch for area changes.
+    entity_listener = hass.bus.async_listen(
+        EVENT_ENTITY_REGISTRY_UPDATED,
+        _async_registry_updated,
+        _entity_registry_filter,
+    )
+
     data[config_entry.entry_id] = {
         DATA_AREA_OBJECT: magic_area,
         DATA_UNDO_UPDATE_LISTENER: undo_listener,
+        DATA_ENTITY_LISTENER: entity_listener,
     }
 
     # Setup platforms
@@ -141,6 +170,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         platforms_unloaded.append(unload_ok)
 
     area_data[DATA_UNDO_UPDATE_LISTENER]()
+    area_data[DATA_ENTITY_LISTENER]()
 
     all_unloaded = all(platforms_unloaded)
 
@@ -151,3 +181,9 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         hass.data.pop(MODULE_DATA)
 
     return all_unloaded
+
+
+@callback
+def _entity_registry_filter(event_data: EventEntityRegistryUpdatedData) -> bool:
+    """Filter entity registry events."""
+    return event_data["action"] == "update" and "area_id" in event_data["changes"]

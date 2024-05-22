@@ -48,6 +48,7 @@ ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass
 # Data Items
 DATA_AREA_OBJECT = "area_object"
 DATA_UNDO_UPDATE_LISTENER = "undo_update_listener"
+DATA_ENTITY_LISTENER = "entity_listener"
 
 # Attributes
 ATTR_STATE = "state"

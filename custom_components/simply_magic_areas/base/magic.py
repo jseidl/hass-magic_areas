@@ -35,7 +35,7 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
-from homeassistant.core import Event, HomeAssistant
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import AreaEntry
 from homeassistant.helpers.device_registry import async_get as async_get_dr
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -345,31 +345,8 @@ class MagicArea(object):  # noqa: UP004
                     str(err),
                 )
 
-    def _async_registry_updated(
-        self, event: Event[EventEntityRegistryUpdatedData]
-    ) -> None:
-        _LOGGER.warning(
-            "%s: Updateing action %s entity %s", self.slug, event.action, event.changes
-        )
-        if event.action != "update":
-            return
-        if "area_id" in event.changes:
-            # Reload entities and then update the other pieces of the system.
-            _LOGGER.debug(
-                "%s: Updateing entity from area change %s", self.slug, event.changes
-            )
-            self.hass.config_entries.async_update_entry(
-                self.config_entry,
-                data={**self.config_entry.data, "entity_ts": datetime.now(UTC)},
-            )
-
     async def _initialize(self, _=None) -> None:
         _LOGGER.debug("%s: Initializing area", self.slug)
-
-        # Watch for area changes.
-        async_dispatcher_connect(
-            self.hass, EVENT_ENTITY_REGISTRY_UPDATED, self._async_registry_updated
-        )
 
         await self._load_entities()
 
