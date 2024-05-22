@@ -58,8 +58,8 @@ class MagicEntity(RestoreEntity, Entity):
                 (DOMAIN, f"{MAGIC_DEVICE_ID_PREFIX}{self.area.id}")
             },
             name=self.area.name,
-            manufacturer="Magic Areas",
-            model="Magic Area",
+            manufacturer="Simply Magic Areas",
+            model="Simply Magic Area",
         )
 
     @property
