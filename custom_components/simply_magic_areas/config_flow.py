@@ -230,7 +230,11 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
 
             # Create area entry with default config
             config_entry = _DOMAIN_SCHEMA({f"{area_object.id}": {}})[area_object.id]
-            extra_opts = {CONF_NAME: area_object.name, CONF_ID: area_object.id}
+            extra_opts = {
+                CONF_NAME: area_object.name,
+                CONF_ID: area_object.id,
+                CONF_ICON: area_object.icon,
+            }
             config_entry.update(extra_opts)
 
             # Handle Meta area
