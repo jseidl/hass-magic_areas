@@ -1,7 +1,7 @@
 # Magic Areas for Home Assistant
 ![Magic Areas](https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/magic_areas/icon.png)
 
-![Build Status](https://github.com/jseidl/hass-magic_areas/actions/workflows/validation.yaml/badge.svg) [![Discord](https://img.shields.io/discord/928386239789400065.svg?color=768AD4&label=Discord)](https://discord.gg/8vxJpJ2vP4) [![Latest release](https://img.shields.io/github/v/release/jseidl/hass-magic_areas.svg)](https://github.com/jseidl/hass-magic_areas/releases) [![GitHub latest commit](https://badgen.net/github/last-commit/jseidl/hass-magic_areas)](https://GitHub.com/jseidl/hass-magic_areas/commit/) [![GitHub contributors](https://badgen.net/github/contributors/jseidl/hass-magic_areas)](https://GitHub.com/jseidl/hass-magic_areas/graphs/contributors/)
+![Build Status](https://github.com/pinkfish/hass-magic_areas/actions/workflows/validation.yaml/badge.svg) [![Discord](https://img.shields.io/discord/928386239789400065.svg?color=768AD4&label=Discord)](https://discord.gg/8vxJpJ2vP4) [![Latest release](https://img.shields.io/github/v/release/pinkfish/hass-magic_areas.svg)](https://github.com/pinkfish/hass-magic_areas/releases) [![GitHub latest commit](https://badgen.net/github/last-commit/pinkfish/hass-magic_areas)](https://GitHub.com/pinkfish/hass-magic_areas/commit/) [![GitHub contributors](https://badgen.net/github/contributors/pinkfish/hass-magic_areas)](https://GitHub.com/pinkfish/hass-magic_areas/graphs/contributors/)
 
 Tired of writing the same automations, over and over, for each of your rooms? You wish Home Assistant just figured out all entities you have in an area and **magically** started being smarter about them? 
 
@@ -31,18 +31,18 @@ If you think all of the above features are freaking awesome, **Magic Areas** is 
 
 ## Installation
 
-_Magic Areas_ is available on HACS! For installation instructions check the installation [wiki](https://github.com/jseidl/hass-magic_areas/wiki/Installation).
+_Magic Areas_ is available on HACS! For installation instructions check the installation [wiki](https://github.com/pinkfish/hass-magic_areas/wiki/Installation).
 
 ## Configuration
 Configuration options for `Magic Areas` are on a per-area basis.
 
-> ⚠️ Before you start: Please make sure you understand all the **Concepts** on the [wiki](https://github.com/jseidl/hass-magic_areas/wiki).
+> ⚠️ Before you start: Please make sure you understand all the **Concepts** on the [wiki](https://github.com/pinkfish/hass-magic_areas/wiki).
 
 > 💡 Light Groups won't control any lights unless the `Light Control` switch for that area is turned `on`!
 
-Go to **Configuration** > **Integrations**. You shall see the *Magic Areas* integration and configure each area (and [Meta-Areas](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas)!). 
+Go to **Configuration** > **Integrations**. You shall see the *Magic Areas* integration and configure each area (and [Meta-Areas](https://github.com/pinkfish/hass-magic_areas/wiki/Meta-Areas)!). 
 
-See all configuration options in the [wiki](https://github.com/jseidl/hass-magic_areas/wiki/Configuration).
+See all configuration options in the [wiki](https://github.com/pinkfish/hass-magic_areas/wiki/Configuration).
 
 ## Problems/bugs, questions, feature requests?
 
@@ -55,4 +55,4 @@ logger:
         custom_components.magic_areas: debug
 ```
 
-As soon as the issue occurs capture the contents of the the log (`/config/home-assistant.log`) and open up a [ticket](https://github.com/jseidl/hass-magic_areas/issues)!
+As soon as the issue occurs capture the contents of the the log (`/config/home-assistant.log`) and open up a [ticket](https://github.com/pinkfish/hass-magic_areas/issues)!
