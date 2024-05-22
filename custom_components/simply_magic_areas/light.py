@@ -174,7 +174,6 @@ class AreaLightGroup(MagicLightGroup):
 
     ### State Change Handling
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:
-        _LOGGER.debug("_area_state_change")
         if event.event_type != "state_changed":
             return
         if event.data["old_state"] is None or event.data["new_state"] is None:
@@ -200,6 +199,8 @@ class AreaLightGroup(MagicLightGroup):
         if self.area.has_configured_state(to_state):
             conf = self.area.state_config(to_state)
             self.turn_on(conf)
+        else:
+            self.logger.warning("%s: Unknown state %s", self.name, to_state)
 
     def _update_group_state(self, event: Event[EventStateChangedData]) -> None:
         if not self.area.is_occupied():
@@ -250,6 +251,14 @@ class AreaLightGroup(MagicLightGroup):
 
         self._entity_ids = conf.lights
         self.async_update_group_state()
+        self.logger.debug(
+            "Update light group %s %s %s %s %s",
+            self.is_on,
+            self.brightness,
+            self.area.entities.keys(),
+            conf.lights,
+            self.area.entities[LIGHT_DOMAIN],
+        )
         if conf.dim_level == 0:
             _LOGGER.debug("%s: Dim is 0", self.name)
             return self.turn_off()
@@ -259,6 +268,7 @@ class AreaLightGroup(MagicLightGroup):
             self.logger.debug("%s: Already on at %s", self.name, brightness)
             return False
 
+        self.logger.debug("Turning on lights")
         self.last_update_from_entity = True
         service_data = {
             ATTR_ENTITY_ID: self.entity_id,

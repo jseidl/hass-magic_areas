@@ -282,8 +282,8 @@ class MagicArea(object):  # noqa: UP004
         for entity_object in entity_registry.entities.values():
             if self._is_magic_area_entity(entity_object):
                 magic_area_entities.append(entity_object.entity_id)
-
                 continue
+
             # Check entity validity
             if not self._is_valid_entity(entity_object):
                 continue
@@ -399,7 +399,11 @@ class MagicArea(object):  # noqa: UP004
                 entity_ob = base.get(lg.entity_name())
                 if entity_ob is None:
                     continue
-
+            lights = self.feature_config(CONF_FEATURE_ADVANCED_LIGHT_GROUPS).get(
+                    lg.advanced_lights_to_control(), light_entities
+                )
+            if not lights:
+                lights = light_entities
             self._state_config[lg.enable_state] = StateConfigData(
                 name=lg.name,
                 entity=entity_ob,
@@ -411,9 +415,7 @@ class MagicArea(object):  # noqa: UP004
                 icon=lg.icon,
                 control_entity=f"{SWITCH_DOMAIN}.area_light_control_{self.slug}",
                 manual_entity=f"{SWITCH_DOMAIN}.area_manual_override_active_{self.slug}",
-                lights=self.feature_config(CONF_FEATURE_ADVANCED_LIGHT_GROUPS).get(
-                    lg.advanced_lights_to_control(), light_entities
-                ),
+                lights=lights,
             )
 
 
