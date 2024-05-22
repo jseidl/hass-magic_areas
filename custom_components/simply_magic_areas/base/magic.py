@@ -48,6 +48,8 @@ from homeassistant.helpers.entity_registry import (
 from homeassistant.util import slugify
 from homeassistant.util.event_type import EventType
 
+_LOGGER = logging.getLogger(__name__)
+
 
 @dataclass
 class MagicEvent:
@@ -82,9 +84,7 @@ class MagicArea(object):  # noqa: UP004
         listen_event: EventType = EVENT_HOMEASSISTANT_STARTED,
         init_on_hass_running: bool = True,
     ) -> None:
-        """Initialize the magic area with alll the stuff."""
-        self.logger = logging.getLogger(__name__)
-
+        """Initialize the magic area with all the stuff."""
         self.hass: HomeAssistant = hass
         self.name: str = area.name
         # Default to the icon for the area.
@@ -114,7 +114,7 @@ class MagicArea(object):  # noqa: UP004
         else:
             self.hass.bus.async_listen_once(listen_event, self._initialize)
 
-        self.logger.debug("Area %s Primed for initialization.", self.slug)
+        _LOGGER.debug("%s: Area Primed for initialization", self.slug)
 
     def _finalize_init(self) -> None:
         self.initialized = True
@@ -127,7 +127,7 @@ class MagicArea(object):  # noqa: UP004
                 self.hass.bus.async_fire(EVENT_MAGICAREAS_READY)
 
         area_type = "Meta-Area" if self.is_meta() else "Area"
-        self.logger.debug("%s %s initialized", area_type, self.slug)
+        _LOGGER.debug("%s: %s initialized", self.slug, area_type)
 
     def is_occupied(self) -> bool:
         """If the area is occupied."""
@@ -163,7 +163,7 @@ class MagicArea(object):  # noqa: UP004
 
         # Handle everything else
         if not isinstance(enabled_features, dict):
-            self.logger.warning(
+            _LOGGER.warning(
                 "%s: Invalid configuration for %s",
                 self.name,
                 CONF_ENABLED_FEATURES,
@@ -175,13 +175,13 @@ class MagicArea(object):  # noqa: UP004
     def feature_config(self, feature: str) -> dict:
         """Get the feature config for the specified feature."""
         if not self.has_feature(feature):
-            self.logger.debug("%s: Feature %s not enabled", self.name, feature)
+            _LOGGER.debug("%s: Feature %s not enabled", self.name, feature)
             return {}
 
         options = self.config.get(CONF_ENABLED_FEATURES, {})
 
         if not options:
-            self.logger.debug("%s: No feature config found for %s", self.name, feature)
+            _LOGGER.debug("%s: No feature config found for %s", self.name, feature)
 
         return options.get(feature, {})
 
@@ -226,8 +226,8 @@ class MagicArea(object):  # noqa: UP004
                 our_device_tuple = (DOMAIN, f"{MAGIC_DEVICE_ID_PREFIX}{self.id}")
 
                 if our_device_tuple in device_object.identifiers:
-                    self.logger.debug(
-                        "%s: Entity %s is ours, skipping.",
+                    _LOGGER.debug(
+                        "%s: Entity %s is ours, skipping",
                         self.name,
                         entity_object.entity_id,
                     )
@@ -302,19 +302,12 @@ class MagicArea(object):  # noqa: UP004
         self._load_entity_list("", entity_list)
         self._load_entity_list(DOMAIN, magic_area_entities)
 
-        self.logger.debug("Loaded entities for area %s: %s", self.slug, self.entities)
+        _LOGGER.debug("%s: Loaded entities for area  %s", self.slug, self.entities)
 
     def _load_entity_list(self, prefix: str, entity_list: list[str]) -> None:
-        self.logger.debug("[%s] Original entity list: %s", self.slug, entity_list)
-
         flattened_entity_list = flatten_entity_list(entity_list)
         unique_entities = set(flattened_entity_list)
-
-        self.logger.debug("[%s] Unique entities: %s", self.slug, unique_entities)
-
         for entity_id in unique_entities:
-            self.logger.debug("[%s] Loading entity:%s", self.slug, entity_id)
-
             try:
                 entity_component, entity_name = entity_id.split(".")
 
@@ -332,8 +325,8 @@ class MagicArea(object):  # noqa: UP004
 
                 # Ignore groups
                 if is_entity_list(updated_entity["entity_id"]):
-                    self.logger.debug(
-                        "[%s] %s is probably a group, skipping...",
+                    _LOGGER.debug(
+                        "%s: %s is probably a group, skipping",
                         self.slug,
                         entity_id,
                     )
@@ -345,8 +338,8 @@ class MagicArea(object):  # noqa: UP004
                 self.entities[prefix + entity_component].append(updated_entity)
 
             except Exception as err:  # noqa: BLE001
-                self.logger.error(
-                    "[%s] Unable to load entity '%s': {%s}",
+                _LOGGER.error(
+                    "%s: Unable to load entity '%s': {%s}",
                     self.slug,
                     entity_id,
                     str(err),
@@ -355,12 +348,15 @@ class MagicArea(object):  # noqa: UP004
     def _async_registry_updated(
         self, event: Event[EventEntityRegistryUpdatedData]
     ) -> None:
+        _LOGGER.warning(
+            "%s: Updateing action %s entity %s", self.slug, event.action, event.changes
+        )
         if event.action != "update":
             return
         if "area_id" in event.changes:
             # Reload entities and then update the other pieces of the system.
-            self.logger.debug(
-                "[%s] Updateing entity from area change %s", self.slug, event.changes
+            _LOGGER.debug(
+                "%s: Updateing entity from area change %s", self.slug, event.changes
             )
             self.hass.config_entries.async_update_entry(
                 self.config_entry,
@@ -368,7 +364,7 @@ class MagicArea(object):  # noqa: UP004
             )
 
     async def _initialize(self, _=None) -> None:
-        self.logger.debug("Initializing area %s", self.slug)
+        _LOGGER.debug("%s: Initializing area", self.slug)
 
         # Watch for area changes.
         async_dispatcher_connect(
@@ -462,8 +458,11 @@ class MagicMetaArea(MagicArea):
                 if entity.state == STATE_ON:
                     active_areas.append(area)
             except Exception as e:  # noqa: BLE001
-                self.logger.error(
-                    "Unable to get active area state for %s: %s", area, str(e)
+                _LOGGER.error(
+                    "%s: Unable to get active area state for %s: %s",
+                    self.slug,
+                    area,
+                    str(e),
                 )
 
         return active_areas
@@ -485,20 +484,18 @@ class MagicMetaArea(MagicArea):
 
     async def _initialize(self, _=None) -> None:
         if self.initialized:
-            self.logger.warning(
-                "Meta-Area %s: Already initialized, ignoring", self.name
-            )
+            _LOGGER.warning("%s: Meta-Area Already initialized, ignoring", self.name)
             return False
 
         # Meta-areas need to wait until other magic areas are loaded.
         if not self._areas_loaded():
-            self.logger.warning(
-                "Meta-Area %s: Non-meta areas not loaded. This shouldn't happen",
+            _LOGGER.warning(
+                "%s: Meta-Area Non-meta areas not loaded. This shouldn't happen",
                 self.name,
             )
             return False
 
-        self.logger.debug("Initializing meta area %s", self.name)
+        _LOGGER.debug("%s: Initializing meta area", self.name)
 
         await self._load_entities()
 
@@ -517,8 +514,9 @@ class MagicMetaArea(MagicArea):
                 for entities in area.entities.values():
                     for entity in entities:
                         if not isinstance(entity["entity_id"], str):
-                            self.logger.debug(
-                                "Entity ID is not a string: %s (probably a group, skipping)",
+                            _LOGGER.debug(
+                                "%s: Entity ID is not a string: %s (probably a group, skipping)",
+                                self.slug,
                                 entity["entity_id"],
                             )
                             continue
@@ -533,6 +531,4 @@ class MagicMetaArea(MagicArea):
 
         self._load_entity_list(entity_list)
 
-        self.logger.debug(
-            "Loaded entities for meta area %s: %s", self.slug, self.entities
-        )
+        _LOGGER.debug("%s: Loaded entities for meta area %s", self.slug, self.entities)

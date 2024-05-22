@@ -163,7 +163,10 @@ class AreaLightGroup(MagicLightGroup):
         self.async_on_remove(
             async_track_state_change_event(
                 self.hass,
-                [f"{SELECT_DOMAIN}.area_magic_{self.area.slug}"],
+                [
+                    f"{SELECT_DOMAIN}.area_magic_{self.area.slug}",
+                    f"{SWITCH_DOMAIN}.area_magic_light_control_{self.area.slug}",
+                ],
                 self._area_state_change,
             )
         )
