@@ -382,13 +382,14 @@ class MagicLightGroup(MagicEntity, LightGroup):
         self._name = f"{self.area.name} Lights"
 
 
-class MagicSelectEntity(MagicEntity, SelectEntity):
+class MagicSelectEntity(MagicEntity, SelectEntity, RestoreEntity):
     """A select entity for fun."""
 
     def __init__(self, area: MagicArea, available_states: list[str]) -> None:
         """Create a select entity for the system."""
         MagicEntity.__init__(self, area)
         SelectEntity.__init__(self)
+        RestoreEntity.__init__(self)
         self.area = area
         self._attr_options = available_states
         self._attr_current_option = available_states[0]

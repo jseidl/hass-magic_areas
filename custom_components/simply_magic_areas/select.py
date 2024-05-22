@@ -101,9 +101,7 @@ class AreaStateSelect(MagicSelectEntity):
                 self.name,
                 last_state.state,
             )
-            self.area.state = last_state.attributes.get(
-                ATTR_STATE, AreaState.AREA_STATE_CLEAR
-            )
+            self.area.state = last_state.state
             self.schedule_update_ha_state()
 
     async def _initialize(self, _=None) -> None:
@@ -543,7 +541,7 @@ class AreaStateSelect(MagicSelectEntity):
                 self.area.slug,
                 active_areas,
             )
-            self._attributes["active_areas"] = active_areas
+            self._attributes[ATTR_ACTIVE_AREAS] = active_areas
 
         if self._mode == "all":
             return len(active_sensors) == len(self.sensors)

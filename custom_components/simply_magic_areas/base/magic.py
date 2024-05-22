@@ -400,8 +400,8 @@ class MagicArea(object):  # noqa: UP004
                 if entity_ob is None:
                     continue
             lights = self.feature_config(CONF_FEATURE_ADVANCED_LIGHT_GROUPS).get(
-                    lg.advanced_lights_to_control(), light_entities
-                )
+                lg.advanced_lights_to_control(), light_entities
+            )
             if not lights:
                 lights = light_entities
             self._state_config[lg.enable_state] = StateConfigData(

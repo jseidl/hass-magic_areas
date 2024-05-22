@@ -19,19 +19,15 @@ from homeassistant.core import (
     EventStateChangedData,
     HomeAssistant,
 )
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import (
-    EVENT_ENTITY_REGISTRY_UPDATED,
-    EventEntityRegistryUpdatedData,
-    RegistryEntry,
     async_get as async_get_er,
 )
 from homeassistant.helpers.event import async_track_state_change_event, call_later
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicLightGroup
-from .base.magic import MagicArea, MagicEvent, StateConfigData
+from .base.magic import MagicArea
 from .const import CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
