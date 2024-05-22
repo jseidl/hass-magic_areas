@@ -177,10 +177,16 @@ CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
     "aggregates_min_entities",
     2,
 )  # cv.positive_int
-CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
-CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT = "clear_timeout", 60  # cv.positive_int
+CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 360  # cv.positive_int
+CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT = (
+    "extended_timeout",
+    360,
+)  # cv.positive_int
 CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT = "manual_timeout", 60  # cv.positive_int
-CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
+CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = (
+    "update_interval",
+    1800,
+)  # cv.positive_int
 CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
 CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (
     "notification_devices",
@@ -194,14 +200,6 @@ CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES = (
 )  # cv.ensure_list
 
 
-# Act on types.
-class ActOn(StrEnum):
-    """The types of things the light can act on."""
-
-    OCCUPANCY_CHANGE = "occupancy"
-    STATE_CHANGE = "state"
-
-
 # Light group setup options
 @dataclass
 class LightEntityConf:
@@ -212,6 +210,7 @@ class LightEntityConf:
     enable_state: AreaState
     icon: str
     has_entity: bool
+    is_advanced: bool
 
     def entity_name(self) -> str:
         """Return the name of the entity to lookup."""
@@ -233,8 +232,22 @@ class LightEntityConf:
         """Return the advance states to activate on."""
         return self.name + "_state_activate"
 
+    def number_selector(self) -> dict[str, any]:
+        """Return a number selector to use for the dim percentage."""
+        return {
+            "number": {
+                # "initial": self.default_dim_level,
+                "min": 0,
+                "max": 100,
+                "mode": "box",
+                "unit_of_measurement": "percent",
+            }
+        }
+
     def config_flow_schema(self) -> dict:
         """Return the options for the schema for the magic areas."""
+        if self.is_advanced:
+            return {}
         if self.has_entity:
             return {
                 vol.Optional(self.entity_name(), default=""): vol.Any(cv.entity_id, ""),
@@ -248,6 +261,8 @@ class LightEntityConf:
 
     def config_flow_options(self) -> list[tuple[str, any, any]]:
         """Return the options for the schema for the magic areas."""
+        if self.is_advanced:
+            return []
         if self.has_entity:
             return [
                 (self.entity_name(), "", cv.entity_id),
@@ -267,6 +282,8 @@ class LightEntityConf:
 
     def config_flow_dynamic_validators(self, all_entities: list[str]) -> dict:
         """Return the dynamic validators to use in the config flow."""
+        if self.is_advanced:
+            return {}
         if self.has_entity:
             return {
                 self.entity_name(): vol.In(["", *all_entities]),
@@ -278,71 +295,130 @@ class LightEntityConf:
 
     def config_flow_selectors(self, all_entities: list[str]) -> dict:
         """Return the config for the main section with the timeouts and name bits."""
+        if self.is_advanced:
+            return {}
         if self.has_entity:
             return {
                 self.entity_name(): NullableEntitySelector(
                     EntitySelectorConfig(include_entities=all_entities, multiple=False)
                 ),
-                self.state_dim_level(): selector(
-                    {
-                        "number": {
-                            # "initial": self.default_dim_level,
-                            "min": 0,
-                            "max": 100,
-                            "mode": "box",
-                            "unit_of_measurement": "percent",
-                        }
-                    }
-                ),
+                self.state_dim_level(): selector(self.number_selector()),
             }
         return {
-            self.state_dim_level(): selector(
-                {
-                    "number": {
-                        # "initial": self.default_dim_level,
-                        "min": 0,
-                        "max": 100,
-                        "mode": "box",
-                        "unit_of_measurement": "percent",
-                    }
-                }
-            ),
+            self.state_dim_level(): selector(self.number_selector()),
         }
 
     def advanced_config_flow_schema(self) -> vol.Schema:
         """Return the options for the schema for the magic areas."""
-        return {
+        ret = {
             vol.Optional(self.advanced_lights_to_control(), default=[]): cv.entity_ids,
             vol.Optional(self.advanced_state_check(), default=STATE_ON): str,
         }
+        if self.is_advanced:
+            if self.has_entity:
+                ret.update(
+                    {
+                        self.entity_name(): vol.Any(cv.entity_id, ""),
+                        self.state_dim_level(): vol.Range(min=0, max=100),
+                    }
+                )
+            else:
+                ret.update(
+                    {
+                        self.state_dim_level(): vol.Range(min=0, max=100),
+                    }
+                )
+        return ret
 
     def advanced_config_flow_options(self) -> list[tuple[str, any, any]]:
         """Return the options for the schema for the magic areas."""
-        return [
+        ret = [
             (self.advanced_lights_to_control(), [], cv.entity_ids),
             (self.advanced_state_check(), STATE_ON, str),
         ]
+        if self.is_advanced:
+            if self.has_entity:
+                ret.extend(
+                    [
+                        (self.entity_name(), "", cv.entity_id),
+                        (
+                            self.state_dim_level(),
+                            self.default_dim_level,
+                            float,
+                        ),
+                    ]
+                )
+            else:
+                ret.extend(
+                    [
+                        (
+                            self.state_dim_level(),
+                            self.default_dim_level,
+                            float,
+                        ),
+                    ]
+                )
+        return ret
 
-    def advanced_config_flow_dynamic_validators(self, all_lights: list[str]) -> dict:
+    def advanced_config_flow_dynamic_validators(
+        self, all_lights: list[str], all_entities: list[str]
+    ) -> dict:
         """Return the dynamic validators to use in the config flow."""
-        return {
+        ret = {
             self.advanced_lights_to_control(): cv.multi_select(all_lights),
             self.advanced_state_check(): str,
         }
+        if self.is_advanced:
+            if self.has_entity:
+                ret.update(
+                    {
+                        self.entity_name(): vol.In(["", *all_entities]),
+                        self.state_dim_level(): vol.Range(min=0, max=100),
+                    }
+                )
+            else:
+                ret.update(
+                    {
+                        self.state_dim_level(): vol.Range(min=0, max=100),
+                    }
+                )
+        return ret
 
-    def advanced_config_flow_selectors(self, all_lights: list[str]) -> dict:
+    def advanced_config_flow_selectors(
+        self, all_lights: list[str], all_entities: list[str]
+    ) -> dict:
         """Return the config for the main section with the timeouts and name bits."""
-        return {
+        ret = {
             self.advanced_lights_to_control(): NullableEntitySelector(
                 EntitySelectorConfig(include_entities=all_lights, multiple=True)
             ),
             self.advanced_state_check(): cv.string,
         }
+        if self.is_advanced:
+            if self.has_entity:
+                ret.update(
+                    {
+                        self.entity_name(): NullableEntitySelector(
+                            EntitySelectorConfig(
+                                include_entities=all_entities, multiple=False
+                            )
+                        ),
+                        self.state_dim_level(): selector(self.number_selector()),
+                    }
+                )
+            else:
+                ret.update(
+                    {
+                        self.state_dim_level(): selector(self.number_selector()),
+                    }
+                )
+        return ret
 
 
 # Setups to control all the lights, items to create
 clear_lights = LightEntityConf(
     name="clear",
+    is_advanced=True,
     default_dim_level=0.0,
     enable_state=AreaState.AREA_STATE_CLEAR,
     icon="mdi:off",
@@ -354,6 +430,7 @@ bright_lights = LightEntityConf(
     enable_state=AreaState.AREA_STATE_BRIGHT,
     icon="mdi:ceiling-light",
     has_entity=True,
+    is_advanced=False,
 )
 sleep_lights = LightEntityConf(
     name="sleep",
@@ -361,9 +438,11 @@ sleep_lights = LightEntityConf(
     enable_state=AreaState.AREA_STATE_SLEEP,
     icon="mdi:sleep",
     has_entity=True,
+    is_advanced=False,
 )
 occupied_lights = LightEntityConf(
     name="occupied",
+    is_advanced=False,
     default_dim_level=100.0,
     enable_state=AreaState.AREA_STATE_OCCUPIED,
     icon="mdi:desk-lamp",
@@ -371,6 +450,7 @@ occupied_lights = LightEntityConf(
 )
 extended_lights = LightEntityConf(
     name="extended",
+    is_advanced=True,
     default_dim_level=0.0,
     enable_state=AreaState.AREA_STATE_EXTENDED,
     has_entity=False,
@@ -378,6 +458,7 @@ extended_lights = LightEntityConf(
 )
 accented_lights = LightEntityConf(
     name="accented",
+    is_advanced=True,
     default_dim_level=0.0,
     enable_state=AreaState.AREA_STATE_ACCENTED,
     has_entity=True,
@@ -523,9 +604,6 @@ ADVANCED_LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
             CONF_PRESENCE_SENSOR_DEVICE_CLASS,
             default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
         ): cv.ensure_list,
-        vol.Optional(
-            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
-        ): cv.positive_int,
         vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list,
     }
 )
@@ -576,6 +654,12 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
         ): cv.positive_int,
+        vol.Optional(
+            CONF_EXTENDED_TIMEOUT, default=DEFAULT_EXTENDED_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
+        ): cv.positive_int,
         vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
     }
 ).extend(
@@ -603,6 +687,8 @@ _DOMAIN_SCHEMA = vol.Schema({cv.slug: AREA_SCHEMA})
 OPTIONS_AREA = [
     (CONF_TYPE, DEFAULT_TYPE, vol.In([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
+    (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),
+    (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
     (CONF_ICON, DEFAULT_ICON, str),
 ]
 for item in ALL_LIGHT_ENTITIES:
@@ -611,7 +697,6 @@ for item in ALL_LIGHT_ENTITIES:
 OPTIONS_AREA_ADVANCED = [
     (CONF_INCLUDE_ENTITIES, [], cv.entity_ids),
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
-    (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
     (
         CONF_PRESENCE_DEVICE_PLATFORMS,
         DEFAULT_PRESENCE_DEVICE_PLATFORMS,

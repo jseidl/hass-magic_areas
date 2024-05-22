@@ -9,6 +9,7 @@ from custom_components.simply_magic_areas.const import (
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
+    CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
     CONF_ICON,
     CONF_ID,
@@ -56,20 +57,18 @@ async def test_form(hass: HomeAssistant) -> None:
     assert result2["title"] == "kitchen"
     assert result2["data"] == {
         CONF_NAME: "kitchen",
-        CONF_CLEAR_TIMEOUT: 60,
+        CONF_CLEAR_TIMEOUT: 360,
         CONF_ENABLED_FEATURES: {},
         CONF_ICON: "mdi:texture-box",
         CONF_ID: "kitchen",
         CONF_TYPE: AREA_TYPE_INTERIOR,
-        "accented_entity": "",
-        "accented_state_dim": 0,
+        CONF_EXTENDED_TIMEOUT: 360,
+        CONF_UPDATE_INTERVAL: 1800,
         "bright_entity": "",
-        "bright_state_dim": 0,
+        "bright_state_dim": 0.0,
         "sleep_entity": "",
-        "sleep_state_dim": 30,
-        "extended_state_dim": 0,
-        "clear_state_dim": 0,
-        "occupied_state_dim": 100,
+        "sleep_state_dim": 30.0,
+        "occupied_state_dim": 100.0,
     }
     # assert len(mock_setup_entry.mock_calls) == 1
 
@@ -90,7 +89,8 @@ async def test_options(hass: HomeAssistant, config_entry: MockConfigEntry) -> No
     result = await hass.config_entries.options.async_init(config_entry.entry_id)
     # submit form with options
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], user_input={CONF_CLEAR_TIMEOUT: 12}
+        result["flow_id"],
+        user_input={CONF_CLEAR_TIMEOUT: 12, CONF_EXTENDED_TIMEOUT: 60},
     )
     await hass.async_block_till_done()
 
@@ -104,17 +104,15 @@ async def test_options(hass: HomeAssistant, config_entry: MockConfigEntry) -> No
     # assert result["title"] == "kitchen"
     assert result["data"] == {
         CONF_CLEAR_TIMEOUT: 12,
+        CONF_EXTENDED_TIMEOUT: 60,
         CONF_ENABLED_FEATURES: {},
         CONF_ICON: "mdi:texture-box",
         CONF_TYPE: AREA_TYPE_INTERIOR,
-        "accented_entity": "",
-        "accented_state_dim": 0.0,
+        CONF_UPDATE_INTERVAL: 1800,
         "bright_entity": "",
         "bright_state_dim": 0.0,
         "sleep_entity": "",
         "sleep_state_dim": 30.0,
-        "extended_state_dim": 0.0,
-        "clear_state_dim": 0.0,
         "occupied_state_dim": 100.0,
     }
 
@@ -138,14 +136,12 @@ async def test_options_enable_advanced_lights(
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "area_config"
     assert result["data_schema"]({}) == {
-        "accented_entity": "",
-        "accented_state_dim": 0.0,
         "bright_entity": "",
         "bright_state_dim": 0.0,
-        "clear_state_dim": 0.0,
-        "clear_timeout": 60.0,
-        "extended_state_dim": 0.0,
+        CONF_EXTENDED_TIMEOUT: 360.0,
         CONF_ICON: "mdi:texture-box",
+        CONF_CLEAR_TIMEOUT: 360.0,
+        CONF_UPDATE_INTERVAL: 1800,
         "occupied_state_dim": 100.0,
         "sleep_entity": "",
         "sleep_state_dim": 30.0,
@@ -179,10 +175,15 @@ async def test_options_enable_advanced_lights(
     # assert result["title"] == "kitchen"
     assert result["data"] == {
         CONF_CLEAR_TIMEOUT: 12,
+        CONF_EXTENDED_TIMEOUT: 360,
         CONF_ENABLED_FEATURES: {
             CONF_FEATURE_ADVANCED_LIGHT_GROUPS: {
+                "accented_entity": "",
+                "accented_state_dim": 0.0,
                 "accented_lights": [],
+                "extended_state_dim": 0.0,
                 "accented_state_check": STATE_OFF,
+                "clear_state_dim": 0.0,
                 "bright_lights": [],
                 "bright_state_check": STATE_ON,
                 "clear_lights": [],
@@ -203,20 +204,16 @@ async def test_options_enable_advanced_lights(
                     BinarySensorDeviceClass.OCCUPANCY,
                     BinarySensorDeviceClass.PRESENCE,
                 ],
-                CONF_UPDATE_INTERVAL: 60,
                 CONF_ON_STATES: [STATE_ON, STATE_OPEN],
                 CONF_INCLUDE_ENTITIES: [],
             },
         },
         CONF_ICON: "mdi:texture-box",
         CONF_TYPE: AREA_TYPE_INTERIOR,
-        "accented_entity": "",
-        "accented_state_dim": 0.0,
+        CONF_UPDATE_INTERVAL: 1800,
         "bright_entity": "",
         "bright_state_dim": 0.0,
         "sleep_entity": "",
         "sleep_state_dim": 30.0,
-        "extended_state_dim": 0.0,
-        "clear_state_dim": 0.0,
         "occupied_state_dim": 100.0,
     }

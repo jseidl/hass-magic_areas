@@ -28,6 +28,7 @@ from .const import (
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
+    CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
@@ -409,21 +410,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             CONF_ICON: icon_selector,
             CONF_UPDATE_INTERVAL: self._build_selector_number(),
             CONF_CLEAR_TIMEOUT: self._build_selector_number(),
-            CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(
-                self.all_entities, multiple=True
-            ),
-            CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(
-                self.all_area_entities, multiple=True
-            ),
-            CONF_ON_STATES: self._build_selector_select(
-                sorted(AVAILABLE_ON_STATES), multiple=True
-            ),
-            CONF_PRESENCE_DEVICE_PLATFORMS: self._build_selector_select(
-                sorted(ALL_PRESENCE_DEVICE_PLATFORMS), multiple=True
-            ),
-            CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(
-                sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
-            ),
+            CONF_EXTENDED_TIMEOUT: self._build_selector_number(),
         }
 
         for item in ALL_LIGHT_ENTITIES:
@@ -441,7 +428,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 selectors.update(lg.config_flow_selectors(self.all_entities))
 
         data_schema = self._build_options_schema(options=options, selectors=selectors)
-        _LOGGER.warning("Schema %s %s", [o[0] for o in options], selectors.keys())
 
         return self.async_show_form(
             step_id="area_config",
@@ -534,7 +520,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         """Configure the advanced light groups bits."""
         options = OPTIONS_AREA_ADVANCED
         selectors = {
-            CONF_UPDATE_INTERVAL: self._build_selector_number(),
             CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(
                 self.all_entities, multiple=True
             ),
@@ -553,7 +538,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         }
         for lg in ALL_LIGHT_ENTITIES:
             options.extend(lg.advanced_config_flow_options())
-            selectors.update(lg.advanced_config_flow_selectors(self.all_lights))
+            selectors.update(
+                lg.advanced_config_flow_selectors(self.all_lights, self.all_entities)
+            )
 
         return await self.do_feature_config(
             name=CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
@@ -562,7 +549,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 k: v
                 for lg in ALL_LIGHT_ENTITIES
                 for k, v in lg.advanced_config_flow_dynamic_validators(
-                    self.all_lights
+                    self.all_lights, self.all_entities
                 ).items()
             },
             selectors=selectors,

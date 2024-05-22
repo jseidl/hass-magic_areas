@@ -32,21 +32,6 @@
           "presence_hold": "Create presence hold switch"
         }
       },
-      "feature_conf_light_groups": {
-        "title": "Light Groups",
-        "description": "Configure the Light Groups feature",
-        "data": {
-          "normal_lights": "Main lights (Leave blank for all area lights)",
-          "normal_lights_states": "States which main lights are turned on",
-          "normal_lights_act_on": "When should main lights be controlled?",
-          "sleep_lights": "Sleep lights",
-          "sleep_lights_states": "States which sleep lights are turned on",
-          "sleep_lights_act_on": "When should sleep lights be controlled?",
-          "bright_lights": "Bright lights",
-          "bright_lights_states": "States which bright lights are turned on",
-          "bright_lights_act_on": "When should bright lights be controlled?"
-        }
-      },
       "feature_conf_presence_hold": {
         "title": "Presence Hold",
         "description": "Creates a switch that will hold an area occupied while it's on",
@@ -87,7 +72,12 @@
           "accented_state": "State of sleep state entity (for on)",
           "accented_lights": "The lights to control in the accented mode",
           "clear_lights": "The lights to control in the clear mode",
-          "occupied_lights": "The lights to control in the occupied mode"
+          "occupied_lights": "The lights to control in the occupied mode",
+          "extended_lights": "The lights to control in the extended mode",
+          "accented_entity": "Entity used to put area into accented when occupied",
+          "accented_state_dim": "Dim level to use when the area is accented (0 for off)",
+          "clear_state_dim": "Dim level to use when the area is clear (0 for off)",
+          "extended_state_dim": "Dim level to use when the area is extended (0 for off)"
         }
       },
       "area_config": {
@@ -100,17 +90,15 @@
           "presence_device_platforms": "Platforms to be used for presence sensing",
           "on_states": "Sensor states that indicate presence",
           "icon": "Icon",
-          "update_interval": "Interval for checking missed events",
           "clear_timeout": "How long since last presence event should it wait before clearing the area",
+          "extended_timeout": "How after occupied the area should be extended",
+          "update_interval": "Interval for checking missed events",
           "type": "Area type (interior/exterior)",
           "bright_entity": "Entity used to put area into bright when occupied",
           "bright_state_dim": "Dim level to use when the area is bright (0 for off)",
           "sleep_entity": "Entity used to put area into sleep when occupied",
           "sleep_state_dim": "Dim level to use when the area is sleep (0 for off)",
-          "accented_entity": "Entity used to put area into accented when occupied",
-          "accented_state_dim": "Dim level to use when the area is accented (0 for off)",
-          "occupied_state_dim": "Dim level to use when the area is occupied (0 for off)",
-          "clear_state_dim": "Dim level to use when the area is clear (0 for off)"
+          "occupied_state_dim": "Dim level to use when the area is occupied (0 for off)"
         }
       }
     },

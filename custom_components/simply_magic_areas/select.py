@@ -231,8 +231,8 @@ class AreaStateSelect(MagicSelectEntity):
             datetime.now(UTC) - self.last_off_time
         ).total_seconds()
 
-        extended_timeout = self._get_extended_timeout()
         clear_timeout = self._get_clear_timeout()
+        extended_timeout = self._get_extended_timeout() + clear_timeout
         _LOGGER.debug(
             "Update state seconds since %s timout %s, extended %s, is_on_clear %s, is_on_extended %s",
             seconds_since_last_change,
@@ -368,10 +368,7 @@ class AreaStateSelect(MagicSelectEntity):
     ###       Extended
 
     def _get_extended_timeout(self) -> int:
-        return (
-            int(self.area.config.get(CONF_EXTENDED_TIMEOUT, 60))
-            + self._get_clear_timeout()
-        )
+        return int(self.area.config.get(CONF_EXTENDED_TIMEOUT, 60))
 
     def _set_extended_timeout(self) -> None:
         if self._extended_timeout_callback:

@@ -392,8 +392,11 @@ class MagicArea(object):  # noqa: UP004
 
         for lg in ALL_LIGHT_ENTITIES:
             entity_ob: str | None = None
+            base = self.config
+            if lg.is_advanced:
+                base = self.feature_config(CONF_FEATURE_ADVANCED_LIGHT_GROUPS)
             if lg.has_entity:
-                entity_ob = self.config.get(lg.entity_name())
+                entity_ob = base.get(lg.entity_name())
                 if entity_ob is None:
                     continue
 
@@ -403,14 +406,14 @@ class MagicArea(object):  # noqa: UP004
                 entity_state_on=self.feature_config(
                     CONF_FEATURE_ADVANCED_LIGHT_GROUPS
                 ).get(lg.advanced_state_check(), "on"),
-                dim_level=int(
-                    self.config.get(lg.state_dim_level(), lg.default_dim_level)
-                ),
+                dim_level=int(base.get(lg.state_dim_level(), lg.default_dim_level)),
                 for_state=lg.enable_state,
                 icon=lg.icon,
                 control_entity=f"{SWITCH_DOMAIN}.area_light_control_{self.slug}",
                 manual_entity=f"{SWITCH_DOMAIN}.area_manual_override_active_{self.slug}",
-                lights=self.config.get(lg.advanced_lights_to_control(), light_entities),
+                lights=self.feature_config(CONF_FEATURE_ADVANCED_LIGHT_GROUPS).get(
+                    lg.advanced_lights_to_control(), light_entities
+                ),
             )
 
 
