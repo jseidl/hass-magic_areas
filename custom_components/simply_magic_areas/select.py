@@ -85,9 +85,7 @@ class AreaStateSelect(MagicSelectEntity):
     @property
     def icon(self) -> str | None:
         """Return the icon to be used for this entity."""
-        if self.area.config.get(CONF_ICON):
-            return self.area.config.get(CONF_ICON)
-        return None
+        return "mdi:home-search"
 
     async def restore_state(self) -> None:
         """Restore the state of the sensor on initialize."""
