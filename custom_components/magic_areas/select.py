@@ -236,7 +236,7 @@ class AreaStateSelect(MagicSelectEntity):
         occupied_state = self._get_sensors_state()
 
         seconds_since_last_change = (
-            datetime.now(UTC) - self.area.last_changed
+            datetime.now(UTC) - self.last_off_time
         ).total_seconds()
 
         extended_timeout = self._get_extended_timeout()
@@ -469,7 +469,7 @@ class AreaStateSelect(MagicSelectEntity):
         if to_state and to_state.state not in self.area.feature_config(
             CONF_FEATURE_ADVANCED_LIGHT_GROUPS
         ).get(CONF_ON_STATES, DEFAULT_ON_STATES):
-            _LOGGER.debug("Setting last off time")
+            _LOGGER.debug("Setting last non-normal time")
             self.last_off_time = datetime.now(UTC)  # Update last_off_time
             # Clear the timeout
             self._remove_clear_timeout()

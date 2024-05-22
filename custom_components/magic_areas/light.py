@@ -244,16 +244,17 @@ class AreaLightGroup(MagicLightGroup):
     def turn_on(self) -> None:
         """Turn on the light group."""
         if not self._is_control_enabled():
-            self.logger("%s: No control enabled", self.name)
-            return False
-
-        if self.is_on:
-            self.logger("%s: Already on", self.name)
+            self.logger.debug("%s: No control enabled", self.name)
             return False
 
         if self.conf.dim_level == 0:
             _LOGGER.debug("%s: No category or dim is 0", self.name)
             return self.turn_off()
+
+        brightness = int(self.conf.dim_level * 255 / 100)
+        if self.is_on and self.brightness == brightness:
+            self.logger.debug("%s: Already on at %s", self.name, brightness)
+            return False
 
         self.last_update_from_entity = True
         service_data = {
@@ -270,6 +271,7 @@ class AreaLightGroup(MagicLightGroup):
             return False
 
         if not self.is_on:
+            _LOGGER.debug("%s: Light already off", self.name)
             return False
 
         self.last_update_from_entity = True
