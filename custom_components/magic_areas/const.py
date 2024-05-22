@@ -35,7 +35,7 @@ from homeassistant.helpers.selector import EntitySelectorConfig, selector
 
 from .nullable_entity_selector import NullableEntitySelector
 
-DOMAIN = "magic_areas"
+DOMAIN = "simply_magic_areas"
 MODULE_DATA = f"{DOMAIN}_data"
 
 # Magic Areas Events
