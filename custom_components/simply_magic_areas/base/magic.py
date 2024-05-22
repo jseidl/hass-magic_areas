@@ -61,7 +61,6 @@ class StateConfigData:
     """The read config data about the light for each state."""
 
     name: str
-    group_entity_id: str
     entity: str | None
     entity_state_on: str
     dim_level: int
@@ -218,8 +217,7 @@ class MagicArea(object):  # noqa: UP004
         """If this is an exterior area."""
         return self.area_type == AREA_TYPE_EXTERIOR
 
-    def _is_valid_entity(self, entity_object: RegistryEntry) -> bool:
-        # Ignore our own entities
+    def _is_magic_area_entity(self, entity_object: RegistryEntry) -> bool:
         if entity_object.device_id:
             device_registry = async_get_dr(self.hass)
             device_object = device_registry.async_get(entity_object.device_id)
@@ -233,7 +231,13 @@ class MagicArea(object):  # noqa: UP004
                         self.name,
                         entity_object.entity_id,
                     )
-                    return False
+                    return True
+        return False
+
+    def _is_valid_entity(self, entity_object: RegistryEntry) -> bool:
+        # Ignore our own entities
+        if self._is_magic_area_entity(entity_object):
+            return False
 
         if entity_object.disabled:
             return False
@@ -268,6 +272,7 @@ class MagicArea(object):  # noqa: UP004
 
     async def _load_entities(self) -> None:
         entity_list = []
+        magic_area_entities = []
         include_entities = self.feature_config(CONF_FEATURE_ADVANCED_LIGHT_GROUPS).get(
             CONF_INCLUDE_ENTITIES, []
         )
@@ -275,6 +280,10 @@ class MagicArea(object):  # noqa: UP004
         entity_registry = async_get_er(self.hass)
 
         for entity_object in entity_registry.entities.values():
+            if self._is_magic_area_entity(entity_object):
+                magic_area_entities.append(entity_object.entity_id)
+
+                continue
             # Check entity validity
             if not self._is_valid_entity(entity_object):
                 continue
@@ -290,11 +299,12 @@ class MagicArea(object):  # noqa: UP004
         if include_entities and isinstance(include_entities, list):
             entity_list.extend(include_entities)
 
-        self._load_entity_list(entity_list)
+        self._load_entity_list("", entity_list)
+        self._load_entity_list(DOMAIN, magic_area_entities)
 
         self.logger.debug("Loaded entities for area %s: %s", self.slug, self.entities)
 
-    def _load_entity_list(self, entity_list) -> None:
+    def _load_entity_list(self, prefix: str, entity_list: list[str]) -> None:
         self.logger.debug("[%s] Original entity list: %s", self.slug, entity_list)
 
         flattened_entity_list = flatten_entity_list(entity_list)
@@ -329,10 +339,10 @@ class MagicArea(object):  # noqa: UP004
                     )
                     continue
 
-                if entity_component not in self.entities:
-                    self.entities[entity_component] = []
+                if prefix + entity_component not in self.entities:
+                    self.entities[prefix + entity_component] = []
 
-                self.entities[entity_component].append(updated_entity)
+                self.entities[prefix + entity_component].append(updated_entity)
 
             except Exception as err:  # noqa: BLE001
                 self.logger.error(
@@ -389,7 +399,6 @@ class MagicArea(object):  # noqa: UP004
 
             self._state_config[lg.enable_state] = StateConfigData(
                 name=lg.name,
-                group_entity_id=f"{LIGHT_DOMAIN}.{lg.name.lower()}_{self.slug}",
                 entity=entity_ob,
                 entity_state_on=self.feature_config(
                     CONF_FEATURE_ADVANCED_LIGHT_GROUPS

@@ -233,7 +233,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             extra_opts = {
                 CONF_NAME: area_object.name,
                 CONF_ID: area_object.id,
-                CONF_ICON: area_object.icon,
+                CONF_ICON: area_object.icon or "mdi:texture-box",
             }
             config_entry.update(extra_opts)
 

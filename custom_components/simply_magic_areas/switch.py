@@ -45,7 +45,7 @@ class AreaLightControlSwitch(SwitchBase):
         """Initialize the area light control switch."""
 
         super().__init__(area)
-        self._name = f"Area Light Control ({self.area.name})"
+        self._name = f"Area Magic Light Control ({self.area.name})"
 
     @property
     def icon(self):
@@ -60,7 +60,7 @@ class AreaLightsManualOverrideActiveSwitch(SwitchBase):
         """Initialize the area manual override switch."""
 
         super().__init__(area)
-        self._name = f"Area Manual Override Active ({self.area.name})"
+        self._name = f"Area Magic Manual Override Active ({self.area.name})"
 
     @property
     def icon(self):

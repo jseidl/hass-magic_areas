@@ -24,21 +24,21 @@ async def test_init_no_devices(
     assert config_entry.state is ConfigEntryState.LOADED
 
     # Validate the right enties were created.
-    control_entity = hass.states.get(f"{SWITCH_DOMAIN}.area_light_control_kitchen")
-    manual_override_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_manual_override_active_kitchen"
+    control_entity = hass.states.get(
+        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
-    occupied_lights = hass.states.get(f"{LIGHT_DOMAIN}.extended_kitchen")
-    extended_lights = hass.states.get(f"{LIGHT_DOMAIN}.occupied_kitchen")
-    clear_lights = hass.states.get(f"{LIGHT_DOMAIN}.clear_kitchen")
+    manual_override_entity = hass.states.get(
+        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+    )
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    occupied_lights = hass.states.get(
+        f"{LIGHT_DOMAIN}.simple_magic_areas_light_kitchen"
+    )
 
     assert control_entity is not None
     assert manual_override_entity is not None
     assert area_binary_sensor is not None
     assert occupied_lights is None
-    assert extended_lights is None
-    assert clear_lights is None
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"
@@ -60,21 +60,21 @@ async def test_init_with_lights(
     assert config_entry.state is ConfigEntryState.LOADED
 
     # Validate the right enties were created.
-    control_entity = hass.states.get(f"{SWITCH_DOMAIN}.area_light_control_kitchen")
-    manual_override_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_manual_override_active_kitchen"
+    control_entity = hass.states.get(
+        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
-    occupied_lights = hass.states.get(f"{LIGHT_DOMAIN}.extended_kitchen")
-    extended_lights = hass.states.get(f"{LIGHT_DOMAIN}.occupied_kitchen")
-    clear_lights = hass.states.get(f"{LIGHT_DOMAIN}.clear_kitchen")
+    manual_override_entity = hass.states.get(
+        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+    )
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    occupied_lights = hass.states.get(
+        f"{LIGHT_DOMAIN}.simple_magic_areas_light_kitchen"
+    )
 
     assert control_entity is not None
     assert manual_override_entity is not None
     assert area_binary_sensor is not None
     assert occupied_lights is not None
-    assert extended_lights is not None
-    assert clear_lights is not None
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"
@@ -97,19 +97,21 @@ async def test_init_with_lights_and_sensor(
     assert config_entry.state is ConfigEntryState.LOADED
 
     # Validate the right enties were created.
-    control_entity = hass.states.get(f"{SWITCH_DOMAIN}.area_light_control_kitchen")
-    manual_override_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_manual_override_active_kitchen"
+    control_entity = hass.states.get(
+        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_kitchen")
-    occupied_lights = hass.states.get(f"{LIGHT_DOMAIN}.extended_kitchen")
-    extended_lights = hass.states.get(f"{LIGHT_DOMAIN}.occupied_kitchen")
+    manual_override_entity = hass.states.get(
+        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+    )
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    occupied_lights = hass.states.get(
+        f"{LIGHT_DOMAIN}.simple_magic_areas_light_kitchen"
+    )
 
     assert control_entity is not None
     assert manual_override_entity is not None
     assert area_binary_sensor is not None
     assert occupied_lights is not None
-    assert extended_lights is not None
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"

@@ -21,12 +21,18 @@ from homeassistant.core import (
 )
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_registry import (
+    EVENT_ENTITY_REGISTRY_UPDATED,
+    EventEntityRegistryUpdatedData,
+    RegistryEntry,
+    async_get as async_get_er,
+)
 from homeassistant.helpers.event import async_track_state_change_event, call_later
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicLightGroup
 from .base.magic import MagicArea, MagicEvent, StateConfigData
-from .const import CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT
+from .const import CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 DEPENDENCIES = ["magic_areas"]
@@ -42,40 +48,45 @@ async def async_setup_entry(
     add_entities_when_ready(hass, async_add_entities, config_entry, _add_lights)
 
 
+def _cleanup_entities(
+    hass: HomeAssistant, new_ids: list[str], old_ids: list[str]
+) -> None:
+    entity_registry = async_get_er(hass)
+    for ent_id in old_ids:
+        if ent_id in new_ids:
+            continue
+        _LOGGER.warning("Deleting old entity %s", ent_id)
+        entity_registry.async_remove(ent_id)
+
+
 def _add_lights(area: MagicArea, async_add_entities: AddEntitiesCallback):
+    existing_light_entities: list[str] = []
+    if DOMAIN + LIGHT_DOMAIN in area.entities:
+        _LOGGER.warning("Froggy %s", area.entities[DOMAIN + LIGHT_DOMAIN])
+        existing_light_entities = [
+            e["entity_id"] for e in area.entities[DOMAIN + LIGHT_DOMAIN]
+        ]
     # Check if there are any lights
     if not area.has_entities(LIGHT_DOMAIN):
         _LOGGER.debug("No %s entities for area %s ", LIGHT_DOMAIN, area.name)
+        _cleanup_entities(area.hass, [], existing_light_entities)
         return
 
     light_groups = []
 
     # Create light groups
+    light_entities = [e["entity_id"] for e in area.entities[LIGHT_DOMAIN]]
     if area.is_meta():
-        light_entities = [e["entity_id"] for e in area.entities[LIGHT_DOMAIN]]
         light_groups.append(MagicLightGroup(area, light_entities))
     else:
-        light_group_ids = []
-
-        # Create extended light groups
-        for state in area.all_state_configs():
-            conf = area.all_state_configs()[state]
-            _LOGGER.debug(
-                "Creating %s group for area %s with lights: %s",
-                conf.name,
-                area.name,
-                conf.lights,
-            )
-            # Create the ones with no entity automatically plus ones with an entity set
-            light_group_object = AreaLightGroup(area, conf)
-            light_groups.append(light_group_object)
-
-            # Infer light group entity id from name
-            light_group_id = conf.group_entity_id
-            light_group_ids.append(light_group_id)
+        # Create the ones with no entity automatically plus ones with an entity set
+        light_group_object = AreaLightGroup(area, light_entities)
+        light_groups.append(light_group_object)
 
     # Create all groups
     async_add_entities(light_groups)
+    group_ids = [e.entity_id for e in light_groups]
+    _cleanup_entities(area.hass, group_ids, existing_light_entities)
 
 
 class AreaLightGroup(MagicLightGroup):
@@ -85,23 +96,18 @@ class AreaLightGroup(MagicLightGroup):
     bright, sleep, accent, ...
     """
 
-    def __init__(
-        self,
-        area: MagicArea,
-        conf: StateConfigData,
-    ) -> None:
+    def __init__(self, area: MagicArea, entities: list[str]) -> None:
         """Init the light group for the area."""
-        MagicLightGroup.__init__(self, area, conf.lights)
+        MagicLightGroup.__init__(self, area, entities)
 
-        category_title: str = " ".join(conf.for_state.split("_")).title()
+        category_title: str = "Simple Magic Areas Light"
         self._name: str = f"{category_title} ({self.area.name})"
 
-        self.conf: StateConfigData = conf
         self._manual_timeout_cb: CALLBACK_TYPE | None = None
 
         self._set_controlled_by_this_entity(True)
 
-        self._icon: str = conf.icon
+        self._icon: str = "mdi:ceiling-light"
 
         # Add static attributes
         self.last_update_from_entity: bool = False
@@ -109,9 +115,8 @@ class AreaLightGroup(MagicLightGroup):
         self._attributes["last_update_from_entity"] = False
 
         self.logger.debug(
-            "Light group %s (%s/%s) created with entities: %s",
+            "Light group %s %s created with entities: %s",
             self.name,
-            conf.for_state,
             self._icon,
             self._entity_ids,
         )
@@ -162,27 +167,18 @@ class AreaLightGroup(MagicLightGroup):
         self.async_on_remove(
             async_track_state_change_event(
                 self.hass,
-                [f"{SELECT_DOMAIN}.area_{self.area.slug}"],
+                [f"{SELECT_DOMAIN}.area_magic_{self.area.slug}"],
                 self._area_state_change,
             )
         )
 
     ### State Change Handling
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:
+        _LOGGER.debug("_area_state_change")
         if event.event_type != "state_changed":
             return
         if event.data["old_state"] is None or event.data["new_state"] is None:
             return
-        from_state = event.data["old_state"].state
-        to_state = event.data["new_state"].state
-        if to_state != self.conf.for_state:
-            self.logger.debug(
-                "Area state change event not for us. Skipping. (req: %s/self: %s)",
-                to_state,
-                self.conf.for_state,
-            )
-            return
-
         automatic_control = self._is_control_enabled()
 
         if not automatic_control:
@@ -191,15 +187,19 @@ class AreaLightGroup(MagicLightGroup):
             )
             return False
 
+        from_state = event.data["old_state"].state
+        to_state = event.data["new_state"].state
+
         self.logger.debug(
-            "Light group %s assigned states: %s. New state: %s / Last state %s",
+            "Light group %s. New state: %s / Last state %s",
             self.name,
-            self.conf.for_state,
             to_state,
             from_state,
         )
 
-        return self.turn_on()
+        if self.area.has_configured_state(to_state):
+            conf = self.area.state_config(to_state)
+            self.turn_on(conf)
 
     def _update_group_state(self, event: Event[EventStateChangedData]) -> None:
         if not self.area.is_occupied():
@@ -241,17 +241,20 @@ class AreaLightGroup(MagicLightGroup):
         self._manual_timeout_cb = None
 
     ####  Light Handling
-    def turn_on(self) -> None:
+    def turn_on(self, conf: ConfigEntry) -> None:
         """Turn on the light group."""
+
         if not self._is_control_enabled():
             self.logger.debug("%s: No control enabled", self.name)
             return False
 
-        if self.conf.dim_level == 0:
-            _LOGGER.debug("%s: No category or dim is 0", self.name)
+        self._entity_ids = conf.lights
+        self.async_update_group_state()
+        if conf.dim_level == 0:
+            _LOGGER.debug("%s: Dim is 0", self.name)
             return self.turn_off()
 
-        brightness = int(self.conf.dim_level * 255 / 100)
+        brightness = int(conf.dim_level * 255 / 100)
         if self.is_on and self.brightness == brightness:
             self.logger.debug("%s: Already on at %s", self.name, brightness)
             return False
@@ -259,7 +262,7 @@ class AreaLightGroup(MagicLightGroup):
         self.last_update_from_entity = True
         service_data = {
             ATTR_ENTITY_ID: self.entity_id,
-            ATTR_BRIGHTNESS: int(self.conf.dim_level * 255 / 100),
+            ATTR_BRIGHTNESS: int(conf.dim_level * 255 / 100),
         }
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
 
@@ -283,7 +286,7 @@ class AreaLightGroup(MagicLightGroup):
 
     #### Control Release
     def _is_control_enabled(self) -> bool:
-        entity_id = f"{SWITCH_DOMAIN}.area_light_control_{self.area.slug}"
+        entity_id = f"{SWITCH_DOMAIN}.area_magic_light_control_{self.area.slug}"
 
         switch_entity = self.hass.states.get(entity_id)
 
@@ -291,7 +294,7 @@ class AreaLightGroup(MagicLightGroup):
 
     def _is_controlled_by_this_entity(self) -> bool:
         entity_id = (
-            f"{SWITCH_DOMAIN}.area_manual_override_active_kitchen{self.area.slug}"
+            f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen{self.area.slug}"
         )
         switch_entity = self.hass.states.get(entity_id)
 
@@ -299,7 +302,9 @@ class AreaLightGroup(MagicLightGroup):
 
     def _set_controlled_by_this_entity(self, enabled: bool) -> None:
         if self.hass:
-            entity_id = f"{SWITCH_DOMAIN}.area_manual_override_active_{self.area.slug}"
+            entity_id = (
+                f"{SWITCH_DOMAIN}.area_magic_manual_override_active_{self.area.slug}"
+            )
             service_data = {
                 ATTR_ENTITY_ID: entity_id,
             }

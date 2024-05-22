@@ -73,7 +73,7 @@ class AreaStateSelect(MagicSelectEntity):
 
         super().__init__(area, list(AreaState))
 
-        self._name: str = f"Area ({self.area.name})"
+        self._name: str = f"Area magic ({self.area.name})"
 
         self.last_off_time: int = datetime.now(UTC)
         self._clear_timeout_callback = None
@@ -118,12 +118,6 @@ class AreaStateSelect(MagicSelectEntity):
         await self._setup_listeners()
 
         _LOGGER.debug("%s Sensor initialized", self.name)
-
-    def _async_registry_updated(self, event: Event[MagicEvent]):
-        if event.data["id"] == self.area.id:
-            # Event is for us.
-            self._load_presence_sensors()
-            self._setup_presence_listeners()
 
     async def _setup_listeners(self, _=None) -> None:
         self.logger.debug("%s: Called '_setup_listeners'", self.name)
