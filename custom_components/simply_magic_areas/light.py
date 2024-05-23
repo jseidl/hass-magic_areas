@@ -113,7 +113,6 @@ class AreaLightGroup(MagicLightGroup):
 
         self._manual_timeout_cb: CALLBACK_TYPE | None = None
         self._icon: str = "mdi:ceiling-light"
-        self._luminance_sensors: list[str] = []
 
         self._set_controlled_by_this_entity(True)
 
@@ -346,11 +345,14 @@ class AreaLightGroup(MagicLightGroup):
         return True
 
     def _get_illuminance(self) -> float:
+        if self.is_on:
+            return self._attributes["last_on_illuminance"] or 0.0
         entity_id = f"{SENSOR_DOMAIN}.simple_magic_areas_illuminance_{self.area.slug}"
         sensor_entity = self.hass.states.get(entity_id)
         if sensor_entity is None:
             return 0.0
         try:
+            self._attributes["last_on_illuminance"] = float(sensor_entity.state)
             return float(sensor_entity.state)
         except ValueError:
             return 0.0
