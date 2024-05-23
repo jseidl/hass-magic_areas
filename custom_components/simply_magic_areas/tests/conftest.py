@@ -26,6 +26,7 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
+from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.light import (
     ATTR_SUPPORTED_COLOR_MODES,
     DOMAIN as LIGHT_DOMAIN,
@@ -175,26 +176,6 @@ async def setup_one_sensor(hass: HomeAssistant) -> list[MockBinarySensor]:
 @pytest.fixture(name="one_light")
 async def setup_one_light(hass: HomeAssistant) -> list[str]:
     """Create one mock light and setup the system with ti."""
-    # mock_light_sensor_entities = [
-    #     MockLight("light_1", STATE_OFF, unique_id="lightfrog")
-    # ]
-    # setup_test_component_platform(hass, LIGHT_DOMAIN, mock_light_sensor_entities)
-    # assert await async_setup_component(
-    #     hass, LIGHT_DOMAIN, {LIGHT_DOMAIN: {CONF_PLATFORM: "test"}}
-    # )
-    # await hass.async_block_till_done()
-    # entity_registry = async_get_er(hass)
-    # await hass.services.async_call(
-    #     LIGHT_DOMAIN,
-    #     SERVICE_TURN_OFF,
-    #     {"entity_id": mock_light_sensor_entities[0].entity_id},
-    #     blocking=True,
-    # )
-    # await hass.async_block_till_done()
-    # await entity_registry.async_update_entity(
-    #     mock_light_sensor_entities[0].entity_id,
-    #     area_id=AREA_NAME,
-    # )
     entity_registry = async_get_er(hass)
     entity_registry.async_get_or_create(
         LIGHT_DOMAIN,
@@ -209,6 +190,25 @@ async def setup_one_light(hass: HomeAssistant) -> list[str]:
         "light.test_5678", "off", {ATTR_SUPPORTED_COLOR_MODES: [ColorMode.HS]}
     )
     return ["light.test_5678"]
+
+
+@pytest.fixture(name="one_fan")
+async def setup_one_fan(hass: HomeAssistant) -> list[str]:
+    """Create one mock fan and setup the system with ti."""
+    entity_registry = async_get_er(hass)
+    entity_registry.async_get_or_create(
+        FAN_DOMAIN,
+        "test",
+        "5678",
+    )
+    entity_registry.async_update_entity(
+        "fan.test_5678",
+        area_id=AREA_NAME,
+    )
+    hass.states.async_set(
+        "fan.test_5678", "off", {ATTR_SUPPORTED_COLOR_MODES: [ColorMode.HS]}
+    )
+    return ["fan.test_5678"]
 
 
 @pytest.fixture(name="two_lights")

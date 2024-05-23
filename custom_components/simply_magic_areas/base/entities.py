@@ -368,33 +368,33 @@ class MagicSwitchEntity(MagicEntity, SwitchEntity):
 class MagicFanGroup(MagicEntity, FanGroup):
     """Controls the lights with the specific setup."""
 
-    def __init__(self, area: MagicArea, entities: list[str]) -> None:
+    def __init__(self, area: MagicArea, entities: list[str], name: str) -> None:
         """Create a new light group."""
-        self._name = f"{self.area.name} Lights"
         MagicEntity.__init__(self, area)
         FanGroup.__init__(
             self,
             unique_id=self.unique_id,
-            name=self._name,
-            entity_ids=entities,
+            name=name,
+            entities=entities,
         )
+        self._name = name
         self.area = area
 
 
 class MagicLightGroup(MagicEntity, LightGroup):
     """Controls the fan with the specific setup."""
 
-    def __init__(self, area: MagicArea, entities: list[str]) -> None:
+    def __init__(self, area: MagicArea, entities: list[str], name: str) -> None:
         """Create a new fan group."""
-        self._name = f"{self.area.name} Lights"
         MagicEntity.__init__(self, area)
         LightGroup.__init__(
             self,
             unique_id=self.unique_id,
-            name=self._name,
+            name=name,
             entity_ids=entities,
             mode=False,
         )
+        self._name = name
         self.area = area
 
 

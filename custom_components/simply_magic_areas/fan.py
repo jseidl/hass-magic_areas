@@ -96,10 +96,10 @@ class AreaFanGroup(MagicFanGroup):
 
     def __init__(self, area: MagicArea, entities: list[str]) -> None:
         """Init the fan group for the area."""
-        MagicFanGroup.__init__(self, area, entities)
+        MagicFanGroup.__init__(
+            self, area, entities, f"Simple Magic Areas Fan ({area.name})"
+        )
 
-        category_title: str = "Simple Magic Areas Fan"
-        self._name: str = f"{category_title} ({self.area.name})"
         self._icon: str = "mdi:fan"
         self._manual_timeout_cb: CALLBACK_TYPE | None = None
 
@@ -248,7 +248,7 @@ class AreaFanGroup(MagicFanGroup):
         self._manual_timeout_cb = None
 
     ####  Fan Handling
-    def turn_on(self, conf: ConfigEntry) -> None:
+    def turn_on(self) -> None:
         """Turn on the fan group."""
 
         if not self._is_control_enabled():

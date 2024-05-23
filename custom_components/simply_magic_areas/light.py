@@ -96,10 +96,10 @@ class AreaLightGroup(MagicLightGroup):
 
     def __init__(self, area: MagicArea, entities: list[str]) -> None:
         """Init the light group for the area."""
-        MagicLightGroup.__init__(self, area, entities)
+        MagicLightGroup.__init__(
+            self, area, entities, f"Simple Magic Areas Light ({area.name})"
+        )
 
-        category_title: str = "Simple Magic Areas Light"
-        self._name: str = f"{category_title} ({self.area.name})"
         self._manual_timeout_cb: CALLBACK_TYPE | None = None
         self._icon: str = "mdi:ceiling-light"
         self._luminance_sensors: list[str] = []
