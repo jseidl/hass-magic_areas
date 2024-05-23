@@ -1,15 +1,13 @@
 """Light controls for magic areas."""
 
 import logging
-import statistics
 
 from homeassistant.components.light import ATTR_BRIGHTNESS, DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
@@ -21,12 +19,10 @@ from homeassistant.core import (
     Event,
     EventStateChangedData,
     HomeAssistant,
-    State,
 )
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.helpers.event import async_track_state_change_event, call_later
-from homeassistant.helpers.typing import StateType
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicLightGroup
