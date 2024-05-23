@@ -232,18 +232,25 @@ class AreaLightGroup(MagicLightGroup):
                     STATE_OFF,
                 ]:
                     return
+                manual_timeout = self.area.config.get(
+                    CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT
+                )
                 if (
                     "restored" in origin_event.data["old_state"].attributes
                     and origin_event.data["old_state"].attributes["restored"]
                 ):
+                    # On state restored, also setup the timeout callback.
+                    if not self._in_controlled_by_this_entity():
+                        if self._manual_timeout_cb is not None:
+                            self._manual_timeout_cb()
+                        self._manual_timeout_cb = call_later(
+                            self.hass, manual_timeout, self._reset_manual_timeout
+                        )
                     return
                 if self.last_update_from_entity:
                     self.last_update_from_entity = False
                     return
                 self._set_controlled_by_this_entity(False)
-                manual_timeout = self.area.config.get(
-                    CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT
-                )
                 if self._manual_timeout_cb is not None:
                     self._manual_timeout_cb()
                 self._manual_timeout_cb = call_later(
