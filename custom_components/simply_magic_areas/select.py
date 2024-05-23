@@ -7,13 +7,15 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
-from homeassistant.core import HomeAssistant, State
+from homeassistant.core import HomeAssistant, State, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
+    async_call_later,
     async_track_state_change,
     async_track_time_interval,
     call_later,
 )
+from homeassistant.util.async_ import run_callback_threadsafe
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicSelectEntity
@@ -151,6 +153,7 @@ class AreaStateSelect(MagicSelectEntity):
         self.async_on_remove(
             async_track_time_interval(self.hass, self._update_state, delta)
         )
+        # self.async_on_remove(self._cleannup_timers)
 
     def _load_presence_sensors(self) -> None:
         if self.area.is_meta():
@@ -355,6 +358,11 @@ class AreaStateSelect(MagicSelectEntity):
 
     def _is_on_clear_timeout(self) -> None:
         return self._clear_timeout_callback is not None
+
+    @callback
+    def _cleannup_timers(self) -> None:
+        self._remove_clear_timeout()
+        self._remove_extended_timeout()
 
     ###       Extended
 

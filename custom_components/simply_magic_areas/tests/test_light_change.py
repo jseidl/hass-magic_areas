@@ -91,6 +91,7 @@ async def test_light_on_off(
 
     assert not hass.data.get(DOMAIN)
     assert config_entry.state is ConfigEntryState.NOT_LOADED
+    await hass.async_block_till_done()
 
 
 async def test_light_entity_change(

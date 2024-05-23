@@ -3,6 +3,7 @@
 from collections import defaultdict
 from datetime import UTC, datetime
 import logging
+from asyncio import run_coroutine_threadsafe
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant, callback
@@ -38,23 +39,20 @@ async def async_setup_entry(
 ):
     """Set up the component."""
 
-    def _async_registry_updated(
-        self, event: Event[EventEntityRegistryUpdatedData]
-    ) -> None:
-        _LOGGER.warning(
-            "%s: Updateing action %s entity %s", self.slug, event.action, event.changes
-        )
-        if event.action != "update":
-            return
-        if "area_id" in event.changes:
-            # Reload entities and then update the other pieces of the system.
-            _LOGGER.debug(
-                "%s: Updateing entity from area change %s", self.slug, event.changes
-            )
-            self.hass.config_entries.async_update_entry(
+    def _update_config_entry():
+        hass.loop.call_soon_threadsafe(
+            lambda: hass.config_entries.async_update_entry(
                 config_entry,
-                data={**self.config_entry.data, "entity_ts": datetime.now(UTC)},
+                data={**config_entry.data, "entity_ts": datetime.now(UTC)},
             )
+        )
+
+    def _async_registry_updated(event: Event[EventEntityRegistryUpdatedData]) -> None:
+        # Reload entities and then update the other pieces of the system.
+        _LOGGER.debug(
+            "%s: Updateing entity from area change", config_entry.data[CONF_NAME]
+        )
+        hass.add_job(_update_config_entry)
 
     data = hass.data.setdefault(MODULE_DATA, {})
     area_id = config_entry.data[CONF_ID]
