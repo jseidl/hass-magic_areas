@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock
 
 from homeassistant import loader
 from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.light import ColorMode, LightEntity
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -357,3 +358,47 @@ class MockBinarySensor(MockEntity, BinarySensorEntity):
     def device_class(self):
         """Return the class of this sensor."""
         return self._handle("device_class")
+
+
+class MockSensor(MockEntity, SensorEntity):
+    """Mock Sensor class."""
+
+    @property
+    def device_class(self):
+        """Return the class of this sensor."""
+        return self._handle("device_class")
+
+    @property
+    def last_reset(self):
+        """Return the last_reset of this sensor."""
+        return self._handle("last_reset")
+
+    @property
+    def suggested_display_precision(self):
+        """Return the number of digits after the decimal point."""
+        return self._handle("suggested_display_precision")
+
+    @property
+    def native_unit_of_measurement(self):
+        """Return the native unit_of_measurement of this sensor."""
+        return self._handle("native_unit_of_measurement")
+
+    @property
+    def native_value(self):
+        """Return the native value of this sensor."""
+        return self._handle("native_value")
+
+    @property
+    def options(self):
+        """Return the options for this sensor."""
+        return self._handle("options")
+
+    @property
+    def state_class(self):
+        """Return the state class of this sensor."""
+        return self._handle("state_class")
+
+    @property
+    def suggested_unit_of_measurement(self):
+        """Return the state class of this sensor."""
+        return self._handle("suggested_unit_of_measurement")

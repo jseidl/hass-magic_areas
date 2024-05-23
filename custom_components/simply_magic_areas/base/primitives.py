@@ -77,7 +77,7 @@ class MagicAggregateBase(MagicSensorBase):
 
     def __init__(self, area: MagicArea, device_class: StrEnum) -> None:
         """Initialize the state for the aggregate sensor."""
-        MagicSensorBase.__init__(area, device_class)
+        MagicSensorBase.__init__(self, area=area, device_class=device_class)
         self.attributes = {}
 
     def load_sensors(self, domain: str, unit_of_measurement: str | None = None):

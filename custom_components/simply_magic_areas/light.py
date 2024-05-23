@@ -1,6 +1,7 @@
 """Light controls for magic areas."""
 
 import logging
+import statistics
 
 from homeassistant.components.light import ATTR_BRIGHTNESS, DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
@@ -20,10 +21,12 @@ from homeassistant.core import (
     Event,
     EventStateChangedData,
     HomeAssistant,
+    State,
 )
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.helpers.event import async_track_state_change_event, call_later
+from homeassistant.helpers.typing import StateType
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicLightGroup
@@ -174,6 +177,7 @@ class AreaLightGroup(MagicLightGroup):
         )
 
     def _load_illuminance_sensors(self) -> None:
+        self._illuminance_sensors = []
         if SensorDeviceClass.ILLUMINANCE not in self.area.entities:
             return
         for component, entities in self.area.entities[SensorDeviceClass.ILLUMINANCE]:
@@ -315,6 +319,41 @@ class AreaLightGroup(MagicLightGroup):
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
 
         return True
+
+    def _get_illuminance(self) -> float:
+        """Return the current mean illuminance for all the luminance pieces in the area."""
+        states: list[StateType] = []
+        sensor_values: list[tuple[str, float, State]] = []
+        for entity_id in self._illuminance_sensors:
+            if (state := self.hass.states.get(entity_id)) is not None:
+                states.append(state.state)
+                try:
+                    numeric_state = float(state.state)
+                    uom = state.attributes["unit_of_measurement"]
+                    if uom != SensorDeviceClass.ILLUMINANCE:
+                        continue
+                    sensor_values.append((entity_id, numeric_state, state))
+                except ValueError:
+                    continue
+                except KeyError:
+                    # This exception handling can be simplified
+                    # once sensor entity doesn't allow incorrect unit of measurement
+                    # with a device class, implementation see PR #107639
+                    _LOGGER.warning(
+                        "Unable to use state. Only entities with correct unit of measurement"
+                        " is supported,"
+                        " entity %s, value %s with device class %s"
+                        " and unit of measurement %s excluded from calculation in %s",
+                        entity_id,
+                        state.state,
+                        self.device_class,
+                        state.attributes.get("unit_of_measurement"),
+                        self.entity_id,
+                    )
+                    continue
+        result = (sensor_value for _, sensor_value, _ in sensor_values)
+
+        return statistics.mean(result)
 
     #### Control Release
     def _is_control_enabled(self) -> bool:

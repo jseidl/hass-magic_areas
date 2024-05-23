@@ -1,25 +1,17 @@
-"""Test for integration init."""
+"""Test for area changes and how the system handles it."""
 
 import logging
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.simply_magic_areas.const import DOMAIN
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import STATE_OFF
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_registry import (
-    EVENT_ENTITY_REGISTRY_UPDATED,
-    EventEntityRegistryUpdatedData,
-    RegistryEntry,
-    async_get as async_get_er,
-)
 from homeassistant.helpers.area_registry import async_get as async_get_ar
+from homeassistant.helpers.entity_registry import async_get as async_get_er
 
-from .mocks import MockBinarySensor, MockLight
+from .mocks import MockBinarySensor
 
 _LOGGER = logging.getLogger(__name__)
 

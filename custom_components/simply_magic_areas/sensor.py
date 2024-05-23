@@ -3,7 +3,12 @@
 from enum import StrEnum
 import logging
 
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.components.sensor import (
+    DEVICE_CLASS_UNITS,
+    DOMAIN as SENSOR_DOMAIN,
+    UNIT_CONVERTERS,
+    SensorDeviceClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -32,8 +37,8 @@ async def async_setup_entry(
 
 def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
     """Add the sensors for the magic areas."""
-    # Create aggregates
-    if not area.has_feature(CONF_FEATURE_AGGREGATION):
+    # Create the illuminance sensor if there are any illuminance sensors in the area.
+    if not area.has_entities(SENSOR_DOMAIN):
         return
 
     aggregates = []
@@ -42,7 +47,7 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
     if not area.has_entities(SENSOR_DOMAIN):
         return
 
-    device_class_uom_pairs = []
+    entities_by_device_class: dict[str, list] = {}
 
     for entity in area.entities[SENSOR_DOMAIN]:
         if "device_class" not in entity:
@@ -59,33 +64,32 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
             )
             continue
 
-        dc_uom_pair = (entity["device_class"], entity["unit_of_measurement"])
-        device_class_uom_pairs.append(dc_uom_pair)
+        # Dictionary of sensors by device class.
+        device_class = entity["device_class"]
+        if device_class not in entities_by_device_class:
+            entities_by_device_class[device_class] = []
+        entities_by_device_class[device_class].append(entity)
 
-    # Sort out individual pairs, if they show up more than CONF_AGGREGATES_MIN_ENTITIES,
-    # we create a sensor for them
-    unique_pairs = set(device_class_uom_pairs)
+    # Create aggregates/illuminance sensor or illuminance ones.
+    for item in entities_by_device_class.items():
+        device_class = item[0]
+        entities = item[1]
 
-    for dc_uom_pair in unique_pairs:
-        entity_count = device_class_uom_pairs.count(dc_uom_pair)
-
-        if entity_count < area.feature_config(CONF_FEATURE_AGGREGATION).get(
-            CONF_AGGREGATES_MIN_ENTITIES
-        ):
-            continue
-
-        device_class, unit_of_measurement = dc_uom_pair
+        if device_class != SensorDeviceClass.ILLUMINANCE:
+            if not area.has_feature(CONF_FEATURE_AGGREGATION):
+                continue
+            if len(entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
+                CONF_AGGREGATES_MIN_ENTITIES
+            ):
+                continue
 
         _LOGGER.debug(
-            "Creating aggregate sensor for device_class '%s' (%s) with %d entities (%s)",
+            "Creating aggregate sensor for device_class '%s' with %d entities (%s)",
             device_class,
-            unit_of_measurement,
-            entity_count,
+            len(entities),
             area.slug,
         )
-        aggregates.append(
-            AreaSensorGroupSensor(area, device_class, unit_of_measurement)
-        )
+        aggregates.append(AreaSensorGroupSensor(area=area, device_class=device_class))
 
     async_add_entities(aggregates)
 
@@ -93,20 +97,19 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
 class AreaSensorGroupSensor(SensorGroupBase):
     """Sensor for the magic area, group sensor with all the stuff in it."""
 
-    def __init__(
-        self, area: MagicArea, device_class: StrEnum, unit_of_measurement: str
-    ) -> None:
+    def __init__(self, area: MagicArea, device_class: StrEnum) -> None:
         """Initialize an area sensor group sensor."""
 
-        super().__init__(area, device_class)
+        super().__init__(area=area, device_class=device_class)
 
         self._mode = "sum" if device_class in AGGREGATE_MODE_SUM else "mean"
-        self._unit_of_measurement = unit_of_measurement
+        if device_class in UNIT_CONVERTERS:
+            self._unit_of_measurement = UNIT_CONVERTERS[device_class].NORMALALIZED_UNIT
+        else:
+            self._unit_of_measurement = list(DEVICE_CLASS_UNITS[device_class])[0]
 
         device_class_name = " ".join(device_class.split("_")).title()
-        self._name = (
-            f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
-        )
+        self._name = f"Simple Magic Areas {device_class_name} ({self.area.name})"
 
     async def _initialize(self, _=None) -> None:
         self.logger.debug("%s Sensor initializing", self.name)

@@ -32,15 +32,16 @@ from homeassistant.components.light import (
     DOMAIN as LIGHT_DOMAIN,
     ColorMode,
 )
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.const import CONF_PLATFORM, STATE_ON
+from homeassistant.const import CONF_PLATFORM, STATE_ON, LIGHT_LUX
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
 from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.setup import async_setup_component
 
 from .common import setup_test_component_platform
-from .mocks import MockBinarySensor
+from .mocks import MockBinarySensor, MockSensor
 
 AREA_NAME = "kitchen"
 _LOGGER = logging.getLogger(__name__)
@@ -168,6 +169,31 @@ async def setup_one_sensor(hass: HomeAssistant) -> list[MockBinarySensor]:
     entity_registry = async_get_er(hass)
     entity_registry.async_update_entity(
         "binary_sensor.motion_sensor",
+        area_id=AREA_NAME,
+    )
+    return mock_binary_sensor_entities
+
+
+@pytest.fixture(name="one_sensor_light")
+async def setup_one_light_sensor(hass: HomeAssistant) -> list[MockSensor]:
+    """Create one mock sensor and setup the system with ti."""
+    mock_binary_sensor_entities = [
+        MockSensor(
+            name="light sensor",
+            is_on=True,
+            unique_id="unique_light",
+            device_class=SensorDeviceClass.ILLUMINANCE,
+            unit_of_measurement=LIGHT_LUX,
+        ),
+    ]
+    setup_test_component_platform(hass, SENSOR_DOMAIN, mock_binary_sensor_entities)
+    assert await async_setup_component(
+        hass, SENSOR_DOMAIN, {SENSOR_DOMAIN: {CONF_PLATFORM: "test"}}
+    )
+    await hass.async_block_till_done()
+    entity_registry = async_get_er(hass)
+    entity_registry.async_update_entity(
+        "sensor.light_sensor",
         area_id=AREA_NAME,
     )
     return mock_binary_sensor_entities

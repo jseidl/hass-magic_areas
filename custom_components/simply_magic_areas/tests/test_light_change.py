@@ -1,4 +1,4 @@
-"""Test for integration init."""
+"""Test for handling lights in the various modes."""
 
 import asyncio
 import logging

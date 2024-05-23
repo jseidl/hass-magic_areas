@@ -1,4 +1,4 @@
-"""Binary sensor control for magic areas."""
+"""Select control for magic areas, tracks the state as an enum."""
 
 from datetime import UTC, datetime, timedelta
 import logging
@@ -66,10 +66,10 @@ def add_state_select(area: MagicArea, async_add_entities: AddEntitiesCallback):
 
 
 class AreaStateSelect(MagicSelectEntity):
-    """Create an area presence binary sensor that tracks the current occupied state."""
+    """Create an area presence select entity that tracks the current occupied state."""
 
     def __init__(self, area: MagicArea) -> None:
-        """Initialize the area presence binary sensor."""
+        """Initialize the area presence select."""
 
         super().__init__(area, list(AreaState))
 
@@ -89,16 +89,16 @@ class AreaStateSelect(MagicSelectEntity):
         return "mdi:home-search"
 
     async def restore_state(self) -> None:
-        """Restore the state of the sensor on initialize."""
+        """Restore the state of the select entity on initialize."""
         last_state = await self.async_get_last_state()
         is_new_entry = last_state is None  # newly added to HA
 
         if is_new_entry:
-            self.logger.debug("New sensor created: %s", self.name)
+            self.logger.debug("%s: New select created", self.name)
             self._update_state()
         else:
             _LOGGER.debug(
-                "Sensor %s restored [state=%s]",
+                "%s: Select restored [state=%s]",
                 self.name,
                 last_state.state,
             )
@@ -106,7 +106,7 @@ class AreaStateSelect(MagicSelectEntity):
             self.schedule_update_ha_state()
 
     async def _initialize(self, _=None) -> None:
-        self.logger.debug("%s Sensor initializing", self.name)
+        self.logger.debug("%s: Select initializing", self.name)
 
         self._load_presence_sensors()
         self._load_attributes()
@@ -114,7 +114,7 @@ class AreaStateSelect(MagicSelectEntity):
         # Setup the listeners
         await self._setup_listeners()
 
-        _LOGGER.debug("%s Sensor initialized", self.name)
+        _LOGGER.debug("%s: Select initialized", self.name)
 
     async def _setup_listeners(self, _=None) -> None:
         self.logger.debug("%s: Called '_setup_listeners'", self.name)
@@ -136,7 +136,7 @@ class AreaStateSelect(MagicSelectEntity):
             if not conf.entity:
                 continue
 
-            self.logger.debug("State entity tracking: %s", conf.entity)
+            self.logger.debug("%s: State entity tracking: %s", self.name, conf.entity)
 
             self.async_on_remove(
                 async_track_state_change(

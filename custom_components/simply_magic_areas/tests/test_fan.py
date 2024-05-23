@@ -1,4 +1,4 @@
-"""Test for integration init."""
+"""Test for the fans."""
 
 import asyncio
 import logging
