@@ -201,6 +201,10 @@ CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES = (
         AreaState.AREA_STATE_EXTENDED,
     ],
 )  # cv.ensure_list
+# When to start dimmin the lights.
+CONF_MIN_BRIGHTNESS_LEVEL, DEFAULT_MIN_BRIGHTNESS_LEVEL = ("min_brightness_level", 100)
+# When to turn the lights off entirely.
+CONF_MAX_BRIGHTNESS_LEVEL, DEFAULT_MAX_BRIGHTNESS_LEVEL = ("max_brightness_level", 200)
 
 
 # Light group setup options

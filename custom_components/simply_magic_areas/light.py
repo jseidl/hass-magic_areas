@@ -31,7 +31,15 @@ from homeassistant.helpers.typing import StateType
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicLightGroup
 from .base.magic import MagicArea
-from .const import CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT, DOMAIN
+from .const import (
+    CONF_MANUAL_TIMEOUT,
+    CONF_MAX_BRIGHTNESS_LEVEL,
+    CONF_MIN_BRIGHTNESS_LEVEL,
+    DEFAULT_MANUAL_TIMEOUT,
+    DEFAULT_MAX_BRIGHTNESS_LEVEL,
+    DEFAULT_MIN_BRIGHTNESS_LEVEL,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 DEPENDENCIES = ["magic_areas"]
@@ -149,7 +157,6 @@ class AreaLightGroup(MagicLightGroup):
         else:
             self._attr_is_on = False
 
-        self._load_illuminance_sensors()
         self.schedule_update_ha_state()
 
         # Setup state change listeners
@@ -175,21 +182,6 @@ class AreaLightGroup(MagicLightGroup):
                 self._area_state_change,
             )
         )
-
-    def _load_illuminance_sensors(self) -> None:
-        self._illuminance_sensors = []
-        if SensorDeviceClass.ILLUMINANCE not in self.area.entities:
-            return
-        for component, entities in self.area.entities[SensorDeviceClass.ILLUMINANCE]:
-            for entity in entities:
-                if not entity:
-                    continue
-
-                if component == SENSOR_DOMAIN:
-                    if ATTR_DEVICE_CLASS not in entity:
-                        continue
-
-                self._illuminance_sensors.append(entity[ATTR_ENTITY_ID])
 
     ### State Change Handling
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:
@@ -285,20 +277,53 @@ class AreaLightGroup(MagicLightGroup):
             conf.lights,
             self.area.entities[LIGHT_DOMAIN],
         )
-        if conf.dim_level == 0:
-            _LOGGER.debug("%s: Dim is 0", self.name)
-            return self.turn_off()
 
         brightness = int(conf.dim_level * 255 / 100)
         if self.is_on and self.brightness == brightness:
             self.logger.debug("%s: Already on at %s", self.name, brightness)
             return False
 
+        luminesence = self._get_illuminance()
+        min_brightness = self.area.config.get(
+            CONF_MIN_BRIGHTNESS_LEVEL, DEFAULT_MIN_BRIGHTNESS_LEVEL
+        )
+        self.logger.debug(
+            "%s: Checking brightness to %s,  %s, %s",
+            self.name,
+            luminesence,
+            min_brightness,
+            self.area.config.get(
+                CONF_MAX_BRIGHTNESS_LEVEL, DEFAULT_MAX_BRIGHTNESS_LEVEL
+            ),
+        )
+        if luminesence > min_brightness:
+            max_brightness = self.area.config.get(
+                CONF_MAX_BRIGHTNESS_LEVEL, DEFAULT_MAX_BRIGHTNESS_LEVEL
+            )
+            if luminesence > max_brightness:
+                brightness = 0
+            else:
+                diff = luminesence - min_brightness
+                brightness = int(
+                    brightness * (1.0 - diff / (max_brightness - min_brightness))
+                )
+                self.logger.debug(
+                    "%s: Updating brightness to %s 1.0 - %s / %s",
+                    self.name,
+                    brightness,
+                    diff,
+                    (max_brightness - min_brightness),
+                )
+
+        if brightness == 0:
+            _LOGGER.debug("%s: Brightness is 0", self.name)
+            return self.turn_off()
+
         self.logger.debug("Turning on lights")
         self.last_update_from_entity = True
         service_data = {
             ATTR_ENTITY_ID: self.entity_id,
-            ATTR_BRIGHTNESS: int(conf.dim_level * 255 / 100),
+            ATTR_BRIGHTNESS: brightness,
         }
         self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
 
@@ -321,46 +346,19 @@ class AreaLightGroup(MagicLightGroup):
         return True
 
     def _get_illuminance(self) -> float:
-        """Return the current mean illuminance for all the luminance pieces in the area."""
-        states: list[StateType] = []
-        sensor_values: list[tuple[str, float, State]] = []
-        for entity_id in self._illuminance_sensors:
-            if (state := self.hass.states.get(entity_id)) is not None:
-                states.append(state.state)
-                try:
-                    numeric_state = float(state.state)
-                    uom = state.attributes["unit_of_measurement"]
-                    if uom != SensorDeviceClass.ILLUMINANCE:
-                        continue
-                    sensor_values.append((entity_id, numeric_state, state))
-                except ValueError:
-                    continue
-                except KeyError:
-                    # This exception handling can be simplified
-                    # once sensor entity doesn't allow incorrect unit of measurement
-                    # with a device class, implementation see PR #107639
-                    _LOGGER.warning(
-                        "Unable to use state. Only entities with correct unit of measurement"
-                        " is supported,"
-                        " entity %s, value %s with device class %s"
-                        " and unit of measurement %s excluded from calculation in %s",
-                        entity_id,
-                        state.state,
-                        self.device_class,
-                        state.attributes.get("unit_of_measurement"),
-                        self.entity_id,
-                    )
-                    continue
-        result = (sensor_value for _, sensor_value, _ in sensor_values)
-
-        return statistics.mean(result)
+        entity_id = f"{SENSOR_DOMAIN}.simple_magic_areas_illuminance_{self.area.slug}"
+        sensor_entity = self.hass.states.get(entity_id)
+        if sensor_entity is None:
+            return 0.0
+        try:
+            return float(sensor_entity.state)
+        except ValueError:
+            return 0.0
 
     #### Control Release
     def _is_control_enabled(self) -> bool:
         entity_id = f"{SWITCH_DOMAIN}.area_magic_light_control_{self.area.slug}"
-
         switch_entity = self.hass.states.get(entity_id)
-
         return switch_entity.state.lower() == STATE_ON
 
     def _is_controlled_by_this_entity(self) -> bool:
@@ -368,7 +366,6 @@ class AreaLightGroup(MagicLightGroup):
             f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen{self.area.slug}"
         )
         switch_entity = self.hass.states.get(entity_id)
-
         return switch_entity.state.lower() == STATE_OFF
 
     def _set_controlled_by_this_entity(self, enabled: bool) -> None:

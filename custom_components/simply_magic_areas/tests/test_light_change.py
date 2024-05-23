@@ -11,11 +11,17 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_ON, STATE_OFF, STATE_ON
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
+    STATE_OFF,
+    STATE_ON,
+)
 from homeassistant.core import HomeAssistant
 
 from .common import async_mock_service
-from .mocks import MockBinarySensor
+from .mocks import MockBinarySensor, MockSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -152,3 +158,68 @@ async def test_light_entity_change(
 
     assert not hass.data.get(DOMAIN)
     assert config_entry_entities.state is ConfigEntryState.NOT_LOADED
+
+
+@pytest.mark.parametrize(
+    ("luminesnce", "brightness"), [(0.0, 255), (200.0, 0), (175.0, 63), (300.0, 0)]
+)
+async def test_light_on_off_with_light_sensor(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    one_light: list[str],
+    one_motion: list[MockBinarySensor],
+    one_sensor_light: list[MockSensor],
+    _setup_integration,
+    luminesnce: float,
+    brightness: int,
+) -> None:
+    """Test loading the integration."""
+    # Validate the right enties were created.
+    control_entity = hass.states.get(
+        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
+    )
+    manual_override_entity = hass.states.get(
+        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+    )
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+
+    calls = async_mock_service(hass, LIGHT_DOMAIN, "turn_on")
+    off_calls = async_mock_service(hass, LIGHT_DOMAIN, "turn_off")
+
+    assert control_entity is not None
+    assert manual_override_entity is not None
+    assert area_binary_sensor is not None
+    for light in one_light:
+        e = hass.states.get(light)
+        assert e.state == STATE_OFF
+    assert control_entity.state == STATE_OFF
+    assert manual_override_entity.state == STATE_OFF
+    assert area_binary_sensor.state == "clear"
+
+    # Make the sensor on to make the area occupied and setup automated, leave the light low to get the brightness correct.
+    service_data = {
+        ATTR_ENTITY_ID: f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen",
+    }
+    await hass.services.async_call(SWITCH_DOMAIN, SERVICE_TURN_ON, service_data)
+    one_motion[0].turn_on()
+    hass.states.async_set(one_sensor_light[0].entity_id, luminesnce)
+    await hass.async_block_till_done()
+
+    # Reload the sensors and they should have changed.
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    assert area_binary_sensor.state == "occupied"
+    assert len(off_calls) == 0
+    if brightness != 0:
+        assert len(calls) == 1
+        assert calls[0].data == {
+            "entity_id": f"{LIGHT_DOMAIN}.simple_magic_areas_light_kitchen",
+            "brightness": brightness,
+        }
+        assert calls[0].service == SERVICE_TURN_ON
+
+    await hass.config_entries.async_unload(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert not hass.data.get(DOMAIN)
+    assert config_entry.state is ConfigEntryState.NOT_LOADED
+    await hass.async_block_till_done()
