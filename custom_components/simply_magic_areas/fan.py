@@ -1,14 +1,12 @@
-"""Light controls for magic areas."""
+"""Fan controls for magic areas."""
 
 import logging
 
-from homeassistant.components.light import ATTR_BRIGHTNESS, DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
@@ -26,9 +24,9 @@ from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.helpers.event import async_track_state_change_event, call_later
 
 from .add_entities_when_ready import add_entities_when_ready
-from .base.entities import MagicLightGroup
+from .base.entities import MagicFanGroup
 from .base.magic import MagicArea
-from .const import CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT, DOMAIN
+from .const import CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT, DOMAIN, AreaState
 
 _LOGGER = logging.getLogger(__name__)
 DEPENDENCIES = ["magic_areas"]
@@ -41,10 +39,10 @@ async def async_setup_entry(
 ):
     """Set up the Area config entry."""
 
-    add_entities_when_ready(hass, async_add_entities, config_entry, _add_lights)
+    add_entities_when_ready(hass, async_add_entities, config_entry, _add_fans)
 
 
-def _cleanup_entities(
+def _cleanup_fan_entities(
     hass: HomeAssistant, new_ids: list[str], old_ids: list[str]
 ) -> None:
     entity_registry = async_get_er(hass)
@@ -55,64 +53,65 @@ def _cleanup_entities(
         entity_registry.async_remove(ent_id)
 
 
-def _add_lights(area: MagicArea, async_add_entities: AddEntitiesCallback):
-    existing_light_entities: list[str] = []
-    if DOMAIN + LIGHT_DOMAIN in area.entities:
-        _LOGGER.warning("Froggy %s", area.entities[DOMAIN + LIGHT_DOMAIN])
-        existing_light_entities = [
-            e["entity_id"] for e in area.entities[DOMAIN + LIGHT_DOMAIN]
+def _add_fans(area: MagicArea, async_add_entities: AddEntitiesCallback):
+    existing_fan_entities: list[str] = []
+    if DOMAIN + FAN_DOMAIN in area.entities:
+        _LOGGER.warning("Froggy %s", area.entities[DOMAIN + FAN_DOMAIN])
+        existing_fan_entities = [
+            e["entity_id"] for e in area.entities[DOMAIN + FAN_DOMAIN]
         ]
-    # Check if there are any lights
-    if not area.has_entities(LIGHT_DOMAIN):
-        _LOGGER.debug("No %s entities for area %s ", LIGHT_DOMAIN, area.name)
-        _cleanup_entities(area.hass, [], existing_light_entities)
+    # Check if there are any fans
+    if not area.has_entities(FAN_DOMAIN):
+        _LOGGER.debug("%s: No fans for area (%s) ", area.name, FAN_DOMAIN)
+        _cleanup_fan_entities(area.hass, [], existing_fan_entities)
+        return
+    if area.is_meta():
+        _LOGGER.debug("%s: No fan controls for meta area")
+        _cleanup_fan_entities(area.hass, [], existing_fan_entities)
         return
 
-    light_groups = []
+    fan_groups = []
 
-    # Create light groups
-    light_entities = [e["entity_id"] for e in area.entities[LIGHT_DOMAIN]]
-    if area.is_meta():
-        light_groups.append(MagicLightGroup(area, light_entities))
-    else:
-        # Create the ones with no entity automatically plus ones with an entity set
-        light_group_object = AreaLightGroup(area, light_entities)
-        light_groups.append(light_group_object)
+    # Find fans
+    fan_entities = [e["entity_id"] for e in area.entities[FAN_DOMAIN]]
+
+    # Create the ones with no entity automatically plus ones with an entity set
+    fan_group_object = AreaFanGroup(area, fan_entities)
+    fan_groups.append(fan_group_object)
 
     # Create all groups
-    async_add_entities(light_groups)
-    group_ids = [e.entity_id for e in light_groups]
-    _cleanup_entities(area.hass, group_ids, existing_light_entities)
+    async_add_entities(fan_groups)
+    group_ids = [e.entity_id for e in fan_groups]
+    _cleanup_fan_entities(area.hass, group_ids, existing_fan_entities)
 
 
-class AreaLightGroup(MagicLightGroup):
-    """The light group to control the area lights specifically.
+class AreaFanGroup(MagicFanGroup):
+    """The fan group to control the area fans specifically.
 
-    There is one light group created that will mutate with the different
-    sets of lights to control for the various states.  The state will
-    always reflect the current state of the system and lights entities in
+    There is one fan group created that will mutate with the different
+    sets of fans to control for the various states.  The state will
+    always reflect the current state of the system and fans entities in
     that state.
     """
 
     def __init__(self, area: MagicArea, entities: list[str]) -> None:
-        """Init the light group for the area."""
-        MagicLightGroup.__init__(self, area, entities)
+        """Init the fan group for the area."""
+        MagicFanGroup.__init__(self, area, entities)
 
-        category_title: str = "Simple Magic Areas Light"
+        category_title: str = "Simple Magic Areas Fan"
         self._name: str = f"{category_title} ({self.area.name})"
+        self._icon: str = "mdi:fan"
         self._manual_timeout_cb: CALLBACK_TYPE | None = None
-        self._icon: str = "mdi:ceiling-light"
-        self._luminance_sensors: list[str] = []
 
         self._set_controlled_by_this_entity(True)
 
         # Add static attributes
         self.last_update_from_entity: bool = False
-        self._attributes["lights"] = self._entity_ids
+        self._attributes["fans"] = self._entity_ids
         self._attributes["last_update_from_entity"] = False
 
         self.logger.debug(
-            "Light group %s %s created with entities: %s",
+            "%s: Fan group %s created with entities: %s",
             self.name,
             self._icon,
             self._entity_ids,
@@ -146,7 +145,6 @@ class AreaLightGroup(MagicLightGroup):
         else:
             self._attr_is_on = False
 
-        self._load_illuminance_sensors()
         self.schedule_update_ha_state()
 
         # Setup state change listeners
@@ -173,20 +171,6 @@ class AreaLightGroup(MagicLightGroup):
             )
         )
 
-    def _load_illuminance_sensors(self) -> None:
-        if SensorDeviceClass.ILLUMINANCE not in self.area.entities:
-            return
-        for component, entities in self.area.entities[SensorDeviceClass.ILLUMINANCE]:
-            for entity in entities:
-                if not entity:
-                    continue
-
-                if component == SENSOR_DOMAIN:
-                    if ATTR_DEVICE_CLASS not in entity:
-                        continue
-
-                self._illuminance_sensors.append(entity[ATTR_ENTITY_ID])
-
     ### State Change Handling
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:
         if event.event_type != "state_changed":
@@ -197,7 +181,7 @@ class AreaLightGroup(MagicLightGroup):
 
         if not automatic_control:
             self.logger.debug(
-                "%s: Automatic control for light group is disabled, skipping", self.name
+                "%s: Automatic control for fan group is disabled, skipping", self.name
             )
             return False
 
@@ -205,17 +189,17 @@ class AreaLightGroup(MagicLightGroup):
         to_state = event.data["new_state"].state
 
         self.logger.debug(
-            "Light group %s. New state: %s / Last state %s",
+            "%s: Fan group New state: %s / Last state %s",
             self.name,
             to_state,
             from_state,
         )
 
-        if self.area.has_configured_state(to_state):
-            conf = self.area.state_config(to_state)
-            self.turn_on(conf)
-        else:
-            self.logger.warning("%s: Unknown state %s", self.name, to_state)
+        # For fans we only worry about the extended state.
+        if to_state == AreaState.AREA_STATE_EXTENDED:
+            self.turn_on()
+        elif from_state == AreaState.AREA_STATE_EXTENDED and self.is_on:
+            self.turn_off()
 
     def _update_group_state(self, event: Event[EventStateChangedData]) -> None:
         if not self.area.is_occupied():
@@ -263,56 +247,35 @@ class AreaLightGroup(MagicLightGroup):
         self._set_controlled_by_this_entity(True)
         self._manual_timeout_cb = None
 
-    ####  Light Handling
+    ####  Fan Handling
     def turn_on(self, conf: ConfigEntry) -> None:
-        """Turn on the light group."""
+        """Turn on the fan group."""
 
         if not self._is_control_enabled():
             self.logger.debug("%s: No control enabled", self.name)
             return False
 
-        self._entity_ids = conf.lights
-        self.async_update_group_state()
-        self.logger.debug(
-            "Update light group %s %s %s %s %s",
-            self.is_on,
-            self.brightness,
-            self.area.entities.keys(),
-            conf.lights,
-            self.area.entities[LIGHT_DOMAIN],
-        )
-        if conf.dim_level == 0:
-            _LOGGER.debug("%s: Dim is 0", self.name)
-            return self.turn_off()
-
-        brightness = int(conf.dim_level * 255 / 100)
-        if self.is_on and self.brightness == brightness:
-            self.logger.debug("%s: Already on at %s", self.name, brightness)
-            return False
-
-        self.logger.debug("Turning on lights")
+        self.logger.debug("%s: Turning on fans", self.name)
         self.last_update_from_entity = True
         service_data = {
             ATTR_ENTITY_ID: self.entity_id,
-            ATTR_BRIGHTNESS: int(conf.dim_level * 255 / 100),
         }
-        self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
+        self.hass.services.call(FAN_DOMAIN, SERVICE_TURN_ON, service_data)
 
         return True
 
     def turn_off(self) -> None:
-        """Turn off the light group."""
+        """Turn off the fan group."""
         if not self._is_control_enabled():
             return False
 
         if not self.is_on:
-            _LOGGER.debug("%s: Light already off", self.name)
+            _LOGGER.debug("%s: Fan already off", self.name)
             return False
 
         self.last_update_from_entity = True
         service_data = {ATTR_ENTITY_ID: self.entity_id}
-        # await self.async_turn_off()
-        self.hass.services.call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
+        self.hass.services.call(FAN_DOMAIN, SERVICE_TURN_OFF, service_data)
 
         return True
 

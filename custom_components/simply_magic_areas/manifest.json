@@ -5,6 +5,7 @@
         "template",
         "group",
         "binary_sensor",
+        "fan",
         "sensor",
         "light",
         "media_player",

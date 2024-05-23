@@ -12,6 +12,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
+from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
@@ -90,6 +91,7 @@ MAGIC_AREAS_COMPONENTS = [
     SWITCH_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
+    FAN_DOMAIN,
     CLIMATE_DOMAIN,
 ]
 

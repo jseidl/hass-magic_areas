@@ -14,6 +14,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
+from homeassistant.components.group.fan import FanGroup
 from homeassistant.components.group.light import LightGroup
 from homeassistant.components.select import SelectEntity
 from homeassistant.components.sensor import SensorEntity
@@ -364,11 +365,28 @@ class MagicSwitchEntity(MagicEntity, SwitchEntity):
         self.schedule_update_ha_state()
 
 
-class MagicLightGroup(MagicEntity, LightGroup):
+class MagicFanGroup(MagicEntity, FanGroup):
     """Controls the lights with the specific setup."""
 
     def __init__(self, area: MagicArea, entities: list[str]) -> None:
         """Create a new light group."""
+        self._name = f"{self.area.name} Lights"
+        MagicEntity.__init__(self, area)
+        FanGroup.__init__(
+            self,
+            unique_id=self.unique_id,
+            name=self._name,
+            entity_ids=entities,
+        )
+        self.area = area
+
+
+class MagicLightGroup(MagicEntity, LightGroup):
+    """Controls the fan with the specific setup."""
+
+    def __init__(self, area: MagicArea, entities: list[str]) -> None:
+        """Create a new fan group."""
+        self._name = f"{self.area.name} Lights"
         MagicEntity.__init__(self, area)
         LightGroup.__init__(
             self,
@@ -378,8 +396,6 @@ class MagicLightGroup(MagicEntity, LightGroup):
             mode=False,
         )
         self.area = area
-
-        self._name = f"{self.area.name} Lights"
 
 
 class MagicSelectEntity(MagicEntity, SelectEntity, RestoreEntity):

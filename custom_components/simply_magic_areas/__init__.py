@@ -3,7 +3,6 @@
 from collections import defaultdict
 from datetime import UTC, datetime
 import logging
-from asyncio import run_coroutine_threadsafe
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant, callback
