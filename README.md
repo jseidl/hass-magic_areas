@@ -6,12 +6,6 @@ This is a fork of https://github.com/jseidl/hass-magic_areas building on this ba
 
 ![Build Status](https://github.com/pinkfish/hass-simple-magic-areas/actions/workflows/validation.yaml/badge.svg) ![Test Status](https://github.com/pinkfish/hass-simple-magic-areas/actions/workflows/test.yaml/badge.svg) [![Latest release](https://img.shields.io/github/v/release/pinkfish/hass-simple-magic-areas.svg)](https://github.com/pinkfish/hass-simple-magic-areas/releases) [![GitHub latest commit](https://badgen.net/github/last-commit/pinkfish/hass-simple-magic-areas)](https://github.com/pinkfish/hass-simple-magic-areas/commit/) [![GitHub contributors](https://badgen.net/github/contributors/pinkfish/hass-simple-magic-areas)](https://GitHub.com/pinkfish/hass-simple-magic-areas/graphs/contributors/)
 
-
-[![GitHub latest commit](https://badgen.net/github/last-commit/pinkfish/hass-simple-magic-areas)](https://github.com/pinkfish/hass-simple-magic-areas/commit/)
-
-
-[![GitHub contributors](https://badgen.net/github/contributors/pinkfish/hass-simple-magic-areas)](https://github.com/pinkfish/hass-simple-magic-areas/graphs/contributors/)
-
 Tired of writing the same automations, over and over, for each of your rooms? You wish Home Assistant just figured out all entities you have in an area and **magically** started being smarter about them? 
 
 Magic Areas is the batteries that were missing! Would like to have a single `motion` sensor that is grouped to all your other motion sensors in that area? What if all (most) of your `sensor` and `binary_sensor` entities had aggregates (grouping/average), PER AREA? Would you like for lights and climate devices to turn on and off **MAGICALLY** whenever an area is occupied/clear?
