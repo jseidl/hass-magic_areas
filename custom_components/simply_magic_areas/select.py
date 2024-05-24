@@ -7,15 +7,13 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
-from homeassistant.core import HomeAssistant, State, callback
+from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
-    async_call_later,
-    async_track_state_change,
+    async_track_state_change_event,
     async_track_time_interval,
     call_later,
 )
-from homeassistant.util.async_ import run_callback_threadsafe
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicSelectEntity
@@ -124,10 +122,25 @@ class AreaStateSelect(MagicSelectEntity):
 
         # Track presence sensor
         self.async_on_remove(
-            async_track_state_change(
+            async_track_state_change_event(
                 self.hass, self._sensors, self._sensor_state_change
             )
         )
+
+        # Track humidity sensors
+        trend_up = f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_{self.area.slug}"
+        trend_down = (
+            f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_{self.area.slug}"
+        )
+        if (
+            self.hass.states.get(trend_up) is not None
+            and self.hass.states.get(trend_down) is not None
+        ):
+            self.async_on_remove(
+                async_track_state_change_event(
+                    self.hass, [trend_up, trend_down], self._humidity_sensor_change
+                )
+            )
 
         # Track secondary states
         for state in self.area.all_state_configs():
@@ -139,7 +152,7 @@ class AreaStateSelect(MagicSelectEntity):
             self.logger.debug("%s: State entity tracking: %s", self.name, conf.entity)
 
             self.async_on_remove(
-                async_track_state_change(
+                async_track_state_change_event(
                     self.hass, conf.entity, self._group_entity_state_change
                 )
             )
@@ -153,7 +166,6 @@ class AreaStateSelect(MagicSelectEntity):
         self.async_on_remove(
             async_track_time_interval(self.hass, self._update_state, delta)
         )
-        # self.async_on_remove(self._cleannup_timers)
 
     def _load_presence_sensors(self) -> None:
         if self.area.is_meta():
@@ -305,22 +317,28 @@ class AreaStateSelect(MagicSelectEntity):
             last_state,
         )
 
-    def _group_entity_state_change(
-        self, entity_id: str, from_state: State, to_state: State
-    ) -> None:
+    def _group_entity_state_change(self, event: Event[EventStateChangedData]) -> None:
+        if event.event_type != "state_changed":
+            return
+        if event.data["new_state"] is None:
+            return
+
+        to_state = event.data["new_state"].state
+        entity_id = event.data["entity_id"]
+
         self.logger.debug(
             "%s: Secondary state change: entity '%s' changed to %s",
             self.area.name,
             entity_id,
-            to_state.state,
+            to_state,
         )
 
-        if to_state.state in INVALID_STATES:
+        if to_state in INVALID_STATES:
             self.logger.debug(
                 "%s: sensor '%s' has invalid state %s",
                 self.area.name,
                 entity_id,
-                to_state.state,
+                to_state,
             )
             return None
 
@@ -428,33 +446,45 @@ class AreaStateSelect(MagicSelectEntity):
 
         return False
 
-    def _sensor_state_change(
-        self, entity_id: str, from_state: State, to_state: State
-    ) -> None:
-        """Actions when the sensor state has changed."""
-        _LOGGER.debug(
-            "Sensor state change %s from %s to %s", entity_id, from_state, to_state
-        )
-        if not to_state:
+    def _humidity_sensor_change(self, event: Event[EventStateChangedData]) -> None:
+        if event.data["new_state"] is None:
             return
+        to_state = event.data["new_state"].state
+        entity_id = event.data["entity_id"]
+        if to_state in INVALID_STATES:
+            self.logger.debug(
+                "%s: sensor '%s' has invalid state %s",
+                self.name,
+                entity_id,
+                to_state,
+            )
+            return
+        self._update_state()
+
+    def _sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
+        """Actions when the sensor state has changed."""
+        if event.data["new_state"] is None:
+            return
+        to_state = event.data["new_state"].state
+        entity_id = event.data["entity_id"]
 
         self.logger.debug(
             "%s: sensor '%s' changed to {%s}",
             self.name,
             entity_id,
-            to_state.state,
+            to_state,
         )
 
-        if to_state.state in INVALID_STATES:
+        if to_state in INVALID_STATES:
             self.logger.debug(
                 "%s: sensor '%s' has invalid state %s",
                 self.name,
                 entity_id,
-                to_state.state,
+                to_state,
             )
             return
 
-        if to_state and to_state.state not in self.area.feature_config(
+        if to_state and to_state not in self.area.feature_config(
             CONF_FEATURE_ADVANCED_LIGHT_GROUPS
         ).get(CONF_ON_STATES, DEFAULT_ON_STATES):
             _LOGGER.debug("Setting last non-normal time")
@@ -530,6 +560,20 @@ class AreaStateSelect(MagicSelectEntity):
                     sensor,
                     str(e),
                 )
+
+        # Track the up/down trend if not already occupied.
+        if len(active_sensors) == 0:
+            trend_up = self.hass.states.get(
+                f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_{self.area.slug}"
+            )
+            trend_down = self.hass.states.get(
+                f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_{self.area.slug}"
+            )
+            if trend_up is not None and trend_down is not None:
+                if trend_up.state == STATE_ON and trend_down.state != STATE_ON:
+                    active_sensors.append(
+                        "{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_{self.area.slug}"
+                    )
 
         self._attributes["active_sensors"] = active_sensors
 

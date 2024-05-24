@@ -146,7 +146,7 @@ async def test_fan_on_off_humidity(
     )
     assert area_humidity_occupied.state == STATE_ON
     assert area_humidity_empty.state == STATE_OFF
-    assert area_binary_sensor.state == "clear"
+    assert area_binary_sensor.state == "occupied"
     assert len(calls) == 1
     assert calls[0].data == {
         "entity_id": f"{FAN_DOMAIN}.simple_magic_areas_fan_kitchen",
@@ -166,7 +166,7 @@ async def test_fan_on_off_humidity(
     assert area_humidity_occupied.state == STATE_ON
     assert area_humidity_empty.state == STATE_ON
     area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
-    assert area_binary_sensor.state == "clear"
+    assert area_binary_sensor.state == "occupied"
     assert len(calls) == 1
 
     await hass.config_entries.async_unload(config_entry.entry_id)

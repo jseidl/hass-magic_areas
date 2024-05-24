@@ -193,8 +193,6 @@ class AreaFanGroup(MagicFanGroup):
 
     ### State Change Handling
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:
-        if event.event_type != "state_changed":
-            return
         if event.data["old_state"] is None or event.data["new_state"] is None:
             return
         automatic_control = self._is_control_enabled()
@@ -226,8 +224,6 @@ class AreaFanGroup(MagicFanGroup):
             self.turn_off()
 
     def _trend_down_state_change(self, event: Event[EventStateChangedData]):
-        if event.event_type != "state_changed":
-            return
         if event.data["old_state"] is None or event.data["new_state"] is None:
             return
         to_state = event.data["new_state"].state
