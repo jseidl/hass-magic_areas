@@ -26,6 +26,7 @@ from .mocks import MockBinarySensor, MockSensor
 _LOGGER = logging.getLogger(__name__)
 
 
+@pytest.mark.parametrize("expected_lingering_timers", [True])
 @pytest.mark.parametrize(("automated", "state"), [(False, STATE_OFF), (True, STATE_ON)])
 async def test_light_on_off(
     hass: HomeAssistant,

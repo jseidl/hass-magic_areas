@@ -21,6 +21,7 @@ from .mocks import MockBinarySensor, MockSensor
 _LOGGER = logging.getLogger(__name__)
 
 
+@pytest.mark.parametrize("expected_lingering_timers", [True])
 @pytest.mark.parametrize(("automated", "state"), [(False, STATE_OFF), (True, STATE_ON)])
 async def test_fan_on_off(
     hass: HomeAssistant,
@@ -96,6 +97,7 @@ async def test_fan_on_off(
     await hass.async_block_till_done()
 
 
+@pytest.mark.parametrize("expected_lingering_timers", [True])
 async def test_fan_on_off_humidity(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,
