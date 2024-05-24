@@ -6,10 +6,14 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
+from homeassistant.components.trend.binary_sensor import SensorTrend
+from homeassistant.components.trend.const import DOMAIN as TREND_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_registry import async_get as async_get_er
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.magic import MagicArea
@@ -20,6 +24,7 @@ from .const import (
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
     DISTRESS_SENSOR_CLASSES,
+    DOMAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,21 +42,31 @@ async def async_setup_entry(
 
 def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
     """Add the basic sensors for the area."""
+    entities = []
+    existing_trend_entities = []
+    if DOMAIN + BINARY_SENSOR_DOMAIN in area.entities:
+        _LOGGER.warning("Froggy %s", area.entities[DOMAIN + BINARY_SENSOR_DOMAIN])
+        existing_trend_entities = [
+            e["entity_id"] for e in area.entities[DOMAIN + BINARY_SENSOR_DOMAIN]
+        ]
     # Create extra sensors
     if area.has_feature(CONF_FEATURE_AGGREGATION):
-        create_aggregate_sensors(area, async_add_entities)
+        entities.extend(create_aggregate_sensors(area, async_add_entities))
 
     if area.has_feature(CONF_FEATURE_HEALTH):
-        create_health_sensors(area, async_add_entities)
+        entities.extend(create_health_sensors(area, async_add_entities))
+    entities.extend(create_trend_sensors(area, async_add_entities))
+
+    _cleanup_binary_sensor_entities(area.hass, entities, existing_trend_entities)
 
 
 def create_health_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
     """Add the health sensors for the area."""
     if not area.has_feature(CONF_FEATURE_HEALTH):
-        return
+        return []
 
     if BINARY_SENSOR_DOMAIN not in area.entities:
-        return
+        return []
 
     distress_entities = []
 
@@ -70,7 +85,9 @@ def create_health_sensors(area: MagicArea, async_add_entities: AddEntitiesCallba
         return
 
     _LOGGER.debug("Creating health sensor for area (%s)", area.slug)
-    async_add_entities([AreaDistressBinarySensor(area)])
+    entities = [AreaDistressBinarySensor(area)]
+    async_add_entities(entities)
+    return entities
 
 
 def create_aggregate_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
@@ -83,7 +100,7 @@ def create_aggregate_sensors(area: MagicArea, async_add_entities: AddEntitiesCal
 
     # Check BINARY_SENSOR_DOMAIN entities, count by device_class
     if BINARY_SENSOR_DOMAIN not in area.entities:
-        return
+        return []
 
     device_class_count = {}
 
@@ -111,6 +128,64 @@ def create_aggregate_sensors(area: MagicArea, async_add_entities: AddEntitiesCal
         aggregates.append(AreaSensorGroupBinarySensor(area, device_class))
 
     async_add_entities(aggregates)
+    return aggregates
+
+
+def create_trend_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
+    """Add the sensors for the magic areas."""
+
+    # Create the illuminance sensor if there are any illuminance sensors in the area.
+    if not area.has_entities(SENSOR_DOMAIN):
+        return []
+
+    aggregates = []
+
+    # Check SENSOR_DOMAIN entities, count by device_class
+    if not area.has_entities(SENSOR_DOMAIN):
+        return []
+
+    found = False
+    for entity in area.entities[SENSOR_DOMAIN]:
+        if "device_class" not in entity:
+            _LOGGER.debug(
+                "Entity %s does not have device_class defined",
+                entity["entity_id"],
+            )
+            continue
+
+        if "unit_of_measurement" not in entity:
+            _LOGGER.debug(
+                "Entity %s does not have unit_of_measurement defined",
+                entity["entity_id"],
+            )
+            continue
+
+        # Dictionary of sensors by device class.
+        device_class = entity["device_class"]
+        if device_class != SensorDeviceClass.HUMIDITY:
+            continue
+        found = True
+
+    if not found:
+        return []
+
+    aggregates.append(HumdityTrendSensor(area=area, increasing=True))
+    aggregates.append(HumdityTrendSensor(area=area, increasing=False))
+
+    async_add_entities(aggregates)
+
+    return aggregates
+
+
+def _cleanup_binary_sensor_entities(
+    hass: HomeAssistant, new_ids: list[str], old_ids: list[str]
+) -> None:
+    entity_registry = async_get_er(hass)
+    for ent_id in old_ids:
+        if ent_id in new_ids:
+            continue
+        _LOGGER.warning("Deleting old entity %s", ent_id)
+        entity_registry.async_remove(ent_id)
 
 
 class AreaSensorGroupBinarySensor(BinarySensorGroupBase):
@@ -175,3 +250,19 @@ class AreaDistressBinarySensor(BinarySensorGroupBase):
             self.sensors.append(entity["entity_id"])
 
         self._attributes = {"sensors": self.sensors, "active_sensors": []}
+
+
+class HumdityTrendSensor(SensorTrend):
+    """Sensor for the magic area, tracking the humidity changes."""
+
+    def __init__(self, area: MagicArea, increasing: bool) -> None:
+        """Initialize an area trend group sensor."""
+
+        super().__init__(
+            name=f"Magic areas humidity occupancy ({area.name})"
+            if increasing
+            else f"Magic areas humidity empty ({area.name})",
+            sample_duration=600 if increasing else 300,
+            max_samples=3 if increasing else 2,
+            min_gradient=0.01666 if increasing else -0.016666,
+        )
