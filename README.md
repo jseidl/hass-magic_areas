@@ -4,7 +4,7 @@ This is a fork of https://github.com/jseidl/hass-magic_areas building on this ba
 
 ![Magic Areas](https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/magic_areas/icon.png)
 
-![Build Status](https://github.com/pinkfish/hass-simple-magic-areas/actions/workflows/validation.yaml/badge.svg) [![Discord](https://img.shields.io/discord/928386239789400065.svg?color=768AD4&label=Discord)](https://discord.gg/8vxJpJ2vP4) [![Latest release](https://img.shields.io/github/v/release/pinkfish/hass-simple-magic-areas.svg)](https://github.com/pinkfish/hass-simple-magic-areas/releases) [![GitHub latest commit](https://badgen.net/github/last-commit/pinkfish/hass-simple-magic-areas)](https://GitHub.com/pinkfish/hass-simple-magic-areas/commit/) [![GitHub contributors](https://badgen.net/github/contributors/pinkfish/hass-simple-magic-areas)](https://GitHub.com/pinkfish/hass-simple-magic-areas/graphs/contributors/)
+![Build Status](https://github.com/pinkfish/hass-simple-magic-areas/actions/workflows/validation.yaml/badge.svg) [![Latest release](https://img.shields.io/github/v/release/pinkfish/hass-simple-magic-areas.svg)](https://github.com/pinkfish/hass-simple-magic-areas/releases) [![GitHub latest commit](https://badgen.net/github/last-commit/pinkfish/hass-simple-magic-areas)](https://GitHub.com/pinkfish/hass-simple-magic-areas/commit/) [![GitHub contributors](https://badgen.net/github/contributors/pinkfish/hass-simple-magic-areas)](https://GitHub.com/pinkfish/hass-simple-magic-areas/graphs/contributors/)
 
 Tired of writing the same automations, over and over, for each of your rooms? You wish Home Assistant just figured out all entities you have in an area and **magically** started being smarter about them? 
 
