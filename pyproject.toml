@@ -1,0 +1,21 @@
+[coverage:run]
+source =
+  custom_components
+
+[coverage:report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplemented()
+    if __name__ == '__main__':
+    main()
+fail_under = 93
+show_missing = true
+
+
+[tool.pytest.ini_options]
+testpaths = ["custom_components/simply_magic_areas/tests"]
+norecursedirs = [".git", "testing_config"]
+log_format = "%(asctime)s.%(msecs)03d %(levelname)-8s %(threadName)s %(name)s:%(filename)s:%(lineno)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+log_cli = false
+asyncio_mode = "auto"
