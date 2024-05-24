@@ -1,14 +1,14 @@
-[coverage:run]
-source = "custom_components"
+#[coverage:run]
+#source = "custom_components"
 
-[coverage:report]
+#[coverage:report]
 #exclude_lines =
 #    pragma: no cover
 #    raise NotImplemented()
 #    if __name__ == '__main__':
 #    main()
-fail_under = 93
-show_missing = true
+#fail_under = 93
+#show_missing = true
 
 
 [tool.pytest.ini_options]
