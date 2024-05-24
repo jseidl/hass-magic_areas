@@ -26,4 +26,4 @@ jobs:
           run: python3 -m pip install -r custom_components/simply_magic_areas/requirements-test.txt
 
         - name: "Run"
-          run: pytest
+          run: pytest custom_components/simply_magic_areas/tests
