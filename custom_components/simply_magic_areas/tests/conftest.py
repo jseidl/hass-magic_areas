@@ -6,22 +6,6 @@ import logging
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.simply_magic_areas.const import (
-    AREA_TYPE_INTERIOR,
-    CONF_CLEAR_TIMEOUT,
-    CONF_ENABLED_FEATURES,
-    CONF_EXTENDED_TIMEOUT,
-    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
-    CONF_ID,
-    CONF_INCLUDE_ENTITIES,
-    CONF_NAME,
-    CONF_ON_STATES,
-    CONF_PRESENCE_DEVICE_PLATFORMS,
-    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
-    CONF_TYPE,
-    CONF_UPDATE_INTERVAL,
-    DOMAIN,
-)
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
@@ -40,6 +24,22 @@ from homeassistant.helpers.area_registry import async_get as async_get_ar
 from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.setup import async_setup_component
 
+from ..const import (
+    AREA_TYPE_INTERIOR,
+    CONF_CLEAR_TIMEOUT,
+    CONF_ENABLED_FEATURES,
+    CONF_EXTENDED_TIMEOUT,
+    CONF_FEATURE_ADVANCED_LIGHT_GROUPS,
+    CONF_ID,
+    CONF_INCLUDE_ENTITIES,
+    CONF_NAME,
+    CONF_ON_STATES,
+    CONF_PRESENCE_DEVICE_PLATFORMS,
+    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_TYPE,
+    CONF_UPDATE_INTERVAL,
+    DOMAIN,
+)
 from .common import setup_test_component_platform
 from .mocks import MockBinarySensor, MockSensor
 

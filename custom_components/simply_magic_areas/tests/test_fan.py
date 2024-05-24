@@ -6,7 +6,6 @@ import logging
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.simply_magic_areas.const import DOMAIN
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
@@ -15,6 +14,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_ON, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
+from ..const import DOMAIN
 from .common import async_mock_service
 from .mocks import MockBinarySensor, MockSensor
 

@@ -6,7 +6,6 @@ import logging
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.simply_magic_areas.const import DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
@@ -20,6 +19,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 
+from ..const import DOMAIN
 from .common import async_mock_service
 from .mocks import MockBinarySensor, MockSensor
 

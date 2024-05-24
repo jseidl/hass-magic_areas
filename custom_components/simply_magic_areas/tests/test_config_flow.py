@@ -1,10 +1,20 @@
 """Tests for the config flow."""
 
-from unittest.mock import patch
-
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.simply_magic_areas.const import (
+from homeassistant import config_entries
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
+)
+from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import STATE_OFF, STATE_ON, STATE_OPEN
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers.area_registry import async_get as async_get_ar
+
+from ..const import (
     AREA_TYPE_INTERIOR,
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,
@@ -22,17 +32,6 @@ from custom_components.simply_magic_areas.const import (
     CONF_UPDATE_INTERVAL,
     DOMAIN,
 )
-from homeassistant import config_entries
-from homeassistant.components.binary_sensor import (
-    DOMAIN as BINARY_SENSOR_DOMAIN,
-    BinarySensorDeviceClass,
-)
-from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import STATE_OFF, STATE_ON, STATE_OPEN
-from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.helpers.area_registry import async_get as async_get_ar
 
 
 async def test_form(hass: HomeAssistant) -> None:

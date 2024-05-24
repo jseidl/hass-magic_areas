@@ -4,7 +4,6 @@ import logging
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.simply_magic_areas.const import DOMAIN
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
@@ -14,6 +13,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import STATE_OFF
 from homeassistant.core import HomeAssistant
 
+from ..const import DOMAIN
 from .mocks import MockLight, MockSensor
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,11 +36,23 @@ async def test_init_no_devices(
     occupied_lights = hass.states.get(
         f"{LIGHT_DOMAIN}.simple_magic_areas_light_kitchen"
     )
+    humidity_sensor = hass.states.get(
+        f"{SENSOR_DOMAIN}.simple_magic_areas_humidity_kitchen"
+    )
+    trend_up = hass.states.get(
+        f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_kitchen"
+    )
+    trend_down = hass.states.get(
+        f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_kitchen"
+    )
 
     assert control_entity is not None
     assert manual_override_entity is not None
     assert area_binary_sensor is not None
     assert occupied_lights is None
+    assert humidity_sensor is None
+    assert trend_up is None
+    assert trend_down is None
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"

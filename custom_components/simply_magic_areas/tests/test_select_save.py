@@ -4,10 +4,11 @@ import logging
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.simply_magic_areas.const import DOMAIN, AreaState
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
+
+from ..const import DOMAIN, AreaState
 
 _LOGGER = logging.getLogger(__name__)
 

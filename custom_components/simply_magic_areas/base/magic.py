@@ -4,6 +4,20 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import logging
 
+from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.area_registry import AreaEntry
+from homeassistant.helpers.device_registry import async_get as async_get_dr
+from homeassistant.helpers.entity_registry import (
+    RegistryEntry,
+    async_get as async_get_er,
+)
+from homeassistant.util import slugify
+from homeassistant.util.event_type import EventType
+
 from ..const import (
     ALL_LIGHT_ENTITIES,
     AREA_TYPE_EXTERIOR,
@@ -26,27 +40,7 @@ from ..const import (
     MODULE_DATA,
     AreaState,
 )
-from ..util import (
-    areas_loaded,
-    flatten_entity_list,
-    is_entity_list,
-)
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.area_registry import AreaEntry
-from homeassistant.helpers.device_registry import async_get as async_get_dr
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_registry import (
-    EVENT_ENTITY_REGISTRY_UPDATED,
-    EventEntityRegistryUpdatedData,
-    RegistryEntry,
-    async_get as async_get_er,
-)
-from homeassistant.util import slugify
-from homeassistant.util.event_type import EventType
+from ..util import areas_loaded, flatten_entity_list, is_entity_list
 
 _LOGGER = logging.getLogger(__name__)
 
