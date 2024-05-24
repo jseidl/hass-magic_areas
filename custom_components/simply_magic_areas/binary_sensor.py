@@ -8,7 +8,6 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.trend.binary_sensor import SensorTrend
-from homeassistant.components.trend.const import DOMAIN as TREND_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS
 from homeassistant.core import HomeAssistant
@@ -259,10 +258,14 @@ class HumdityTrendSensor(SensorTrend):
         """Initialize an area trend group sensor."""
 
         super().__init__(
-            name=f"Magic areas humidity occupancy ({area.name})"
+            name=f"Simple magic areas humidity occupancy ({area.name})"
             if increasing
-            else f"Magic areas humidity empty ({area.name})",
+            else f"Simple magic areas humidity empty ({area.name})",
             sample_duration=600 if increasing else 300,
             max_samples=3 if increasing else 2,
             min_gradient=0.01666 if increasing else -0.016666,
+            invert=False,
+            min_samples=2,
+            attribute=None,
+            entity_id=f"{SENSOR_DOMAIN}.simple_magic_areas_humidity_{area.slug}",
         )

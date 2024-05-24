@@ -2,6 +2,7 @@
 
 import logging
 
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
@@ -170,6 +171,25 @@ class AreaFanGroup(MagicFanGroup):
                 self._area_state_change,
             )
         )
+        # If the trend entities exist, listen to them
+        trend_up = f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_{self.area.slug}"
+        trend_down = (
+            f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_{self.area.slug}"
+        )
+        if (
+            self.hass.states.get(trend_up) is not None
+            and self.hass.states.get(trend_down) is not None
+        ):
+            self.async_on_remove(
+                async_track_state_change_event(
+                    self.hass, [trend_up], self._trend_up_state_change
+                )
+            )
+            self.async_on_remove(
+                async_track_state_change_event(
+                    self.hass, [trend_down], self._trend_down_state_change
+                )
+            )
 
     ### State Change Handling
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:
@@ -198,8 +218,48 @@ class AreaFanGroup(MagicFanGroup):
         # For fans we only worry about the extended state.
         if to_state == AreaState.AREA_STATE_EXTENDED:
             self.turn_on()
-        elif from_state == AreaState.AREA_STATE_EXTENDED and self.is_on:
+        elif (
+            from_state == AreaState.AREA_STATE_EXTENDED
+            and self.is_on
+            and not self.attributes["humidity_up"]
+        ):
             self.turn_off()
+
+    def _trend_down_state_change(self, event: Event[EventStateChangedData]):
+        if event.event_type != "state_changed":
+            return
+        if event.data["old_state"] is None or event.data["new_state"] is None:
+            return
+        to_state = event.data["new_state"].state
+        from_state = event.data["old_state"].state
+        self.logger.debug(
+            "%s: Trend down New state: %s / Last state %s",
+            self.name,
+            to_state,
+            from_state,
+        )
+        if to_state == STATE_ON and from_state != STATE_ON:
+            # We have stuff going down.
+            self._attributes["humidity_up"] = False
+            self.turn_off()
+
+    def _trend_up_state_change(self, event: Event[EventStateChangedData]):
+        if event.event_type != "state_changed":
+            return
+        if event.data["old_state"] is None or event.data["new_state"] is None:
+            return
+        to_state = event.data["new_state"].state
+        from_state = event.data["old_state"].state
+        self.logger.debug(
+            "%s: Trend up New state: %s / Last state %s",
+            self.name,
+            to_state,
+            from_state,
+        )
+        if to_state == STATE_ON and from_state != STATE_ON:
+            # We have stuff going up.
+            self._attributes["humidity_up"] = True
+            self.turn_on()
 
     def _update_group_state(self, event: Event[EventStateChangedData]) -> None:
         if not self.area.is_occupied():

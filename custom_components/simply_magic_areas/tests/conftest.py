@@ -32,9 +32,9 @@ from homeassistant.components.light import (
     DOMAIN as LIGHT_DOMAIN,
     ColorMode,
 )
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.const import CONF_PLATFORM, STATE_ON, LIGHT_LUX
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
+from homeassistant.const import CONF_PLATFORM, LIGHT_LUX, PERCENTAGE, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
 from homeassistant.helpers.entity_registry import async_get as async_get_er
@@ -194,6 +194,31 @@ async def setup_one_light_sensor(hass: HomeAssistant) -> list[MockSensor]:
     entity_registry = async_get_er(hass)
     entity_registry.async_update_entity(
         "sensor.light_sensor",
+        area_id=AREA_NAME,
+    )
+    return mock_binary_sensor_entities
+
+
+@pytest.fixture(name="one_sensor_humidity")
+async def setup_one_humidity_sensor(hass: HomeAssistant) -> list[MockSensor]:
+    """Create one mock sensor and setup the system with ti."""
+    mock_binary_sensor_entities = [
+        MockSensor(
+            name="humidity sensor",
+            is_on=True,
+            unique_id="unique_humidity",
+            device_class=SensorDeviceClass.HUMIDITY,
+            unit_of_measurement=PERCENTAGE,
+        ),
+    ]
+    setup_test_component_platform(hass, SENSOR_DOMAIN, mock_binary_sensor_entities)
+    assert await async_setup_component(
+        hass, SENSOR_DOMAIN, {SENSOR_DOMAIN: {CONF_PLATFORM: "test"}}
+    )
+    await hass.async_block_till_done()
+    entity_registry = async_get_er(hass)
+    entity_registry.async_update_entity(
+        "sensor.humidity_sensor",
         area_id=AREA_NAME,
     )
     return mock_binary_sensor_entities
