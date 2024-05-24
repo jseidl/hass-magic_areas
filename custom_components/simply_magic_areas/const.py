@@ -21,6 +21,7 @@ from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.sun import DOMAIN as SUN_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.components.trend.const import DOMAIN as TREND_DOMAIN
 from homeassistant.const import (
     STATE_ALARM_TRIGGERED,
     STATE_HOME,

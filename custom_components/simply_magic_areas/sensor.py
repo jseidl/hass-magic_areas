@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_registry import async_get as async_get_er
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.magic import MagicArea
@@ -20,9 +21,12 @@ from .const import (
     AGGREGATE_MODE_SUM,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
+    DOMAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+ALWAYS_DEVICE_CLASS = {SensorDeviceClass.HUMIDITY, SensorDeviceClass.ILLUMINANCE}
 
 
 async def async_setup_entry(
@@ -37,14 +41,23 @@ async def async_setup_entry(
 
 def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
     """Add the sensors for the magic areas."""
+    existing_sensor_entities: list[str] = []
+    if DOMAIN + SENSOR_DOMAIN in area.entities:
+        _LOGGER.warning("Froggy %s", area.entities[DOMAIN + SENSOR_DOMAIN])
+        existing_sensor_entities = [
+            e["entity_id"] for e in area.entities[DOMAIN + SENSOR_DOMAIN]
+        ]
+
     # Create the illuminance sensor if there are any illuminance sensors in the area.
     if not area.has_entities(SENSOR_DOMAIN):
+        _cleanup_sensor_entities(area.hass, [], existing_sensor_entities)
         return
 
     aggregates = []
 
     # Check SENSOR_DOMAIN entities, count by device_class
     if not area.has_entities(SENSOR_DOMAIN):
+        _cleanup_sensor_entities(area.hass, [], existing_sensor_entities)
         return
 
     entities_by_device_class: dict[str, list] = {}
@@ -75,7 +88,7 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
         device_class = item[0]
         entities = item[1]
 
-        if device_class != SensorDeviceClass.ILLUMINANCE:
+        if device_class not in ALWAYS_DEVICE_CLASS:
             if not area.has_feature(CONF_FEATURE_AGGREGATION):
                 continue
             if len(entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
@@ -91,7 +104,20 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
         )
         aggregates.append(AreaSensorGroupSensor(area=area, device_class=device_class))
 
+    _cleanup_sensor_entities(area.hass, aggregates, existing_sensor_entities)
+
     async_add_entities(aggregates)
+
+
+def _cleanup_sensor_entities(
+    hass: HomeAssistant, new_ids: list[str], old_ids: list[str]
+) -> None:
+    entity_registry = async_get_er(hass)
+    for ent_id in old_ids:
+        if ent_id in new_ids:
+            continue
+        _LOGGER.warning("Deleting old entity %s", ent_id)
+        entity_registry.async_remove(ent_id)
 
 
 class AreaSensorGroupSensor(SensorGroupBase):

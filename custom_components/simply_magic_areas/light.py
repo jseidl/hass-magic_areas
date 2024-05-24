@@ -283,13 +283,15 @@ class AreaLightGroup(MagicLightGroup):
             CONF_MIN_BRIGHTNESS_LEVEL, DEFAULT_MIN_BRIGHTNESS_LEVEL
         )
         self.logger.debug(
-            "%s: Checking brightness to %s,  %s, %s",
+            "%s: Checking brightness to %s %s,  %s, %s -- %s",
             self.name,
+            self.is_on,
             luminesence,
             min_brightness,
             self.area.config.get(
                 CONF_MAX_BRIGHTNESS_LEVEL, DEFAULT_MAX_BRIGHTNESS_LEVEL
             ),
+            self._attributes["last_on_illuminance"],
         )
         if luminesence > min_brightness:
             max_brightness = self.area.config.get(
@@ -346,6 +348,7 @@ class AreaLightGroup(MagicLightGroup):
         entity_id = f"{SENSOR_DOMAIN}.simple_magic_areas_illuminance_{self.area.slug}"
         sensor_entity = self.hass.states.get(entity_id)
         if sensor_entity is None:
+            self._attributes["last_on_illuminance"] = 0.0
             return 0.0
         try:
             self._attributes["last_on_illuminance"] = float(sensor_entity.state)
