@@ -1,5 +1,6 @@
 """Light controls for magic areas."""
 
+from datetime import datetime
 import logging
 
 from homeassistant.components.light import ATTR_BRIGHTNESS, DOMAIN as LIGHT_DOMAIN
@@ -250,7 +251,7 @@ class AreaLightGroup(MagicLightGroup):
                     self.hass, manual_timeout, self._reset_manual_timeout
                 )
 
-    def _reset_manual_timeout(self):
+    def _reset_manual_timeout(self, now: datetime):
         self._set_controlled_by_this_entity(True)
         self._manual_timeout_cb = None
 
