@@ -41,7 +41,7 @@ from ..const import (
     DOMAIN,
 )
 from .common import setup_test_component_platform
-from .mocks import MockBinarySensor, MockSensor
+from .mocks import MockBinarySensor, MockFan, MockSensor
 
 AREA_NAME = "kitchen"
 _LOGGER = logging.getLogger(__name__)
@@ -244,14 +244,16 @@ async def setup_one_light(hass: HomeAssistant) -> list[str]:
 
 
 @pytest.fixture(name="one_fan")
-async def setup_one_fan(hass: HomeAssistant) -> list[str]:
+async def setup_one_fan(hass: HomeAssistant) -> list[MockFan]:
     """Create one mock fan and setup the system with ti."""
-    entity_registry = async_get_er(hass)
-    entity_registry.async_get_or_create(
-        FAN_DOMAIN,
-        "test",
-        "5678",
+    mock_fan = MockFan(name="test 5678", is_on=False, unique_id="fan_5678")
+    setup_test_component_platform(hass, FAN_DOMAIN, [mock_fan])
+    assert await async_setup_component(
+        hass, FAN_DOMAIN, {FAN_DOMAIN: {CONF_PLATFORM: "test"}}
     )
+    await hass.async_block_till_done()
+
+    entity_registry = async_get_er(hass)
     entity_registry.async_update_entity(
         "fan.test_5678",
         area_id=AREA_NAME,
@@ -259,7 +261,7 @@ async def setup_one_fan(hass: HomeAssistant) -> list[str]:
     hass.states.async_set(
         "fan.test_5678", "off", {ATTR_SUPPORTED_COLOR_MODES: [ColorMode.HS]}
     )
-    return ["fan.test_5678"]
+    return [mock_fan]
 
 
 @pytest.fixture(name="two_lights")

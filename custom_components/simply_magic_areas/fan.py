@@ -104,7 +104,7 @@ class AreaFanGroup(MagicFanGroup):
         self._icon: str = "mdi:fan"
         self._manual_timeout_cb: CALLBACK_TYPE | None = None
 
-        self._set_controlled_by_this_entity(True)
+        self._controled_by_entity = True
 
         # Add static attributes
         self.last_update_from_entity: bool = False
@@ -195,7 +195,7 @@ class AreaFanGroup(MagicFanGroup):
     def _area_state_change(self, event: Event[EventStateChangedData]) -> None:
         if event.data["old_state"] is None or event.data["new_state"] is None:
             return
-        automatic_control = self._is_control_enabled()
+        automatic_control = self.area.is_control_enabled()
 
         if not automatic_control:
             self.logger.debug(
@@ -207,21 +207,20 @@ class AreaFanGroup(MagicFanGroup):
         to_state = event.data["new_state"].state
 
         self.logger.debug(
-            "%s: Fan group New state: %s / Last state %s",
+            "%s: Fan group New state: %s / Last state %s (Humidity %s)",
             self.name,
             to_state,
             from_state,
+            self._attributes.get("humidity_up", False),
         )
 
         # For fans we only worry about the extended state.
         if to_state == AreaState.AREA_STATE_EXTENDED:
             self.turn_on()
-        elif (
-            from_state == AreaState.AREA_STATE_EXTENDED
-            and self.is_on
-            and not self.attributes["humidity_up"]
-        ):
+        elif self.is_on and not self._attributes.get("humidity_up", False):
             self.turn_off()
+        else:
+            _LOGGER.debug("Ignoring state change")
 
     def _trend_down_state_change(self, event: Event[EventStateChangedData]):
         if event.data["old_state"] is None or event.data["new_state"] is None:
@@ -307,7 +306,7 @@ class AreaFanGroup(MagicFanGroup):
     def turn_on(self) -> None:
         """Turn on the fan group."""
 
-        if not self._is_control_enabled():
+        if not self.area.is_control_enabled():
             self.logger.debug("%s: No control enabled", self.name)
             return False
 
@@ -322,13 +321,15 @@ class AreaFanGroup(MagicFanGroup):
 
     def turn_off(self) -> None:
         """Turn off the fan group."""
-        if not self._is_control_enabled():
+        if not self.area.is_control_enabled():
+            _LOGGER.debug("%s: Fan control is off", self.name)
             return False
 
         if not self.is_on:
             _LOGGER.debug("%s: Fan already off", self.name)
             return False
 
+        _LOGGER.debug("%s: Turning fan off", self.name)
         self.last_update_from_entity = True
         service_data = {ATTR_ENTITY_ID: self.entity_id}
         self.hass.services.call(FAN_DOMAIN, SERVICE_TURN_OFF, service_data)
@@ -336,45 +337,12 @@ class AreaFanGroup(MagicFanGroup):
         return True
 
     #### Control Release
-    def _is_control_enabled(self) -> bool:
-        entity_id = f"{SWITCH_DOMAIN}.area_magic_light_control_{self.area.slug}"
-
-        switch_entity = self.hass.states.get(entity_id)
-
-        return switch_entity.state.lower() == STATE_ON
-
     def _is_controlled_by_this_entity(self) -> bool:
-        entity_id = (
-            f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen{self.area.slug}"
-        )
-        switch_entity = self.hass.states.get(entity_id)
-
-        return switch_entity.state.lower() == STATE_OFF
+        return self._controled_by_entity
 
     def _set_controlled_by_this_entity(self, enabled: bool) -> None:
-        if self.hass:
-            entity_id = (
-                f"{SWITCH_DOMAIN}.area_magic_manual_override_active_{self.area.slug}"
-            )
-            service_data = {
-                ATTR_ENTITY_ID: entity_id,
-            }
-            if enabled:
-                self.hass.services.call(
-                    SWITCH_DOMAIN,
-                    SERVICE_TURN_OFF,
-                    service_data,
-                    blocking=False,
-                    context=self._context,
-                )
-            else:
-                self.hass.services.call(
-                    SWITCH_DOMAIN,
-                    SERVICE_TURN_ON,
-                    service_data,
-                    blocking=False,
-                    context=self._context,
-                )
+        _controled_by_entity = enabled
+        self._manual_timeout_cb = call_later(self.hass, 60, self._reset_control)
 
     def _reset_control(self) -> None:
         self._set_controlled_by_this_entity(True)

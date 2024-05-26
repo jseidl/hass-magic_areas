@@ -185,7 +185,7 @@ class AreaLightGroup(MagicLightGroup):
             return
         if event.data["old_state"] is None or event.data["new_state"] is None:
             return
-        automatic_control = self._is_control_enabled()
+        automatic_control = self.area.is_control_enabled()
 
         if not automatic_control:
             self.logger.debug(
@@ -259,7 +259,7 @@ class AreaLightGroup(MagicLightGroup):
     def turn_on(self, conf: ConfigEntry) -> None:
         """Turn on the light group."""
 
-        if not self._is_control_enabled():
+        if not self.area.is_control_enabled():
             self.logger.debug("%s: No control enabled", self.name)
             return False
 
@@ -329,7 +329,7 @@ class AreaLightGroup(MagicLightGroup):
 
     def turn_off(self) -> None:
         """Turn off the light group."""
-        if not self._is_control_enabled():
+        if not self.area.is_control_enabled():
             return False
 
         if not self.is_on:
@@ -358,11 +358,6 @@ class AreaLightGroup(MagicLightGroup):
             return 0.0
 
     #### Control Release
-    def _is_control_enabled(self) -> bool:
-        entity_id = f"{SWITCH_DOMAIN}.area_magic_light_control_{self.area.slug}"
-        switch_entity = self.hass.states.get(entity_id)
-        return switch_entity.state.lower() == STATE_ON
-
     def _is_controlled_by_this_entity(self) -> bool:
         entity_id = (
             f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen{self.area.slug}"

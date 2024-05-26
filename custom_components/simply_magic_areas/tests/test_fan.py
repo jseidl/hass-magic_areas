@@ -3,6 +3,7 @@
 import asyncio
 import logging
 
+from _pytest.monkeypatch import MonkeyPatch
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -13,6 +14,10 @@ from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_ON, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_registry import (
+    RegistryEntry,
+    async_get as async_get_er,
+)
 
 from ..const import DOMAIN
 from .common import async_mock_service
@@ -31,6 +36,7 @@ async def test_fan_on_off(
     _setup_integration,
     automated: bool,
     state: str,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     """Test loading the integration."""
     # Validate the right enties were created.
@@ -43,13 +49,13 @@ async def test_fan_on_off(
     area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
 
     calls = async_mock_service(hass, FAN_DOMAIN, "turn_on")
+    calls_off = async_mock_service(hass, FAN_DOMAIN, "turn_off")
 
     assert control_entity is not None
     assert manual_override_entity is not None
     assert area_binary_sensor is not None
     for fan in one_fan:
-        e = hass.states.get(fan)
-        assert e.state == STATE_OFF
+        assert not fan.is_on
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"
@@ -81,6 +87,22 @@ async def test_fan_on_off(
             "entity_id": f"{FAN_DOMAIN}.simple_magic_areas_fan_kitchen",
         }
         assert calls[0].service == SERVICE_TURN_ON
+        # Actually turn on the fan since we intercept the service call.
+        one_fan[0].turn_on()
+        # entity_registry = async_get_er(hass)
+        # entity = entity_registry.async_get(
+        #     f"{FAN_DOMAIN}.simple_magic_areas_fan_kitchen"
+        # )
+        # _LOGGER.warning("Entity %s", entity)
+        # _LOGGER.warning("State %s", area_binary_sensor)
+        # _LOGGER.warning(
+        #     "Servive %s",
+        #     [
+        #         sd[1].job.target
+        #         for s in hass.services._services.items()
+        #         for sd in s[1].items()
+        #     ],
+        # )
     else:
         assert len(calls) == 0
 
@@ -88,6 +110,8 @@ async def test_fan_on_off(
     await hass.async_block_till_done()
     area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
     assert area_binary_sensor.state == "clear"
+    if automated:
+        assert len(calls_off) == 1
 
     await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -122,8 +146,7 @@ async def test_fan_on_off_humidity(
     assert manual_override_entity is not None
     assert area_binary_sensor is not None
     for fan in one_fan:
-        e = hass.states.get(fan)
-        assert e.state == STATE_OFF
+        assert not fan.is_on
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"

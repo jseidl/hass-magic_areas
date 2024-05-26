@@ -385,6 +385,14 @@ class MagicArea(object):  # noqa: UP004
                 lights=lights,
             )
 
+    def is_control_enabled(self) -> bool:
+        """If the area has controled turned on for magic areas."""
+        entity_id = f"{SWITCH_DOMAIN}.area_magic_light_control_{self.slug}"
+
+        switch_entity = self.hass.states.get(entity_id)
+
+        return switch_entity.state.lower() == STATE_ON
+
 
 class MagicMetaArea(MagicArea):
     """Class for the meta magic areas that contain other areas."""
