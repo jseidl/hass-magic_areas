@@ -5,6 +5,8 @@ from datetime import datetime
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
 from homeassistant.util import slugify
 from homeassistant.helpers.discovery import async_load_platform
+from homeassistant.helpers.entity_registry import async_get as async_get_er
+from homeassistant.helpers.device_registry import async_get as async_get_dr
 
 from custom_components.magic_areas.util import flatten_entity_list, is_entity_list, areas_loaded
 from custom_components.magic_areas.const import (
@@ -158,7 +160,7 @@ class MagicArea(object):
         # Ignore our own entities
         if entity_object.device_id:
 
-            device_registry = self.hass.helpers.device_registry.async_get(self.hass)
+            device_registry = async_get_dr(self.hass)
             device_object = device_registry.async_get(entity_object.device_id)
 
             if device_object:
@@ -184,7 +186,7 @@ class MagicArea(object):
 
         # Check device's area id, if available
         if entity_object.device_id:
-            device_registry = self.hass.helpers.device_registry.async_get(self.hass)
+            device_registry = async_get_dr(self.hass)
             if entity_object.device_id in device_registry.devices.keys():
                 device_object = device_registry.devices[entity_object.device_id]
                 if device_object.area_id == self.id:
@@ -200,7 +202,7 @@ class MagicArea(object):
         entity_list = []
         include_entities = self.config.get(CONF_INCLUDE_ENTITIES)
 
-        entity_registry = self.hass.helpers.entity_registry.async_get(self.hass)
+        entity_registry = async_get_er(self.hass)
 
         for entity_id, entity_object in entity_registry.entities.items():
             # Check entity validity
