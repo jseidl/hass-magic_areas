@@ -20,7 +20,7 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_OFF, STATE_ON
-from homeassistant.core import State
+from homeassistant.core import Event, EventStateChangedData, State
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -129,8 +129,11 @@ class MagicBinarySensorEntity(MagicEntity, BinarySensorEntity):
         """Return true if the area is occupied."""
         return self._state
 
-    def sensor_state_change(self, entity_id: str, from_state: State, to_state: State):
+    def sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
         """Actions when the sensor state has changed."""
+        entity_id = event.data["entity_id"]
+        from_state = event.data["old_state"]
+        to_state = event.data["new_state"]
         _LOGGER.warning(
             "Sensor state change %s from %s to %s", entity_id, from_state, to_state
         )
@@ -253,8 +256,11 @@ class MagicSensorEntity(MagicEntity, SensorEntity):
         """Return the state of the entity."""
         return self.get_sensors_state()
 
-    def sensor_state_change(self, entity_id: str, from_state: State, to_state: State):
+    def sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
         """Call when the sensor state changes to update the system."""
+        entity_id = event.data["entity_id"]
+        to_state = event.data["new_state"]
+
         self.logger.debug(
             "%s: sensor '%s' changed to %s", self.name, entity_id, to_state.state
         )

@@ -29,7 +29,7 @@ from .util import get_meta_area_object
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = []
+PLATFORMS: list[str] = []
 
 
 async def async_setup_entry(
@@ -113,7 +113,7 @@ async def async_setup_entry(
     #  Conditional reload of related meta-areas
 
     # Populate dict with all meta-areas with ID as key
-    meta_areas = defaultdict()
+    meta_areas: dict[str, MagicArea] = defaultdict()
 
     for area in data.values():
         area_obj = area[DATA_AREA_OBJECT]

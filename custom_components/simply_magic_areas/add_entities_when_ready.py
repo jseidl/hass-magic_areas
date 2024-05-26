@@ -3,6 +3,8 @@
 import logging
 from typing import Protocol
 
+from collections.abc import Callable
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -13,20 +15,11 @@ from .const import DATA_AREA_OBJECT, EVENT_MAGICAREAS_AREA_READY, MODULE_DATA
 _LOGGER = logging.getLogger(__name__)
 
 
-class AddEntitiesWhenReadyCallback(Protocol):
-    """Protocol type for add_entities_when_ready callback."""
-
-    def __call__(
-        self, area: MagicArea, add_entity_callback: AddEntitiesCallback
-    ) -> None:
-        """Define add_entities type."""
-
-
 def add_entities_when_ready(
     hass: HomeAssistant,
     async_add_entities: AddEntitiesCallback,
     config_entry: ConfigEntry,
-    callback_fn: AddEntitiesWhenReadyCallback,
+    callback_fn: Callable[[MagicArea, AddEntitiesCallback]],
 ) -> None:
     """Add entities into the system when it is ready to add."""
     ma_data = hass.data[MODULE_DATA]

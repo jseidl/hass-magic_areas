@@ -11,7 +11,9 @@
         "media_player",
         "device_tracker",
         "discovery",
-        "camera"
+        "camera",
+        "trend",
+        "select"
     ],
     "codeowners": [
         "@ddt"

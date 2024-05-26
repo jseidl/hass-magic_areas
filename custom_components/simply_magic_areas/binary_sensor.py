@@ -10,7 +10,7 @@ from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDevic
 from homeassistant.components.trend.binary_sensor import SensorTrend
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Entity, HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import async_get as async_get_er
 
@@ -39,7 +39,7 @@ async def async_setup_entry(
     add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
 
 
-def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
+def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback) -> None:
     """Add the basic sensors for the area."""
     entities = []
     existing_trend_entities = []
@@ -59,7 +59,9 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
     _cleanup_binary_sensor_entities(area.hass, entities, existing_trend_entities)
 
 
-def create_health_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
+def create_health_sensors(
+    area: MagicArea, async_add_entities: AddEntitiesCallback
+) -> list[Entity]:
     """Add the health sensors for the area."""
     if not area.has_feature(CONF_FEATURE_HEALTH):
         return []
@@ -67,7 +69,7 @@ def create_health_sensors(area: MagicArea, async_add_entities: AddEntitiesCallba
     if BINARY_SENSOR_DOMAIN not in area.entities:
         return []
 
-    distress_entities = []
+    distress_entities: list[Entity] = []
 
     for entity in area.entities[BINARY_SENSOR_DOMAIN]:
         if ATTR_DEVICE_CLASS not in entity:
@@ -79,9 +81,9 @@ def create_health_sensors(area: MagicArea, async_add_entities: AddEntitiesCallba
         distress_entities.append(entity)
 
     if len(distress_entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
-        CONF_AGGREGATES_MIN_ENTITIES
+        CONF_AGGREGATES_MIN_ENTITIES, 0
     ):
-        return
+        return []
 
     _LOGGER.debug("Creating health sensor for area (%s)", area.slug)
     entities = [AreaDistressBinarySensor(area)]
@@ -89,13 +91,15 @@ def create_health_sensors(area: MagicArea, async_add_entities: AddEntitiesCallba
     return entities
 
 
-def create_aggregate_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
+def create_aggregate_sensors(
+    area: MagicArea, async_add_entities: AddEntitiesCallback
+) -> list[Entity]:
     """Create the aggregate sensors for the area."""
     # Create aggregates
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
-        return
+        return []
 
-    aggregates = []
+    aggregates: list[Entity] = []
 
     # Check BINARY_SENSOR_DOMAIN entities, count by device_class
     if BINARY_SENSOR_DOMAIN not in area.entities:
@@ -114,7 +118,7 @@ def create_aggregate_sensors(area: MagicArea, async_add_entities: AddEntitiesCal
 
     for device_class, entity_count in device_class_count.items():
         if entity_count < area.feature_config(CONF_FEATURE_AGGREGATION).get(
-            CONF_AGGREGATES_MIN_ENTITIES
+            CONF_AGGREGATES_MIN_ENTITIES, 0
         ):
             continue
 
@@ -227,14 +231,14 @@ class AreaDistressBinarySensor(BinarySensorGroupBase):
     async def _initialize(self, _=None) -> None:
         self.logger.debug("%s Sensor initializing.", self.name)
 
-        self.load_sensors()
+        self.load_sensors(BinarySensorDeviceClass.PROBLEM)
 
         # Setup the listeners
         await self._setup_listeners()
 
         self.logger.debug("%s Sensor initialized.", self.name)
 
-    def load_sensors(self) -> None:
+    def load_sensors(self, domain: str, unit_of_measurement: str | None = None) -> None:
         """Load the sensors from the system."""
         # Fetch sensors
         self.sensors = []
