@@ -3,6 +3,7 @@
 from datetime import datetime
 import logging
 
+from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import ATTR_BRIGHTNESS, DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
@@ -24,9 +25,10 @@ from homeassistant.core import (
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.helpers.event import async_track_state_change_event, call_later
+from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
-from .base.entities import MagicLightGroup
+from .base.entities import MagicEntity
 from .base.magic import MagicArea
 from .const import (
     CONF_MANUAL_TIMEOUT,
@@ -52,7 +54,7 @@ async def async_setup_entry(
     add_entities_when_ready(hass, async_add_entities, config_entry, _add_lights)
 
 
-def _cleanup_entities(
+def _cleanup_light_entities(
     hass: HomeAssistant, new_ids: list[str], old_ids: list[str]
 ) -> None:
     entity_registry = async_get_er(hass)
@@ -73,7 +75,7 @@ def _add_lights(area: MagicArea, async_add_entities: AddEntitiesCallback):
     # Check if there are any lights
     if not area.has_entities(LIGHT_DOMAIN):
         _LOGGER.debug("No %s entities for area %s ", LIGHT_DOMAIN, area.name)
-        _cleanup_entities(area.hass, [], existing_light_entities)
+        _cleanup_light_entities(area.hass, [], existing_light_entities)
         return
 
     light_groups = []
@@ -81,7 +83,8 @@ def _add_lights(area: MagicArea, async_add_entities: AddEntitiesCallback):
     # Create light groups
     light_entities = [e["entity_id"] for e in area.entities[LIGHT_DOMAIN]]
     if area.is_meta():
-        light_groups.append(MagicLightGroup(area, light_entities))
+        # light_groups.append(MagicLightGroup(area, light_entities))
+        pass
     else:
         # Create the ones with no entity automatically plus ones with an entity set
         light_group_object = AreaLightGroup(area, light_entities)
@@ -90,10 +93,10 @@ def _add_lights(area: MagicArea, async_add_entities: AddEntitiesCallback):
     # Create all groups
     async_add_entities(light_groups)
     group_ids = [e.entity_id for e in light_groups]
-    _cleanup_entities(area.hass, group_ids, existing_light_entities)
+    _cleanup_light_entities(area.hass, group_ids, existing_light_entities)
 
 
-class AreaLightGroup(MagicLightGroup):
+class AreaLightGroup(MagicEntity, LightGroup):
     """The light group to control the area lights specifically.
 
     There is one light group created that will mutate with the different
@@ -104,8 +107,13 @@ class AreaLightGroup(MagicLightGroup):
 
     def __init__(self, area: MagicArea, entities: list[str]) -> None:
         """Init the light group for the area."""
-        MagicLightGroup.__init__(
-            self, area, entities, f"Simple Magic Areas Light ({area.name})"
+        MagicEntity.__init__(self, area)
+        LightGroup.__init__(
+            self,
+            entity_ids=entities,
+            name=f"Simply Magic Areas Light ({area.name})",
+            unique_id=slugify(f"Simply Magic Areas Light ({area.name})"),
+            mode=False,
         )
 
         self._manual_timeout_cb: CALLBACK_TYPE | None = None
@@ -115,10 +123,10 @@ class AreaLightGroup(MagicLightGroup):
 
         # Add static attributes
         self.last_update_from_entity: bool = False
-        self._attributes["lights"] = self._entity_ids
-        self._attributes["last_update_from_entity"] = False
+        self._attr_extra_state_attributes["lights"] = self._entity_ids
+        self._attr_extra_state_attributes["last_update_from_entity"] = False
 
-        self.logger.debug(
+        _LOGGER.debug(
             "Light group %s %s created with entities: %s",
             self.name,
             self._icon,
@@ -136,7 +144,7 @@ class AreaLightGroup(MagicLightGroup):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            self.logger.debug(
+            _LOGGER.debug(
                 "%s restored [state=%s]",
                 self.name,
                 last_state.state,
@@ -147,7 +155,7 @@ class AreaLightGroup(MagicLightGroup):
                 self.last_update_from_entity = last_state.attributes[
                     "last_update_from_entity"
                 ]
-                self._attributes["last_update_from_entity"] = (
+                self._attr_extra_state_attributes["last_update_from_entity"] = (
                     self.last_update_from_entity
                 )
         else:
@@ -172,8 +180,8 @@ class AreaLightGroup(MagicLightGroup):
             async_track_state_change_event(
                 self.hass,
                 [
-                    f"{SELECT_DOMAIN}.area_magic_{self.area.slug}",
-                    f"{SWITCH_DOMAIN}.area_magic_light_control_{self.area.slug}",
+                    f"{SELECT_DOMAIN}.simply_magic_areas_{self.area.slug}",
+                    f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_{self.area.slug}",
                 ],
                 self._area_state_change,
             )
@@ -188,7 +196,7 @@ class AreaLightGroup(MagicLightGroup):
         automatic_control = self.area.is_control_enabled()
 
         if not automatic_control:
-            self.logger.debug(
+            _LOGGER.debug(
                 "%s: Automatic control for light group is disabled, skipping", self.name
             )
             return False
@@ -196,7 +204,7 @@ class AreaLightGroup(MagicLightGroup):
         from_state = event.data["old_state"].state
         to_state = event.data["new_state"].state
 
-        self.logger.debug(
+        _LOGGER.debug(
             "Light group %s. New state: %s / Last state %s",
             self.name,
             to_state,
@@ -207,49 +215,48 @@ class AreaLightGroup(MagicLightGroup):
             conf = self.area.state_config(to_state)
             self.turn_on(conf)
         else:
-            self.logger.warning("%s: Unknown state %s", self.name, to_state)
+            _LOGGER.warning("%s: Unknown state %s", self.name, to_state)
 
     def _update_group_state(self, event: Event[EventStateChangedData]) -> None:
         if not self.area.is_occupied():
             self._reset_control()
         else:
-            origin_event = event.context.origin_event
-            if origin_event.event_type == "state_changed":
-                # Skip non ON/OFF state changes
-                if origin_event.data["old_state"].state not in [
-                    STATE_ON,
-                    STATE_OFF,
-                ]:
-                    return
-                if origin_event.data["new_state"].state not in [
-                    STATE_ON,
-                    STATE_OFF,
-                ]:
-                    return
-                manual_timeout = self.area.config.get(
-                    CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT
-                )
-                if (
-                    "restored" in origin_event.data["old_state"].attributes
-                    and origin_event.data["old_state"].attributes["restored"]
-                ):
-                    # On state restored, also setup the timeout callback.
-                    if not self._in_controlled_by_this_entity():
-                        if self._manual_timeout_cb is not None:
-                            self._manual_timeout_cb()
-                        self._manual_timeout_cb = call_later(
-                            self.hass, manual_timeout, self._reset_manual_timeout
-                        )
-                    return
-                if self.last_update_from_entity:
-                    self.last_update_from_entity = False
-                    return
-                self._set_controlled_by_this_entity(False)
-                if self._manual_timeout_cb is not None:
-                    self._manual_timeout_cb()
-                self._manual_timeout_cb = call_later(
-                    self.hass, manual_timeout, self._reset_manual_timeout
-                )
+            old_state = event.data["old_state"]
+            new_state = event.data["new_state"]
+            if old_state is None or new_state is None:
+                return
+            # Skip non ON/OFF state changes
+            if old_state.state not in [
+                STATE_ON,
+                STATE_OFF,
+            ]:
+                return
+            if new_state.state not in [
+                STATE_ON,
+                STATE_OFF,
+            ]:
+                return
+            manual_timeout = self.area.config.get(
+                CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT
+            )
+            if old_state.attributes.get("restored"):
+                # On state restored, also setup the timeout callback.
+                if not self._in_controlled_by_this_entity():
+                    if self._manual_timeout_cb is not None:
+                        self._manual_timeout_cb()
+                    self._manual_timeout_cb = call_later(
+                        self.hass, manual_timeout, self._reset_manual_timeout
+                    )
+                return
+            if self.last_update_from_entity:
+                self.last_update_from_entity = False
+                return
+            self._set_controlled_by_this_entity(False)
+            if self._manual_timeout_cb is not None:
+                self._manual_timeout_cb()
+            self._manual_timeout_cb = call_later(
+                self.hass, manual_timeout, self._reset_manual_timeout
+            )
 
     def _reset_manual_timeout(self, now: datetime):
         self._set_controlled_by_this_entity(True)
@@ -260,12 +267,12 @@ class AreaLightGroup(MagicLightGroup):
         """Turn on the light group."""
 
         if not self.area.is_control_enabled():
-            self.logger.debug("%s: No control enabled", self.name)
+            _LOGGER.debug("%s: No control enabled", self.name)
             return False
 
         self._entity_ids = conf.lights
         self.async_update_group_state()
-        self.logger.debug(
+        _LOGGER.debug(
             "Update light group %s %s %s %s %s",
             self.is_on,
             self.brightness,
@@ -276,14 +283,14 @@ class AreaLightGroup(MagicLightGroup):
 
         brightness = int(conf.dim_level * 255 / 100)
         if self.is_on and self.brightness == brightness:
-            self.logger.debug("%s: Already on at %s", self.name, brightness)
+            _LOGGER.debug("%s: Already on at %s", self.name, brightness)
             return False
 
         luminesence = self._get_illuminance()
         min_brightness = self.area.config.get(
             CONF_MIN_BRIGHTNESS_LEVEL, DEFAULT_MIN_BRIGHTNESS_LEVEL
         )
-        self.logger.debug(
+        _LOGGER.debug(
             "%s: Checking brightness to %s %s,  %s, %s -- %s",
             self.name,
             self.is_on,
@@ -292,7 +299,7 @@ class AreaLightGroup(MagicLightGroup):
             self.area.config.get(
                 CONF_MAX_BRIGHTNESS_LEVEL, DEFAULT_MAX_BRIGHTNESS_LEVEL
             ),
-            self._attributes["last_on_illuminance"],
+            self._attr_extra_state_attributes["last_on_illuminance"],
         )
         if luminesence > min_brightness:
             max_brightness = self.area.config.get(
@@ -305,7 +312,7 @@ class AreaLightGroup(MagicLightGroup):
                 brightness = int(
                     brightness * (1.0 - diff / (max_brightness - min_brightness))
                 )
-                self.logger.debug(
+                _LOGGER.debug(
                     "%s: Updating brightness to %s 1.0 - %s / %s",
                     self.name,
                     brightness,
@@ -317,7 +324,7 @@ class AreaLightGroup(MagicLightGroup):
             _LOGGER.debug("%s: Brightness is 0", self.name)
             return self.turn_off()
 
-        self.logger.debug("Turning on lights")
+        _LOGGER.debug("Turning on lights")
         self.last_update_from_entity = True
         service_data = {
             ATTR_ENTITY_ID: self.entity_id,
@@ -345,31 +352,29 @@ class AreaLightGroup(MagicLightGroup):
 
     def _get_illuminance(self) -> float:
         if self.is_on:
-            return self._attributes["last_on_illuminance"] or 0.0
-        entity_id = f"{SENSOR_DOMAIN}.simple_magic_areas_illuminance_{self.area.slug}"
+            return self._attr_extra_state_attributes["last_on_illuminance"] or 0.0
+        entity_id = f"{SENSOR_DOMAIN}.simply_magic_areas_illuminance_{self.area.slug}"
         sensor_entity = self.hass.states.get(entity_id)
         if sensor_entity is None:
-            self._attributes["last_on_illuminance"] = 0.0
+            self._attr_extra_state_attributes["last_on_illuminance"] = 0.0
             return 0.0
         try:
-            self._attributes["last_on_illuminance"] = float(sensor_entity.state)
+            self._attr_extra_state_attributes["last_on_illuminance"] = float(
+                sensor_entity.state
+            )
             return float(sensor_entity.state)
         except ValueError:
             return 0.0
 
     #### Control Release
     def _is_controlled_by_this_entity(self) -> bool:
-        entity_id = (
-            f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen{self.area.slug}"
-        )
+        entity_id = f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen{self.area.slug}"
         switch_entity = self.hass.states.get(entity_id)
         return switch_entity.state.lower() == STATE_OFF
 
     def _set_controlled_by_this_entity(self, enabled: bool) -> None:
         if self.hass:
-            entity_id = (
-                f"{SWITCH_DOMAIN}.area_magic_manual_override_active_{self.area.slug}"
-            )
+            entity_id = f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_{self.area.slug}"
             service_data = {
                 ATTR_ENTITY_ID: entity_id,
             }
@@ -393,4 +398,4 @@ class AreaLightGroup(MagicLightGroup):
     def _reset_control(self) -> None:
         self._set_controlled_by_this_entity(True)
         self.schedule_update_ha_state()
-        self.logger.debug("{self.name}: Control Reset.")
+        _LOGGER.debug("{self.name}: Control Reset.")

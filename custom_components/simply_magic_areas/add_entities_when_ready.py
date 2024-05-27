@@ -1,9 +1,8 @@
 """Utility details for the system."""
 
+from collections.abc import Callable
 import logging
 from typing import Protocol
-
-from collections.abc import Callable
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -19,7 +18,7 @@ def add_entities_when_ready(
     hass: HomeAssistant,
     async_add_entities: AddEntitiesCallback,
     config_entry: ConfigEntry,
-    callback_fn: Callable[[MagicArea, AddEntitiesCallback]],
+    callback_fn: Callable[[MagicArea, AddEntitiesCallback], None],
 ) -> None:
     """Add entities into the system when it is ready to add."""
     ma_data = hass.data[MODULE_DATA]

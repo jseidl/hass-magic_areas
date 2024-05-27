@@ -1,6 +1,7 @@
 """Fake light for testing with."""
 
-from typing import Any, Final
+import logging
+from typing import Any, Final, Mapping, Self, cast, final, override
 from unittest.mock import AsyncMock
 
 from homeassistant import loader
@@ -11,6 +12,8 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityCategory, ToggleEntity
+
+_LOGGER = logging.getLogger(__name__)
 
 TURN_ON_ARG_TO_COLOR_MODE = {
     "hs_color": ColorMode.HS,
@@ -426,3 +429,9 @@ class MockSensor(MockEntity, SensorEntity):
     def suggested_unit_of_measurement(self):
         """Return the state class of this sensor."""
         return self._handle("suggested_unit_of_measurement")
+
+    async def async_added_to_hass(self) -> None:
+        """Call when entity about to be added to hass."""
+
+        await super().async_added_to_hass()
+        self.async_write_ha_state()

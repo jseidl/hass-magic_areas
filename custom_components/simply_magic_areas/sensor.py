@@ -3,6 +3,12 @@
 from enum import StrEnum
 import logging
 
+from homeassistant.components.group.sensor import (
+    ATTR_MEAN,
+    ATTR_SUM,
+    SensorGroup,
+    SensorStateClass,
+)
 from homeassistant.components.sensor import (
     DEVICE_CLASS_UNITS,
     DOMAIN as SENSOR_DOMAIN,
@@ -13,10 +19,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import async_get as async_get_er
+from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
+from .base.entities import MagicEntity
 from .base.magic import MagicArea
-from .base.primitives import SensorGroupBase
 from .const import (
     AGGREGATE_MODE_SUM,
     CONF_AGGREGATES_MIN_ENTITIES,
@@ -60,7 +67,7 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
         _cleanup_sensor_entities(area.hass, [], existing_sensor_entities)
         return
 
-    entities_by_device_class: dict[str, list] = {}
+    entities_by_device_class: dict[str, list[str]] = {}
 
     for entity in area.entities[SENSOR_DOMAIN]:
         if "device_class" not in entity:
@@ -81,7 +88,7 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
         device_class = entity["device_class"]
         if device_class not in entities_by_device_class:
             entities_by_device_class[device_class] = []
-        entities_by_device_class[device_class].append(entity)
+        entities_by_device_class[device_class].append(entity["entity_id"])
 
     # Create aggregates/illuminance sensor or illuminance ones.
     for item in entities_by_device_class.items():
@@ -102,7 +109,13 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
             len(entities),
             area.slug,
         )
-        aggregates.append(AreaSensorGroupSensor(area=area, device_class=device_class))
+        aggregates.append(
+            AreaSensorGroupSensor(
+                area=area,
+                device_class=device_class,
+                entity_ids=entities,
+            )
+        )
 
     _cleanup_sensor_entities(area.hass, aggregates, existing_sensor_entities)
 
@@ -120,29 +133,33 @@ def _cleanup_sensor_entities(
         entity_registry.async_remove(ent_id)
 
 
-class AreaSensorGroupSensor(SensorGroupBase):
+class AreaSensorGroupSensor(MagicEntity, SensorGroup):
     """Sensor for the magic area, group sensor with all the stuff in it."""
 
-    def __init__(self, area: MagicArea, device_class: StrEnum) -> None:
+    def __init__(
+        self,
+        area: MagicArea,
+        device_class: SensorDeviceClass,
+        entity_ids: list[str],
+    ) -> None:
         """Initialize an area sensor group sensor."""
 
-        super().__init__(area=area, device_class=device_class)
-
-        self._mode = "sum" if device_class in AGGREGATE_MODE_SUM else "mean"
-        if device_class in UNIT_CONVERTERS:
-            self._unit_of_measurement = UNIT_CONVERTERS[device_class].NORMALALIZED_UNIT
-        else:
-            self._unit_of_measurement = list(DEVICE_CLASS_UNITS[device_class])[0]
-
-        device_class_name = " ".join(device_class.split("_")).title()
-        self._name = f"Simple Magic Areas {device_class_name} ({self.area.name})"
-
-    async def _initialize(self, _=None) -> None:
-        self.logger.debug("%s Sensor initializing", self.name)
-
-        self.load_sensors(SENSOR_DOMAIN, self._unit_of_measurement)
-
-        # Setup the listeners
-        await self._setup_listeners()
-
-        self.logger.debug("%s Sensor initialized.", self.name)
+        MagicEntity.__init__(self, area=area)
+        SensorGroup.__init__(
+            self,
+            hass=area.hass,
+            device_class=device_class,
+            entity_ids=entity_ids,
+            ignore_non_numeric=True,
+            sensor_type=ATTR_SUM if device_class in AGGREGATE_MODE_SUM else ATTR_MEAN,
+            state_class=SensorStateClass.TOTAL
+            if device_class in AGGREGATE_MODE_SUM
+            else SensorStateClass.MEASUREMENT,
+            name=f"Simply Magic Areas {" ".join(device_class.split("_")).title()} ({self.area.name})",
+            unique_id=slugify(
+                f"Simply Magic Areas {" ".join(device_class.split("_")).title()} ({self.area.name})"
+            ),
+            unit_of_measurement=UNIT_CONVERTERS[device_class].NORMALALIZED_UNIT
+            if device_class in UNIT_CONVERTERS
+            else list(DEVICE_CLASS_UNITS[device_class])[0],
+        )

@@ -27,23 +27,23 @@ async def test_init_no_devices(
 
     # Validate the right enties were created.
     control_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_kitchen"
     )
     manual_override_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
     occupied_lights = hass.states.get(
-        f"{LIGHT_DOMAIN}.simple_magic_areas_light_kitchen"
+        f"{LIGHT_DOMAIN}.simply_magic_areas_light_kitchen"
     )
     humidity_sensor = hass.states.get(
-        f"{SENSOR_DOMAIN}.simple_magic_areas_humidity_kitchen"
+        f"{SENSOR_DOMAIN}.simply_magic_areas_humidity_kitchen"
     )
     trend_up = hass.states.get(
-        f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_kitchen"
+        f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_occupancy_kitchen"
     )
     trend_down = hass.states.get(
-        f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_kitchen"
+        f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_empty_kitchen"
     )
 
     assert control_entity is not None
@@ -75,14 +75,14 @@ async def test_init_with_lights(
 
     # Validate the right enties were created.
     control_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_kitchen"
     )
     manual_override_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
     occupied_lights = hass.states.get(
-        f"{LIGHT_DOMAIN}.simple_magic_areas_light_kitchen"
+        f"{LIGHT_DOMAIN}.simply_magic_areas_light_kitchen"
     )
 
     assert control_entity is not None
@@ -111,17 +111,17 @@ async def test_init_with_light_sensor(
 
     # Validate the right enties were created.
     control_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_kitchen"
     )
     manual_override_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
     occupied_lights = hass.states.get(
-        f"{LIGHT_DOMAIN}.simple_magic_areas_light_kitchen"
+        f"{LIGHT_DOMAIN}.simply_magic_areas_light_kitchen"
     )
     light_sensor = hass.states.get(
-        f"{SENSOR_DOMAIN}.simple_magic_areas_illuminance_kitchen"
+        f"{SENSOR_DOMAIN}.simply_magic_areas_illuminance_kitchen"
     )
 
     assert control_entity is not None
@@ -151,23 +151,23 @@ async def test_init_with_humidity_sensor(
 
     # Validate the right enties were created.
     control_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_kitchen"
     )
     manual_override_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
     occupied_lights = hass.states.get(
-        f"{LIGHT_DOMAIN}.simple_magic_areas_light_kitchen"
+        f"{LIGHT_DOMAIN}.simply_magic_areas_light_kitchen"
     )
     humidity_sensor = hass.states.get(
-        f"{SENSOR_DOMAIN}.simple_magic_areas_humidity_kitchen"
+        f"{SENSOR_DOMAIN}.simply_magic_areas_humidity_kitchen"
     )
     trend_up = hass.states.get(
-        f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_kitchen"
+        f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_occupancy_kitchen"
     )
     trend_down = hass.states.get(
-        f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_kitchen"
+        f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_empty_kitchen"
     )
 
     assert control_entity is not None
@@ -180,6 +180,7 @@ async def test_init_with_humidity_sensor(
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"
+    await hass.async_block_till_done()
 
     await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -200,14 +201,14 @@ async def test_init_with_lights_and_sensor(
 
     # Validate the right enties were created.
     control_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_kitchen"
     )
     manual_override_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
     occupied_lights = hass.states.get(
-        f"{LIGHT_DOMAIN}.simple_magic_areas_light_kitchen"
+        f"{LIGHT_DOMAIN}.simply_magic_areas_light_kitchen"
     )
 
     assert control_entity is not None
@@ -217,6 +218,7 @@ async def test_init_with_lights_and_sensor(
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"
+    await hass.async_block_till_done()
 
     await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done()

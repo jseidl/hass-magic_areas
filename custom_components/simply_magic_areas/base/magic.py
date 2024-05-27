@@ -203,11 +203,11 @@ class MagicArea(object):  # noqa: UP004
         """If this is a meta area."""
         return self.area_type == AREA_TYPE_META
 
-    def is_interior(self):
+    def is_interior(self) -> bool:
         """If this is an interior area."""
         return self.area_type == AREA_TYPE_INTERIOR
 
-    def is_exterior(self):
+    def is_exterior(self) -> bool:
         """If this is an exterior area."""
         return self.area_type == AREA_TYPE_EXTERIOR
 
@@ -387,11 +387,12 @@ class MagicArea(object):  # noqa: UP004
 
     def is_control_enabled(self) -> bool:
         """If the area has controled turned on for magic areas."""
-        entity_id = f"{SWITCH_DOMAIN}.area_magic_light_control_{self.slug}"
+        entity_id = f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_{self.slug}"
 
         switch_entity = self.hass.states.get(entity_id)
-
-        return switch_entity.state.lower() == STATE_ON
+        if switch_entity:
+            return switch_entity.state.lower() == STATE_ON
+        return True
 
 
 class MagicMetaArea(MagicArea):

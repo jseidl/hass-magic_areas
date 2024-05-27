@@ -20,13 +20,13 @@ async def test_save_select(
     assert config_entry.state is ConfigEntryState.LOADED
 
     # Validate the right enties were created.
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
 
     assert area_binary_sensor is not None
     assert area_binary_sensor.state == "clear"
     assert area_binary_sensor.attributes == {
         "active_sensors": [],
-        "friendly_name": "Area magic (kitchen)",
+        "friendly_name": "Simply Magic Areas (kitchen)",
         "icon": "mdi:home-search",
         "last_active_sensors": [],
         "presence_sensors": [],

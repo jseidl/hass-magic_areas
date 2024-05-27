@@ -1,14 +1,22 @@
 """Switches for magic areas."""
 
+import logging
+
+from homeassistant.components.switch import (
+    DOMAIN as SWITCH_DOMAIN,
+    SwitchEntity,
+    SwitchDeviceClass,
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import call_later
+from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
+from .base.entities import MagicEntity
 from .base.magic import MagicArea
-from .base.primitives import SwitchBase
 from .const import (
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_PRESENCE_HOLD_TIMEOUT,
@@ -16,6 +24,8 @@ from .const import (
     ICON_LIGHT_CONTROL,
     ICON_PRESENCE_HOLD,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -38,6 +48,36 @@ def add_switches(area: MagicArea, async_add_entities: AddEntitiesCallback):
     )
 
 
+class SwitchBase(MagicEntity, SwitchEntity):
+    """The base class for all the switches."""
+
+    def __init__(self, area: MagicArea) -> None:
+        """Initialize the base switch bits, basic just a mixin for the two types."""
+        MagicEntity.__init__(self, area)
+        SwitchEntity.__init__(self)
+        self._attr_device_class = SwitchDeviceClass.SWITCH
+        self._attr_should_poll = False
+        self._attr_is_on = False
+
+    async def async_added_to_hass(self) -> None:
+        """Call when entity about to be added to hass."""
+        await super().async_added_to_hass()
+        self.async_write_ha_state()
+        self.schedule_update_ha_state()
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Turn on presence hold."""
+        self._attr_state = STATE_ON
+        self._attr_is_on = True
+        self.schedule_update_ha_state()
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Turn off presence hold."""
+        self._attr_state = STATE_OFF
+        self._attr_is_on = False
+        self.schedule_update_ha_state()
+
+
 class AreaLightControlSwitch(SwitchBase):
     """Controls if the system is running and watching state."""
 
@@ -45,7 +85,10 @@ class AreaLightControlSwitch(SwitchBase):
         """Initialize the area light control switch."""
 
         super().__init__(area)
-        self._name = f"Area Magic Light Control ({self.area.name})"
+        self._attr_name = f"Simply Magic Areas Light Control ({self.area.name})"
+        self.entity_id = f"{SWITCH_DOMAIN}.{slugify(self._attr_name)}"
+        self._attr_state = STATE_OFF
+        self._attr_is_on = False
 
     @property
     def icon(self):
@@ -60,7 +103,12 @@ class AreaLightsManualOverrideActiveSwitch(SwitchBase):
         """Initialize the area manual override switch."""
 
         super().__init__(area)
-        self._name = f"Area Magic Manual Override Active ({self.area.name})"
+        self._attr_name = (
+            f"Simply Magic Areas Manual Override Active ({self.area.name})"
+        )
+        self.entity_id = f"{SWITCH_DOMAIN}.{slugify(self._attr_name)}"
+        self._attr_state = STATE_OFF
+        self._attr_is_on = False
 
     @property
     def icon(self):
@@ -75,9 +123,12 @@ class AreaPresenceHoldSwitch(SwitchBase):
         """Initialize the area presence hold switch."""
 
         super().__init__(area)
-        self._name = f"Area Presence Hold ({self.area.name})"
+        self._attr_name = f"Simply Magic Areas Presence Hold ({self.area.name})"
+        self.entity_id = f"{SWITCH_DOMAIN}.{slugify(self._attr_name)}"
 
         self.timeout_callback = None
+        self._attr_state = STATE_OFF
+        self._attr_is_on = False
 
     @property
     def icon(self):
@@ -86,12 +137,13 @@ class AreaPresenceHoldSwitch(SwitchBase):
 
     def timeout_turn_off(self, next_interval):
         """Turn off the presence hold after the timeout."""
-        if self._state == STATE_ON:
+        if self._attr_state == STATE_ON:
             self.turn_off()
 
-    def turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs):
         """Turn on presence hold."""
-        self._state = STATE_ON
+        self._attr_state = STATE_ON
+        self._attr_is_on = True
         self.schedule_update_ha_state()
 
         timeout = self.area.feature_config(CONF_FEATURE_PRESENCE_HOLD).get(
@@ -103,9 +155,10 @@ class AreaPresenceHoldSwitch(SwitchBase):
                 self.hass, timeout, self.timeout_turn_off
             )
 
-    def turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs):
         """Turn off presence hold."""
-        self._state = STATE_OFF
+        self._attr_state = STATE_OFF
+        self._attr_is_on = False
         self.schedule_update_ha_state()
 
         if self.timeout_callback:

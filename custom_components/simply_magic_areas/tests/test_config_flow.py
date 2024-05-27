@@ -70,6 +70,7 @@ async def test_form(hass: HomeAssistant) -> None:
         "occupied_state_dim": 100.0,
     }
     # assert len(mock_setup_entry.mock_calls) == 1
+    await hass.async_block_till_done()
 
 
 async def test_options(hass: HomeAssistant, config_entry: MockConfigEntry) -> None:
@@ -114,6 +115,10 @@ async def test_options(hass: HomeAssistant, config_entry: MockConfigEntry) -> No
         "sleep_state_dim": 30.0,
         "occupied_state_dim": 100.0,
     }
+
+    await hass.async_block_till_done()
+    await hass.config_entries.async_unload(config_entry.entry_id)
+    await hass.async_block_till_done()
 
 
 async def test_options_enable_advanced_lights(
@@ -216,3 +221,6 @@ async def test_options_enable_advanced_lights(
         "sleep_state_dim": 30.0,
         "occupied_state_dim": 100.0,
     }
+    await hass.async_block_till_done()
+    await hass.config_entries.async_unload(config_entry.entry_id)
+    await hass.async_block_till_done()

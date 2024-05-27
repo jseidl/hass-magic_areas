@@ -6,17 +6,20 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
+from homeassistant.components.group.binary_sensor import BinarySensorGroup
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.trend.binary_sensor import SensorTrend
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_DEVICE_CLASS
-from homeassistant.core import Entity, HomeAssistant
+from homeassistant.const import ATTR_DEVICE_CLASS, STATE_OFF, STATE_ON
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import async_get as async_get_er
+from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
+from .base.entities import MagicEntity
 from .base.magic import MagicArea
-from .base.primitives import BinarySensorGroupBase
 from .const import (
     AGGREGATE_MODE_ALL,
     CONF_AGGREGATES_MIN_ENTITIES,
@@ -86,7 +89,7 @@ def create_health_sensors(
         return []
 
     _LOGGER.debug("Creating health sensor for area (%s)", area.slug)
-    entities = [AreaDistressBinarySensor(area)]
+    entities = [AreaSensorGroupBinarySensor(area, entity_ids=distress_entities)]
     async_add_entities(entities)
     return entities
 
@@ -105,18 +108,18 @@ def create_aggregate_sensors(
     if BINARY_SENSOR_DOMAIN not in area.entities:
         return []
 
-    device_class_count = {}
+    device_class_entities: dict[str, list[str]] = {}
 
     for entity in area.entities[BINARY_SENSOR_DOMAIN]:
         if ATTR_DEVICE_CLASS not in entity:
             continue
 
-        if entity[ATTR_DEVICE_CLASS] not in device_class_count:
-            device_class_count[entity[ATTR_DEVICE_CLASS]] = 0
+        if entity[ATTR_DEVICE_CLASS] not in device_class_entities:
+            device_class_entities[entity[ATTR_DEVICE_CLASS]] = [entity["entity_id"]]
+        else:
+            device_class_entities[entity[ATTR_DEVICE_CLASS]].append(entity["entity_id"])
 
-        device_class_count[entity[ATTR_DEVICE_CLASS]] += 1
-
-    for device_class, entity_count in device_class_count.items():
+    for device_class, entity_count in device_class_entities.items():
         if entity_count < area.feature_config(CONF_FEATURE_AGGREGATION).get(
             CONF_AGGREGATES_MIN_ENTITIES, 0
         ):
@@ -128,7 +131,9 @@ def create_aggregate_sensors(
             entity_count,
             area.slug,
         )
-        aggregates.append(AreaSensorGroupBinarySensor(area, device_class))
+        aggregates.append(
+            AreaSensorGroupBinarySensor(area, device_class, device_class_entities)
+        )
 
     async_add_entities(aggregates)
     return aggregates
@@ -172,8 +177,18 @@ def create_trend_sensors(area: MagicArea, async_add_entities: AddEntitiesCallbac
     if not found:
         return []
 
-    aggregates.append(HumdityTrendSensor(area=area, increasing=True))
-    aggregates.append(HumdityTrendSensor(area=area, increasing=False))
+    aggregates.append(
+        HumdityTrendSensor(
+            area=area,
+            increasing=True,
+        )
+    )
+    aggregates.append(
+        HumdityTrendSensor(
+            area=area,
+            increasing=False,
+        )
+    )
 
     async_add_entities(aggregates)
 
@@ -191,85 +206,75 @@ def _cleanup_binary_sensor_entities(
         entity_registry.async_remove(ent_id)
 
 
-class AreaSensorGroupBinarySensor(BinarySensorGroupBase):
+class AreaSensorGroupBinarySensor(MagicEntity, BinarySensorGroup):
     """Group binary sensor for the area."""
 
-    def __init__(self, area: MagicArea, device_class: BinarySensorDeviceClass) -> None:
+    def __init__(
+        self,
+        area: MagicArea,
+        device_class: BinarySensorDeviceClass,
+        entity_ids: list[str],
+    ) -> None:
         """Initialize an area sensor group binary sensor."""
 
-        super().__init__(area, device_class)
+        MagicEntity.__init__(self, area)
+        BinarySensorGroup.__init__(
+            self,
+            device_class=device_class,
+            entity_ids=entity_ids,
+            mode=device_class in AGGREGATE_MODE_ALL,
+            name=f"Area {" ".join(device_class.split("_")).title()} ({self.area.name})",
+        )
 
-        self._mode = "all" if device_class in AGGREGATE_MODE_ALL else "single"
+        self.area = area
 
-        device_class_name = " ".join(device_class.split("_")).title()
-        self._name = f"Area {device_class_name} ({self.area.name})"
-
-    async def _initialize(self, _=None) -> None:
-        self.logger.debug("%s Sensor initializing.", self.name)
-
-        self.load_sensors(BINARY_SENSOR_DOMAIN)
-
-        # Setup the listeners
-        await self._setup_listeners()
-
-        # Refresh state
-        self._update_state()
-
-        self.logger.debug("%s Sensor initialized.", self.name)
-
-
-class AreaDistressBinarySensor(BinarySensorGroupBase):
-    """The distress binary sensor for the area."""
-
-    def __init__(self, area: MagicArea) -> None:
-        """Initialize an area sensor group binary sensor."""
-
-        super().__init__(area, BinarySensorDeviceClass.PROBLEM)
-
-        self._name = f"Area Health ({self.area.name})"
-
-    async def _initialize(self, _=None) -> None:
-        self.logger.debug("%s Sensor initializing.", self.name)
-
-        self.load_sensors(BinarySensorDeviceClass.PROBLEM)
-
-        # Setup the listeners
-        await self._setup_listeners()
-
-        self.logger.debug("%s Sensor initialized.", self.name)
-
-    def load_sensors(self, domain: str, unit_of_measurement: str | None = None) -> None:
-        """Load the sensors from the system."""
-        # Fetch sensors
-        self.sensors = []
-
-        for entity in self.area.entities[BINARY_SENSOR_DOMAIN]:
-            if ATTR_DEVICE_CLASS not in entity:
-                continue
-
-            if entity[ATTR_DEVICE_CLASS] not in DISTRESS_SENSOR_CLASSES:
-                continue
-
-            self.sensors.append(entity["entity_id"])
-
-        self._attributes = {"sensors": self.sensors, "active_sensors": []}
+    async def async_added_to_hass(self) -> None:
+        """Call when entity about to be added to hass."""
+        last_state = await self.async_get_last_state()
+        if last_state:
+            _LOGGER.debug(
+                "%s restored [state=%s]",
+                self.name,
+                last_state.state,
+            )
+            self._state = last_state.state == STATE_ON
+        await super().async_added_to_hass()
+        self.async_write_ha_state()
 
 
-class HumdityTrendSensor(SensorTrend):
+class HumdityTrendSensor(MagicEntity, SensorTrend):
     """Sensor for the magic area, tracking the humidity changes."""
 
     def __init__(self, area: MagicArea, increasing: bool) -> None:
         """Initialize an area trend group sensor."""
 
-        super().__init__(
-            name=f"Simple magic areas humidity occupancy ({area.name})"
+        MagicEntity.__init__(self, area)
+        SensorTrend.__init__(
+            self,
+            name=f"Simply Magic Areas humidity occupancy ({area.name})"
             if increasing
-            else f"Simple magic areas humidity empty ({area.name})",
+            else f"Simply Magic Areas humidity empty ({area.name})",
             sample_duration=600 if increasing else 300,
             max_samples=3 if increasing else 2,
             min_gradient=0.01666 if increasing else -0.016666,
             invert=False,
             min_samples=2,
             attribute=None,
-            entity_id=f"{SENSOR_DOMAIN}.simple_magic_areas_humidity_{area.slug}",
+            entity_id=f"{SENSOR_DOMAIN}.simply_magic_areas_humidity_{area.slug}",
         )
+        self._state = False
+
+    async def async_added_to_hass(self) -> None:
+        """Call when entity about to be added to hass."""
+        last_state = await self.async_get_last_state()
+        if last_state:
+            _LOGGER.debug(
+                "%s restored [state=%s]",
+                self.name,
+                last_state.state,
+            )
+            self._state = last_state.state == STATE_ON
+
+        await super().async_added_to_hass()
+        await self.async_update()
+        self.async_write_ha_state()

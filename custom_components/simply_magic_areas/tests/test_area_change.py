@@ -2,6 +2,7 @@
 
 import logging
 
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
@@ -16,6 +17,7 @@ from .mocks import MockBinarySensor
 _LOGGER = logging.getLogger(__name__)
 
 
+@pytest.mark.parametrize("expected_lingering_timers", [True])
 async def test_area_change(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,
@@ -30,7 +32,7 @@ async def test_area_change(
     registry.async_get_or_create("frog")
 
     # Validate the right enties were created.
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
 
     assert area_binary_sensor is not None
     assert area_binary_sensor.state == "clear"

@@ -41,12 +41,12 @@ async def test_fan_on_off(
     """Test loading the integration."""
     # Validate the right enties were created.
     control_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_kitchen"
     )
     manual_override_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
 
     calls = async_mock_service(hass, FAN_DOMAIN, "turn_on")
     calls_off = async_mock_service(hass, FAN_DOMAIN, "turn_off")
@@ -63,14 +63,14 @@ async def test_fan_on_off(
     # Make the sensor on to make the area occupied and setup automated.
     if automated:
         service_data = {
-            ATTR_ENTITY_ID: f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen",
+            ATTR_ENTITY_ID: f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_kitchen",
         }
         await hass.services.async_call(SWITCH_DOMAIN, SERVICE_TURN_ON, service_data)
     one_motion[0].turn_on()
     await hass.async_block_till_done()
 
     # Reload the sensors and they should have changed.
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
     assert area_binary_sensor.state == "occupied"
     assert len(calls) == 0
 
@@ -79,36 +79,20 @@ async def test_fan_on_off(
     await hass.async_block_till_done()
     await asyncio.sleep(4)
     await hass.async_block_till_done()
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
     assert area_binary_sensor.state == "extended"
     if automated:
         assert len(calls) == 1
         assert calls[0].data == {
-            "entity_id": f"{FAN_DOMAIN}.simple_magic_areas_fan_kitchen",
+            "entity_id": f"{FAN_DOMAIN}.simply_magic_areas_fan_kitchen",
         }
         assert calls[0].service == SERVICE_TURN_ON
-        # Actually turn on the fan since we intercept the service call.
-        one_fan[0].turn_on()
-        # entity_registry = async_get_er(hass)
-        # entity = entity_registry.async_get(
-        #     f"{FAN_DOMAIN}.simple_magic_areas_fan_kitchen"
-        # )
-        # _LOGGER.warning("Entity %s", entity)
-        # _LOGGER.warning("State %s", area_binary_sensor)
-        # _LOGGER.warning(
-        #     "Servive %s",
-        #     [
-        #         sd[1].job.target
-        #         for s in hass.services._services.items()
-        #         for sd in s[1].items()
-        #     ],
-        # )
     else:
         assert len(calls) == 0
 
     await asyncio.sleep(3)
     await hass.async_block_till_done()
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
     assert area_binary_sensor.state == "clear"
     if automated:
         assert len(calls_off) == 1
@@ -133,12 +117,18 @@ async def test_fan_on_off_humidity(
     """Test loading the integration."""
     # Validate the right enties were created.
     control_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_kitchen"
     )
     manual_override_entity = hass.states.get(
-        f"{SWITCH_DOMAIN}.area_magic_manual_override_active_kitchen"
+        f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
+    area_humidity_occupied = hass.states.get(
+        f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_occupancy_kitchen"
+    )
+    area_humidity_empty = hass.states.get(
+        f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_empty_kitchen"
+    )
 
     calls = async_mock_service(hass, FAN_DOMAIN, "turn_on")
 
@@ -150,47 +140,78 @@ async def test_fan_on_off_humidity(
     assert control_entity.state == STATE_OFF
     assert manual_override_entity.state == STATE_OFF
     assert area_binary_sensor.state == "clear"
+    assert area_humidity_occupied.state == STATE_OFF
+    assert area_humidity_empty.state == STATE_OFF
 
     # Make the sensor on to make the area occupied and setup automated.
     service_data = {
-        ATTR_ENTITY_ID: f"{SWITCH_DOMAIN}.area_magic_light_control_kitchen",
+        ATTR_ENTITY_ID: f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_kitchen",
     }
     await hass.services.async_call(SWITCH_DOMAIN, SERVICE_TURN_ON, service_data)
-    hass.states.async_set(one_sensor_humidity[0].entity_id, 10)
-    hass.states.async_set(one_sensor_humidity[0].entity_id, 20)
-    hass.states.async_set(one_sensor_humidity[0].entity_id, 30)
+    await hass.async_block_till_done()
+    hass.states.async_set(
+        one_sensor_humidity[0].entity_id,
+        10.0,
+        attributes={"unit_of_measurement": "%"},
+    )
+    await hass.async_block_till_done()
+    hass.states.async_set(
+        one_sensor_humidity[0].entity_id,
+        20.0,
+        attributes={"unit_of_measurement": "%"},
+    )
+    await hass.async_block_till_done()
+    hass.states.async_set(
+        one_sensor_humidity[0].entity_id,
+        30.0,
+        attributes={"unit_of_measurement": "%"},
+    )
     await hass.async_block_till_done()
 
     # Reload the sensors and they should have changed.
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
     area_humidity_occupied = hass.states.get(
-        f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_kitchen"
+        f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_occupancy_kitchen"
     )
     area_humidity_empty = hass.states.get(
-        f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_kitchen"
+        f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_empty_kitchen"
     )
     assert area_humidity_occupied.state == STATE_ON
     assert area_humidity_empty.state == STATE_OFF
     assert area_binary_sensor.state == "occupied"
     assert len(calls) == 1
     assert calls[0].data == {
-        "entity_id": f"{FAN_DOMAIN}.simple_magic_areas_fan_kitchen",
+        "entity_id": f"{FAN_DOMAIN}.simply_magic_areas_fan_kitchen",
     }
 
     # Push events down, should turn on the down trending sensor.
-    hass.states.async_set(one_sensor_humidity[0].entity_id, 20)
-    hass.states.async_set(one_sensor_humidity[0].entity_id, 30)
-    hass.states.async_set(one_sensor_humidity[0].entity_id, 5)
+    hass.states.async_set(
+        one_sensor_humidity[0].entity_id,
+        20,
+        attributes={"unit_of_measurement": "%"},
+    )
+    await hass.async_block_till_done()
+    hass.states.async_set(
+        one_sensor_humidity[0].entity_id,
+        30,
+        attributes={"unit_of_measurement": "%"},
+    )
+    await hass.async_block_till_done()
+    hass.states.async_set(
+        one_sensor_humidity[0].entity_id,
+        5,
+        attributes={"unit_of_measurement": "%"},
+    )
     await hass.async_block_till_done()
     area_humidity_occupied = hass.states.get(
-        f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_kitchen"
+        f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_occupancy_kitchen"
     )
     area_humidity_empty = hass.states.get(
-        f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_kitchen"
+        f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_empty_kitchen"
     )
     assert area_humidity_occupied.state == STATE_ON
     assert area_humidity_empty.state == STATE_ON
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.area_magic_kitchen")
+    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
     assert area_binary_sensor.state == "occupied"
     assert len(calls) == 1
 

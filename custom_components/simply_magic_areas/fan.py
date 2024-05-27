@@ -4,6 +4,7 @@ import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
+from homeassistant.components.group.fan import FanGroup
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
@@ -23,9 +24,10 @@ from homeassistant.core import (
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.helpers.event import async_track_state_change_event, call_later
+from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
-from .base.entities import MagicFanGroup
+from .base.entities import MagicEntity
 from .base.magic import MagicArea
 from .const import CONF_MANUAL_TIMEOUT, DEFAULT_MANUAL_TIMEOUT, DOMAIN, AreaState
 
@@ -86,7 +88,7 @@ def _add_fans(area: MagicArea, async_add_entities: AddEntitiesCallback):
     _cleanup_fan_entities(area.hass, group_ids, existing_fan_entities)
 
 
-class AreaFanGroup(MagicFanGroup):
+class AreaFanGroup(MagicEntity, FanGroup):
     """The fan group to control the area fans specifically.
 
     There is one fan group created that will mutate with the different
@@ -97,8 +99,12 @@ class AreaFanGroup(MagicFanGroup):
 
     def __init__(self, area: MagicArea, entities: list[str]) -> None:
         """Init the fan group for the area."""
-        MagicFanGroup.__init__(
-            self, area, entities, f"Simple Magic Areas Fan ({area.name})"
+        MagicEntity.__init__(self, area)
+        FanGroup.__init__(
+            self,
+            entities=entities,
+            name=f"Simply Magic Areas Fan ({area.name})",
+            unique_id=slugify(f"Simply Magic Areas Fan ({area.name})"),
         )
 
         self._icon: str = "mdi:fan"
@@ -108,10 +114,10 @@ class AreaFanGroup(MagicFanGroup):
 
         # Add static attributes
         self.last_update_from_entity: bool = False
-        self._attributes["fans"] = self._entity_ids
-        self._attributes["last_update_from_entity"] = False
+        self._attr_extra_state_attributes["fans"] = self._entity_ids
+        self._attr_extra_state_attributes["last_update_from_entity"] = False
 
-        self.logger.debug(
+        _LOGGER.debug(
             "%s: Fan group %s created with entities: %s",
             self.name,
             self._icon,
@@ -129,7 +135,7 @@ class AreaFanGroup(MagicFanGroup):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            self.logger.debug(
+            _LOGGER.debug(
                 "%s restored [state=%s]",
                 self.name,
                 last_state.state,
@@ -140,7 +146,7 @@ class AreaFanGroup(MagicFanGroup):
                 self.last_update_from_entity = last_state.attributes[
                     "last_update_from_entity"
                 ]
-                self._attributes["last_update_from_entity"] = (
+                self._attr_extra_state_attributes["last_update_from_entity"] = (
                     self.last_update_from_entity
                 )
         else:
@@ -165,16 +171,16 @@ class AreaFanGroup(MagicFanGroup):
             async_track_state_change_event(
                 self.hass,
                 [
-                    f"{SELECT_DOMAIN}.area_magic_{self.area.slug}",
-                    f"{SWITCH_DOMAIN}.area_magic_light_control_{self.area.slug}",
+                    f"{SELECT_DOMAIN}.simply_magic_areas_{self.area.slug}",
+                    f"{SWITCH_DOMAIN}.simply_areas_light_control_{self.area.slug}",
                 ],
                 self._area_state_change,
             )
         )
         # If the trend entities exist, listen to them
-        trend_up = f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_{self.area.slug}"
+        trend_up = f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_occupancy_{self.area.slug}"
         trend_down = (
-            f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_{self.area.slug}"
+            f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_empty_{self.area.slug}"
         )
         if (
             self.hass.states.get(trend_up) is not None
@@ -198,7 +204,7 @@ class AreaFanGroup(MagicFanGroup):
         automatic_control = self.area.is_control_enabled()
 
         if not automatic_control:
-            self.logger.debug(
+            _LOGGER.debug(
                 "%s: Automatic control for fan group is disabled, skipping", self.name
             )
             return False
@@ -206,18 +212,20 @@ class AreaFanGroup(MagicFanGroup):
         from_state = event.data["old_state"].state
         to_state = event.data["new_state"].state
 
-        self.logger.debug(
+        _LOGGER.debug(
             "%s: Fan group New state: %s / Last state %s (Humidity %s)",
             self.name,
             to_state,
             from_state,
-            self._attributes.get("humidity_up", False),
+            self._attr_extra_state_attributes.get("humidity_up", False),
         )
 
         # For fans we only worry about the extended state.
         if to_state == AreaState.AREA_STATE_EXTENDED:
             self.turn_on()
-        elif self.is_on and not self._attributes.get("humidity_up", False):
+        elif self.is_on and not self._attr_extra_state_attributes.get(
+            "humidity_up", False
+        ):
             self.turn_off()
         else:
             _LOGGER.debug("Ignoring state change")
@@ -227,7 +235,7 @@ class AreaFanGroup(MagicFanGroup):
             return
         to_state = event.data["new_state"].state
         from_state = event.data["old_state"].state
-        self.logger.debug(
+        _LOGGER.debug(
             "%s: Trend down New state: %s / Last state %s",
             self.name,
             to_state,
@@ -235,7 +243,7 @@ class AreaFanGroup(MagicFanGroup):
         )
         if to_state == STATE_ON and from_state != STATE_ON:
             # We have stuff going down.
-            self._attributes["humidity_up"] = False
+            self._attr_extra_state_attributes["humidity_up"] = False
             self.turn_off()
 
     def _trend_up_state_change(self, event: Event[EventStateChangedData]):
@@ -245,7 +253,7 @@ class AreaFanGroup(MagicFanGroup):
             return
         to_state = event.data["new_state"].state
         from_state = event.data["old_state"].state
-        self.logger.debug(
+        _LOGGER.debug(
             "%s: Trend up New state: %s / Last state %s",
             self.name,
             to_state,
@@ -253,7 +261,7 @@ class AreaFanGroup(MagicFanGroup):
         )
         if to_state == STATE_ON and from_state != STATE_ON:
             # We have stuff going up.
-            self._attributes["humidity_up"] = True
+            self._attr_extra_state_attributes["humidity_up"] = True
             self.turn_on()
 
     def _update_group_state(self, event: Event[EventStateChangedData]) -> None:
@@ -307,10 +315,10 @@ class AreaFanGroup(MagicFanGroup):
         """Turn on the fan group."""
 
         if not self.area.is_control_enabled():
-            self.logger.debug("%s: No control enabled", self.name)
+            _LOGGER.debug("%s: No control enabled", self.name)
             return False
 
-        self.logger.debug("%s: Turning on fans", self.name)
+        _LOGGER.debug("%s: Turning on fans", self.name)
         self.last_update_from_entity = True
         service_data = {
             ATTR_ENTITY_ID: self.entity_id,
@@ -347,4 +355,4 @@ class AreaFanGroup(MagicFanGroup):
     def _reset_control(self) -> None:
         self._set_controlled_by_this_entity(True)
         self.schedule_update_ha_state()
-        self.logger.debug("{self.name}: Control Reset.")
+        _LOGGER.debug("{self.name}: Control Reset.")

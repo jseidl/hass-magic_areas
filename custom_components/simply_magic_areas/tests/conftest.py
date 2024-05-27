@@ -180,9 +180,10 @@ async def setup_one_light_sensor(hass: HomeAssistant) -> list[MockSensor]:
     mock_binary_sensor_entities = [
         MockSensor(
             name="light sensor",
-            is_on=True,
+            native_value=1.0,
             unique_id="unique_light",
             device_class=SensorDeviceClass.ILLUMINANCE,
+            suggested_unit_of_measurement=LIGHT_LUX,
             unit_of_measurement=LIGHT_LUX,
         ),
     ]
@@ -205,12 +206,18 @@ async def setup_one_humidity_sensor(hass: HomeAssistant) -> list[MockSensor]:
     mock_binary_sensor_entities = [
         MockSensor(
             name="humidity sensor",
-            is_on=True,
+            native_value=1.0,
             unique_id="unique_humidity",
             device_class=SensorDeviceClass.HUMIDITY,
+            suggested_unit_of_measurement=PERCENTAGE,
+            native_unit_of_measurement=PERCENTAGE,
             unit_of_measurement=PERCENTAGE,
+            extra_state_attributes={
+                "unit_of_measurement": PERCENTAGE,
+            },
         ),
     ]
+
     setup_test_component_platform(hass, SENSOR_DOMAIN, mock_binary_sensor_entities)
     assert await async_setup_component(
         hass, SENSOR_DOMAIN, {SENSOR_DOMAIN: {CONF_PLATFORM: "test"}}

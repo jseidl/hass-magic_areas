@@ -1,22 +1,25 @@
 """Select control for magic areas, tracks the state as an enum."""
 
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 import logging
+from typing import Any
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
+from homeassistant.components.select import DOMAIN as SELECT_DOMAIN, SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
+    async_call_later,
     async_track_state_change_event,
     async_track_time_interval,
     call_later,
 )
 
 from .add_entities_when_ready import add_entities_when_ready
-from .base.entities import MagicSelectEntity
+from .base.entities import MagicEntity
 from .base.magic import MagicArea
 from .const import (
     ATTR_ACTIVE_AREAS,
@@ -57,43 +60,59 @@ async def async_setup_entry(
     add_entities_when_ready(hass, async_add_entities, config_entry, add_state_select)
 
 
-def add_state_select(area: MagicArea, async_add_entities: AddEntitiesCallback):
+def add_state_select(area: MagicArea, async_add_entities: AddEntitiesCallback) -> None:
     """Add the basic sensors for the area."""
     # Create basic presence sensor
     async_add_entities([AreaStateSelect(area)])
 
 
-class AreaStateSelect(MagicSelectEntity):
+class AreaStateSelect(MagicEntity, SelectEntity):
     """Create an area presence select entity that tracks the current occupied state."""
 
     def __init__(self, area: MagicArea) -> None:
         """Initialize the area presence select."""
 
-        super().__init__(area, list(AreaState))
+        MagicEntity.__init__(self, area)
+        SelectEntity.__init__(self)
 
-        self._name: str = f"Area magic ({self.area.name})"
+        self._attr_name: str = f"Simply Magic Areas ({self.area.name})"
+        self._attr_options = list(AreaState)
+        self._attr_current_option = AreaState.AREA_STATE_CLEAR
+        self._state = AreaState.AREA_STATE_CLEAR
+        self._attr_extra_state_attributes = {}
 
-        self._last_off_time: int = datetime.now(UTC)
-        self._clear_timeout_callback = None
-        self._extended_timeout_callback = None
-        self._attributes: dict[str, any] = {}
+        self._last_off_time: datetime = datetime.now(UTC) - timedelta(days=2)
+        self._clear_timeout_callback: Callable[[], None] | None = None
+        self._extended_timeout_callback: Callable[[], None] | None = None
         self._sensors: list[str] = []
-        self._mode: str = "some"
-        self._illuminance_sensors: list[str] = []
+        self._mode: str = "one"
 
     @property
     def icon(self) -> str | None:
         """Return the icon to be used for this entity."""
         return "mdi:home-search"
 
-    async def restore_state(self) -> None:
+    async def async_added_to_hass(self) -> None:
+        """Call to add the system to hass."""
+        await self._restore_state()
+        await self._load_attributes()
+        self._load_presence_sensors()
+
+        # Setup the listeners
+        await self._setup_listeners()
+
+        _LOGGER.debug("%s: Select initialized", self.name)
+        self.async_on_remove(self._cleanup_timers)
+
+    async def _restore_state(self) -> None:
         """Restore the state of the select entity on initialize."""
         last_state = await self.async_get_last_state()
-        is_new_entry = last_state is None  # newly added to HA
 
-        if is_new_entry:
-            self.logger.debug("%s: New select created", self.name)
-            self._update_state()
+        self.schedule_update_ha_state()
+        if last_state is None:
+            _LOGGER.debug("%s: New select created", self.name)
+            self._attr_current_option = AreaState.AREA_STATE_CLEAR
+            self._state = AreaState.AREA_STATE_CLEAR
         else:
             _LOGGER.debug(
                 "%s: Select restored [state=%s]",
@@ -101,23 +120,12 @@ class AreaStateSelect(MagicSelectEntity):
                 last_state.state,
             )
             self.area.state = last_state.state
-            self.schedule_update_ha_state()
+            self._attr_extra_state_attributes = last_state.attributes
 
-    async def _initialize(self, _=None) -> None:
-        self.logger.debug("%s: Select initializing", self.name)
-
-        self._load_presence_sensors()
-        self._load_attributes()
-
-        # Setup the listeners
-        await self._setup_listeners()
-
-        _LOGGER.debug("%s: Select initialized", self.name)
-
-    async def _setup_listeners(self, _=None) -> None:
-        self.logger.debug("%s: Called '_setup_listeners'", self.name)
+    async def _setup_listeners(self) -> None:
+        _LOGGER.debug("%s: Called '_setup_listeners'", self.name)
         if not self.hass.is_running:
-            self.logger.debug("%s: Cancelled '_setup_listeners'", self.name)
+            _LOGGER.debug("%s: Cancelled '_setup_listeners'", self.name)
             return
 
         # Track presence sensor
@@ -128,9 +136,9 @@ class AreaStateSelect(MagicSelectEntity):
         )
 
         # Track humidity sensors
-        trend_up = f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_{self.area.slug}"
+        trend_up = f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_occupancy_{self.area.slug}"
         trend_down = (
-            f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_{self.area.slug}"
+            f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_empty_{self.area.slug}"
         )
         if (
             self.hass.states.get(trend_up) is not None
@@ -149,7 +157,7 @@ class AreaStateSelect(MagicSelectEntity):
             if not conf.entity:
                 continue
 
-            self.logger.debug("%s: State entity tracking: %s", self.name, conf.entity)
+            _LOGGER.debug("%s: State entity tracking: %s", self.name, conf.entity)
 
             self.async_on_remove(
                 async_track_state_change_event(
@@ -202,14 +210,12 @@ class AreaStateSelect(MagicSelectEntity):
 
                 self._sensors.append(entity[ATTR_ENTITY_ID])
 
-    def _load_attributes(self) -> None:
+    async def _load_attributes(self) -> None:
         # Set attributes
-        self._attributes = {}
-
         if not self.area.is_meta():
-            self._attributes.update({ATTR_STATE: self.area.state})
+            self._attr_extra_state_attributes[ATTR_STATE] = self.area.state
         else:
-            self._attributes.update(
+            self._attr_extra_state_attributes.update(
                 {
                     ATTR_AREAS: self.area.get_child_areas(),
                     ATTR_ACTIVE_AREAS: self.area.get_active_areas(),
@@ -217,7 +223,7 @@ class AreaStateSelect(MagicSelectEntity):
             )
 
         # Add common attributes
-        self._attributes.update(
+        self._attr_extra_state_attributes.update(
             {
                 ATTR_ACTIVE_SENSORS: [],
                 ATTR_LAST_ACTIVE_SENSORS: [],
@@ -226,13 +232,19 @@ class AreaStateSelect(MagicSelectEntity):
             }
         )
 
-    def _update_attributes(self):
-        self._attributes[ATTR_STATE] = self.area.state
-        self._attributes[ATTR_CLEAR_TIMEOUT] = self._get_clear_timeout()
-        self._attributes[ATTR_EXTENDED_TIMEOUT] = self._get_extended_timeout()
+    def _update_attributes(self) -> None:
+        self._attr_extra_state_attributes[ATTR_STATE] = self.area.state
+        self._attr_extra_state_attributes[ATTR_CLEAR_TIMEOUT] = (
+            self._get_clear_timeout()
+        )
+        self._attr_extra_state_attributes[ATTR_EXTENDED_TIMEOUT] = (
+            self._get_extended_timeout()
+        )
 
         if self.area.is_meta():
-            self._attributes[ATTR_ACTIVE_AREAS] = self.area.get_active_areas()
+            self._attr_extra_state_attributes[ATTR_ACTIVE_AREAS] = (
+                self.area.get_active_areas()
+            )
 
     ####
     ####     State Change Handling
@@ -241,6 +253,8 @@ class AreaStateSelect(MagicSelectEntity):
         # Get Main occupancy state
         occupied_state = self._get_sensors_state()
 
+        _LOGGER.debug("Sensor state %s", occupied_state)
+
         seconds_since_last_change = (
             datetime.now(UTC) - self._last_off_time
         ).total_seconds()
@@ -248,16 +262,24 @@ class AreaStateSelect(MagicSelectEntity):
         clear_timeout = self._get_clear_timeout()
         extended_timeout = self._get_extended_timeout() + clear_timeout
         if not occupied_state:
-            if not self._is_on_clear_timeout():
-                self._set_clear_timeout()
+            if (
+                not self._is_on_clear_timeout()
+                and seconds_since_last_change < clear_timeout
+            ):
+                self._set_clear_timeout(clear_timeout - seconds_since_last_change)
             if seconds_since_last_change >= clear_timeout:
                 if seconds_since_last_change >= extended_timeout:
                     self._remove_extended_timeout()
                     return AreaState.AREA_STATE_CLEAR
-                _LOGGER.debug("Clearing teimput, state extended")
+                _LOGGER.debug("%s: Clearing the imput, state extended", self.area.slug)
                 self._remove_clear_timeout()
-                if not self._is_on_extended_timeout():
-                    self._set_extended_timeout()
+                if (
+                    not self._is_on_extended_timeout()
+                    and seconds_since_last_change < extended_timeout
+                ):
+                    self._set_extended_timeout(
+                        extended_timeout - seconds_since_last_change
+                    )
                 return AreaState.AREA_STATE_EXTENDED
         else:
             self._remove_clear_timeout()
@@ -277,7 +299,7 @@ class AreaStateSelect(MagicSelectEntity):
                 continue
 
             if entity.state.lower() == conf.entity_state_on:
-                self.logger.debug(
+                _LOGGER.debug(
                     "%s: Secondary state: %s is at %s, adding %s",
                     self.area.name,
                     conf.entity,
@@ -288,7 +310,7 @@ class AreaStateSelect(MagicSelectEntity):
 
         return new_state
 
-    def _update_state(self, extra=None) -> None:
+    def _update_state(self, extra: datetime) -> None:
         last_state = self.area.state
         new_state = self.get_current_area_state()
 
@@ -296,7 +318,7 @@ class AreaStateSelect(MagicSelectEntity):
             return
 
         # Calculate what's new
-        self.logger.debug(
+        _LOGGER.debug(
             "%s: Current state: %s, last state: %s",
             self.name,
             new_state,
@@ -310,7 +332,7 @@ class AreaStateSelect(MagicSelectEntity):
         self._update_attributes()
         self.schedule_update_ha_state()
 
-        self.logger.debug(
+        _LOGGER.debug(
             "Reporting state change for %s (new state: %s/last state: %s)",
             self.area.name,
             new_state,
@@ -326,7 +348,7 @@ class AreaStateSelect(MagicSelectEntity):
         to_state = event.data["new_state"].state
         entity_id = event.data["entity_id"]
 
-        self.logger.debug(
+        _LOGGER.debug(
             "%s: Secondary state change: entity '%s' changed to %s",
             self.area.name,
             entity_id,
@@ -334,7 +356,7 @@ class AreaStateSelect(MagicSelectEntity):
         )
 
         if to_state in INVALID_STATES:
-            self.logger.debug(
+            _LOGGER.debug(
                 "%s: sensor '%s' has invalid state %s",
                 self.area.name,
                 entity_id,
@@ -342,31 +364,33 @@ class AreaStateSelect(MagicSelectEntity):
             )
             return None
 
-        self._update_state()
+        self._update_state(datetime.now(UTC))
 
     ###       Clearing
 
     def _get_clear_timeout(self) -> int:
         return int(self.area.config.get(CONF_CLEAR_TIMEOUT, 60))
 
-    def _set_clear_timeout(self) -> None:
+    def _set_clear_timeout(self, timeout: int) -> None:
         if self._clear_timeout_callback:
             self._remove_clear_timeout()
 
-        timeout = self._get_clear_timeout()
-
-        self.logger.debug("%s: Scheduling clear in %s seconds", self.area.name, timeout)
+        _LOGGER.debug("%s: Scheduling clear in %s seconds", self.area.name, timeout)
         self._clear_timeout_callback = call_later(
             self.hass,
             timeout,
             self._update_state,
         )
 
+    async def _async_my_update_state(self):
+        if self.hass.is_running and not self.hass.loop.is_closed():
+            self.hass.loop.call_soon_threadsafe(self._update_state)
+
     def _remove_clear_timeout(self) -> None:
         if not self._clear_timeout_callback:
-            return False
+            return
 
-        self.logger.debug(
+        _LOGGER.debug(
             "%s: Clearing timeout",
             self.area.name,
         )
@@ -374,11 +398,11 @@ class AreaStateSelect(MagicSelectEntity):
         self._clear_timeout_callback()
         self._clear_timeout_callback = None
 
-    def _is_on_clear_timeout(self) -> None:
+    def _is_on_clear_timeout(self) -> bool:
         return self._clear_timeout_callback is not None
 
     @callback
-    def _cleannup_timers(self) -> None:
+    def _cleanup_timers(self) -> None:
         self._remove_clear_timeout()
         self._remove_extended_timeout()
 
@@ -387,15 +411,11 @@ class AreaStateSelect(MagicSelectEntity):
     def _get_extended_timeout(self) -> int:
         return int(self.area.config.get(CONF_EXTENDED_TIMEOUT, 60))
 
-    def _set_extended_timeout(self) -> None:
+    def _set_extended_timeout(self, timeout: int) -> None:
         if self._extended_timeout_callback:
             self._remove_extended_timeout()
 
-        timeout = self._get_extended_timeout()
-
-        self.logger.debug(
-            "%s: Scheduling extended in %s seconds", self.area.name, timeout
-        )
+        _LOGGER.debug("%s: Scheduling extended in %s seconds", self.area.name, timeout)
         self._extended_timeout_callback = call_later(
             self.hass,
             timeout,
@@ -404,12 +424,12 @@ class AreaStateSelect(MagicSelectEntity):
 
     def _remove_extended_timeout(self) -> None:
         if not self._extended_timeout_callback:
-            return False
+            return
 
         self._extended_timeout_callback()
         self._extended_timeout_callback = None
 
-    def _is_on_extended_timeout(self) -> None:
+    def _is_on_extended_timeout(self) -> bool:
         return self._extended_timeout_callback is not None
 
     #### Sensor controls.
@@ -424,7 +444,7 @@ class AreaStateSelect(MagicSelectEntity):
         time_now = datetime.now(UTC)
 
         if time_now >= clear_time:
-            self.logger.debug("%s: Clear Timeout exceeded", self.area.name)
+            _LOGGER.debug("%s: Clear Timeout exceeded", self.area.name)
             self._remove_clear_timeout()
             return True
 
@@ -440,7 +460,7 @@ class AreaStateSelect(MagicSelectEntity):
         time_now = datetime.now(UTC)
 
         if time_now >= extended_time:
-            self.logger.debug("%s: Extended Timeout exceeded", self.area.name)
+            _LOGGER.debug("%s: Extended Timeout exceeded", self.area.name)
             self._remove_extended_timeout()
             return True
 
@@ -452,14 +472,14 @@ class AreaStateSelect(MagicSelectEntity):
         to_state = event.data["new_state"].state
         entity_id = event.data["entity_id"]
         if to_state in INVALID_STATES:
-            self.logger.debug(
+            _LOGGER.debug(
                 "%s: sensor '%s' has invalid state %s",
                 self.name,
                 entity_id,
                 to_state,
             )
             return
-        self._update_state()
+        self._update_state(datetime.now(UTC))
 
     def _sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
         """Actions when the sensor state has changed."""
@@ -468,7 +488,7 @@ class AreaStateSelect(MagicSelectEntity):
         to_state = event.data["new_state"].state
         entity_id = event.data["entity_id"]
 
-        self.logger.debug(
+        _LOGGER.debug(
             "%s: sensor '%s' changed to {%s}",
             self.name,
             entity_id,
@@ -476,7 +496,7 @@ class AreaStateSelect(MagicSelectEntity):
         )
 
         if to_state in INVALID_STATES:
-            self.logger.debug(
+            _LOGGER.debug(
                 "%s: sensor '%s' has invalid state %s",
                 self.name,
                 entity_id,
@@ -487,12 +507,16 @@ class AreaStateSelect(MagicSelectEntity):
         if to_state and to_state not in self.area.feature_config(
             CONF_FEATURE_ADVANCED_LIGHT_GROUPS
         ).get(CONF_ON_STATES, DEFAULT_ON_STATES):
-            _LOGGER.debug("Setting last non-normal time")
+            _LOGGER.debug(
+                "Setting last non-normal time %s %s",
+                event.data["old_state"],
+                event.data["new_state"],
+            )
             self._last_off_time = datetime.now(UTC)  # Update last_off_time
             # Clear the timeout
             self._remove_clear_timeout()
 
-        self._update_state()
+        self._update_state(datetime.now(UTC))
 
     def _get_sensors_state(self) -> bool:
         """Get the current state of the sensor."""
@@ -504,7 +528,7 @@ class AreaStateSelect(MagicSelectEntity):
             )
         )
 
-        self.logger.debug(
+        _LOGGER.debug(
             "[Area: %s] Updating state. (Valid states: %s)",
             self.area.slug,
             valid_states,
@@ -522,14 +546,14 @@ class AreaStateSelect(MagicSelectEntity):
                 entity = self.hass.states.get(sensor)
 
                 if not entity:
-                    self.logger.info(
+                    _LOGGER.info(
                         "[Area: %s] Could not get sensor state: %s entity not found, skipping",
                         self.area.slug,
                         sensor,
                     )
                     continue
 
-                self.logger.debug(
+                _LOGGER.debug(
                     "[Area: %s] Sensor %s state: %s",
                     self.area.slug,
                     sensor,
@@ -538,23 +562,23 @@ class AreaStateSelect(MagicSelectEntity):
 
                 # Skip unavailable entities
                 if entity.state in INVALID_STATES:
-                    self.logger.debug(
-                        "[Area: %s] Sensor '%s' is unavailable, skipping.",
+                    _LOGGER.debug(
+                        "[Area: %s] Sensor '%s' is unavailable, skipping",
                         self.area.slug,
                         sensor,
                     )
                     continue
 
                 if entity.state in valid_states:
-                    self.logger.debug(
-                        "[Area: %s] Valid presence sensor found: %s.",
+                    _LOGGER.debug(
+                        "[Area: %s] Valid presence sensor found: %s",
                         self.area.slug,
                         sensor,
                     )
                     active_sensors.append(sensor)
 
             except Exception as e:  # noqa: BLE001
-                self.logger.error(
+                _LOGGER.error(
                     "[%s] Error getting entity state for '%s': %s",
                     self.area.slug,
                     sensor,
@@ -564,24 +588,24 @@ class AreaStateSelect(MagicSelectEntity):
         # Track the up/down trend if not already occupied.
         if len(active_sensors) == 0:
             trend_up = self.hass.states.get(
-                f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_{self.area.slug}"
+                f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_occupancy_{self.area.slug}"
             )
             trend_down = self.hass.states.get(
-                f"{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_empty_{self.area.slug}"
+                f"{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_empty_{self.area.slug}"
             )
             if trend_up is not None and trend_down is not None:
                 if trend_up.state == STATE_ON and trend_down.state != STATE_ON:
                     active_sensors.append(
-                        "{BINARY_SENSOR_DOMAIN}.simple_magic_areas_humidity_occupancy_{self.area.slug}"
+                        "{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_occupancy_{self.area.slug}"
                     )
 
-        self._attributes["active_sensors"] = active_sensors
+        self._attr_extra_state_attributes["active_sensors"] = active_sensors
 
         # Make a copy that doesn't gets cleared out, for debugging
         if active_sensors:
-            self._attributes["last_active_sensors"] = active_sensors
+            self._attr_extra_state_attributes["last_active_sensors"] = active_sensors
 
-        self.logger.debug(
+        _LOGGER.debug(
             "[Area: %s] Active sensors: %s",
             self.area.slug,
             active_sensors,
@@ -589,12 +613,12 @@ class AreaStateSelect(MagicSelectEntity):
 
         if self.area.is_meta():
             active_areas = self.area.get_active_areas()
-            self.logger.debug(
+            _LOGGER.debug(
                 "[Area: %s] Active areas: %s",
                 self.area.slug,
                 active_areas,
             )
-            self._attributes[ATTR_ACTIVE_AREAS] = active_areas
+            self._attr_extra_state_attributes[ATTR_ACTIVE_AREAS] = active_areas
 
         if self._mode == "all":
             return len(active_sensors) == len(self._sensors)

@@ -137,7 +137,7 @@ async def setup_area_aware_media_player(
     async_add_entities([AreaAwareMediaPlayer(area, areas_with_media_players)])
 
 
-class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
+class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
     """Media player that is area aware."""
 
     def __init__(self, area: MagicArea, areas: list[AreaEntry]) -> None:
