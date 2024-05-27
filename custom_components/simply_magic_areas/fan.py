@@ -213,11 +213,12 @@ class AreaFanGroup(MagicEntity, FanGroup):
         to_state = event.data["new_state"].state
 
         _LOGGER.debug(
-            "%s: Fan group New state: %s / Last state %s (Humidity %s)",
+            "%s: Fan group New state: %s / Last state %s (Humidity %s On: %s)",
             self.name,
             to_state,
             from_state,
             self._attr_extra_state_attributes.get("humidity_up", False),
+            self.is_on,
         )
 
         # For fans we only worry about the extended state.

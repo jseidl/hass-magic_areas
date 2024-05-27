@@ -225,6 +225,11 @@ async def test_light_on_off_with_light_sensor(
             "brightness": brightness,
         }
         assert calls[0].service == SERVICE_TURN_ON
+        # Turn on the underlying entity.
+        hass.states.async_set(
+            one_light[0],
+            STATE_ON,
+        )
 
     await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done()

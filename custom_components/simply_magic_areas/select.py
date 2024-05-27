@@ -598,6 +598,9 @@ class AreaStateSelect(MagicEntity, SelectEntity):
                     active_sensors.append(
                         "{BINARY_SENSOR_DOMAIN}.simply_magic_areas_humidity_occupancy_{self.area.slug}"
                     )
+                # Make the last off time stay until this is not on any more.
+                if trend_down.state == STATE_ON:
+                    self._last_off_time = datetime.now(UTC)
 
         self._attr_extra_state_attributes["active_sensors"] = active_sensors
 
