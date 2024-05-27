@@ -5,7 +5,7 @@ flake8-docstrings~=1.7
 fnv-hash-fast~=0.4
 mypy~=1.9
 psutil-home-assistant==0.0.1
-pylint~=3.1
+pylint~=3.2
 pylint-strict-informational==0.1
 pytest>=7.2
 pytest-cov>=3.0
