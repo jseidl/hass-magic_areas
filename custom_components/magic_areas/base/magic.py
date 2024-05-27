@@ -4,6 +4,8 @@ from datetime import UTC, datetime
 import logging
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
+from homeassistant.helpers.device_registry import async_get as devicereg_async_get
+from homeassistant.helpers.entity_registry import async_get as entityreg_async_get
 from homeassistant.util import slugify
 
 from ..const import (
@@ -177,7 +179,7 @@ class MagicArea:
         """Validate an entity."""
         # Ignore our own entities
         if entity_object.device_id:
-            device_registry = self.hass.helpers.device_registry.async_get(self.hass)
+            device_registry = devicereg_async_get(self.hass)
             device_object = device_registry.async_get(entity_object.device_id)
 
             if device_object:
@@ -207,7 +209,7 @@ class MagicArea:
 
         # Check device's area id, if available
         if entity_object.device_id:
-            device_registry = self.hass.helpers.device_registry.async_get(self.hass)
+            device_registry = devicereg_async_get(self.hass)
             if entity_object.device_id in device_registry.devices:
                 device_object = device_registry.devices[entity_object.device_id]
                 if device_object.area_id == self.id:
@@ -224,7 +226,7 @@ class MagicArea:
         entity_list = []
         include_entities = self.config.get(CONF_INCLUDE_ENTITIES)
 
-        entity_registry = self.hass.helpers.entity_registry.async_get(self.hass)
+        entity_registry = entityreg_async_get(self.hass)
 
         for entity_object in entity_registry.entities.values():
             # Check entity validity

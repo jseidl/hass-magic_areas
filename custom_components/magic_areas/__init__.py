@@ -5,6 +5,7 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.area_registry import async_get as areareg_async_get
 
 from .base.magic import MagicArea, MagicMetaArea
 from .const import (
@@ -39,7 +40,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     meta_ids = [meta_area.lower() for meta_area in META_AREAS]
 
     if area_id not in meta_ids:
-        area_registry = hass.helpers.area_registry.async_get(hass)
+        area_registry = areareg_async_get(hass)
         area = area_registry.async_get_area(area_id)
 
         if not area:
