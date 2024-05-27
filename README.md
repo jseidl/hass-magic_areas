@@ -1,4 +1,4 @@
-# Simple Magic Areas for Home Assistant
+# Simply Magic Areas for Home Assistant
 
 This is a fork of https://github.com/jseidl/hass-magic_areas building on this base.
 
