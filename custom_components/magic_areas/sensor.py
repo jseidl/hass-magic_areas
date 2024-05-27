@@ -1,24 +1,28 @@
+"""Platform file for Magic Area's sensor entities."""
+
 import logging
 
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 
-from custom_components.magic_areas.base.primitives import SensorGroupBase
-from custom_components.magic_areas.const import (
+from .base.primitives import SensorGroupBase
+from .const import (
     AGGREGATE_MODE_SUM,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
 )
-from custom_components.magic_areas.util import add_entities_when_ready
+from .util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Demo config entry."""
 
     add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
 
+
 def add_sensors(area, async_add_entities):
-    
+    """Add all the sensor entities for all features that have one."""
     # Create aggregates
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
         return
@@ -32,15 +36,17 @@ def add_sensors(area, async_add_entities):
     device_class_uom_pairs = []
 
     for entity in area.entities[SENSOR_DOMAIN]:
-        if "device_class" not in entity.keys():
+        if "device_class" not in entity:
             _LOGGER.debug(
-                f"Entity {entity['entity_id']} does not have device_class defined"
+                "Entity %s does not have device_class defined", entity["entity_id"]
             )
             continue
 
-        if "unit_of_measurement" not in entity.keys():
+        if "unit_of_measurement" not in entity:
             _LOGGER.debug(
-                f"Entity {entity['entity_id']} does not have unit_of_measurement defined"
+                "%s: Entity %s does not have unit_of_measurement defined",
+                area.name,
+                entity["entity_id"],
             )
             continue
 
@@ -62,7 +68,11 @@ def add_sensors(area, async_add_entities):
         device_class, unit_of_measurement = dc_uom_pair
 
         _LOGGER.debug(
-            f"Creating aggregate sensor for device_class '{device_class}' ({unit_of_measurement}) with {entity_count} entities ({area.slug})"
+            "%s: Creating aggregate sensor for device_class '%s' (%s) with %s entities",
+            area.name,
+            device_class,
+            unit_of_measurement,
+            entity_count,
         )
         aggregates.append(
             AreaSensorGroupSensor(area, device_class, unit_of_measurement)
@@ -70,7 +80,10 @@ def add_sensors(area, async_add_entities):
 
     async_add_entities(aggregates)
 
+
 class AreaSensorGroupSensor(SensorGroupBase):
+    """Sensor aggregates."""
+
     def __init__(self, area, device_class, unit_of_measurement):
         """Initialize an area sensor group sensor."""
 
@@ -78,18 +91,19 @@ class AreaSensorGroupSensor(SensorGroupBase):
 
         self._mode = "sum" if device_class in AGGREGATE_MODE_SUM else "mean"
         self._unit_of_measurement = unit_of_measurement
-        
+
         device_class_name = " ".join(device_class.split("_")).title()
         self._name = (
             f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
         )
 
     async def _initialize(self, _=None) -> None:
-        self.logger.debug(f"{self.name} Sensor initializing.")
+        """Load sensors and setup listeners."""
+        self.logger.debug("%s: Sensor initializing.", self.name)
 
         self.load_sensors(SENSOR_DOMAIN, self._unit_of_measurement)
 
         # Setup the listeners
         await self._setup_listeners()
 
-        self.logger.debug(f"{self.name} Sensor initialized.")
+        self.logger.debug("%s: Sensor initialized.", self.name)

@@ -1,30 +1,32 @@
+"""Base classes for Home Assistant primitive entities."""
+
 from datetime import timedelta
 
+from homeassistant.components.sensor.const import SensorStateClass
 from homeassistant.helpers.event import (
     async_track_state_change,
     async_track_time_interval,
 )
-from homeassistant.components.sensor.const import SensorStateClass
 
-from custom_components.magic_areas.base.entities import (
+from ..base.entities import (
+    MagicBinarySensorEntity,
     MagicEntity,
-    MagicSwitchEntity,
     MagicSensorEntity,
-    MagicBinarySensorEntity
+    MagicSwitchEntity,
 )
-from custom_components.magic_areas.const import (
-    CONF_UPDATE_INTERVAL
-)
+from ..const import CONF_UPDATE_INTERVAL
+
 
 class MagicSensorBase(MagicEntity):
+    """Base class common to both Binary Sensor and Sensor entities."""
 
     sensors = []
     _device_class = None
 
     def __init__(self, area, device_class):
-
+        """Initialize parent class and variables."""
         MagicEntity.__init__(self, area)
-        self.sensors = list()
+        self.sensors = []
         self._device_class = device_class
 
     @property
@@ -33,23 +35,29 @@ class MagicSensorBase(MagicEntity):
         return self._device_class
 
     def refresh_states(self, next_interval):
-        self.logger.debug(f"Refreshing sensor states {self.name}")
+        """Refresh sensor state from tracked sensors."""
+        self.logger.debug("%s: Refreshing sensor states.", self.name)
         return self.update_state()
-    
+
     def update(self):
+        """Update sensor state."""
         self.update_state()
 
     def update_state(self):
+        """Update sensor state."""
+        # pylint: disable-next=no-member
         self._state = self.get_sensors_state()
         self.schedule_update_ha_state()
 
     async def _initialize(self, _=None) -> None:
+        """Set up listeners and update state."""
         # Setup the listeners
         await self._setup_listeners()
 
         self.update_state()
 
     async def _setup_listeners(self, _=None) -> None:
+        """Set up event listeners."""
         self.logger.debug("%s: Called '_setup_listeners'", self._name)
         if not self.hass.is_running:
             self.logger.debug("%s: Cancelled '_setup_listeners'", self._name)
@@ -57,6 +65,7 @@ class MagicSensorBase(MagicEntity):
 
         # Track presence sensors
         self.async_on_remove(
+            # pylint: disable-next=no-member
             async_track_state_change(self.hass, self.sensors, self.sensor_state_change)
         )
 
@@ -64,22 +73,28 @@ class MagicSensorBase(MagicEntity):
 
         # Timed self update
         self.async_on_remove(
-            async_track_time_interval(self.hass, self.refresh_states, delta)
+            async_track_time_interval(
+                self.hass, self.refresh_states, delta, cancel_on_shutdown=True
+            )
         )
 
+
 class MagicAggregateBase(MagicSensorBase):
+    """Base class for Aggregate sensors."""
+
     def load_sensors(self, domain, unit_of_measurement=None):
+        """Load entities into entity list."""
         # Fetch sensors
         self.sensors = []
         for entity in self.area.entities[domain]:
-            if "device_class" not in entity.keys():
+            if "device_class" not in entity:
                 continue
 
             if entity["device_class"] != self._device_class:
                 continue
 
             if unit_of_measurement:
-                if "unit_of_measurement" not in entity.keys():
+                if "unit_of_measurement" not in entity:
                     continue
                 if entity["unit_of_measurement"] != unit_of_measurement:
                     continue
@@ -94,17 +109,26 @@ class MagicAggregateBase(MagicSensorBase):
         else:
             self._attributes = {"sensors": self.sensors, "active_sensors": []}
 
+
 class SwitchBase(MagicSwitchEntity):
-    pass
-    
+    """Base class for Switch entities."""
+
+
 class BinarySensorBase(MagicSensorBase, MagicBinarySensorEntity):
-    pass
+    """Base class for Binary Sensor entities."""
+
 
 class BinarySensorGroupBase(MagicAggregateBase, MagicBinarySensorEntity):
-    pass
+    """Base class for Group Binary Sensor entities."""
+
 
 class SensorBase(MagicSensorBase, MagicSensorEntity):
+    """Base class for Sensor entities."""
+
     _state_class = SensorStateClass.MEASUREMENT
 
+
 class SensorGroupBase(MagicAggregateBase, MagicSensorEntity):
+    """Base class for Group Sensor entities."""
+
     _state_class = SensorStateClass.MEASUREMENT

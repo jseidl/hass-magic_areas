@@ -1,28 +1,36 @@
-name: "Validation Pipeline"
+name: "Validate"
+
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
+    - cron:  "0 0 * * *"
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
 jobs:
-  ci:
-    runs-on: ubuntu-latest
+  hassfest: # https://developers.home-assistant.io/blog/2020/04/16/hassfest
+    name: "Hassfest Validation"
+    runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v3
-        name: Download repository
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v3
-        name: Setup Python
-      - uses: actions/cache@v3
-        name: Cache
-        with:
-          path: |
-            ~/.cache/pip
-          key: custom-component-ci
-      - uses: hacs/action@main
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CATEGORY: integration
-      - uses: home-assistant/actions/hassfest@master
-        name: Hassfest
+        - name: "Checkout the repository"
+          uses: "actions/checkout@v4.1.0"
+
+        - name: "Run hassfest validation"
+          uses: "home-assistant/actions/hassfest@master"
+
+  hacs: # https://github.com/hacs/action
+    name: "HACS Validation"
+    runs-on: "ubuntu-latest"
+    steps:
+        - name: "Checkout the repository"
+          uses: "actions/checkout@v4.1.0"
+
+        - name: "Run HACS validation"
+          uses: "hacs/action@main"
+          with:
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+            category: integration

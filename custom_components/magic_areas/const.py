@@ -1,16 +1,20 @@
+"""Constants for Magic Areas."""
+
 from itertools import chain
 
 import voluptuous as vol
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass
+
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
+)
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.sun import DOMAIN as SUN_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
@@ -124,10 +128,13 @@ CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
 (
     CONF_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
-) = "presence_device_platforms", [
-    MEDIA_PLAYER_DOMAIN,
-    BINARY_SENSOR_DOMAIN,
-]  # cv.ensure_list
+) = (
+    "presence_device_platforms",
+    [
+        MEDIA_PLAYER_DOMAIN,
+        BINARY_SENSOR_DOMAIN,
+    ],
+)  # cv.ensure_list
 ALL_PRESENCE_DEVICE_PLATFORMS = [
     MEDIA_PLAYER_DOMAIN,
     BINARY_SENSOR_DOMAIN,
@@ -136,15 +143,21 @@ ALL_PRESENCE_DEVICE_PLATFORMS = [
 (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
-) = "presence_sensor_device_class", [
-    BinarySensorDeviceClass.MOTION,
-    BinarySensorDeviceClass.OCCUPANCY,
-    BinarySensorDeviceClass.PRESENCE,
-]  # cv.ensure_list
-CONF_ON_STATES, DEFAULT_ON_STATES = "on_states", [
-    STATE_ON,
-    STATE_OPEN,
-]  # cv.ensure_list
+) = (
+    "presence_sensor_device_class",
+    [
+        BinarySensorDeviceClass.MOTION,
+        BinarySensorDeviceClass.OCCUPANCY,
+        BinarySensorDeviceClass.PRESENCE,
+    ],
+)  # cv.ensure_list
+CONF_ON_STATES, DEFAULT_ON_STATES = (
+    "on_states",
+    [
+        STATE_ON,
+        STATE_OPEN,
+    ],
+)  # cv.ensure_list
 CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
     "aggregates_min_entities",
     2,
@@ -156,9 +169,12 @@ CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (
     "notification_devices",
     [],
 )  # cv.entity_ids
-CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES = "notification_states", [
-    AREA_STATE_EXTENDED,
-]  # cv.ensure_list
+CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES = (
+    "notification_states",
+    [
+        AREA_STATE_EXTENDED,
+    ],
+)  # cv.ensure_list
 
 # Secondary states options
 CONF_DARK_ENTITY = "dark_entity"
@@ -390,9 +406,7 @@ NON_CONFIGURABLE_FEATURES_META = [
 ]
 
 NON_CONFIGURABLE_FEATURES = {
-    feature: {}
-    for feature in ALL_FEATURES
-    if feature not in CONFIGURABLE_FEATURES.keys()
+    feature: {} for feature in ALL_FEATURES if feature not in CONFIGURABLE_FEATURES
 }
 
 FEATURES_SCHEMA = vol.Schema(
