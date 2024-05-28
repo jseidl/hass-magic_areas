@@ -52,6 +52,7 @@ class MagicArea:
         self.hass = hass
         self.name = area.name
         self.id = area.id
+        self.icon = area.icon
         self.slug = slugify(self.name)
         self.hass_config = config
         self.initialized = False

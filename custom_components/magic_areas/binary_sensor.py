@@ -40,7 +40,6 @@ from .const import (
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
     CONF_FEATURE_PRESENCE_HOLD,
-    CONF_ICON,
     CONF_ON_STATES,
     CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -166,9 +165,7 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     @property
     def icon(self):
         """Return the icon to be used for this entity."""
-        if self.area.config.get(CONF_ICON):
-            return self.area.config.get(CONF_ICON)
-        return None
+        return self.area.icon
 
     @property
     def is_on(self):

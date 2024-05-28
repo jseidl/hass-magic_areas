@@ -164,7 +164,6 @@ CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
 )  # cv.positive_int
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
-CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
 CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (
     "notification_devices",
     [],
@@ -461,7 +460,6 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
-        vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
         vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
         vol.Optional(CONF_SECONDARY_STATES, default={}): SECONDARY_STATES_SCHEMA,
     }
@@ -479,7 +477,6 @@ META_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
-        vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
     }
 )
 
@@ -509,14 +506,12 @@ OPTIONS_AREA = [
     ),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
-    (CONF_ICON, DEFAULT_ICON, str),
 ]
 
 OPTIONS_AREA_META = [
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
-    (CONF_ICON, DEFAULT_ICON, str),
 ]
 
 OPTIONS_SECONDARY_STATES = [
