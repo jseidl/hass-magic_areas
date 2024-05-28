@@ -1,9 +1,9 @@
 {
-  "title": "Magic Areas",
+  "title": "Simply Magic Areas",
   "config": {
     "step": {
       "user": {
-        "title": "Create a Magic Area",
+        "title": "Create a Simply Magic Area",
         "description": "Choose the area you would like to make it magic!",
         "data": {
           "name": "Area"

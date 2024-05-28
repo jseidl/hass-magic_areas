@@ -1,14 +1,14 @@
 {
-  "title": "Magic Areas",
+  "title": "Simply Magic Areas",
   "config": {
     "step": {
       "init": {
-        "description": "Diese Integration wird beim Laden automatisch konfiguriert. Ein manuelles Hinzufügen der Integration ist nicht notwendig. Die Magic Areas sollten bereits für jeden Bereich erstellt worden und auf der Integrations-Seite sichtbar sein. Verwende die Bereichsverwaltung von Home Assistant, um weitere Bereiche hinzuzufügen oder vorhandene Bereiche zu löschen.",
+        "description": "Diese Integration wird beim Laden automatisch konfiguriert. Ein manuelles Hinzufügen der Integration ist nicht notwendig. Die Simply Magic Areas sollten bereits für jeden Bereich erstellt worden und auf der Integrations-Seite sichtbar sein. Verwende die Bereichsverwaltung von Home Assistant, um weitere Bereiche hinzuzufügen oder vorhandene Bereiche zu löschen.",
         "data": {}
       }
     },
     "abort": {
-      "not_supported": "Diese Integration wird beim Laden automatisch konfiguriert. Ein manuelles Hinzufügen der Integration ist nicht notwendig. Die Magic Areas sollten bereits für jeden Bereich erstellt worden und auf der Integrations-Seite sichtbar sein. Verwende die Bereichsverwaltung von Home Assistant, um weitere Bereiche hinzuzufügen oder vorhandene Bereiche zu löschen."
+      "not_supported": "Diese Integration wird beim Laden automatisch konfiguriert. Ein manuelles Hinzufügen der Integration ist nicht notwendig. Die Simply Magic Areas sollten bereits für jeden Bereich erstellt worden und auf der Integrations-Seite sichtbar sein. Verwende die Bereichsverwaltung von Home Assistant, um weitere Bereiche hinzuzufügen oder vorhandene Bereiche zu löschen."
     }
   },
   "options": {
@@ -110,4 +110,4 @@
       "malformed_input": "Dieses Feld ist ungültig:"
     }
   }
-} 
+}

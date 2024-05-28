@@ -21,7 +21,6 @@ from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.sun import DOMAIN as SUN_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from homeassistant.components.trend.const import DOMAIN as TREND_DOMAIN
 from homeassistant.const import (
     STATE_ALARM_TRIGGERED,
     STATE_HOME,
@@ -245,7 +244,7 @@ class LightEntityConf:
         }
 
     def config_flow_schema(self) -> dict:
-        """Return the options for the schema for the magic areas."""
+        """Return the options for the schema for the simply magic areas."""
         if self.is_advanced:
             return {}
         if self.has_entity:
@@ -260,7 +259,7 @@ class LightEntityConf:
         }
 
     def config_flow_options(self) -> list[tuple[str, any, any]]:
-        """Return the options for the schema for the magic areas."""
+        """Return the options for the schema for the simply magic areas."""
         if self.is_advanced:
             return []
         if self.has_entity:
@@ -309,7 +308,7 @@ class LightEntityConf:
         }
 
     def advanced_config_flow_schema(self) -> vol.Schema:
-        """Return the options for the schema for the magic areas."""
+        """Return the options for the schema for the simply magic areas."""
         ret = {
             vol.Optional(self.advanced_lights_to_control(), default=[]): cv.entity_ids,
             vol.Optional(self.advanced_state_check(), default=STATE_ON): str,
@@ -331,7 +330,7 @@ class LightEntityConf:
         return ret
 
     def advanced_config_flow_options(self) -> list[tuple[str, any, any]]:
-        """Return the options for the schema for the magic areas."""
+        """Return the options for the schema for the simply magic areas."""
         ret = [
             (self.advanced_lights_to_control(), [], cv.entity_ids),
             (self.advanced_state_check(), STATE_ON, str),
@@ -644,7 +643,7 @@ FEATURES_SCHEMA = vol.Schema(
     }
 )
 
-# Magic Areas
+# Simply Magic Areas
 REGULAR_AREA_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_TYPE, default=DEFAULT_TYPE): vol.In(

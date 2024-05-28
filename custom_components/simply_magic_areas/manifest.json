@@ -20,9 +20,9 @@
     ],
     "config_flow": true,
     "dependencies": [],
-    "documentation": "https://github.com/pinkfish/hass-magic_areas/wiki",
+    "documentation": "https://github.com/pinkfish/hass-simply_magic_areas/wiki",
     "iot_class": "calculated",
-    "issue_tracker": "https://github.com/pinkfish/hass-magic_areas/issues",
+    "issue_tracker": "https://github.com/pinkfish/hass-simply_magic_areas/issues",
     "requirements": [],
     "version": "1.0.1"
 }

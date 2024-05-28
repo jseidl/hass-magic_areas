@@ -81,7 +81,7 @@ async def async_setup_entry(
         magic_area = MagicMetaArea(hass, meta_area, config_entry)
 
     _LOGGER.debug(
-        "Magic Area %s (%s) created: %s",
+        "Simply Magic Area %s (%s) created: %s",
         magic_area.name,
         magic_area.id,
         magic_area.config,

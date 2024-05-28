@@ -1,4 +1,4 @@
-"""The device setup for the magic areas."""
+"""The device setup for the simply magic areas."""
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -387,7 +387,7 @@ class MagicArea(object):  # noqa: UP004
             )
 
     def is_control_enabled(self) -> bool:
-        """If the area has controled turned on for magic areas."""
+        """If the area has controled turned on for simply magic areas."""
         entity_id = f"{SWITCH_DOMAIN}.simply_magic_areas_light_control_{self.slug}"
 
         switch_entity = self.hass.states.get(entity_id)
@@ -397,12 +397,12 @@ class MagicArea(object):  # noqa: UP004
 
 
 class MagicMetaArea(MagicArea):
-    """Class for the meta magic areas that contain other areas."""
+    """Class for the meta simply magic areas that contain other areas."""
 
     def __init__(
         self, hass: HomeAssistant, area: AreaEntry, config: ConfigEntry
     ) -> None:
-        """Initialize the meta magic area."""
+        """Initialize the meta simply magic area."""
         super().__init__(
             hass,
             area,
@@ -468,7 +468,7 @@ class MagicMetaArea(MagicArea):
             _LOGGER.warning("%s: Meta-Area Already initialized, ignoring", self.name)
             return False
 
-        # Meta-areas need to wait until other magic areas are loaded.
+        # Meta-areas need to wait until other simply magic areas are loaded.
         if not self._areas_loaded():
             _LOGGER.warning(
                 "%s: Meta-Area Non-meta areas not loaded. This shouldn't happen",

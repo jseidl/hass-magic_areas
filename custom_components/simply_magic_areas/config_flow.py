@@ -78,7 +78,7 @@ EMPTY_ENTRY = [""]
 
 
 class ConfigBase:
-    """Base object for the magic areas config."""
+    """Base object for the simply magic areas config."""
 
     # Selector builder
     def _build_selector_select(
@@ -175,7 +175,7 @@ class ConfigBase:
 
 
 class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
-    """Handle a config flow for Magic Areas."""
+    """Handle a config flow for Simply Magic Areas."""
 
     VERSION = 1
 
