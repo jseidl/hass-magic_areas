@@ -1,5 +1,6 @@
 """Fan controls for magic areas."""
 
+from datetime import UTC, datetime
 import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
@@ -267,7 +268,7 @@ class AreaFanGroup(MagicEntity, FanGroup):
 
     def _update_group_state(self, event: Event[EventStateChangedData]) -> None:
         if not self.area.is_occupied():
-            self._reset_control()
+            self._reset_control(datetime.now(UTC))
         else:
             origin_event = event.context.origin_event
             if origin_event.event_type == "state_changed":
@@ -353,7 +354,7 @@ class AreaFanGroup(MagicEntity, FanGroup):
         _controled_by_entity = enabled
         self._manual_timeout_cb = call_later(self.hass, 60, self._reset_control)
 
-    def _reset_control(self) -> None:
+    def _reset_control(self, time: datetime) -> None:
         self._set_controlled_by_this_entity(True)
         self.schedule_update_ha_state()
-        _LOGGER.debug("{self.name}: Control Reset.")
+        _LOGGER.debug("%s: Control Reset", self.name)

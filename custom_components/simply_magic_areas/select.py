@@ -120,7 +120,7 @@ class AreaStateSelect(MagicEntity, SelectEntity):
                 last_state.state,
             )
             self.area.state = last_state.state
-            self._attr_extra_state_attributes = last_state.attributes
+            self._attr_extra_state_attributes = dict(last_state.attributes)
 
     async def _setup_listeners(self) -> None:
         _LOGGER.debug("%s: Called '_setup_listeners'", self.name)
