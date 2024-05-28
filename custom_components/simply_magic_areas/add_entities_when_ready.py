@@ -2,7 +2,6 @@
 
 from collections.abc import Callable
 import logging
-from typing import Protocol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant

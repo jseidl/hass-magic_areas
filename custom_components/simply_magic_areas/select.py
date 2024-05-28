@@ -3,7 +3,6 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 import logging
-from typing import Any
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN, SelectEntity
@@ -12,7 +11,6 @@ from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
-    async_call_later,
     async_track_state_change_event,
     async_track_time_interval,
     call_later,
@@ -56,11 +54,11 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Area config entry."""
+    _LOGGER.debug("Doing area select")
+    add_entities_when_ready(hass, async_add_entities, config_entry, _add_state_select)
 
-    add_entities_when_ready(hass, async_add_entities, config_entry, add_state_select)
 
-
-def add_state_select(area: MagicArea, async_add_entities: AddEntitiesCallback) -> None:
+def _add_state_select(area: MagicArea, async_add_entities: AddEntitiesCallback) -> None:
     """Add the basic sensors for the area."""
     # Create basic presence sensor
     async_add_entities([AreaStateSelect(area)])
@@ -94,6 +92,7 @@ class AreaStateSelect(MagicEntity, SelectEntity):
 
     async def async_added_to_hass(self) -> None:
         """Call to add the system to hass."""
+        await super().async_added_to_hass()
         await self._restore_state()
         await self._load_attributes()
         self._load_presence_sensors()
@@ -103,6 +102,7 @@ class AreaStateSelect(MagicEntity, SelectEntity):
 
         _LOGGER.debug("%s: Select initialized", self.name)
         self.async_on_remove(self._cleanup_timers)
+        _LOGGER.warning("%s: Done with adding select to hass", self.area.slug)
 
     async def _restore_state(self) -> None:
         """Restore the state of the select entity on initialize."""

@@ -50,7 +50,6 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
     """Add the sensors for the magic areas."""
     existing_sensor_entities: list[str] = []
     if DOMAIN + SENSOR_DOMAIN in area.entities:
-        _LOGGER.warning("Froggy %s", area.entities[DOMAIN + SENSOR_DOMAIN])
         existing_sensor_entities = [
             e["entity_id"] for e in area.entities[DOMAIN + SENSOR_DOMAIN]
         ]

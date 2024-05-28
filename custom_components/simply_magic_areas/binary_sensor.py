@@ -47,7 +47,6 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback) -> Non
     entities = []
     existing_trend_entities = []
     if DOMAIN + BINARY_SENSOR_DOMAIN in area.entities:
-        _LOGGER.warning("Froggy %s", area.entities[DOMAIN + BINARY_SENSOR_DOMAIN])
         existing_trend_entities = [
             e["entity_id"] for e in area.entities[DOMAIN + BINARY_SENSOR_DOMAIN]
         ]

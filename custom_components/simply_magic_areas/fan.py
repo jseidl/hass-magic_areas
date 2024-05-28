@@ -60,7 +60,6 @@ def _cleanup_fan_entities(
 def _add_fans(area: MagicArea, async_add_entities: AddEntitiesCallback):
     existing_fan_entities: list[str] = []
     if DOMAIN + FAN_DOMAIN in area.entities:
-        _LOGGER.warning("Froggy %s", area.entities[DOMAIN + FAN_DOMAIN])
         existing_fan_entities = [
             e["entity_id"] for e in area.entities[DOMAIN + FAN_DOMAIN]
         ]

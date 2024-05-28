@@ -169,7 +169,8 @@ class MagicArea(object):  # noqa: UP004
     def feature_config(self, feature: str) -> dict:
         """Get the feature config for the specified feature."""
         if not self.has_feature(feature):
-            _LOGGER.debug("%s: Feature %s not enabled", self.name, feature)
+            if feature != CONF_FEATURE_ADVANCED_LIGHT_GROUPS:
+                _LOGGER.debug("%s: Feature %s not enabled", self.name, feature)
             return {}
 
         options = self.config.get(CONF_ENABLED_FEATURES, {})

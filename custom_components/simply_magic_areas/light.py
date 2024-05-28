@@ -68,7 +68,6 @@ def _cleanup_light_entities(
 def _add_lights(area: MagicArea, async_add_entities: AddEntitiesCallback):
     existing_light_entities: list[str] = []
     if DOMAIN + LIGHT_DOMAIN in area.entities:
-        _LOGGER.warning("Froggy %s", area.entities[DOMAIN + LIGHT_DOMAIN])
         existing_light_entities = [
             e["entity_id"] for e in area.entities[DOMAIN + LIGHT_DOMAIN]
         ]
@@ -214,8 +213,6 @@ class AreaLightGroup(MagicEntity, LightGroup):
         if self.area.has_configured_state(to_state):
             conf = self.area.state_config(to_state)
             self.turn_on(conf)
-        else:
-            _LOGGER.warning("%s: Unknown state %s", self.name, to_state)
 
     def _update_group_state(self, event: Event[EventStateChangedData]) -> None:
         if not self.area.is_occupied():
