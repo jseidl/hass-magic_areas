@@ -2,6 +2,7 @@
 
 import logging
 
+from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
@@ -13,8 +14,10 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.util import slugify
 
-from .base.entities import MagicLightGroup
+from .add_entities_when_ready import add_entities_when_ready
+from .base.entities import MagicEntity
 from .const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,
@@ -32,7 +35,6 @@ from .const import (
     LIGHT_GROUP_ICONS,
     LIGHT_GROUP_STATES,
 )
-from .util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,7 +62,15 @@ def add_lights(area, async_add_entities):
 
     # Create light groups
     if area.is_meta():
-        light_groups.append(MagicLightGroup(area, light_entities))
+        meta_area_name = "{area.name} Lights"
+        light_groups.append(
+            LightGroup(
+                name=meta_area_name,
+                unique_id=slugify(meta_area_name),
+                entity_ids=light_entities,
+                mode=False,
+            )
+        )
     else:
         light_group_ids = []
 
@@ -99,20 +109,20 @@ def add_lights(area, async_add_entities):
     async_add_entities(light_groups)
 
 
-class AreaLightGroup(MagicLightGroup):
+class AreaLightGroup(MagicEntity, LightGroup):
     """Magic Light Group."""
 
     def __init__(self, area, entities, category=None, child_ids=None):
         """Initialize light group."""
 
-        name_override = None
+        name = f"{area.name} Lights"
 
         if not child_ids:
             child_ids = []
 
         if category:
             category_title = " ".join(category.split("_")).title()
-            name_override = f"{category_title} ({area.name})"
+            name = f"{category_title} ({area.name})"
 
         self._child_ids = child_ids
 
@@ -123,7 +133,14 @@ class AreaLightGroup(MagicLightGroup):
         self.controlling = True
         self.controlled = False
 
-        MagicLightGroup.__init__(self, area, entities, name_override)
+        MagicEntity.__init__(self, area)
+        LightGroup.__init__(
+            self,
+            entity_ids=entities,
+            name=name,
+            unique_id=slugify(name),
+            mode=False,
+        )
 
         self._icon = LIGHT_GROUP_DEFAULT_ICON
 
@@ -140,7 +157,7 @@ class AreaLightGroup(MagicLightGroup):
             )
 
         # Add static attributes
-        self._attributes["lights"] = self._entities
+        self._attributes["lights"] = self._entity_ids
         self._attributes["controlling"] = self.controlling
 
         if not self.category:
@@ -148,9 +165,9 @@ class AreaLightGroup(MagicLightGroup):
 
         self.logger.debug(
             "%s: Light group (%s) created with entities: %s",
-            self._name,
+            self.name,
             category,
-            str(self._entities),
+            str(self._entity_ids),
         )
 
     @property
@@ -167,14 +184,14 @@ class AreaLightGroup(MagicLightGroup):
             self.logger.debug(
                 "%s: State restored [state=%s]", self.name, last_state.state
             )
-            self._state = last_state.state == STATE_ON
+            self._attr_is_on = last_state.state == STATE_ON
 
             if "controlling" in last_state.attributes:
                 controlling = last_state.attributes["controlling"]
                 self.controlling = controlling
                 self._attributes["controlling"] = self.controlling
         else:
-            self._state = False
+            self._attr_is_on = False
 
         self.schedule_update_ha_state()
 

@@ -18,6 +18,7 @@ from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, ST
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
+from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
 from .const import (
     AREA_STATE_CLEAR,
@@ -33,7 +34,6 @@ from .const import (
     META_AREA_GLOBAL,
     MODULE_DATA,
 )
-from .util import add_entities_when_ready
 
 _LOGGER = logging.getLogger(__name__)
 
