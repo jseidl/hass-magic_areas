@@ -299,7 +299,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             [
                 area.name
                 for area in available_areas
-                if area.normalized_name not in reserved_names
+                if slugify(area.name) not in reserved_names
             ]
         )
         available_area_names.extend(
@@ -307,7 +307,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
                 [
                     f"(Meta) {area.name}"
                     for area in available_areas
-                    if area.normalized_name in reserved_names
+                    if slugify(area.name) in reserved_names
                 ]
             )
         )

@@ -1,5 +1,6 @@
 """Constants for Magic Areas."""
 
+from enum import StrEnum
 from itertools import chain
 
 import voluptuous as vol
@@ -63,6 +64,34 @@ ATTR_PRESENCE_SENSORS = "presence_sensors"
 ICON_PRESENCE_HOLD = "mdi:car-brake-hold"
 ICON_LIGHT_CONTROL = "mdi:lightbulb-auto-outline"
 
+
+class MetaAreaIcons(StrEnum):
+    """Meta area icons."""
+
+    INTERIOR = "mdi:home-import-outline"
+    EXTERIOR = "mdi:home-export-outline"
+    GLOBAL = "mdi:home"
+
+
+class FeatureIcons(StrEnum):
+    """Feature related icons."""
+
+    PRESENCE_HOLD_SWITCH = "mdi:car-brake-hold"
+    LIGHT_CONTROL_SWITCH = "mdi:lightbulb-auto-outline"
+
+
+class AreaStates(StrEnum):
+    """Magic area states."""
+
+    CLEAR = "clear"
+    OCCUPIED = "occupied"
+    EXTENDED = "extended"
+    DARK = "dark"
+    BRIGHT = "bright"
+    SLEEP = "sleep"
+    ACCENT = "accented"
+
+
 # Area States
 AREA_STATE_CLEAR = "clear"
 AREA_STATE_OCCUPIED = "occupied"
@@ -101,7 +130,25 @@ MAGIC_AREAS_COMPONENTS_GLOBAL = MAGIC_AREAS_COMPONENTS_META
 
 MAGIC_DEVICE_ID_PREFIX = "magic_area_device_"
 
+
+class AreaType(StrEnum):
+    """Regular area types."""
+
+    INTERIOR = "interior"
+    EXTERIOR = "exterior"
+    META = "meta"
+
+
 # Meta Areas
+class MetaAreaType(StrEnum):
+    """Meta area types."""
+
+    GLOBAL = "global"
+    INTERIOR = "interior"
+    EXTERIOR = "exterior"
+    FLOOR = "floor"
+
+
 META_AREA_GLOBAL = "Global"
 META_AREA_INTERIOR = "Interior"
 META_AREA_EXTERIOR = "Exterior"
