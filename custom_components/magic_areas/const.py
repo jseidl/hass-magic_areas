@@ -1,5 +1,6 @@
 """Constants for Magic Areas."""
 
+from enum import StrEnum
 from itertools import chain
 
 import voluptuous as vol
@@ -63,6 +64,34 @@ ATTR_PRESENCE_SENSORS = "presence_sensors"
 ICON_PRESENCE_HOLD = "mdi:car-brake-hold"
 ICON_LIGHT_CONTROL = "mdi:lightbulb-auto-outline"
 
+
+class MetaAreaIcons(StrEnum):
+    """Meta area icons."""
+
+    INTERIOR = "mdi:home-import-outline"
+    EXTERIOR = "mdi:home-export-outline"
+    GLOBAL = "mdi:home"
+
+
+class FeatureIcons(StrEnum):
+    """Feature related icons."""
+
+    PRESENCE_HOLD_SWITCH = "mdi:car-brake-hold"
+    LIGHT_CONTROL_SWITCH = "mdi:lightbulb-auto-outline"
+
+
+class AreaStates(StrEnum):
+    """Magic area states."""
+
+    CLEAR = "clear"
+    OCCUPIED = "occupied"
+    EXTENDED = "extended"
+    DARK = "dark"
+    BRIGHT = "bright"
+    SLEEP = "sleep"
+    ACCENT = "accented"
+
+
 # Area States
 AREA_STATE_CLEAR = "clear"
 AREA_STATE_OCCUPIED = "occupied"
@@ -101,7 +130,25 @@ MAGIC_AREAS_COMPONENTS_GLOBAL = MAGIC_AREAS_COMPONENTS_META
 
 MAGIC_DEVICE_ID_PREFIX = "magic_area_device_"
 
+
+class AreaType(StrEnum):
+    """Regular area types."""
+
+    INTERIOR = "interior"
+    EXTERIOR = "exterior"
+    META = "meta"
+
+
 # Meta Areas
+class MetaAreaType(StrEnum):
+    """Meta area types."""
+
+    GLOBAL = "global"
+    INTERIOR = "interior"
+    EXTERIOR = "exterior"
+    FLOOR = "floor"
+
+
 META_AREA_GLOBAL = "Global"
 META_AREA_INTERIOR = "Interior"
 META_AREA_EXTERIOR = "Exterior"
@@ -164,7 +211,6 @@ CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
 )  # cv.positive_int
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
-CONF_ICON, DEFAULT_ICON = "icon", "mdi:texture-box"  # cv.string
 CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (
     "notification_devices",
     [],
@@ -461,7 +507,6 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
-        vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
         vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
         vol.Optional(CONF_SECONDARY_STATES, default={}): SECONDARY_STATES_SCHEMA,
     }
@@ -479,7 +524,6 @@ META_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
-        vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
     }
 )
 
@@ -509,14 +553,12 @@ OPTIONS_AREA = [
     ),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
-    (CONF_ICON, DEFAULT_ICON, str),
 ]
 
 OPTIONS_AREA_META = [
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
-    (CONF_ICON, DEFAULT_ICON, str),
 ]
 
 OPTIONS_SECONDARY_STATES = [

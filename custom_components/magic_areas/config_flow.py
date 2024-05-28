@@ -15,6 +15,7 @@ from homeassistant.helpers.selector import (
     EntitySelectorConfig,
     selector,
 )
+from homeassistant.util import slugify
 
 from .const import (
     _DOMAIN_SCHEMA,
@@ -49,7 +50,6 @@ from .const import (
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
     CONF_FEATURE_PRESENCE_HOLD,
-    CONF_ICON,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
@@ -76,7 +76,6 @@ from .const import (
     CONFIGURABLE_AREA_STATE_MAP,
     CONFIGURABLE_FEATURES,
     DATA_AREA_OBJECT,
-    DEFAULT_ICON,
     DOMAIN,
     LIGHT_GROUP_ACT_ON_OPTIONS,
     META_AREA_GLOBAL,
@@ -217,7 +216,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
         """Handle the initial step."""
         errors = {}
 
-        reserved_names = [meta_area.lower() for meta_area in META_AREAS]
+        reserved_names = [slugify(meta_area) for meta_area in META_AREAS]
 
         # Load registries
         area_registry = self.hass.helpers.area_registry.async_get(self.hass)
@@ -272,7 +271,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             config_entry.update(extra_opts)
 
             # Handle Meta area
-            if area_object.normalized_name in reserved_names:
+            if slugify(area_object.name) in reserved_names:
                 _LOGGER.debug(
                     "ConfigFlow: Meta area %s found, setting correct type.",
                     area_object.name,
@@ -300,7 +299,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             [
                 area.name
                 for area in available_areas
-                if area.normalized_name not in reserved_names
+                if slugify(area.name) not in reserved_names
             ]
         )
         available_area_names.extend(
@@ -308,7 +307,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
                 [
                     f"(Meta) {area.name}"
                     for area in available_areas
-                    if area.normalized_name in reserved_names
+                    if slugify(area.name) in reserved_names
                 ]
             )
         )
@@ -455,8 +454,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
                 return await self.async_step_secondary_states()
 
-        icon_selector = selector({"icon": {"placeholder": DEFAULT_ICON}})
-
         all_selectors = {
             CONF_TYPE: self._build_selector_select(
                 sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])
@@ -476,7 +473,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             CONF_ON_STATES: self._build_selector_select(
                 sorted(AVAILABLE_ON_STATES), multiple=True
             ),
-            CONF_ICON: icon_selector,
             CONF_UPDATE_INTERVAL: self._build_selector_number(),
             CONF_CLEAR_TIMEOUT: self._build_selector_number(),
         }

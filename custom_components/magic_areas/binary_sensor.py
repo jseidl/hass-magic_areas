@@ -40,7 +40,6 @@ from .const import (
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
     CONF_FEATURE_PRESENCE_HOLD,
-    CONF_ICON,
     CONF_ON_STATES,
     CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -56,6 +55,8 @@ from .const import (
     DISTRESS_SENSOR_CLASSES,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     INVALID_STATES,
+    MetaAreaIcons,
+    MetaAreaType,
 )
 from .util import add_entities_when_ready
 
@@ -166,9 +167,15 @@ class AreaPresenceBinarySensor(BinarySensorBase):
     @property
     def icon(self):
         """Return the icon to be used for this entity."""
-        if self.area.config.get(CONF_ICON):
-            return self.area.config.get(CONF_ICON)
-        return None
+        if self.area.is_meta():
+            if self.area.id == MetaAreaType.EXTERIOR:
+                return MetaAreaIcons.EXTERIOR
+            if self.area.id == MetaAreaType.INTERIOR:
+                return MetaAreaIcons.INTERIOR
+            if self.area.id == MetaAreaType.GLOBAL:
+                return MetaAreaIcons.GLOBAL
+
+        return self.area.icon
 
     @property
     def is_on(self):

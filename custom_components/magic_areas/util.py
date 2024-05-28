@@ -19,8 +19,10 @@ basestring = (str, bytes)
 class BasicArea:
     """An interchangeable area object for Magic Areas to consume."""
 
-    id = None
-    name = None
+    id: str
+    name: str | None = None
+    icon: str | None = None
+    floor_id: str | None = None
 
 
 def is_entity_list(item):
@@ -96,7 +98,7 @@ def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn)
         callback = hass.bus.async_listen(EVENT_MAGICAREAS_AREA_READY, load_entities)
 
 
-def basic_area_from_name(name) -> BasicArea:
+def basic_area_from_name(name: str) -> BasicArea:
     """Create a BasicArea from a name."""
 
     area = BasicArea()
@@ -112,5 +114,7 @@ def basic_area_from_object(area: AreaEntry) -> BasicArea:
     basic_area = BasicArea()
     basic_area.name = area.name
     basic_area.id = area.id
+    basic_area.icon = area.icon
+    basic_area.floor_id = area.floor_id
 
     return basic_area

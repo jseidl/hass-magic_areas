@@ -98,7 +98,6 @@
           "presence_sensor_device_class": "Geräteklassen von Anwesenheitssensoren",
           "presence_device_platforms": "Plattformen zur Anwesenheitserfassung",
           "on_states": "Sensorzustände, die Anwesenheit anzeigen",
-          "icon": "Icon",
           "update_interval": "Intervall für die Überprüfung verpasster Ereignisse",
           "clear_timeout": "Wann soll der Bereich nach dem letzten Ereignis frei werden?",
           "type": "Bereichstyp (innen/außen)"
