@@ -32,6 +32,8 @@ from homeassistant.helpers import config_validation as cv
 DOMAIN = "magic_areas"
 MODULE_DATA = f"{DOMAIN}_data"
 
+ADDITIONAL_LIGHT_TRACKING_ENTITIES = ["sun.sun"]
+
 
 # Magic Areas Events
 class MagicAreasEvents(StrEnum):

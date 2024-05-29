@@ -11,7 +11,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.const import CONF_NAME
+from homeassistant.const import ATTR_DEVICE_CLASS, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
 import homeassistant.helpers.config_validation as cv
@@ -25,6 +25,7 @@ from homeassistant.util import slugify
 
 from .const import (
     _DOMAIN_SCHEMA,
+    ADDITIONAL_LIGHT_TRACKING_ENTITIES,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
     AREA_STATE_DARK,
@@ -456,13 +457,26 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             )
         )
 
+        # Compile all binary sensors of light device class
+        eligible_light_tracking_entities = []
+        for entity in self.all_entities:
+            e_component = entity.split(".")[0]
+
+            if e_component == BINARY_SENSOR_DOMAIN:
+                entity_object = self.hass.states.get(entity)
+                entity_object_attributes = entity_object.attributes
+                if (
+                    ATTR_DEVICE_CLASS in entity_object_attributes
+                    and entity_object_attributes[ATTR_DEVICE_CLASS]
+                    == BinarySensorDeviceClass.LIGHT
+                ):
+                    eligible_light_tracking_entities.append(entity)
+
+        # Add additional entities to eligitible entities
+        eligible_light_tracking_entities.extend(ADDITIONAL_LIGHT_TRACKING_ENTITIES)
+
         self.all_light_tracking_entities = sorted(
-            self.resolve_groups(
-                entity["entity_id"]
-                for entity in self.area.entities.get(BINARY_SENSOR_DOMAIN, [])
-                if entity["entity_id"] in self.all_entities
-                and entity["device_class"] == BinarySensorDeviceClass.LIGHT
-            )
+            self.resolve_groups(eligible_light_tracking_entities)
         )
 
         area_schema = META_AREA_SCHEMA if self.area.is_meta() else REGULAR_AREA_SCHEMA
@@ -486,12 +500,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         ]
 
         # Add entries for features
+        menu_options_features = []
         configurable_features = self._get_configurable_features()
         for feature in self.area_options[CONF_ENABLED_FEATURES]:
             if feature not in configurable_features:
                 continue
-            menu_options.append(f"feature_conf_{feature}")
+            menu_options_features.append(f"feature_conf_{feature}")
 
+        menu_options.extend(sorted(menu_options_features))
         menu_options.append("save_and_exit")
 
         return self.async_show_menu(step_id="show_menu", menu_options=menu_options)
