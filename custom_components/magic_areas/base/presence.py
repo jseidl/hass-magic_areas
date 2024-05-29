@@ -239,7 +239,7 @@ class AreaStateTracker:
             to_state,
         )
 
-        if to_state.state in INVALID_STATES:
+        if to_state in INVALID_STATES:
             _LOGGER.debug(
                 "%s: sensor '%s' has invalid state %s",
                 self.area.name,
@@ -402,8 +402,21 @@ class AreaStateTracker:
                 continue
 
             entity = self.hass.states.get(secondary_state_entity)
+            has_valid_state = entity.state.lower() in self._valid_on_states()
+            state_to_add = None
 
-            if entity.state.lower() in self._valid_on_states():
+            # Handle dark state from light sensor as an inverted configurable state
+            inverted_states = [AreaStates.DARK]
+
+            # Handle both forward and inverted configurable state
+            if configurable_state in inverted_states:
+                if not has_valid_state:
+                    state_to_add = configurable_state
+            else:
+                if has_valid_state:
+                    state_to_add = configurable_state
+
+            if state_to_add:
                 _LOGGER.debug(
                     "%s: Secondary state: %s is at %s, adding %s",
                     self.area.name,

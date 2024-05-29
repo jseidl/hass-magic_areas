@@ -377,6 +377,10 @@ AGGREGATE_MODE_SUM = [
     SensorDeviceClass.ENERGY,
 ]
 
+AGGREGATE_MODE_TOTAL_SENSOR = [
+    SensorDeviceClass.ENERGY,
+]
+
 # Config Schema
 
 AGGREGATE_FEATURE_SCHEMA = vol.Schema(
