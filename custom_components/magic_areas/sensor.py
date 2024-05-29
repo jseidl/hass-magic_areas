@@ -27,6 +27,7 @@ from .const import (
     AGGREGATE_MODE_TOTAL_SENSOR,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
+    DEFAULT_SENSOR_PRECISION,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -133,6 +134,8 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
         else:
             if device_class in DEVICE_CLASS_UNITS:
                 default_unit_of_measurement = list(DEVICE_CLASS_UNITS[device_class])[0]
+
+        self._attr_suggested_display_precision = DEFAULT_SENSOR_PRECISION
 
         SensorGroup.__init__(
             self,

@@ -33,6 +33,7 @@ DOMAIN = "magic_areas"
 MODULE_DATA = f"{DOMAIN}_data"
 
 ADDITIONAL_LIGHT_TRACKING_ENTITIES = ["sun.sun"]
+DEFAULT_SENSOR_PRECISION = 2
 
 
 # Magic Areas Events
