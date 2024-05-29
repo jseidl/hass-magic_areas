@@ -35,7 +35,9 @@ from .const import (
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
     DISTRESS_SENSOR_CLASSES,
+    DATA_AREA_OBJECT,
     DOMAIN,
+    MODULE_DATA,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,11 +50,8 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Area config entry."""
 
-    add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
+    area: MagicArea = hass.data[MODULE_DATA][config_entry.entry_id][DATA_AREA_OBJECT]
 
-
-def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback) -> None:
-    """Add the basic sensors for the area."""
     entities = []
     existing_trend_entities = []
     if DOMAIN + BINARY_SENSOR_DOMAIN in area.entities:
