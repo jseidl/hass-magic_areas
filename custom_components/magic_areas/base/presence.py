@@ -148,6 +148,10 @@ class AreaStateTracker:
             ATTR_STATES: self.area.states,
         }
 
+    def force_update(self) -> None:
+        """Force instant state update."""
+        self._update_state()
+
     # Helpers
 
     def _valid_on_states(self) -> list[str]:
@@ -611,6 +615,9 @@ class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
         # Setup the listeners
         await self._setup_listeners()
 
+        if self._state_tracker:
+            self._state_tracker.force_update()
+
         _LOGGER.debug("%s: area presence binary sensor initialized", self.area.name)
 
     async def _setup_listeners(self) -> None:
@@ -626,23 +633,21 @@ class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
 
     async def _restore_state(self) -> None:
         """Restore the state of the presence sensor entity on initialize."""
-        # last_state = await self.async_get_last_state()
+        last_state = await self.async_get_last_state()
+
+        if last_state is None:
+            _LOGGER.debug("%s: New presence sensor created", self.area.name)
+            self._attr_is_on = False
+        else:
+            _LOGGER.debug(
+                "%s: presence sensor restored [state=%s]",
+                self.area.name,
+                last_state.state,
+            )
+            self._attr_is_on = last_state.state == STATE_ON
+            self._attr_extra_state_attributes = dict(last_state.attributes)
 
         self.schedule_update_ha_state()
-
-        # @FIXME implement this
-        # if last_state is None:
-        #     _LOGGER.debug("%s: New presence sensor created", self.area.name)
-        #     self._attr_current_option = AreaState.AreaStates.CLEAR
-        #     self._state = AreaState.AreaStates.CLEAR
-        # else:
-        #     _LOGGER.debug(
-        #         "%s: presence sensor restored [state=%s]",
-        #         self.area.name,
-        #         last_state.state,
-        #     )
-        #     self.area.state = last_state.state
-        #     self._attr_extra_state_attributes = dict(last_state.attributes)
 
     # Binary sensor overrides
 

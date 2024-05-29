@@ -44,10 +44,13 @@ async def async_setup_entry(
 def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
     """Add the sensors for the magic areas."""
 
-    entities_by_device_class: dict[str, list[str]] = {}
+    eligible_entities: dict[dict[list]] = {}
     aggregates = []
 
     if SENSOR_DOMAIN not in area.entities:
+        return
+
+    if not area.has_feature(CONF_FEATURE_AGGREGATION):
         return
 
     for entity in area.entities[SENSOR_DOMAIN]:
@@ -67,35 +70,40 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
 
         # Dictionary of sensors by device class.
         device_class = entity["device_class"]
-        if device_class not in entities_by_device_class:
-            entities_by_device_class[device_class] = []
-        entities_by_device_class[device_class].append(entity["entity_id"])
+        unit_of_measurement = entity["unit_of_measurement"]
+
+        if device_class not in eligible_entities:
+            eligible_entities[device_class] = {}
+
+        if unit_of_measurement not in eligible_entities[device_class]:
+            eligible_entities[device_class][unit_of_measurement] = []
+
+        eligible_entities[device_class][unit_of_measurement].append(entity["entity_id"])
 
     # Create aggregates/illuminance sensor or illuminance ones.
-    for item in entities_by_device_class.items():
-        device_class = item[0]
-        entities = item[1]
+    for device_class, unit_of_measurements in eligible_entities.items():
+        for uom, entities in unit_of_measurements.items():
 
-        if not area.has_feature(CONF_FEATURE_AGGREGATION):
-            continue
-        if len(entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
-            CONF_AGGREGATES_MIN_ENTITIES
-        ):
-            continue
+            if len(entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
+                CONF_AGGREGATES_MIN_ENTITIES
+            ):
+                continue
 
-        _LOGGER.debug(
-            "Creating aggregate sensor for device_class '%s' with %d entities (%s)",
-            device_class,
-            len(entities),
-            area.slug,
-        )
-        aggregates.append(
-            AreaSensorGroupSensor(
-                area=area,
-                device_class=device_class,
-                entity_ids=entities,
+            _LOGGER.debug(
+                "Creating aggregate sensor for device_class '%s' / unit_of_measurement '%s' with %d entities (%s)",
+                device_class,
+                uom,
+                len(entities),
+                area.slug,
             )
-        )
+            aggregates.append(
+                AreaSensorGroupSensor(
+                    area=area,
+                    device_class=device_class,
+                    entity_ids=entities,
+                    unit_of_measurement=uom,
+                )
+            )
 
     async_add_entities(aggregates)
 
@@ -108,13 +116,20 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
         area: MagicArea,
         device_class: SensorDeviceClass,
         entity_ids: list[str],
+        unit_of_measurement: str | None = None,
     ) -> None:
         """Initialize an area sensor group sensor."""
 
         MagicEntity.__init__(self, area=area)
 
         device_class_name = " ".join(device_class.split("_")).title()
-        name = f"Area {device_class_name} ({self.area.name})"
+        name = f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
+
+        default_unit_of_measurement = (
+            UNIT_CONVERTERS[device_class].NORMALIZED_UNIT
+            if device_class in UNIT_CONVERTERS
+            else list(DEVICE_CLASS_UNITS[device_class])[0]
+        )
 
         SensorGroup.__init__(
             self,
@@ -131,8 +146,8 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
             name=name,
             unique_id=slugify(name),
             unit_of_measurement=(
-                UNIT_CONVERTERS[device_class].NORMALIZED_UNIT
-                if device_class in UNIT_CONVERTERS
-                else list(DEVICE_CLASS_UNITS[device_class])[0]
+                unit_of_measurement
+                if unit_of_measurement
+                else default_unit_of_measurement
             ),
         )
