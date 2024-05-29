@@ -18,6 +18,7 @@ from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, STATE_ON
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
@@ -303,11 +304,12 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
         MagicEntity.__init__(self, area)
 
         name = f"{area.name} Media Players"
+        unique_id = slugify(name)
 
         self._name = name
         self._entities = entities
 
-        MediaPlayerGroup.__init__(self, self.unique_id, self._name, self._entities)
+        MediaPlayerGroup.__init__(self, unique_id, self._name, self._entities)
 
         _LOGGER.debug(
             "%s: Media Player group created with entities: %s",
@@ -320,6 +322,9 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
 
         entity_id = f"{SWITCH_DOMAIN}.area_media_player_control_{self.area.slug}"
         switch_entity = self.hass.states.get(entity_id)
+
+        if not switch_entity:
+            return False
 
         return switch_entity.state.lower() == STATE_ON
 

@@ -372,6 +372,9 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
         entity_id = f"{SWITCH_DOMAIN}.area_climate_control_{self.area.slug}"
         switch_entity = self.hass.states.get(entity_id)
 
+        if not switch_entity:
+            return False
+
         return switch_entity.state.lower() == STATE_ON
 
     def area_state_changed(self, area_id, states_tuple):
