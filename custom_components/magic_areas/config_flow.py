@@ -318,9 +318,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
                 )
                 config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
-            return self.async_create_entry(
-                title=user_input[CONF_NAME], data=config_entry
-            )
+            return self.async_create_entry(title=area.name, data=config_entry)
 
         # Filter out already-configured areas
         configured_areas = []
@@ -789,7 +787,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             self.area.name,
             str(self.area_options),
         )
-        return self.async_create_entry(title="", data=self.area_options)
+        return self.async_create_entry(title=self.area.name, data=self.area_options)
 
     async def async_step_feature_conf_light_groups(self, user_input=None):
         """Configure the light groups feature."""
