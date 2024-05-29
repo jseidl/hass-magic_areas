@@ -33,7 +33,17 @@ from homeassistant.helpers import config_validation as cv
 DOMAIN = "magic_areas"
 MODULE_DATA = f"{DOMAIN}_data"
 
+
 # Magic Areas Events
+class MagicAreasEvents(StrEnum):
+    """Magic Areas events."""
+
+    STARTED = "magicareas_start"
+    READY = "magicareas_ready"
+    AREA_READY = "magicareas_area_ready"
+    AREA_STATE_CHANGED = "magicareas_area_state_changed"
+
+
 EVENT_MAGICAREAS_STARTED = "magicareas_start"
 EVENT_MAGICAREAS_READY = "magicareas_ready"
 EVENT_MAGICAREAS_AREA_READY = "magicareas_area_ready"
@@ -59,6 +69,8 @@ ATTR_ACTIVE_SENSORS = "active_sensors"
 ATTR_LAST_ACTIVE_SENSORS = "last_active_sensors"
 ATTR_FEATURES = "features"
 ATTR_PRESENCE_SENSORS = "presence_sensors"
+
+PRESENCE_SENSOR_VALID_ON_STATES = [STATE_ON, STATE_OPEN, STATE_PLAYING]
 
 # Icons
 ICON_PRESENCE_HOLD = "mdi:car-brake-hold"

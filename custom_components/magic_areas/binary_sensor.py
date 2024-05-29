@@ -17,6 +17,7 @@ from homeassistant.util import slugify
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
 from .base.magic import MagicArea
+from .base.presence import AreaStateBinarySensor
 from .const import (
     AGGREGATE_MODE_ALL,
     CONF_AGGREGATES_MIN_ENTITIES,
@@ -42,12 +43,18 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback) -> Non
     """Add the basic sensors for the area."""
     entities = []
 
+    # Create main presence sensor
+    entities.append(AreaStateBinarySensor(area))
+
     # Create extra sensors
     if area.has_feature(CONF_FEATURE_AGGREGATION):
         entities.extend(create_aggregate_sensors(area, async_add_entities))
 
     if area.has_feature(CONF_FEATURE_HEALTH):
         entities.extend(create_health_sensors(area, async_add_entities))
+
+    # Add all entities
+    async_add_entities(entities)
 
 
 def create_health_sensors(
@@ -84,7 +91,7 @@ def create_health_sensors(
             entity_ids=distress_entities,
         )
     ]
-    async_add_entities(entities)
+
     return entities
 
 
@@ -125,11 +132,8 @@ def create_aggregate_sensors(
             len(entity_list),
             area.slug,
         )
-        aggregates.append(
-            AreaSensorGroupBinarySensor(area, device_class, entity_list)
-        )
+        aggregates.append(AreaSensorGroupBinarySensor(area, device_class, entity_list))
 
-    async_add_entities(aggregates)
     return aggregates
 
 
