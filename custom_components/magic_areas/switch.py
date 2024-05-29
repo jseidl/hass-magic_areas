@@ -2,11 +2,7 @@
 
 import logging
 
-from homeassistant.components.switch import (
-    DOMAIN as SWITCH_DOMAIN,
-    SwitchDeviceClass,
-    SwitchEntity,
-)
+from homeassistant.components.switch import SwitchDeviceClass, SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
@@ -43,10 +39,24 @@ def add_switches(area: MagicArea, async_add_entities: AddEntitiesCallback):
     """Add all the switch entities for all features that have one."""
 
     if area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
-        async_add_entities([AreaPresenceHoldSwitch(area)])
+        async_add_entities(
+            [
+                ResettableMagicSwitch(
+                    area,
+                    f"Area Presence Hold ({area.name})",
+                    icon=ICON_PRESENCE_HOLD,
+                )
+            ]
+        )
 
     if area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
-        async_add_entities([AreaLightControlSwitch(area)])
+        async_add_entities(
+            [
+                SimpleMagicSwitch(
+                    area, f"Area Light Control ({area.name})", icon=ICON_LIGHT_CONTROL
+                )
+            ]
+        )
 
 
 class SwitchBase(MagicEntity, SwitchEntity):
@@ -60,9 +70,22 @@ class SwitchBase(MagicEntity, SwitchEntity):
         self._attr_should_poll = False
         self._attr_is_on = False
 
+    @property
+    def unique_id(self):
+        """Return a unique ID."""
+        name_slug = slugify(self._attr_name)
+        return f"{name_slug}"
+
     async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""
         await super().async_added_to_hass()
+
+        # Restore state
+        last_state = await self.async_get_last_state()
+        if last_state:
+            self._attr_is_on = last_state.state == STATE_ON
+            self._attr_extra_state_attributes = dict(last_state.attributes)
+
         self.async_write_ha_state()
         self.schedule_update_ha_state()
 
@@ -79,44 +102,29 @@ class SwitchBase(MagicEntity, SwitchEntity):
         self.schedule_update_ha_state()
 
 
-class AreaLightControlSwitch(SwitchBase):
+class SimpleMagicSwitch(SwitchBase):
     """Controls if the system is running and watching state."""
 
-    def __init__(self, area: MagicArea) -> None:
-        """Initialize the area light control switch."""
+    def __init__(self, area: MagicArea, name: str, icon: str | None = None) -> None:
+        """Initialize the switch."""
 
         super().__init__(area)
-        self._attr_name = f"Areas Light Control ({self.area.name})"
-        self.entity_id = f"{SWITCH_DOMAIN}.{slugify(self._attr_name)}"
+        self._attr_name = name
         self._attr_state = STATE_OFF
         self._attr_is_on = False
-
-    @property
-    def icon(self):
-        """Return the icon to be used for this entity."""
-        return ICON_LIGHT_CONTROL
+        self._attr_icon = icon
 
 
-class AreaPresenceHoldSwitch(SwitchBase):
+class ResettableMagicSwitch(SimpleMagicSwitch):
     """Control the presense/state from being changed for the device."""
 
-    def __init__(self, area: MagicArea) -> None:
-        """Initialize the area presence hold switch."""
+    def __init__(self, area: MagicArea, name: str, icon: str | None = None) -> None:
+        """Initialize the switch."""
+        super().__init__(area, name, icon)
 
-        super().__init__(area)
-        self._attr_name = f"Area Presence Hold ({self.area.name})"
-        self.entity_id = f"{SWITCH_DOMAIN}.{slugify(self._attr_name)}"
+        self._timeout_callback = None
 
-        self.timeout_callback = None
-        self._attr_state = STATE_OFF
-        self._attr_is_on = False
-
-    @property
-    def icon(self):
-        """Return the icon to be used for this entity."""
-        return ICON_PRESENCE_HOLD
-
-    def timeout_turn_off(self, next_interval):
+    def _timeout_turn_off(self, next_interval):
         """Turn off the presence hold after the timeout."""
         if self._attr_state == STATE_ON:
             self.turn_off()
@@ -131,9 +139,9 @@ class AreaPresenceHoldSwitch(SwitchBase):
             CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT
         )
 
-        if timeout and not self.timeout_callback:
-            self.timeout_callback = call_later(
-                self.hass, timeout, self.timeout_turn_off
+        if timeout and not self._timeout_callback:
+            self._timeout_callback = call_later(
+                self.hass, timeout, self._timeout_turn_off
             )
 
     async def async_turn_off(self, **kwargs):
@@ -142,6 +150,6 @@ class AreaPresenceHoldSwitch(SwitchBase):
         self._attr_is_on = False
         self.schedule_update_ha_state()
 
-        if self.timeout_callback:
-            self.timeout_callback()
-            self.timeout_callback = None
+        if self._timeout_callback:
+            self._timeout_callback()
+            self._timeout_callback = None

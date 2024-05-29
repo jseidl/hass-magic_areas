@@ -7,6 +7,7 @@ from homeassistant.components.group.cover import CoverGroup
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
@@ -81,7 +82,7 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
         self._attributes["entity_id"] = [e["entity_id"] for e in self._entities]
 
         CoverGroup.__init__(
-            self, self.unique_id, self._name, self._attributes["entity_id"]
+            self, slugify(self._name), self._name, self._attributes["entity_id"]
         )
 
     @property

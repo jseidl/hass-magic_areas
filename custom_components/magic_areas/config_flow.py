@@ -5,9 +5,13 @@ import logging
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
+)
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.const import CONF_NAME
+from homeassistant.const import ATTR_DEVICE_CLASS, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
 import homeassistant.helpers.config_validation as cv
@@ -21,6 +25,7 @@ from homeassistant.util import slugify
 
 from .const import (
     _DOMAIN_SCHEMA,
+    ADDITIONAL_LIGHT_TRACKING_ENTITIES,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
     AREA_STATE_DARK,
@@ -30,7 +35,6 @@ from .const import (
     AREA_TYPE_EXTERIOR,
     AREA_TYPE_INTERIOR,
     AREA_TYPE_META,
-    AVAILABLE_ON_STATES,
     BUILTIN_AREA_STATES,
     CONF_ACCENT_ENTITY,
     CONF_ACCENT_LIGHTS,
@@ -56,7 +60,6 @@ from .const import (
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
-    CONF_ON_STATES,
     CONF_OVERHEAD_LIGHTS,
     CONF_OVERHEAD_LIGHTS_ACT_ON,
     CONF_OVERHEAD_LIGHTS_STATES,
@@ -80,7 +83,9 @@ from .const import (
     DATA_AREA_OBJECT,
     DOMAIN,
     LIGHT_GROUP_ACT_ON_OPTIONS,
+    META_AREA_BASIC_OPTIONS_SCHEMA,
     META_AREA_GLOBAL,
+    META_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
     META_AREA_SCHEMA,
     MODULE_DATA,
     NON_CONFIGURABLE_FEATURES_META,
@@ -92,7 +97,11 @@ from .const import (
     OPTIONS_CLIMATE_GROUP_META,
     OPTIONS_LIGHT_GROUP,
     OPTIONS_PRESENCE_HOLD,
+    OPTIONS_PRESENCE_TRACKING,
+    OPTIONS_PRESENCE_TRACKING_META,
     OPTIONS_SECONDARY_STATES,
+    REGULAR_AREA_BASIC_OPTIONS_SCHEMA,
+    REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
     MetaAreaType,
@@ -367,12 +376,34 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         self.all_area_entities = []
         self.all_lights = []
         self.all_media_players = []
-        self.selected_features = []
-        self.features_to_configure = None
+        self.all_light_tracking_entities = []
         self.area_options = {}
+
+    def _get_feature_list(self) -> list[str]:
+        """Return list of available features for area type."""
+
+        feature_list = CONF_FEATURE_LIST
+        area_type = self.area.config.get(CONF_TYPE)
+        if area_type == AREA_TYPE_META:
+            feature_list = CONF_FEATURE_LIST_META
+        if self.area.id == META_AREA_GLOBAL.lower():
+            feature_list = CONF_FEATURE_LIST_GLOBAL
+
+        return feature_list
+
+    def _get_configurable_features(self) -> list[str]:
+        """Return configurable features for area type."""
+        filtered_configurable_features = list(CONFIGURABLE_FEATURES.keys())
+        if self.area.is_meta():
+            for feature in NON_CONFIGURABLE_FEATURES_META:
+                if feature in filtered_configurable_features:
+                    filtered_configurable_features.remove(feature)
+
+        return filtered_configurable_features
 
     async def async_step_init(self, user_input=None):
         """Initialize the options flow."""
+
         self.data = self.hass.data[MODULE_DATA][self.config_entry.entry_id]
         self.area = self.data[DATA_AREA_OBJECT]
 
@@ -387,9 +418,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         # Return all relevant entities
         self.all_entities = sorted(
-            entity_id
-            for entity_id in self.hass.states.async_entity_ids()
-            if entity_id.split(".")[0] in CONFIG_FLOW_ENTITY_FILTER_EXT
+            self.resolve_groups(
+                entity_id
+                for entity_id in self.hass.states.async_entity_ids()
+                if entity_id.split(".")[0] in CONFIG_FLOW_ENTITY_FILTER_EXT
+            )
         )
 
         # Return all relevant area entities that exists
@@ -426,7 +459,60 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             )
         )
 
-        return await self.async_step_area_config()
+        # Compile all binary sensors of light device class
+        eligible_light_tracking_entities = []
+        for entity in self.all_entities:
+            e_component = entity.split(".")[0]
+
+            if e_component == BINARY_SENSOR_DOMAIN:
+                entity_object = self.hass.states.get(entity)
+                entity_object_attributes = entity_object.attributes
+                if (
+                    ATTR_DEVICE_CLASS in entity_object_attributes
+                    and entity_object_attributes[ATTR_DEVICE_CLASS]
+                    == BinarySensorDeviceClass.LIGHT
+                ):
+                    eligible_light_tracking_entities.append(entity)
+
+        # Add additional entities to eligitible entities
+        eligible_light_tracking_entities.extend(ADDITIONAL_LIGHT_TRACKING_ENTITIES)
+
+        self.all_light_tracking_entities = sorted(
+            self.resolve_groups(eligible_light_tracking_entities)
+        )
+
+        area_schema = META_AREA_SCHEMA if self.area.is_meta() else REGULAR_AREA_SCHEMA
+        self.area_options = area_schema({})
+        self.area_options.update(self.config_entry.options)
+
+        _LOGGER.debug(
+            "%s: Loaded area options: %s", self.area.name, str(self.area_options)
+        )
+
+        return await self.async_step_show_menu()
+
+    async def async_step_show_menu(self, user_input=None):
+        """Show options selection menu."""
+        # Show options menu
+        menu_options: list = [
+            "area_config",
+            "secondary_states",
+            "presence_tracking",
+            "select_features",
+        ]
+
+        # Add entries for features
+        menu_options_features = []
+        configurable_features = self._get_configurable_features()
+        for feature in self.area_options[CONF_ENABLED_FEATURES]:
+            if feature not in configurable_features:
+                continue
+            menu_options_features.append(f"feature_conf_{feature}")
+
+        menu_options.extend(sorted(menu_options_features))
+        menu_options.append("save_and_exit")
+
+        return self.async_show_menu(step_id="show_menu", menu_options=menu_options)
 
     @staticmethod
     def resolve_groups(raw_list):
@@ -450,11 +536,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 self.area.name,
                 str(user_input),
             )
-            area_schema = (
-                META_AREA_SCHEMA if self.area.is_meta() else REGULAR_AREA_SCHEMA
+            options_schema = (
+                META_AREA_BASIC_OPTIONS_SCHEMA
+                if self.area.is_meta()
+                else REGULAR_AREA_BASIC_OPTIONS_SCHEMA
             )
             try:
-                self.area_options = area_schema(user_input)
+                self.area_options.update(options_schema(user_input))
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
                 _LOGGER.debug(
@@ -476,10 +564,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     self.area.name,
                     str(self.area_options),
                 )
-                if self.area.is_meta():
-                    return await self.async_step_select_features()
 
-                return await self.async_step_secondary_states()
+                return await self.async_step_show_menu()
 
         all_selectors = {
             CONF_TYPE: self._build_selector_select(
@@ -491,17 +577,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(
                 self.all_area_entities, multiple=True
             ),
-            CONF_PRESENCE_DEVICE_PLATFORMS: self._build_selector_select(
-                sorted(ALL_PRESENCE_DEVICE_PLATFORMS), multiple=True
-            ),
-            CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(
-                sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
-            ),
-            CONF_ON_STATES: self._build_selector_select(
-                sorted(AVAILABLE_ON_STATES), multiple=True
-            ),
-            CONF_UPDATE_INTERVAL: self._build_selector_number(),
-            CONF_CLEAR_TIMEOUT: self._build_selector_number(),
         }
 
         options = OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA
@@ -512,10 +587,85 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         for option_key in option_keys:
             selectors[option_key] = all_selectors[option_key]
 
-        data_schema = self._build_options_schema(options=options, selectors=selectors)
+        data_schema = self._build_options_schema(
+            options=options, saved_options=self.area_options, selectors=selectors
+        )
 
         return self.async_show_form(
             step_id="area_config",
+            data_schema=data_schema,
+            errors=errors,
+        )
+
+    async def async_step_presence_tracking(self, user_input=None):
+        """Gather basic settings for the area."""
+        errors = {}
+        if user_input is not None:
+            _LOGGER.debug(
+                "OptionsFlow: Validating area %s presence tracking config: %s",
+                self.area.name,
+                str(user_input),
+            )
+            options_schema = (
+                META_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA
+                if self.area.is_meta()
+                else REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA
+            )
+            try:
+                self.area_options.update(options_schema(user_input))
+            except vol.MultipleInvalid as validation:
+                errors = {error.path[0]: error.msg for error in validation.errors}
+                _LOGGER.debug(
+                    "OptionsFlow: Found the following errors for area %s: %s",
+                    self.area.name,
+                    str(errors),
+                )
+            # Adding pylint exception because this is a last-resort hail-mary catch-all
+            # pylint: disable-next=broad-exception-caught
+            except Exception as e:
+                _LOGGER.warning(
+                    "OptionsFlow: Unexpected error caught on area %s: %s",
+                    self.area.name,
+                    str(e),
+                )
+            else:
+                _LOGGER.debug(
+                    "OptionsFlow: Saving area %s base config: %s",
+                    self.area.name,
+                    str(self.area_options),
+                )
+
+                return await self.async_step_show_menu()
+
+        all_selectors = {
+            CONF_PRESENCE_DEVICE_PLATFORMS: self._build_selector_select(
+                sorted(ALL_PRESENCE_DEVICE_PLATFORMS), multiple=True
+            ),
+            CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(
+                sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
+            ),
+            CONF_UPDATE_INTERVAL: self._build_selector_number(),
+            CONF_CLEAR_TIMEOUT: self._build_selector_number(),
+        }
+
+        options = (
+            OPTIONS_PRESENCE_TRACKING_META
+            if self.area.is_meta()
+            else OPTIONS_PRESENCE_TRACKING
+        )
+        selectors = {}
+
+        # Apply options for given area type (regular/meta)
+        option_keys = [option[0] for option in options]
+        for option_key in option_keys:
+            selectors[option_key] = all_selectors[option_key]
+
+        data_schema = self._build_options_schema(
+            options=options, saved_options=self.area_options, selectors=selectors
+        )
+
+        return self.async_show_form(
+            step_id="presence_tracking",
             data_schema=data_schema,
             errors=errors,
         )
@@ -555,21 +705,23 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     self.area.name,
                     str(self.area_options),
                 )
-                return await self.async_step_select_features()
+                return await self.async_step_show_menu()
 
         return self.async_show_form(
             step_id="secondary_states",
             data_schema=self._build_options_schema(
                 options=(OPTIONS_SECONDARY_STATES),
-                saved_options=self.config_entry.options.get(CONF_SECONDARY_STATES, {}),
+                saved_options=self.area_options.get(CONF_SECONDARY_STATES, {}),
                 dynamic_validators={
-                    CONF_DARK_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
+                    CONF_DARK_ENTITY: vol.In(
+                        EMPTY_ENTRY + self.all_light_tracking_entities
+                    ),
                     CONF_SLEEP_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
                     CONF_ACCENT_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
                 },
                 selectors={
                     CONF_DARK_ENTITY: self._build_selector_entity_simple(
-                        self.all_entities
+                        self.all_light_tracking_entities
                     ),
                     CONF_SLEEP_ENTITY: self._build_selector_entity_simple(
                         self.all_entities
@@ -587,41 +739,29 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
     async def async_step_select_features(self, user_input=None):
         """Ask the user to select features to enable for the area."""
+
+        feature_list = self._get_feature_list()
+
         if user_input is not None:
-            self.selected_features = [
+            selected_features = [
                 feature for feature, is_selected in user_input.items() if is_selected
             ]
 
-            # Disable feature configuration for meta-areas
-            filtered_configurable_features = list(CONFIGURABLE_FEATURES.keys())
-            if self.area.is_meta():
-                for feature in NON_CONFIGURABLE_FEATURES_META:
-                    if feature in filtered_configurable_features:
-                        filtered_configurable_features.remove(feature)
-
-            self.features_to_configure = list(
-                set(self.selected_features) & set(filtered_configurable_features)
-            )
             _LOGGER.debug(
                 "OptionsFlow: Selected features for area %s: %s",
                 self.area.name,
-                str(self.selected_features),
+                str(selected_features),
             )
-            self.area_options[CONF_ENABLED_FEATURES].update(
-                {
-                    feature: {}
-                    for feature in self.selected_features
-                    if feature not in self.features_to_configure
-                }
-            )
-            return await self.async_route_feature_config()
+            for c_feature in feature_list:
+                if c_feature in selected_features:
+                    if c_feature not in self.area_options[CONF_ENABLED_FEATURES]:
+                        self.area_options[CONF_ENABLED_FEATURES][c_feature] = {}
+                else:
+                    # Remove feature if we had previously enabled
+                    if c_feature in self.area_options[CONF_ENABLED_FEATURES]:
+                        self.area_options[CONF_ENABLED_FEATURES].pop(c_feature)
 
-        feature_list = CONF_FEATURE_LIST
-        area_type = self.area.config.get(CONF_TYPE)
-        if area_type == AREA_TYPE_META:
-            feature_list = CONF_FEATURE_LIST_META
-        if self.area.id == META_AREA_GLOBAL.lower():
-            feature_list = CONF_FEATURE_LIST_GLOBAL
+            return await self.async_step_show_menu()
 
         _LOGGER.debug(
             "OptionsFlow: Selecting features for area %s from %s",
@@ -635,43 +775,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 options=[(feature, False, bool) for feature in feature_list],
                 saved_options={
                     feature: (
-                        feature
-                        in self.config_entry.options.get(CONF_ENABLED_FEATURES, {})
+                        feature in self.area_options.get(CONF_ENABLED_FEATURES, {})
                     )
                     for feature in feature_list
                 },
             ),
         )
 
-    async def async_route_feature_config(self, user_input=None):
-        """Route to next configurable feature.
-
-        Determine the next feature to be configured or finalize the options
-        flow if there are no more features left (i.e. all selected features have
-        been configured).
-        """
-        _LOGGER.debug(
-            "OptionsFlow: Features yet to configure for area %s: %s",
-            self.area.name,
-            str(self.features_to_configure),
-        )
-        _LOGGER.debug(
-            "OptionsFlow: Current config for area %s is: %s",
-            self.area.name,
-            str(self.area_options),
-        )
-        if self.features_to_configure:
-            current_feature = self.features_to_configure.pop()
-            _LOGGER.debug(
-                "OptionsFlow: Initiating configuration step on area %s for feature %s",
-                self.area.name,
-                current_feature,
-            )
-            feature_conf_step = getattr(
-                self, f"async_step_feature_conf_{current_feature}"
-            )
-            return await feature_conf_step()
-
+    async def async_step_save_and_exit(self, user_input=None):
+        """Save options and exit options flow."""
         _LOGGER.debug(
             "OptionsFlow: All features configured for area %s, saving config: %s",
             self.area.name,
@@ -685,13 +797,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         available_states = BUILTIN_AREA_STATES.copy()
 
         light_group_state_exempt = [AREA_STATE_DARK]
-        for extra_state, extra_state_opts in CONFIGURABLE_AREA_STATE_MAP.items():
+        for extra_state, extra_state_entity in CONFIGURABLE_AREA_STATE_MAP.items():
             # Skip AREA_STATE_DARK because lights can't be tied to this state
             if extra_state in light_group_state_exempt:
                 continue
 
-            # pylint: disable-next=unused-variable
-            extra_state_entity, extra_state_state = extra_state_opts
             if self.area_options[CONF_SECONDARY_STATES].get(extra_state_entity, None):
                 available_states.append(extra_state)
 
@@ -865,7 +975,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     str(validated_input),
                 )
                 self.area_options[CONF_ENABLED_FEATURES][name] = validated_input
-                return await self.async_route_feature_config()
+                return await self.async_step_show_menu()
 
         _LOGGER.debug(
             "OptionsFlow: Config entry options for area %s: %s",
@@ -873,12 +983,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             str(self.config_entry.options),
         )
 
-        saved_options = self.config_entry.options.get(CONF_ENABLED_FEATURES, {})
-
-        # Handle legacy options somewhat-gracefully
-        # @REMOVEME on 4.x.x, users shall be updated by then
-        if not isinstance(saved_options, dict):
-            saved_options = {}
+        saved_options = self.area_options.get(CONF_ENABLED_FEATURES, {})
 
         return self.async_show_form(
             step_id=f"feature_conf_{name}",

@@ -99,10 +99,8 @@ class AreaStateTracker:
 
         # Track secondary states
         for configurable_state in self._get_configured_secondary_states():
-            (
-                configurable_state_entity,
-                configurable_state_value,  # pylint: disable=unused-variable
-            ) = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
+
+            configurable_state_entity = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
             tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
                 configurable_state_entity, None
             )
@@ -164,12 +162,8 @@ class AreaStateTracker:
 
         for (
             configurable_state,
-            configurable_state_opts,
+            configurable_state_entity,
         ) in CONFIGURABLE_AREA_STATE_MAP.items():
-            (
-                configurable_state_entity,
-                configurable_state_value,  # pylint: disable=unused-variable
-            ) = configurable_state_opts
 
             secondary_state_entity = self.area.config.get(
                 CONF_SECONDARY_STATES, {}
@@ -245,7 +239,7 @@ class AreaStateTracker:
             to_state,
         )
 
-        if to_state.state in INVALID_STATES:
+        if to_state in INVALID_STATES:
             _LOGGER.debug(
                 "%s: sensor '%s' has invalid state %s",
                 self.area.name,
@@ -398,29 +392,36 @@ class AreaStateTracker:
             states.append(AreaStates.DARK)
 
         for configurable_state in configurable_states:
-            (
-                configurable_state_entity,
-                configurable_state_value,
-            ) = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
+            configurable_state_entity = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
 
             secondary_state_entity = self.area.config.get(
                 CONF_SECONDARY_STATES, {}
             ).get(configurable_state_entity, None)
-            secondary_state_value = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                configurable_state_value, None
-            )
 
             if not secondary_state_entity:
                 continue
 
             entity = self.hass.states.get(secondary_state_entity)
+            has_valid_state = entity.state.lower() in self._valid_on_states()
+            state_to_add = None
 
-            if entity.state.lower() == secondary_state_value.lower():
+            # Handle dark state from light sensor as an inverted configurable state
+            inverted_states = [AreaStates.DARK]
+
+            # Handle both forward and inverted configurable state
+            if configurable_state in inverted_states:
+                if not has_valid_state:
+                    state_to_add = configurable_state
+            else:
+                if has_valid_state:
+                    state_to_add = configurable_state
+
+            if state_to_add:
                 _LOGGER.debug(
                     "%s: Secondary state: %s is at %s, adding %s",
                     self.area.name,
                     secondary_state_entity,
-                    secondary_state_value,
+                    entity.state.lower(),
                     configurable_state,
                 )
                 states.append(configurable_state)

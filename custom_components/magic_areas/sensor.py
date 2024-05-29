@@ -24,6 +24,7 @@ from .base.entities import MagicEntity
 from .base.magic import MagicArea
 from .const import (
     AGGREGATE_MODE_SUM,
+    AGGREGATE_MODE_TOTAL_SENSOR,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
 )
@@ -125,11 +126,13 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
         device_class_name = " ".join(device_class.split("_")).title()
         name = f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
 
-        default_unit_of_measurement = (
-            UNIT_CONVERTERS[device_class].NORMALIZED_UNIT
-            if device_class in UNIT_CONVERTERS
-            else list(DEVICE_CLASS_UNITS[device_class])[0]
-        )
+        default_unit_of_measurement = None
+
+        if device_class in UNIT_CONVERTERS:
+            default_unit_of_measurement = UNIT_CONVERTERS[device_class].NORMALIZED_UNIT
+        else:
+            if device_class in DEVICE_CLASS_UNITS:
+                default_unit_of_measurement = list(DEVICE_CLASS_UNITS[device_class])[0]
 
         SensorGroup.__init__(
             self,
@@ -140,7 +143,7 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
             sensor_type=ATTR_SUM if device_class in AGGREGATE_MODE_SUM else ATTR_MEAN,
             state_class=(
                 SensorStateClass.TOTAL
-                if device_class in AGGREGATE_MODE_SUM
+                if device_class in AGGREGATE_MODE_TOTAL_SENSOR
                 else SensorStateClass.MEASUREMENT
             ),
             name=name,

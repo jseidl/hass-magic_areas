@@ -62,7 +62,7 @@ def add_lights(area, async_add_entities):
 
     # Create light groups
     if area.is_meta():
-        meta_area_name = "{area.name} Lights"
+        meta_area_name = f"{area.name} Lights"
         light_groups.append(
             LightGroup(
                 name=meta_area_name,
