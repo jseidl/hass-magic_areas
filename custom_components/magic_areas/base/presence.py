@@ -24,6 +24,7 @@ from homeassistant.util import slugify
 from ..const import (
     ATTR_ACTIVE_SENSORS,
     ATTR_AREAS,
+    ATTR_CLEAR_TIMEOUT,
     ATTR_LAST_ACTIVE_SENSORS,
     ATTR_PRESENCE_SENSORS,
     ATTR_STATES,
@@ -99,23 +100,29 @@ class AreaStateTracker:
         )
 
         # Track secondary states
-        for configurable_state in self._get_configured_secondary_states():
+        secondary_state_entities: list[str] = []
+        configurable_states = self._get_configured_secondary_states()
+
+        for configurable_state in configurable_states:
 
             configurable_state_entity = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
             tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
                 configurable_state_entity, None
             )
-
             if not tracked_entity:
                 continue
 
-            _LOGGER.debug(
-                "%s: Secondary state tracking: %s", self.area.name, tracked_entity
-            )
+            secondary_state_entities.append(tracked_entity)
 
+        if secondary_state_entities:
+            _LOGGER.debug(
+                "%s: Secondary state tracking: %s",
+                self.area.name,
+                str(secondary_state_entities),
+            )
             self._track_listener(
                 async_track_state_change_event(
-                    self.hass, tracked_entity, self._secondary_state_change
+                    self.hass, secondary_state_entities, self._secondary_state_change
                 )
             )
 
@@ -145,6 +152,7 @@ class AreaStateTracker:
             ATTR_ACTIVE_SENSORS: self._active_sensors,
             ATTR_LAST_ACTIVE_SENSORS: self._last_active_sensors,
             ATTR_STATES: self.area.states,
+            ATTR_CLEAR_TIMEOUT: self._get_clear_timeout(),
         }
 
     def force_update(self) -> None:
@@ -156,7 +164,7 @@ class AreaStateTracker:
     def _valid_on_states(self, additional_states: list[str] | None = None) -> list[str]:
         """Return valid ON states for entities."""
 
-        valid_states = PRESENCE_SENSOR_VALID_ON_STATES
+        valid_states = PRESENCE_SENSOR_VALID_ON_STATES.copy()
 
         if additional_states:
             valid_states.extend(additional_states)
@@ -693,6 +701,7 @@ class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
                 ATTR_LAST_ACTIVE_SENSORS: [],
                 ATTR_PRESENCE_SENSORS: [],
                 ATTR_TYPE: self.area.config.get(CONF_TYPE),
+                ATTR_CLEAR_TIMEOUT: 0,
             }
         )
 
