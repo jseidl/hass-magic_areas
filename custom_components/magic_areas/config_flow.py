@@ -28,6 +28,7 @@ from .const import (
     ADDITIONAL_LIGHT_TRACKING_ENTITIES,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
     ALL_PRESENCE_DEVICE_PLATFORMS,
+    ALL_SENSOR_DEVICE_CLASSES,
     AREA_STATE_DARK,
     AREA_STATE_EXTENDED,
     AREA_STATE_OCCUPIED,
@@ -40,7 +41,9 @@ from .const import (
     CONF_ACCENT_LIGHTS,
     CONF_ACCENT_LIGHTS_ACT_ON,
     CONF_ACCENT_LIGHTS_STATES,
+    CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     CONF_AGGREGATES_MIN_ENTITIES,
+    CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_CLEAR_TIMEOUT,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_DARK_ENTITY,
@@ -917,7 +920,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         selectors = {
             CONF_AGGREGATES_MIN_ENTITIES: self._build_selector_number(
                 unit_of_measurement="entities"
-            )
+            ),
+            CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES: self._build_selector_select(
+                sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
+            ),
+            CONF_AGGREGATES_SENSOR_DEVICE_CLASSES: self._build_selector_select(
+                sorted(ALL_SENSOR_DEVICE_CLASSES), multiple=True
+            ),
         }
 
         return await self.do_feature_config(

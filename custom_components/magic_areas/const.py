@@ -54,6 +54,7 @@ EVENT_MAGICAREAS_AREA_CLEAR = "magicareas_area_clear"
 EVENT_MAGICAREAS_AREA_STATE_CHANGED = "magicareas_area_state_changed"
 
 ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]
+ALL_SENSOR_DEVICE_CLASSES = [cls.value for cls in SensorDeviceClass]
 
 # Data Items
 DATA_AREA_OBJECT = "area_object"
@@ -215,6 +216,17 @@ CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
     "aggregates_min_entities",
     2,
 )  # cv.positive_int
+(
+    CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
+    DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
+) = (
+    "aggregates_binary_sensor_device_classes",
+    ALL_BINARY_SENSOR_DEVICE_CLASSES,
+)  # cv.ensure_list
+CONF_AGGREGATES_SENSOR_DEVICE_CLASSES, DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES = (
+    "aggregates_sensor_device_classes",
+    ALL_SENSOR_DEVICE_CLASSES,
+)  # cv.ensure_list
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT_META = (
     "clear_timeout",
     60,
@@ -393,6 +405,14 @@ AGGREGATE_FEATURE_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_AGGREGATES_MIN_ENTITIES, default=DEFAULT_AGGREGATES_MIN_ENTITIES
         ): cv.positive_int,
+        vol.Optional(
+            CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
+            default=DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
+        ): cv.ensure_list,
+        vol.Optional(
+            CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
+            default=DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
+        ): cv.ensure_list,
     }
 )
 
@@ -641,6 +661,16 @@ OPTIONS_LIGHT_GROUP = [
 
 OPTIONS_AGGREGATES = [
     (CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES, int),
+    (
+        CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
+        DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
+        cv.ensure_list,
+    ),
+    (
+        CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
+        DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
+        cv.ensure_list,
+    ),
 ]
 
 OPTIONS_PRESENCE_HOLD = [

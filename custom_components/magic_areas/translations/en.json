@@ -98,7 +98,9 @@
         "title": "Feature: Sensor aggregates",
         "description": "If you have multiple sensors (or binary sensors) of the same type, Magic Areas can group then into a single entity allowing you to have averages (or sums) of sensors or combined state of binary sensors. It's even useful if you only currently have one sensor of each kind as it allows you to use the aggregate in automations and expand in the future without having to re-write your automations.",
         "data": {
-          "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates."
+          "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates.",
+          "aggregates_binary_sensor_device_classes": "Binary sensor device classes to be aggregated.",
+          "aggregates_sensor_device_classes": "Sensor device classes to be aggregated."
         }
       },
       "feature_conf_climate_groups": {
