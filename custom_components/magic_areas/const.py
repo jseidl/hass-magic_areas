@@ -90,6 +90,8 @@ class FeatureIcons(StrEnum):
 
     PRESENCE_HOLD_SWITCH = "mdi:car-brake-hold"
     LIGHT_CONTROL_SWITCH = "mdi:lightbulb-auto-outline"
+    MEDIA_CONTROL_SWITCH = "mdi:auto-mode"
+    CLIMATE_CONTROL_SWITCH = "mdi:thermostat-auto"
 
 
 class AreaStates(StrEnum):
