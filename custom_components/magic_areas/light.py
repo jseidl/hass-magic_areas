@@ -62,15 +62,7 @@ def add_lights(area, async_add_entities):
 
     # Create light groups
     if area.is_meta():
-        meta_area_name = f"{area.name} Lights"
-        light_groups.append(
-            LightGroup(
-                name=meta_area_name,
-                unique_id=slugify(meta_area_name),
-                entity_ids=light_entities,
-                mode=False,
-            )
-        )
+        light_groups.append(MetaAreaLightGroup(area, light_entities))
     else:
         light_group_ids = []
 
@@ -107,6 +99,21 @@ def add_lights(area, async_add_entities):
 
     # Create all groups
     async_add_entities(light_groups)
+
+
+class MetaAreaLightGroup(MagicEntity, LightGroup):
+    """Magic Light Group for Meta-areas."""
+
+    def __init__(self, area, entities, name=None):
+        """Initialize parent class and state."""
+        MagicEntity.__init__(self, area)
+
+        self._entities = entities
+
+        self._name = name if name else f"{self.area.name} Lights"
+        unique_id = slugify(self._name)
+
+        LightGroup.__init__(self, unique_id, self._name, self._entities, mode=False)
 
 
 class AreaLightGroup(MagicEntity, LightGroup):
