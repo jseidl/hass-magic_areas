@@ -24,6 +24,7 @@ from .const import (
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
+    DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     DISTRESS_SENSOR_CLASSES,
 )
 
@@ -128,7 +129,8 @@ def create_aggregate_sensors(
             continue
 
         if device_class not in area.feature_config(CONF_FEATURE_AGGREGATION).get(
-            CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES
+            CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
+            DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
         ):
             continue
 
