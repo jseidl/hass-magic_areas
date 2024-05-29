@@ -9,6 +9,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
+from homeassistant.components.sun.const import STATE_ABOVE_HORIZON
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
@@ -152,9 +153,15 @@ class AreaStateTracker:
 
     # Helpers
 
-    def _valid_on_states(self) -> list[str]:
+    def _valid_on_states(self, additional_states: list[str] | None = None) -> list[str]:
         """Return valid ON states for entities."""
-        return [STATE_ON] if self.area.is_meta() else PRESENCE_SENSOR_VALID_ON_STATES
+
+        valid_states = PRESENCE_SENSOR_VALID_ON_STATES
+
+        if additional_states:
+            valid_states.extend(additional_states)
+
+        return [STATE_ON] if self.area.is_meta() else valid_states
 
     def _get_configured_secondary_states(self) -> list[str]:
         """Return configured secondary states."""
@@ -402,7 +409,9 @@ class AreaStateTracker:
                 continue
 
             entity = self.hass.states.get(secondary_state_entity)
-            has_valid_state = entity.state.lower() in self._valid_on_states()
+            has_valid_state = entity.state.lower() in self._valid_on_states(
+                [STATE_ABOVE_HORIZON]
+            )
             state_to_add = None
 
             # Handle dark state from light sensor as an inverted configurable state
