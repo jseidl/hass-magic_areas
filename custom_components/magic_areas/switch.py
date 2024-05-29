@@ -14,12 +14,13 @@ from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
 from .base.magic import MagicArea
 from .const import (
+    CONF_FEATURE_CLIMATE_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
+    CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_PRESENCE_HOLD_TIMEOUT,
     DEFAULT_PRESENCE_HOLD_TIMEOUT,
-    ICON_LIGHT_CONTROL,
-    ICON_PRESENCE_HOLD,
+    FeatureIcons,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ def add_switches(area: MagicArea, async_add_entities: AddEntitiesCallback):
                 ResettableMagicSwitch(
                     area,
                     f"Area Presence Hold ({area.name})",
-                    icon=ICON_PRESENCE_HOLD,
+                    icon=FeatureIcons.PRESENCE_HOLD_SWITCH,
                 )
             ]
         )
@@ -53,7 +54,31 @@ def add_switches(area: MagicArea, async_add_entities: AddEntitiesCallback):
         async_add_entities(
             [
                 SimpleMagicSwitch(
-                    area, f"Area Light Control ({area.name})", icon=ICON_LIGHT_CONTROL
+                    area,
+                    f"Area Light Control ({area.name})",
+                    icon=FeatureIcons.LIGHT_CONTROL_SWITCH,
+                )
+            ]
+        )
+
+    if area.has_feature(CONF_FEATURE_MEDIA_PLAYER_GROUPS):
+        async_add_entities(
+            [
+                SimpleMagicSwitch(
+                    area,
+                    f"Area Media Player Control ({area.name})",
+                    icon=FeatureIcons.MEDIA_CONTROL_SWITCH,
+                )
+            ]
+        )
+
+    if area.has_feature(CONF_FEATURE_CLIMATE_GROUPS):
+        async_add_entities(
+            [
+                SimpleMagicSwitch(
+                    area,
+                    f"Area Climate Control ({area.name})",
+                    icon=FeatureIcons.CLIMATE_CONTROL_SWITCH,
                 )
             ]
         )

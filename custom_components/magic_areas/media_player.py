@@ -14,9 +14,11 @@ from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_ID,
     ATTR_MEDIA_CONTENT_TYPE,
 )
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, STATE_ON
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
@@ -143,8 +145,6 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
         self._attributes = {}
         self._state = STATE_IDLE
 
-        self.logger = _LOGGER
-
         self.areas = areas
         self.area = area
         self._tracked_entities = []
@@ -154,7 +154,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             if entity_list:
                 self._tracked_entities.extend(entity_list)
 
-        self.logger.info("AreaAwareMediaPlayer loaded.")
+        _LOGGER.info("AreaAwareMediaPlayer loaded.")
 
     def update_attributes(self):
         """Update entity attributes."""
@@ -171,9 +171,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER
         ).get(CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES)
 
-        self.logger.debug(
-            "%s: Notification devices: %s", area.name, notification_devices
-        )
+        _LOGGER.debug("%s: Notification devices: %s", area.name, notification_devices)
 
         area_media_players = [
             entity["entity_id"] for entity in area.entities[MEDIA_PLAYER_DOMAIN]
@@ -192,7 +190,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         if last_state:
-            self.logger.debug(
+            _LOGGER.debug(
                 "%s: Nedia Player restored [state=%s]", self.name, last_state.state
             )
             self._state = last_state.state
@@ -220,7 +218,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             area_binary_sensor_state = self.hass.states.get(area_binary_sensor_name)
 
             if not area_binary_sensor_state:
-                self.logger.debug(
+                _LOGGER.debug(
                     "%s: No state found for entity '%s'",
                     self.name,
                     area_binary_sensor_name,
@@ -273,7 +271,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
 
         # Fail early
         if not active_areas:
-            self.logger.info("No areas active. Ignoring.")
+            _LOGGER.info("No areas active. Ignoring.")
             return False
 
         # Gather media_player entities
@@ -282,7 +280,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity, RestoreEntity):
             media_players.extend(self.get_media_players_for_area(area))
 
         if not media_players:
-            self.logger.info(
+            _LOGGER.info(
                 "%s: No media_player entities to forward. Ignoring.", self.name
             )
             return False
@@ -306,25 +304,42 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
         MagicEntity.__init__(self, area)
 
         name = f"{area.name} Media Players"
+        unique_id = slugify(name)
 
         self._name = name
         self._entities = entities
 
-        MediaPlayerGroup.__init__(self, self.unique_id, self._name, self._entities)
+        MediaPlayerGroup.__init__(self, unique_id, self._name, self._entities)
 
-        self.logger.debug(
+        _LOGGER.debug(
             "%s: Media Player group created with entities: %s",
             self.name,
             str(self._entities),
         )
+
+    def _is_control_enabled(self):
+        """Check if media player control is enabled by checking media player control switch state."""
+
+        entity_id = f"{SWITCH_DOMAIN}.area_media_player_control_{self.area.slug}"
+        switch_entity = self.hass.states.get(entity_id)
+
+        if not switch_entity:
+            return False
+
+        return switch_entity.state.lower() == STATE_ON
 
     def area_state_changed(self, area_id, states_tuple):
         """Handle area state change event."""
         # pylint: disable-next=unused-variable
         new_states, lost_states = states_tuple
 
+        # Do nothing if control is disabled
+        if not self._is_control_enabled():
+            _LOGGER.debug("%s: Control disabled, skipping.", self.name)
+            return
+
         if area_id != self.area.id:
-            self.logger.debug(
+            _LOGGER.debug(
                 "%s: Area state change event not for us. Skipping. (req: %s/self: %s)",
                 self.name,
                 area_id,
@@ -332,12 +347,10 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
             )
             return
 
-        self.logger.debug(
-            "%s: Media Player group detected area state change.", self.name
-        )
+        _LOGGER.debug("%s: Media Player group detected area state change.", self.name)
 
         if AREA_STATE_CLEAR in new_states:
-            self.logger.debug("%s: Area clear, turning off media players", self.name)
+            _LOGGER.debug("%s: Area clear, turning off media players", self.name)
             self._turn_off()
 
     def _turn_off(self):

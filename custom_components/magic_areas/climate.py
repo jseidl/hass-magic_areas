@@ -46,10 +46,12 @@ from homeassistant.components.group.util import (
     reduce_attribute,
     states_equal,
 )
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
+    STATE_ON,
     STATE_UNAVAILABLE,
 )
 from homeassistant.core import Event, callback
@@ -364,10 +366,26 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
             str(self._entities),
         )
 
+    def _is_control_enabled(self):
+        """Check if light climate is enabled by checking climate control switch state."""
+
+        entity_id = f"{SWITCH_DOMAIN}.area_climate_control_{self.area.slug}"
+        switch_entity = self.hass.states.get(entity_id)
+
+        if not switch_entity:
+            return False
+
+        return switch_entity.state.lower() == STATE_ON
+
     def area_state_changed(self, area_id, states_tuple):
         """Handle area state change event."""
         if self.area.is_meta():
             _LOGGER.debug("%s: %s is meta. Noop.", self.name, self.area.name)
+            return
+
+        # Do nothing if control is disabled
+        if not self._is_control_enabled():
+            _LOGGER.debug("%s: Control disabled, skipping.", self.name)
             return
 
         # pylint: disable-next=unused-variable
