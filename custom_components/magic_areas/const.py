@@ -20,7 +20,6 @@ from homeassistant.components.sun import DOMAIN as SUN_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     STATE_ALARM_TRIGGERED,
-    STATE_HOME,
     STATE_ON,
     STATE_OPEN,
     STATE_PLAYING,
@@ -59,7 +58,6 @@ DATA_UNDO_UPDATE_LISTENER = "undo_update_listener"
 
 # Attributes
 ATTR_STATES = "states"
-ATTR_ON_STATES = "on_states"
 ATTR_AREAS = "areas"
 ATTR_ACTIVE_AREAS = "active_areas"
 ATTR_TYPE = "type"
@@ -172,8 +170,6 @@ AREA_TYPE_INTERIOR = "interior"
 AREA_TYPE_EXTERIOR = "exterior"
 AREA_TYPES = [AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR, AREA_TYPE_META]
 
-AVAILABLE_ON_STATES = [STATE_ON, STATE_HOME, STATE_PLAYING, STATE_OPEN]
-
 INVALID_STATES = [STATE_UNAVAILABLE, STATE_UNKNOWN]
 
 # Configuration parameters
@@ -210,18 +206,15 @@ ALL_PRESENCE_DEVICE_PLATFORMS = [
         BinarySensorDeviceClass.PRESENCE,
     ],
 )  # cv.ensure_list
-CONF_ON_STATES, DEFAULT_ON_STATES = (
-    "on_states",
-    [
-        STATE_ON,
-        STATE_OPEN,
-    ],
-)  # cv.ensure_list
 CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
     "aggregates_min_entities",
     2,
 )  # cv.positive_int
-CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT = "clear_timeout", 60  # cv.positive_int
+CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT_META = (
+    "clear_timeout",
+    60,
+    0,
+)  # cv.positive_int
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
 CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (
     "notification_devices",
@@ -236,22 +229,19 @@ CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES = (
 
 # Secondary states options
 CONF_DARK_ENTITY = "dark_entity"
-CONF_DARK_STATE, DEFAULT_DARK_STATE = "dark_state", STATE_ON
 CONF_ACCENT_ENTITY = "accent_entity"
-CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE = "accent_state", STATE_ON
 CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT = (
     "sleep_timeout",
     DEFAULT_CLEAR_TIMEOUT,
 )  # int
 CONF_SLEEP_ENTITY = "sleep_entity"
-CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE = "sleep_state", STATE_ON
 CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME = "extended_time", 120  # cv.positive_int
 CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT = "extended_timeout", 300  # int
 
 CONFIGURABLE_AREA_STATE_MAP = {
-    AREA_STATE_SLEEP: (CONF_SLEEP_ENTITY, CONF_SLEEP_STATE),
-    AREA_STATE_DARK: (CONF_DARK_ENTITY, CONF_DARK_STATE),
-    AREA_STATE_ACCENT: (CONF_ACCENT_ENTITY, CONF_ACCENT_STATE),
+    AREA_STATE_SLEEP: CONF_SLEEP_ENTITY,
+    AREA_STATE_DARK: CONF_DARK_ENTITY,
+    AREA_STATE_ACCENT: CONF_ACCENT_ENTITY,
 }
 
 # features
@@ -478,20 +468,66 @@ FEATURES_SCHEMA = vol.Schema(
 
 SECONDARY_STATES_SCHEMA = vol.Schema(
     {
+        vol.Optional(CONF_DARK_ENTITY, default=""): vol.Any("", cv.entity_id),
+        vol.Optional(CONF_ACCENT_ENTITY, default=""): vol.Any("", cv.entity_id),
         vol.Optional(CONF_SLEEP_ENTITY, default=""): vol.Any("", cv.entity_id),
-        vol.Optional(CONF_SLEEP_STATE, default=DEFAULT_SLEEP_STATE): str,
         vol.Optional(
             CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT
         ): cv.positive_int,
-        vol.Optional(CONF_DARK_ENTITY, default=""): vol.Any("", cv.entity_id),
-        vol.Optional(CONF_DARK_STATE, default=DEFAULT_DARK_STATE): str,
-        vol.Optional(CONF_ACCENT_ENTITY, default=""): vol.Any("", cv.entity_id),
-        vol.Optional(CONF_ACCENT_STATE, default=DEFAULT_ACCENT_STATE): str,
         vol.Optional(
             CONF_EXTENDED_TIME, default=DEFAULT_EXTENDED_TIME
         ): cv.positive_int,
         vol.Optional(
             CONF_EXTENDED_TIMEOUT, default=DEFAULT_EXTENDED_TIMEOUT
+        ): cv.positive_int,
+    }
+)
+
+# Basic Area Options Schema
+REGULAR_AREA_BASIC_OPTIONS_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_TYPE, default=DEFAULT_TYPE): vol.In(
+            [AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR]
+        ),
+        vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
+        vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+    }
+)
+META_AREA_BASIC_OPTIONS_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_TYPE, default=AREA_TYPE_META): AREA_TYPE_META,
+        vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
+        vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+    }
+)
+
+# Presence Tracking Schema
+REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_PRESENCE_DEVICE_PLATFORMS,
+            default=DEFAULT_PRESENCE_DEVICE_PLATFORMS,
+        ): cv.ensure_list,
+        vol.Optional(
+            CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+            default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
+        ): cv.ensure_list,
+        vol.Optional(
+            CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
+        ): cv.positive_int,
+    }
+)
+
+META_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT_META
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
     }
 )
@@ -512,7 +548,6 @@ REGULAR_AREA_SCHEMA = vol.Schema(
             CONF_PRESENCE_SENSOR_DEVICE_CLASS,
             default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
         ): cv.ensure_list,
-        vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list,
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
         ): cv.positive_int,
@@ -529,9 +564,8 @@ META_AREA_SCHEMA = vol.Schema(
         vol.Optional(CONF_TYPE, default=AREA_TYPE_META): AREA_TYPE_META,
         vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
-        vol.Optional(CONF_ON_STATES, default=DEFAULT_ON_STATES): cv.ensure_list,
         vol.Optional(
-            CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
+            CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT_META
         ): cv.positive_int,
         vol.Optional(
             CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
@@ -548,6 +582,8 @@ OPTIONS_AREA = [
     (CONF_TYPE, DEFAULT_TYPE, vol.In([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])),
     (CONF_INCLUDE_ENTITIES, [], cv.entity_ids),
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
+]
+OPTIONS_PRESENCE_TRACKING = [
     (
         CONF_PRESENCE_DEVICE_PLATFORMS,
         DEFAULT_PRESENCE_DEVICE_PLATFORMS,
@@ -558,29 +594,23 @@ OPTIONS_AREA = [
         DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
         cv.ensure_list,
     ),
-    (
-        CONF_ON_STATES,
-        DEFAULT_ON_STATES,
-        cv.ensure_list,
-    ),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
 ]
 
 OPTIONS_AREA_META = [
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
+]
+OPTIONS_PRESENCE_TRACKING_META = [
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
 ]
 
 OPTIONS_SECONDARY_STATES = [
-    (CONF_SLEEP_ENTITY, "", cv.entity_id),
-    (CONF_SLEEP_STATE, DEFAULT_SLEEP_STATE, str),
-    (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
     (CONF_DARK_ENTITY, "", cv.entity_id),
-    (CONF_DARK_STATE, DEFAULT_DARK_STATE, str),
     (CONF_ACCENT_ENTITY, "", cv.entity_id),
-    (CONF_ACCENT_STATE, DEFAULT_ACCENT_STATE, str),
+    (CONF_SLEEP_ENTITY, "", cv.entity_id),
+    (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
     (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
     (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),
 ]
