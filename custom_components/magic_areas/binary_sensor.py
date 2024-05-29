@@ -20,6 +20,7 @@ from .base.magic import MagicArea
 from .base.presence import AreaStateBinarySensor
 from .const import (
     AGGREGATE_MODE_ALL,
+    CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
@@ -123,6 +124,11 @@ def create_aggregate_sensors(
     for device_class, entity_list in device_class_entities.items():
         if len(entity_list) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
             CONF_AGGREGATES_MIN_ENTITIES, 0
+        ):
+            continue
+
+        if device_class not in area.feature_config(CONF_FEATURE_AGGREGATION).get(
+            CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES
         ):
             continue
 

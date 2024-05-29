@@ -26,6 +26,7 @@ from .const import (
     AGGREGATE_MODE_SUM,
     AGGREGATE_MODE_TOTAL_SENSOR,
     CONF_AGGREGATES_MIN_ENTITIES,
+    CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_FEATURE_AGGREGATION,
     DEFAULT_SENSOR_PRECISION,
 )
@@ -88,6 +89,11 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
 
             if len(entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
                 CONF_AGGREGATES_MIN_ENTITIES
+            ):
+                continue
+
+            if device_class not in area.feature_config(CONF_FEATURE_AGGREGATION).get(
+                CONF_AGGREGATES_SENSOR_DEVICE_CLASSES
             ):
                 continue
 
