@@ -7,9 +7,9 @@ from collections.abc import Iterable
 import logging
 
 from homeassistant.helpers.area_registry import AreaEntry
-from homeassistant.util import slugify
+from homeassistant.helpers.floor_registry import FloorEntry
 
-from .const import DATA_AREA_OBJECT, EVENT_MAGICAREAS_AREA_READY, MODULE_DATA
+from .const import DATA_AREA_OBJECT, MODULE_DATA
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ class BasicArea:
     name: str | None = None
     icon: str | None = None
     floor_id: str | None = None
+    is_meta: bool = False
 
 
 def is_entity_list(item):
@@ -55,55 +56,14 @@ def areas_loaded(hass):
     return True
 
 
-def add_entities_when_ready(hass, async_add_entities, config_entry, callback_fn):
-    """Add entities to Home Assistant when Magic Area finishes initializing."""
-
-    ma_data = hass.data[MODULE_DATA]
-    area_data = ma_data[config_entry.entry_id]
-    area = area_data[DATA_AREA_OBJECT]
-
-    # Run right away if area is ready
-    if area.initialized:
-        callback_fn(area, async_add_entities)
-    else:
-        callback = None
-
-        async def load_entities(event):
-            if config_entry.entry_id not in ma_data:
-                _LOGGER.warning(
-                    "Config entry id '%s' not in Magic Areas data.",
-                    config_entry.entry_id,
-                )
-                return False
-
-            if area.id != event.data.get("id"):
-                return False
-
-            # Destroy listener
-            if callback:
-                callback()
-
-            try:
-                callback_fn(area, async_add_entities)
-            # Adding pylint exception because this is a last-resort hail-mary catch-all
-            # pylint: disable-next=broad-exception-caught
-            except Exception:
-                _LOGGER.exception(
-                    "%s: Error loading platform entities on '%s'.",
-                    area.name,
-                    str(callback_fn),
-                )
-
-        # These sensors need to wait for the area object to be fully initialized
-        callback = hass.bus.async_listen(EVENT_MAGICAREAS_AREA_READY, load_entities)
-
-
-def basic_area_from_name(name: str) -> BasicArea:
+def basic_area_from_meta(area_id: str, name: str | None = None) -> BasicArea:
     """Create a BasicArea from a name."""
 
     area = BasicArea()
-    area.name = name
-    area.id = slugify(name)
+    if not name:
+        area.name = area_id.capitalize()
+    area.id = area_id
+    area.is_meta = True
 
     return area
 
@@ -116,5 +76,18 @@ def basic_area_from_object(area: AreaEntry) -> BasicArea:
     basic_area.id = area.id
     basic_area.icon = area.icon
     basic_area.floor_id = area.floor_id
+
+    return basic_area
+
+
+def basic_area_from_floor(floor: FloorEntry) -> BasicArea:
+    """Create a BasicArea from an AreaEntry object."""
+
+    basic_area = BasicArea()
+    basic_area.name = floor.name
+    basic_area.id = floor.floor_id
+    basic_area.icon = floor.icon
+    basic_area.floor_id = floor.floor_id
+    basic_area.is_meta = True
 
     return basic_area

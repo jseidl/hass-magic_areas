@@ -28,6 +28,7 @@ from ..const import (
     MAGIC_DEVICE_ID_PREFIX,
     META_AREA_GLOBAL,
     MODULE_DATA,
+    MetaAreaType,
 )
 from ..util import areas_loaded, flatten_entity_list, is_entity_list
 
@@ -56,6 +57,8 @@ class MagicArea:
         self.slug = slugify(self.name)
         self.hass_config = config
         self.initialized = False
+        self.floor_id = area.floor_id
+        self.is_meta_area = area.is_meta
 
         # Merged options
         area_config = dict(config.data)
@@ -369,11 +372,20 @@ class MagicMetaArea(MagicArea):
 
         for area_info in data.values():
             area = area_info[DATA_AREA_OBJECT]
-            if (
-                self.id == META_AREA_GLOBAL.lower()
-                or area.config.get(CONF_TYPE) == self.id
-            ) and not area.is_meta():
-                areas.append(area.slug)
+
+            if area.is_meta_area:
+                continue
+
+            if self.floor_id:
+
+                if self.floor_id == area.floor_id:
+                    areas.append(area.slug)
+            else:
+                if (
+                    self.id == MetaAreaType.GLOBAL
+                    or area.config.get(CONF_TYPE) == self.id
+                ):
+                    areas.append(area.slug)
 
         return areas
 
@@ -399,31 +411,31 @@ class MagicMetaArea(MagicArea):
     async def load_entities(self) -> None:
         """Load entities into entity list."""
         entity_list = []
+        child_areas = self.get_child_areas()
 
         data = self.hass.data[MODULE_DATA]
         for area_info in data.values():
+
             area = area_info[DATA_AREA_OBJECT]
-            if (
-                self.id == META_AREA_GLOBAL.lower()
-                or area.config.get(CONF_TYPE) == self.id
-            ):
-                for entities in area.entities.values():
-                    for entity in entities:
-                        if not isinstance(entity["entity_id"], str):
-                            self.logger.debug(
-                                "%s: Entity ID is not a string: '%s' (probably a group, skipping)",
-                                self.name,
-                                str(entity["entity_id"]),
-                            )
-                            continue
 
-                        # Skip excluded entities
-                        if entity["entity_id"] in self.config.get(
-                            CONF_EXCLUDE_ENTITIES
-                        ):
-                            continue
+            if area.slug not in child_areas:
+                continue
 
-                        entity_list.append(entity["entity_id"])
+            for entities in area.entities.values():
+                for entity in entities:
+                    if not isinstance(entity["entity_id"], str):
+                        self.logger.debug(
+                            "%s: Entity ID is not a string: '%s' (probably a group, skipping)",
+                            self.name,
+                            str(entity["entity_id"]),
+                        )
+                        continue
+
+                    # Skip excluded entities
+                    if entity["entity_id"] in self.config.get(CONF_EXCLUDE_ENTITIES):
+                        continue
+
+                    entity_list.append(entity["entity_id"])
 
         self.load_entity_list(entity_list)
 

@@ -56,6 +56,7 @@ from homeassistant.core import Event, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
 
+from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
 from .const import (
     AREA_STATE_CLEAR,
@@ -64,7 +65,6 @@ from .const import (
     DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
 )
-from .util import add_entities_when_ready
 
 # Climate Group Constants
 

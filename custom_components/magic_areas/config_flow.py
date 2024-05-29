@@ -9,7 +9,9 @@ from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
+from homeassistant.helpers.area_registry import async_get as areareg_async_get
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
@@ -80,7 +82,6 @@ from .const import (
     LIGHT_GROUP_ACT_ON_OPTIONS,
     META_AREA_GLOBAL,
     META_AREA_SCHEMA,
-    META_AREAS,
     MODULE_DATA,
     NON_CONFIGURABLE_FEATURES_META,
     OPTIONS_AGGREGATES,
@@ -94,8 +95,9 @@ from .const import (
     OPTIONS_SECONDARY_STATES,
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
+    MetaAreaType,
 )
-from .util import basic_area_from_name, basic_area_from_object
+from .util import basic_area_from_floor, basic_area_from_meta, basic_area_from_object
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -216,19 +218,46 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
         """Handle the initial step."""
         errors = {}
 
-        reserved_names = [slugify(meta_area) for meta_area in META_AREAS]
+        reserved_names = []
+        non_floor_meta_areas = [
+            meta_area_type
+            for meta_area_type in MetaAreaType
+            if meta_area_type != MetaAreaType.FLOOR
+        ]
 
         # Load registries
-        area_registry = self.hass.helpers.area_registry.async_get(self.hass)
+        area_registry = areareg_async_get(self.hass)
+        floor_registry = floorreg_async_get(self.hass)
         areas = [
             basic_area_from_object(area) for area in area_registry.async_list_areas()
         ]
         area_ids = [area.id for area in areas]
 
-        # Add Meta Areas to area list
-        for meta_area in META_AREAS:
+        # Load floors meta-aras
+        floors = floor_registry.async_list_floors()
+
+        for floor in floors:
             # Prevent conflicts between meta areas and existing areas
-            if meta_area.lower() in area_ids:
+            if floor.floor_id in area_ids:
+                _LOGGER.warning(
+                    "ConfigFlow: You have an area with a reserved name '%s'. This will prevent from using the %s Meta area.",
+                    floor.floor_id,
+                    floor.floor_id,
+                )
+                continue
+
+            _LOGGER.debug(
+                "ConfigFlow: Appending Meta Area %s to the list of areas",
+                floor.floor_id,
+            )
+            area = basic_area_from_floor(floor)
+            reserved_names.append(area.id)
+            areas.append(area)
+
+        # Add standard meta areas to area list
+        for meta_area in non_floor_meta_areas:
+            # Prevent conflicts between meta areas and existing areas
+            if meta_area in area_ids:
                 _LOGGER.warning(
                     "ConfigFlow: You have an area with a reserved name '%s'. This will prevent from using the %s Meta area.",
                     meta_area,
@@ -239,7 +268,9 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             _LOGGER.debug(
                 "ConfigFlow: Appending Meta Area %s to the list of areas", meta_area
             )
-            areas.append(basic_area_from_name(meta_area))
+            area = basic_area_from_meta(meta_area)
+            reserved_names.append(area.id)
+            areas.append(area)
 
         if user_input is not None:
             # Look up area object by name
@@ -271,10 +302,10 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             config_entry.update(extra_opts)
 
             # Handle Meta area
-            if slugify(area_object.name) in reserved_names:
+            if slugify(area_object.id) in reserved_names:
                 _LOGGER.debug(
                     "ConfigFlow: Meta area %s found, setting correct type.",
-                    area_object.name,
+                    area_object.id,
                 )
                 config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
@@ -296,18 +327,14 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
 
         # Slight ordering trick so Meta areas are at the bottom
         available_area_names = sorted(
-            [
-                area.name
-                for area in available_areas
-                if slugify(area.name) not in reserved_names
-            ]
+            [area.name for area in available_areas if area.id not in reserved_names]
         )
         available_area_names.extend(
             sorted(
                 [
                     f"(Meta) {area.name}"
                     for area in available_areas
-                    if slugify(area.name) in reserved_names
+                    if area.id in reserved_names
                 ]
             )
         )

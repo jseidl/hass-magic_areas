@@ -6,6 +6,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
+from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 
 from .base.magic import MagicArea, MagicMetaArea
 from .const import (
@@ -16,10 +17,10 @@ from .const import (
     META_AREA_EXTERIOR,
     META_AREA_GLOBAL,
     META_AREA_INTERIOR,
-    META_AREAS,
     MODULE_DATA,
+    MetaAreaType,
 )
-from .util import basic_area_from_name
+from .util import basic_area_from_floor, basic_area_from_meta, basic_area_from_object
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,9 +38,24 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     _LOGGER.debug("%s: Setting up entry.", area_name)
 
-    meta_ids = [meta_area.lower() for meta_area in META_AREAS]
+    # Load floors
+    floor_registry = floorreg_async_get(hass)
+    floors = floor_registry.async_list_floors()
 
-    if area_id not in meta_ids:
+    non_floor_meta_ids = [
+        meta_area_type
+        for meta_area_type in MetaAreaType
+        if meta_area_type != MetaAreaType.FLOOR
+    ]
+    floor_ids = [f.floor_id for f in floors]
+
+    if area_id in non_floor_meta_ids:
+        meta_area = basic_area_from_meta(area_id)
+        magic_area = MagicMetaArea(hass, meta_area, config_entry)
+    elif area_id in floor_ids:
+        meta_area = basic_area_from_floor(floor_registry.async_get_floor(area_id))
+        magic_area = MagicMetaArea(hass, meta_area, config_entry)
+    else:
         area_registry = areareg_async_get(hass)
         area = area_registry.async_get_area(area_id)
 
@@ -51,12 +67,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
         magic_area = MagicArea(
             hass,
-            area,
+            basic_area_from_object(area),
             config_entry,
         )
-    else:
-        meta_area = basic_area_from_name(area_name)
-        magic_area = MagicMetaArea(hass, meta_area, config_entry)
 
     _LOGGER.debug(
         "%s: Magic Area (%s) created: %s",
