@@ -32,7 +32,9 @@ async def test_init_no_devices(
     manual_override_entity = hass.states.get(
         f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
+    area_binary_sensor = hass.states.get(
+        f"{SELECT_DOMAIN}.simply_magic_areas_state_kitchen"
+    )
     occupied_lights = hass.states.get(
         f"{LIGHT_DOMAIN}.simply_magic_areas_light_kitchen"
     )
@@ -80,7 +82,9 @@ async def test_init_with_lights(
     manual_override_entity = hass.states.get(
         f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
+    area_binary_sensor = hass.states.get(
+        f"{SELECT_DOMAIN}.simply_magic_areas_state_kitchen"
+    )
     occupied_lights = hass.states.get(
         f"{LIGHT_DOMAIN}.simply_magic_areas_light_kitchen"
     )
@@ -116,7 +120,9 @@ async def test_init_with_light_sensor(
     manual_override_entity = hass.states.get(
         f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
+    area_binary_sensor = hass.states.get(
+        f"{SELECT_DOMAIN}.simply_magic_areas_state_kitchen"
+    )
     occupied_lights = hass.states.get(
         f"{LIGHT_DOMAIN}.simply_magic_areas_light_kitchen"
     )
@@ -156,7 +162,9 @@ async def test_init_with_humidity_sensor(
     manual_override_entity = hass.states.get(
         f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
+    area_binary_sensor = hass.states.get(
+        f"{SELECT_DOMAIN}.simply_magic_areas_state_kitchen"
+    )
     occupied_lights = hass.states.get(
         f"{LIGHT_DOMAIN}.simply_magic_areas_light_kitchen"
     )
@@ -206,7 +214,9 @@ async def test_init_with_lights_and_sensor(
     manual_override_entity = hass.states.get(
         f"{SWITCH_DOMAIN}.simply_magic_areas_manual_override_active_kitchen"
     )
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
+    area_binary_sensor = hass.states.get(
+        f"{SELECT_DOMAIN}.simply_magic_areas_state_kitchen"
+    )
     occupied_lights = hass.states.get(
         f"{LIGHT_DOMAIN}.simply_magic_areas_light_kitchen"
     )

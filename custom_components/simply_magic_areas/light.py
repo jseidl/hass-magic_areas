@@ -106,15 +106,16 @@ class AreaLightGroup(MagicEntity, LightGroup):
 
     def __init__(self, area: MagicArea, entities: list[str]) -> None:
         """Init the light group for the area."""
-        MagicEntity.__init__(self, area)
+        MagicEntity.__init__(self, area, domain=LIGHT_DOMAIN, translation_key="light")
         LightGroup.__init__(
             self,
+            name="",
             entity_ids=entities,
-            name=f"Simply Magic Areas Light ({area.name})",
-            unique_id=slugify(f"Simply Magic Areas Light ({area.name})"),
+            unique_id=f"light_{slugify(area.name)}",
             mode=False,
         )
 
+        self._attr_name = None
         self._manual_timeout_cb: CALLBACK_TYPE | None = None
         self._icon: str = "mdi:ceiling-light"
 

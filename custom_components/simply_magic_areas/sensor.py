@@ -143,7 +143,9 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
     ) -> None:
         """Initialize an area sensor group sensor."""
 
-        MagicEntity.__init__(self, area=area)
+        MagicEntity.__init__(
+            self, area=area, domain=SENSOR_DOMAIN, translation_key=device_class
+        )
         SensorGroup.__init__(
             self,
             hass=area.hass,

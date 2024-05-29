@@ -20,7 +20,9 @@ async def test_save_select(
     assert config_entry.state is ConfigEntryState.LOADED
 
     # Validate the right enties were created.
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
+    area_binary_sensor = hass.states.get(
+        f"{SELECT_DOMAIN}.simply_magic_areas_state_kitchen"
+    )
 
     assert area_binary_sensor is not None
     assert area_binary_sensor.state == "clear"

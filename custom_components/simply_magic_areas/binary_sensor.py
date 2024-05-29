@@ -1,21 +1,30 @@
 """Binary sensor control for magic areas."""
 
+from datetime import UTC, datetime
 import logging
+import math
+
+import numpy as np
 
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
+    BinarySensorEntity,
 )
 from homeassistant.components.group.binary_sensor import BinarySensorGroup
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
-from homeassistant.components.trend.binary_sensor import SensorTrend
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_DEVICE_CLASS, STATE_OFF, STATE_ON
-from homeassistant.core import HomeAssistant
+from homeassistant.const import (
+    ATTR_DEVICE_CLASS,
+    STATE_ON,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+)
+from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import async_get as async_get_er
-from homeassistant.util import slugify
+from homeassistant.helpers.event import async_track_state_change_event
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
@@ -216,13 +225,14 @@ class AreaSensorGroupBinarySensor(MagicEntity, BinarySensorGroup):
     ) -> None:
         """Initialize an area sensor group binary sensor."""
 
-        MagicEntity.__init__(self, area)
+        MagicEntity.__init__(
+            self, area=area, translation_key=device_class, domain=BINARY_SENSOR_DOMAIN
+        )
         BinarySensorGroup.__init__(
             self,
             device_class=device_class,
             entity_ids=entity_ids,
             mode=device_class in AGGREGATE_MODE_ALL,
-            name=f"Area {" ".join(device_class.split("_")).title()} ({self.area.name})",
         )
 
         self.area = area
@@ -236,32 +246,41 @@ class AreaSensorGroupBinarySensor(MagicEntity, BinarySensorGroup):
                 self.name,
                 last_state.state,
             )
-            self._state = last_state.state == STATE_ON
+            self._attr_is_on = last_state.state == STATE_ON
+            self._attr_extra_state_attributes = dict(last_state.attributes)
         await super().async_added_to_hass()
         self.async_write_ha_state()
 
 
-class HumdityTrendSensor(MagicEntity, SensorTrend):
+class HumdityTrendSensor(MagicEntity, BinarySensorEntity):
     """Sensor for the magic area, tracking the humidity changes."""
 
     def __init__(self, area: MagicArea, increasing: bool) -> None:
-        """Initialize an area trend group sensor."""
+        """Initialize an area sensor group binary sensor."""
 
-        MagicEntity.__init__(self, area)
-        SensorTrend.__init__(
+        MagicEntity.__init__(
             self,
-            name=f"Simply Magic Areas humidity occupancy ({area.name})"
-            if increasing
-            else f"Simply Magic Areas humidity empty ({area.name})",
-            sample_duration=600 if increasing else 300,
-            max_samples=3 if increasing else 2,
-            min_gradient=0.01666 if increasing else -0.016666,
-            invert=False,
-            min_samples=2,
-            attribute=None,
-            entity_id=f"{SENSOR_DOMAIN}.simply_magic_areas_humidity_{area.slug}",
+            area=area,
+            translation_key="humidity_occupancy" if increasing else "humidity_empty",
+            domain=BINARY_SENSOR_DOMAIN,
         )
-        self._state = False
+        BinarySensorEntity.__init__(
+            self,
+        )
+        self._attr_device_class = BinarySensorDeviceClass.MOISTURE
+        self.area = area
+        if increasing:
+            self._sample_duration = 600
+            self._max_samples = 3
+            self._min_gradient = 0.01666
+        else:
+            self._sample_duration = 300
+            self._max_samples = 2
+            self._min_gradient = -0.016666
+        self._invert = False
+        self._min_samples = 2
+        self._to_monitor = area.entity_unique_id(SENSOR_DOMAIN, "humidity")
+        self._gradient = 0.0
 
     async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""
@@ -272,8 +291,70 @@ class HumdityTrendSensor(MagicEntity, SensorTrend):
                 self.name,
                 last_state.state,
             )
-            self._state = last_state.state == STATE_ON
-
+            self._attr_is_on = last_state.state == STATE_ON
+            self._attr_extra_state_attributes = dict(last_state.attributes)
         await super().async_added_to_hass()
-        await self.async_update()
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass, [self._to_monitor], self._trend_sensor_state_listener
+            )
+        )
         self.async_write_ha_state()
+
+    @callback
+    def _trend_sensor_state_listener(
+        self,
+        event: Event[EventStateChangedData],
+    ) -> None:
+        """Handle state changes on the observed device."""
+        if (new_state := event.data["new_state"]) is None:
+            return
+        try:
+            if self._attribute:
+                state = new_state.attributes.get(self._attribute)
+            else:
+                state = new_state.state
+            if state not in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+                sample = (new_state.last_updated.timestamp(), float(state))  # type: ignore[arg-type]
+                self.samples.append(sample)
+                self.async_schedule_update_ha_state(True)
+        except (ValueError, TypeError) as ex:
+            _LOGGER.error(ex)
+
+    async def async_update(self) -> None:
+        """Get the latest data and update the states."""
+        # Remove outdated samples
+        if self._sample_duration > 0:
+            cutoff = datetime.now(UTC).timestamp() - self._sample_duration
+            while self.samples and self.samples[0][0] < cutoff:
+                self.samples.popleft()
+
+        if len(self.samples) < self._min_samples:
+            return
+
+        # Calculate gradient of linear trend
+        await self.hass.async_add_executor_job(self._calculate_gradient)
+
+        # Update state
+        self._attr_is_on = (
+            abs(self._gradient) > abs(self._min_gradient)
+            and math.copysign(self._gradient, self._min_gradient) == self._gradient
+        )
+
+        if self._invert:
+            self._attr_is_on = not self._attr_is_on
+
+    def _calculate_gradient(self) -> None:
+        """Compute the linear trend gradient of the current samples.
+
+        This need run inside executor.
+        """
+        timestamps = np.array([t for t, _ in self.samples])
+        values = np.array([s for _, s in self.samples])
+        coeffs = np.polyfit(timestamps, values, 1)
+        self._gradient = coeffs[0]
+
+    def _update_state(self) -> None:
+        self._attr_extra_state_attributes["gradient"] = self._gradient
+        self._attr_extra_state_attributes["min_gradient"] = self.min_gradient
+        self._attr_extra_state_attributes["entity_to_monitor"] = self._to_monitor

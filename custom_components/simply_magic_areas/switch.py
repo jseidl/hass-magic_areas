@@ -4,8 +4,8 @@ import logging
 
 from homeassistant.components.switch import (
     DOMAIN as SWITCH_DOMAIN,
-    SwitchEntity,
     SwitchDeviceClass,
+    SwitchEntity,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_OFF, STATE_ON
@@ -51,9 +51,11 @@ def add_switches(area: MagicArea, async_add_entities: AddEntitiesCallback):
 class SwitchBase(MagicEntity, SwitchEntity):
     """The base class for all the switches."""
 
-    def __init__(self, area: MagicArea) -> None:
+    def __init__(self, area: MagicArea, translation_key: str) -> None:
         """Initialize the base switch bits, basic just a mixin for the two types."""
-        MagicEntity.__init__(self, area)
+        MagicEntity.__init__(
+            self, area=area, domain=SWITCH_DOMAIN, translation_key=translation_key
+        )
         SwitchEntity.__init__(self)
         self._attr_device_class = SwitchDeviceClass.SWITCH
         self._attr_should_poll = False
@@ -84,9 +86,9 @@ class AreaLightControlSwitch(SwitchBase):
     def __init__(self, area: MagicArea) -> None:
         """Initialize the area light control switch."""
 
-        super().__init__(area)
-        self._attr_name = f"Simply Magic Areas Light Control ({self.area.name})"
-        self.entity_id = f"{SWITCH_DOMAIN}.{slugify(self._attr_name)}"
+        super().__init__(area, "light_control")
+        self._attr_name = area.entity_name("Light Control")
+        self.entity_id = area.entity_unique_id(SWITCH_DOMAIN, "Light Control")
         self._attr_state = STATE_OFF
         self._attr_is_on = False
 
@@ -102,7 +104,7 @@ class AreaLightsManualOverrideActiveSwitch(SwitchBase):
     def __init__(self, area: MagicArea) -> None:
         """Initialize the area manual override switch."""
 
-        super().__init__(area)
+        super().__init__(area, "manual_override")
         self._attr_name = (
             f"Simply Magic Areas Manual Override Active ({self.area.name})"
         )
@@ -122,7 +124,7 @@ class AreaPresenceHoldSwitch(SwitchBase):
     def __init__(self, area: MagicArea) -> None:
         """Initialize the area presence hold switch."""
 
-        super().__init__(area)
+        super().__init__(area, "presence_hold")
         self._attr_name = f"Simply Magic Areas Presence Hold ({self.area.name})"
         self.entity_id = f"{SWITCH_DOMAIN}.{slugify(self._attr_name)}"
 

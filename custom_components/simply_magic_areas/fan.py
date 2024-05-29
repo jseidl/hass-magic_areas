@@ -99,14 +99,15 @@ class AreaFanGroup(MagicEntity, FanGroup):
 
     def __init__(self, area: MagicArea, entities: list[str]) -> None:
         """Init the fan group for the area."""
-        MagicEntity.__init__(self, area)
+        MagicEntity.__init__(self, area=area, domain=FAN_DOMAIN, translation_key="fan")
         FanGroup.__init__(
             self,
             entities=entities,
-            name=f"Simply Magic Areas Fan ({area.name})",
-            unique_id=slugify(f"Simply Magic Areas Fan ({area.name})"),
+            name="",
+            unique_id=f"light_{slugify(area.name)}",
         )
 
+        self._attr_name = None
         self._icon: str = "mdi:fan"
         self._manual_timeout_cb: CALLBACK_TYPE | None = None
 

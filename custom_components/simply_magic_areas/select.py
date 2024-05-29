@@ -70,25 +70,33 @@ class AreaStateSelect(MagicEntity, SelectEntity):
     def __init__(self, area: MagicArea) -> None:
         """Initialize the area presence select."""
 
-        MagicEntity.__init__(self, area)
         SelectEntity.__init__(self)
+        MagicEntity.__init__(
+            self, area=area, domain=SELECT_DOMAIN, translation_key="state"
+        )
 
-        self._attr_name: str = f"Simply Magic Areas ({self.area.name})"
+        # self._attr_name: str = f"Simply Magic Areas ({self.area.name})"
+        self._attr_unique_id = f"simply_magic_areas_state_{area.slug}"
+        self._attr_name = None
         self._attr_options = list(AreaState)
         self._attr_current_option = AreaState.AREA_STATE_CLEAR
         self._state = AreaState.AREA_STATE_CLEAR
         self._attr_extra_state_attributes = {}
+        self._attr_icon = "mdi:home-search"
+        self._attr_has_entity_name = True
 
         self._last_off_time: datetime = datetime.now(UTC) - timedelta(days=2)
         self._clear_timeout_callback: Callable[[], None] | None = None
         self._extended_timeout_callback: Callable[[], None] | None = None
         self._sensors: list[str] = []
         self._mode: str = "one"
-
-    @property
-    def icon(self) -> str | None:
-        """Return the icon to be used for this entity."""
-        return "mdi:home-search"
+        _LOGGER.debug(
+            "%s: Select initialized - 1 %s %s %s",
+            self.unique_id,
+            self.entity_id,
+            self.name,
+            self.translation_key,
+        )
 
     async def async_added_to_hass(self) -> None:
         """Call to add the system to hass."""
@@ -100,7 +108,13 @@ class AreaStateSelect(MagicEntity, SelectEntity):
         # Setup the listeners
         await self._setup_listeners()
 
-        _LOGGER.debug("%s: Select initialized", self.name)
+        _LOGGER.debug(
+            "%s: Select initialized %s %s %s",
+            self.unique_id,
+            self.entity_id,
+            self.name,
+            self.translation_key,
+        )
         self.async_on_remove(self._cleanup_timers)
         _LOGGER.warning("%s: Done with adding select to hass", self.area.slug)
 

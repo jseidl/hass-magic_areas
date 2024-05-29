@@ -32,7 +32,9 @@ async def test_area_change(
     registry.async_get_or_create("frog")
 
     # Validate the right enties were created.
-    area_binary_sensor = hass.states.get(f"{SELECT_DOMAIN}.simply_magic_areas_kitchen")
+    area_binary_sensor = hass.states.get(
+        f"{SELECT_DOMAIN}.simply_magic_areas_state_kitchen"
+    )
 
     assert area_binary_sensor is not None
     assert area_binary_sensor.state == "clear"

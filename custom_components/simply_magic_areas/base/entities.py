@@ -16,19 +16,19 @@ class MagicEntity(RestoreEntity):
     """MagicEntity is the base entity for use with all the magic classes."""
 
     area: MagicArea = None
+    _attr_has_entity_name = True
+    _attr_name = None
 
-    def __init__(self, area: MagicArea) -> None:
+    def __init__(self, area: MagicArea, domain: str, translation_key: str) -> None:
         """Initialize the magic area."""
         # Avoiding using super() due multiple inheritance issues
         RestoreEntity.__init__(self)
 
         self.area = area
-
-    @property
-    def unique_id(self) -> str:
-        """Return a unique ID."""
-        name_slug = slugify(self._attr_name)
-        return f"{name_slug}"
+        self._attr_translation_key = slugify(translation_key)
+        self._attr_unique_id = f"simply_magic_areas_{translation_key}_{area.slug}"
+        self.entity_id = f"{domain}.simply_magic_areas_{translation_key}_{area.slug}"
+        self._attr_translation_placeholders = {"area_name": area.name}
 
     @property
     def should_poll(self) -> str:

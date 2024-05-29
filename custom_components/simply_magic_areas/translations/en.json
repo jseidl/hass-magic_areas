@@ -106,5 +106,46 @@
       "option_error": "Invalid option",
       "malformed_input": "This field is invalid:"
     }
+  },
+  "entity": {
+    "binary_sensor": {
+      "sma_occupancy": {
+        "name": "{area_name} Occupancy (Simply Magic Areas)"
+      },
+      "humidity_occupancy": {
+        "name": "{area_name} Humidity Occupancy (Simply Magic Areas)",
+        "state": {
+          "on": "Humidity Increasing",
+          "off": "Humidity Steady"
+        }
+      },
+      "humidity_empty": {
+        "name": "{area_name} Humidity Empty (Simply Magic Areas)",
+        "state": {
+          "on": "Humidity Dropping",
+          "off": "Humidity steady"
+        }
+      }
+    },
+    "sensor": {
+      "state": {
+        "name": "{area_name} State (Simply Magic Areas)",
+        "state": {
+          "sleep": "Sleep",
+          "occupied": "Occupied",
+          "bright": "Bright",
+          "clear": "Clear",
+          "accented": "Accented"
+        }
+      }
+    },
+    "switch": {
+      "light_control": {
+        "name": "{area_name} Light Control (Simply Magic Areas)"
+      },
+      "manual_override": {
+        "name": "{area_name} Manual Overried (Simply Magic Areas)"
+      }
+    }
   }
 }
