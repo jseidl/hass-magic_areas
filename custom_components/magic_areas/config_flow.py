@@ -418,9 +418,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         # Return all relevant entities
         self.all_entities = sorted(
-            entity_id
-            for entity_id in self.hass.states.async_entity_ids()
-            if entity_id.split(".")[0] in CONFIG_FLOW_ENTITY_FILTER_EXT
+            self.resolve_groups(
+                entity_id
+                for entity_id in self.hass.states.async_entity_ids()
+                if entity_id.split(".")[0] in CONFIG_FLOW_ENTITY_FILTER_EXT
+            )
         )
 
         # Return all relevant area entities that exists

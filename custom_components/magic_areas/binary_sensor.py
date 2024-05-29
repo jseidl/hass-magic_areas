@@ -76,7 +76,7 @@ def create_health_sensors(
         if entity[ATTR_DEVICE_CLASS] not in DISTRESS_SENSOR_CLASSES:
             continue
 
-        distress_entities.append(entity)
+        distress_entities.append(entity["entity_id"])
 
     if len(distress_entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
         CONF_AGGREGATES_MIN_ENTITIES, 0
@@ -116,9 +116,9 @@ def create_aggregate_sensors(
             continue
 
         if entity[ATTR_DEVICE_CLASS] not in device_class_entities:
-            device_class_entities[entity[ATTR_DEVICE_CLASS]] = [entity["entity_id"]]
-        else:
-            device_class_entities[entity[ATTR_DEVICE_CLASS]].append(entity["entity_id"])
+            device_class_entities[entity[ATTR_DEVICE_CLASS]] = []
+
+        device_class_entities[entity[ATTR_DEVICE_CLASS]].append(entity["entity_id"])
 
     for device_class, entity_list in device_class_entities.items():
         if len(entity_list) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
