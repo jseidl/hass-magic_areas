@@ -56,7 +56,9 @@ def add_sensors(
     # Create extra sensors
     if area.has_feature(CONF_FEATURE_AGGREGATION):
         entities.extend(create_aggregate_sensors(area))
-        entities.append(create_illuminance_threshold(area, hass))
+        illuminance_threshold_sensor = create_illuminance_threshold(area, hass)
+        if illuminance_threshold_sensor:
+            entities.append(illuminance_threshold_sensor)
 
     if area.has_feature(CONF_FEATURE_HEALTH):
         entities.extend(create_health_sensors(area))
