@@ -11,6 +11,9 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
+from homeassistant.components.device_tracker.const import (
+    DOMAIN as DEVICE_TRACKER_DOMAIN,
+)
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
@@ -200,6 +203,7 @@ ALL_PRESENCE_DEVICE_PLATFORMS = [
     MEDIA_PLAYER_DOMAIN,
     BINARY_SENSOR_DOMAIN,
     REMOTE_DOMAIN,
+    DEVICE_TRACKER_DOMAIN,
 ]
 (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -227,6 +231,11 @@ CONF_AGGREGATES_SENSOR_DEVICE_CLASSES, DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES 
     "aggregates_sensor_device_classes",
     ALL_SENSOR_DEVICE_CLASSES,
 )  # cv.ensure_list
+CONF_AGGREGATES_ILLUMINANCE_THRESHOLD, DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD = (
+    "aggregates_illuminance_threshold",
+    0,  # 0 = disabled
+)  # cv.positive_int
+
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT_META = (
     "clear_timeout",
     60,
@@ -413,6 +422,10 @@ AGGREGATE_FEATURE_SCHEMA = vol.Schema(
             CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
             default=DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
         ): cv.ensure_list,
+        vol.Optional(
+            CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
+            default=DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
+        ): cv.positive_int,
     }
 )
 
@@ -671,6 +684,11 @@ OPTIONS_AGGREGATES = [
         DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
         cv.ensure_list,
     ),
+    (
+        CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
+        DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
+        int,
+    ),
 ]
 
 OPTIONS_PRESENCE_HOLD = [
@@ -694,6 +712,11 @@ OPTIONS_AREA_AWARE_MEDIA_PLAYER = [
 CONFIG_FLOW_ENTITY_FILTER = [
     BINARY_SENSOR_DOMAIN,
     SENSOR_DOMAIN,
+    SWITCH_DOMAIN,
+    INPUT_BOOLEAN_DOMAIN,
+]
+CONFIG_FLOW_ENTITY_FILTER_BOOL = [
+    BINARY_SENSOR_DOMAIN,
     SWITCH_DOMAIN,
     INPUT_BOOLEAN_DOMAIN,
 ]

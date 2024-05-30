@@ -2,10 +2,10 @@
 
 import logging
 
-from custom_components.magic_areas.const import DOMAIN, MAGIC_DEVICE_ID_PREFIX
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
+from ..const import DOMAIN, MAGIC_DEVICE_ID_PREFIX
 from .magic import MagicArea
 
 _LOGGER = logging.getLogger(__name__)

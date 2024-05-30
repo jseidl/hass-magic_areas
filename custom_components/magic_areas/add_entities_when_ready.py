@@ -18,6 +18,7 @@ def add_entities_when_ready(
     async_add_entities: AddEntitiesCallback,
     config_entry: ConfigEntry,
     callback_fn: Callable[[MagicArea, AddEntitiesCallback], None],
+    with_hass: bool = False,
 ) -> None:
     """Add entities into the system when it is ready to add."""
     ma_data = hass.data[MODULE_DATA]
@@ -26,7 +27,10 @@ def add_entities_when_ready(
 
     # Run right away if area is ready
     if area.initialized:
-        callback_fn(area, async_add_entities)
+        if with_hass:
+            callback_fn(area, hass, async_add_entities)
+        else:
+            callback_fn(area, async_add_entities)
     else:
         callback = None
 
@@ -45,7 +49,10 @@ def add_entities_when_ready(
                 callback()
 
             try:
-                callback_fn(area, async_add_entities)
+                if with_hass:
+                    callback_fn(area, hass, async_add_entities)
+                else:
+                    callback_fn(area, async_add_entities)
             # pylint: disable-next=broad-exception-caught
             except Exception:
                 _LOGGER.exception(

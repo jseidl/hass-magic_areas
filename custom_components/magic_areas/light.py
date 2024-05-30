@@ -108,12 +108,10 @@ class MetaAreaLightGroup(MagicEntity, LightGroup):
         """Initialize parent class and state."""
         MagicEntity.__init__(self, area)
 
-        self._entities = entities
-
         self._name = name if name else f"{self.area.name} Lights"
         unique_id = slugify(self._name)
 
-        LightGroup.__init__(self, unique_id, self._name, self._entities, mode=False)
+        LightGroup.__init__(self, unique_id, self._name, entities, mode=False)
 
 
 class AreaLightGroup(MagicEntity, LightGroup):

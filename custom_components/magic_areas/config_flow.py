@@ -42,6 +42,7 @@ from .const import (
     CONF_ACCENT_LIGHTS_ACT_ON,
     CONF_ACCENT_LIGHTS_STATES,
     CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
+    CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_CLEAR_TIMEOUT,
@@ -80,6 +81,7 @@ from .const import (
     CONF_TASK_LIGHTS_STATES,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
+    CONFIG_FLOW_ENTITY_FILTER_BOOL,
     CONFIG_FLOW_ENTITY_FILTER_EXT,
     CONFIGURABLE_AREA_STATE_MAP,
     CONFIGURABLE_FEATURES,
@@ -321,7 +323,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
                 )
                 config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
-            return self.async_create_entry(title=area.name, data=config_entry)
+            return self.async_create_entry(title=area_object.name, data=config_entry)
 
         # Filter out already-configured areas
         configured_areas = []
@@ -377,6 +379,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         self.all_area_entities = []
         self.all_lights = []
         self.all_media_players = []
+        self.all_binary_entities = []
         self.all_light_tracking_entities = []
         self.area_options = {}
 
@@ -401,6 +404,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     filtered_configurable_features.remove(feature)
 
         return filtered_configurable_features
+
+    async def _update_options(self):
+        """Update config entry options."""
+        return self.async_create_entry(title="", data=dict(self.area_options))
 
     async def async_step_init(self, user_input=None):
         """Initialize the options flow."""
@@ -439,6 +446,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             )
 
         self.area_entities = sorted(self.resolve_groups(filtered_area_entities))
+
+        # All binary entities
+        self.all_binary_entities = sorted(
+            self.resolve_groups(
+                entity_id
+                for entity_id in self.all_entities
+                if entity_id.split(".")[0] in CONFIG_FLOW_ENTITY_FILTER_BOOL
+            )
+        )
 
         self.all_area_entities = sorted(
             self.area_entities
@@ -483,8 +499,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
         area_schema = META_AREA_SCHEMA if self.area.is_meta() else REGULAR_AREA_SCHEMA
-        self.area_options = area_schema({})
-        self.area_options.update(self.config_entry.options)
+        self.area_options = area_schema(dict(self.config_entry.options))
 
         _LOGGER.debug(
             "%s: Loaded area options: %s", self.area.name, str(self.area_options)
@@ -497,21 +512,23 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         # Show options menu
         menu_options: list = [
             "area_config",
-            "secondary_states",
             "presence_tracking",
             "select_features",
         ]
 
+        if not self.area.is_meta():
+            menu_options.insert(1, "secondary_states")
+
         # Add entries for features
         menu_options_features = []
         configurable_features = self._get_configurable_features()
-        for feature in self.area_options[CONF_ENABLED_FEATURES]:
+        for feature in self.area_options.get(CONF_ENABLED_FEATURES, {}):
             if feature not in configurable_features:
                 continue
             menu_options_features.append(f"feature_conf_{feature}")
 
         menu_options.extend(sorted(menu_options_features))
-        menu_options.append("save_and_exit")
+        menu_options.append("finish")
 
         return self.async_show_menu(step_id="show_menu", menu_options=menu_options)
 
@@ -717,18 +734,18 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     CONF_DARK_ENTITY: vol.In(
                         EMPTY_ENTRY + self.all_light_tracking_entities
                     ),
-                    CONF_SLEEP_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
-                    CONF_ACCENT_ENTITY: vol.In(EMPTY_ENTRY + self.all_entities),
+                    CONF_SLEEP_ENTITY: vol.In(EMPTY_ENTRY + self.all_binary_entities),
+                    CONF_ACCENT_ENTITY: vol.In(EMPTY_ENTRY + self.all_binary_entities),
                 },
                 selectors={
                     CONF_DARK_ENTITY: self._build_selector_entity_simple(
                         self.all_light_tracking_entities
                     ),
                     CONF_SLEEP_ENTITY: self._build_selector_entity_simple(
-                        self.all_entities
+                        self.all_binary_entities
                     ),
                     CONF_ACCENT_ENTITY: self._build_selector_entity_simple(
-                        self.all_entities
+                        self.all_binary_entities
                     ),
                     CONF_SLEEP_TIMEOUT: self._build_selector_number(),
                     CONF_EXTENDED_TIME: self._build_selector_number(),
@@ -753,13 +770,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 self.area.name,
                 str(selected_features),
             )
+
+            if CONF_ENABLED_FEATURES not in self.area_options:
+                self.area_options[CONF_ENABLED_FEATURES] = {}
+
             for c_feature in feature_list:
                 if c_feature in selected_features:
-                    if c_feature not in self.area_options[CONF_ENABLED_FEATURES]:
+                    if c_feature not in self.area_options.get(
+                        CONF_ENABLED_FEATURES, {}
+                    ):
                         self.area_options[CONF_ENABLED_FEATURES][c_feature] = {}
                 else:
                     # Remove feature if we had previously enabled
-                    if c_feature in self.area_options[CONF_ENABLED_FEATURES]:
+                    if c_feature in self.area_options.get(CONF_ENABLED_FEATURES, {}):
                         self.area_options[CONF_ENABLED_FEATURES].pop(c_feature)
 
             return await self.async_step_show_menu()
@@ -783,14 +806,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             ),
         )
 
-    async def async_step_save_and_exit(self, user_input=None):
+    async def async_step_finish(self, user_input=None):
         """Save options and exit options flow."""
         _LOGGER.debug(
             "OptionsFlow: All features configured for area %s, saving config: %s",
             self.area.name,
             str(self.area_options),
         )
-        return self.async_create_entry(title=self.area.name, data=self.area_options)
+        return await self._update_options()
 
     async def async_step_feature_conf_light_groups(self, user_input=None):
         """Configure the light groups feature."""
@@ -926,6 +949,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             ),
             CONF_AGGREGATES_SENSOR_DEVICE_CLASSES: self._build_selector_select(
                 sorted(ALL_SENSOR_DEVICE_CLASSES), multiple=True
+            ),
+            CONF_AGGREGATES_ILLUMINANCE_THRESHOLD: self._build_selector_number(
+                unit_of_measurement="lx", mode="slider", min_value=0, max_value=1000
             ),
         }
 
