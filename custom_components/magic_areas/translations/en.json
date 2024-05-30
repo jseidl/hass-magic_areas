@@ -129,7 +129,7 @@
           "extended_timeout": "How long area will wait before clearing the state when on extended state"
         },
         "data_description": {
-          "dark_entity": "The area's light sensor will be used to track an area `bright`/`dark` status which is used by features such as Light groups to turn on/off your lights according to the room brightness state."
+          "dark_entity": "The area's light sensor will be used to track an area `bright`/`dark` status which is used by features such as Light groups to turn on/off your lights according to the room brightness state.\n\n**Avoid using a `light` sensor in the same area as it may cause a feedback loop.** It is recommended to use either `sun.sun` or an exterior `light` sensor that won't be affected by the lights being controlled."
         }
       },
       "area_config": {
