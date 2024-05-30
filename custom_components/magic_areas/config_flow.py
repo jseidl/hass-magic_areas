@@ -512,10 +512,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         # Show options menu
         menu_options: list = [
             "area_config",
-            "secondary_states",
             "presence_tracking",
             "select_features",
         ]
+
+        if not self.area.is_meta():
+            menu_options.insert(1, "secondary_states")
 
         # Add entries for features
         menu_options_features = []
