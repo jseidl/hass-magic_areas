@@ -45,6 +45,9 @@ def create_illuminance_threshold(area: MagicArea, hass: HomeAssistant) -> Entity
     ):
         return None
 
+    if SENSOR_DOMAIN not in area.entities:
+        return None
+
     illuminance_sensors = [
         sensor
         for sensor in area.entities[SENSOR_DOMAIN]

@@ -40,7 +40,7 @@
           "secondary_states": "Advanced area state tracking",
           "presence_tracking": "Presence tracking options",
           "select_features": "Feature selection",
-          "save_and_exit": "Save & Exit",
+          "finish": "Save & Exit",
           "feature_conf_climate_groups": "Configure climate groups",
           "feature_conf_light_groups": "Configure light groups",
           "feature_conf_area_aware_media_player": "Configure area-aware media player",

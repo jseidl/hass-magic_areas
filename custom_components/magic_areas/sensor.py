@@ -28,6 +28,7 @@ from .const import (
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_FEATURE_AGGREGATION,
+    DEFAULT_AGGREGATES_MIN_ENTITIES,
     DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
     DEFAULT_SENSOR_PRECISION,
 )
@@ -89,7 +90,7 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
         for uom, entities in unit_of_measurements.items():
 
             if len(entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
-                CONF_AGGREGATES_MIN_ENTITIES
+                CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES
             ):
                 continue
 

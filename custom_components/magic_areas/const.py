@@ -11,6 +11,9 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
+from homeassistant.components.device_tracker.const import (
+    DOMAIN as DEVICE_TRACKER_DOMAIN,
+)
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
@@ -200,6 +203,7 @@ ALL_PRESENCE_DEVICE_PLATFORMS = [
     MEDIA_PLAYER_DOMAIN,
     BINARY_SENSOR_DOMAIN,
     REMOTE_DOMAIN,
+    DEVICE_TRACKER_DOMAIN,
 ]
 (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -708,6 +712,11 @@ OPTIONS_AREA_AWARE_MEDIA_PLAYER = [
 CONFIG_FLOW_ENTITY_FILTER = [
     BINARY_SENSOR_DOMAIN,
     SENSOR_DOMAIN,
+    SWITCH_DOMAIN,
+    INPUT_BOOLEAN_DOMAIN,
+]
+CONFIG_FLOW_ENTITY_FILTER_BOOL = [
+    BINARY_SENSOR_DOMAIN,
     SWITCH_DOMAIN,
     INPUT_BOOLEAN_DOMAIN,
 ]
