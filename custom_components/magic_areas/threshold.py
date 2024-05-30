@@ -19,6 +19,7 @@ from .const import (
     CONF_FEATURE_AGGREGATION,
     DEFAULT_AGGREGATES_MIN_ENTITIES,
     DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
+    DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def create_illuminance_threshold(area: MagicArea, hass: HomeAssistant) -> Entity
         return None
 
     illuminance_threshold = area.feature_config(CONF_FEATURE_AGGREGATION).get(
-        CONF_AGGREGATES_ILLUMINANCE_THRESHOLD, 0
+        CONF_AGGREGATES_ILLUMINANCE_THRESHOLD, DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD
     )
 
     if illuminance_threshold == 0:
