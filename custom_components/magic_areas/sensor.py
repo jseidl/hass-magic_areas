@@ -106,9 +106,20 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
                 len(entities),
                 area.slug,
             )
+
+            # Create name dynamically
+            device_class_name = " ".join(device_class.split("_")).title()
+            if len(unit_of_measurements) > 1:
+                sensor_name = (
+                    f"Area {device_class_name} [{unit_of_measurement}] ({area.name})"
+                )
+            else:
+                sensor_name = f"Area {device_class_name} ({area.name})"
+
             aggregates.append(
                 AreaSensorGroupSensor(
                     area=area,
+                    name=sensor_name,
                     device_class=device_class,
                     entity_ids=entities,
                     unit_of_measurement=uom,
@@ -124,6 +135,7 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
     def __init__(
         self,
         area: MagicArea,
+        name: str,
         device_class: SensorDeviceClass,
         entity_ids: list[str],
         unit_of_measurement: str | None = None,
@@ -131,9 +143,6 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
         """Initialize an area sensor group sensor."""
 
         MagicEntity.__init__(self, area=area)
-
-        device_class_name = " ".join(device_class.split("_")).title()
-        name = f"Area {device_class_name} [{unit_of_measurement}] ({self.area.name})"
 
         default_unit_of_measurement = None
 

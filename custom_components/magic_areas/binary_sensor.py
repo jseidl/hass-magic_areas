@@ -27,6 +27,7 @@ from .const import (
     DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     DISTRESS_SENSOR_CLASSES,
 )
+from .threshold import create_illuminance_threshold
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,10 +39,14 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Area config entry."""
 
-    add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
+    add_entities_when_ready(
+        hass, async_add_entities, config_entry, add_sensors, with_hass=True
+    )
 
 
-def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback) -> None:
+def add_sensors(
+    area: MagicArea, hass: HomeAssistant, async_add_entities: AddEntitiesCallback
+) -> None:
     """Add the basic sensors for the area."""
     entities = []
 
@@ -50,18 +55,17 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback) -> Non
 
     # Create extra sensors
     if area.has_feature(CONF_FEATURE_AGGREGATION):
-        entities.extend(create_aggregate_sensors(area, async_add_entities))
+        entities.extend(create_aggregate_sensors(area))
+        entities.append(create_illuminance_threshold(area, hass))
 
     if area.has_feature(CONF_FEATURE_HEALTH):
-        entities.extend(create_health_sensors(area, async_add_entities))
+        entities.extend(create_health_sensors(area))
 
     # Add all entities
     async_add_entities(entities)
 
 
-def create_health_sensors(
-    area: MagicArea, async_add_entities: AddEntitiesCallback
-) -> list[Entity]:
+def create_health_sensors(area: MagicArea) -> list[Entity]:
     """Add the health sensors for the area."""
     if not area.has_feature(CONF_FEATURE_HEALTH):
         return []
@@ -97,9 +101,7 @@ def create_health_sensors(
     return entities
 
 
-def create_aggregate_sensors(
-    area: MagicArea, async_add_entities: AddEntitiesCallback
-) -> list[Entity]:
+def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
     """Create the aggregate sensors for the area."""
     # Create aggregates
     if not area.has_feature(CONF_FEATURE_AGGREGATION):

@@ -42,6 +42,7 @@ from .const import (
     CONF_ACCENT_LIGHTS_ACT_ON,
     CONF_ACCENT_LIGHTS_STATES,
     CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
+    CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_CLEAR_TIMEOUT,
@@ -321,7 +322,7 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
                 )
                 config_entry.update({CONF_TYPE: AREA_TYPE_META})
 
-            return self.async_create_entry(title=area.name, data=config_entry)
+            return self.async_create_entry(title=area_object.name, data=config_entry)
 
         # Filter out already-configured areas
         configured_areas = []
@@ -926,6 +927,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             ),
             CONF_AGGREGATES_SENSOR_DEVICE_CLASSES: self._build_selector_select(
                 sorted(ALL_SENSOR_DEVICE_CLASSES), multiple=True
+            ),
+            CONF_AGGREGATES_ILLUMINANCE_THRESHOLD: self._build_selector_number(
+                unit_of_measurement="lx", mode="slider", min_value=0, max_value=1000
             ),
         }
 

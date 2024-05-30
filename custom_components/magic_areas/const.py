@@ -227,6 +227,11 @@ CONF_AGGREGATES_SENSOR_DEVICE_CLASSES, DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES 
     "aggregates_sensor_device_classes",
     ALL_SENSOR_DEVICE_CLASSES,
 )  # cv.ensure_list
+CONF_AGGREGATES_ILLUMINANCE_THRESHOLD, DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD = (
+    "aggregates_illuminance_threshold",
+    600,
+)  # cv.positive_int
+
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT_META = (
     "clear_timeout",
     60,
@@ -413,6 +418,10 @@ AGGREGATE_FEATURE_SCHEMA = vol.Schema(
             CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
             default=DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
         ): cv.ensure_list,
+        vol.Optional(
+            CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
+            default=DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
+        ): cv.positive_int,
     }
 )
 
@@ -670,6 +679,11 @@ OPTIONS_AGGREGATES = [
         CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
         DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
         cv.ensure_list,
+    ),
+    (
+        CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
+        DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
+        int,
     ),
 ]
 
