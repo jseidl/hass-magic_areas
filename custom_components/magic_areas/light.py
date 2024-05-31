@@ -62,7 +62,7 @@ def add_lights(area, async_add_entities):
 
     # Create light groups
     if area.is_meta():
-        light_groups.append(MetaAreaLightGroup(area, light_entities))
+        light_groups.append(MagicLightGroup(area, light_entities))
     else:
         light_group_ids = []
 
@@ -101,7 +101,7 @@ def add_lights(area, async_add_entities):
     async_add_entities(light_groups)
 
 
-class MetaAreaLightGroup(MagicEntity, LightGroup):
+class MagicLightGroup(MagicEntity, LightGroup):
     """Magic Light Group for Meta-areas."""
 
     def __init__(self, area, entities, name=None):
@@ -113,8 +113,49 @@ class MetaAreaLightGroup(MagicEntity, LightGroup):
 
         LightGroup.__init__(self, unique_id, self._name, entities, mode=False)
 
+    def _get_active_lights(self) -> list[str]:
+        """Return list of lights that are on."""
+        active_lights = []
+        for entity_id in self._entity_ids:
+            light_state = self.hass.states.get(entity_id)
+            if not light_state:
+                continue
+            if light_state.state == STATE_ON:
+                active_lights.append(entity_id)
 
-class AreaLightGroup(MagicEntity, LightGroup):
+        return active_lights
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Forward the turn_on command to all lights in the light group."""
+        data = {}
+
+        # Copy parameters over
+        for arg_keyword, arg_value in kwargs.items():
+            data[arg_keyword] = arg_value
+
+        # Active lights
+        active_lights = self._get_active_lights()
+
+        if active_lights:
+            _LOGGER.debug(
+                "%s: restricting call to active lights: %s",
+                self.area.name,
+                str(active_lights),
+            )
+
+        data[ATTR_ENTITY_ID] = active_lights if active_lights else self._entity_ids
+
+        # Forward call
+        await self.hass.services.async_call(
+            LIGHT_DOMAIN,
+            SERVICE_TURN_ON,
+            data,
+            blocking=True,
+            context=self._context,
+        )
+
+
+class AreaLightGroup(MagicLightGroup):
     """Magic Light Group."""
 
     def __init__(self, area, entities, category=None, child_ids=None):
@@ -129,6 +170,8 @@ class AreaLightGroup(MagicEntity, LightGroup):
             category_title = " ".join(category.split("_")).title()
             name = f"{category_title} ({area.name})"
 
+        MagicLightGroup.__init__(self, area, entities, name)
+
         self._child_ids = child_ids
 
         self.category = category
@@ -138,14 +181,14 @@ class AreaLightGroup(MagicEntity, LightGroup):
         self.controlling = True
         self.controlled = False
 
-        MagicEntity.__init__(self, area)
-        LightGroup.__init__(
-            self,
-            entity_ids=entities,
-            name=name,
-            unique_id=slugify(name),
-            mode=False,
-        )
+        # MagicEntity.__init__(self, area)
+        # LightGroup.__init__(
+        #     self,
+        #     entity_ids=entities,
+        #     name=name,
+        #     unique_id=slugify(name),
+        #     mode=False,
+        # )
 
         self._icon = LIGHT_GROUP_DEFAULT_ICON
 
