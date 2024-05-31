@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import call_later
+from homeassistant.helpers.event import async_call_later
 from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
@@ -149,6 +149,13 @@ class ResettableMagicSwitch(SimpleMagicSwitch):
 
         self._timeout_callback = None
 
+        self.async_on_remove(self._clear_timers)
+
+    def _clear_timers(self) -> None:
+        """Remove the timer on entity removal."""
+        if self._timeout_callback:
+            self._timeout_callback()
+
     def _timeout_turn_off(self, next_interval):
         """Turn off the presence hold after the timeout."""
         if self._attr_state == STATE_ON:
@@ -165,7 +172,7 @@ class ResettableMagicSwitch(SimpleMagicSwitch):
         )
 
         if timeout and not self._timeout_callback:
-            self._timeout_callback = call_later(
+            self._timeout_callback = async_call_later(
                 self.hass, timeout, self._timeout_turn_off
             )
 
