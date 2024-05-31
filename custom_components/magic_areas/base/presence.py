@@ -12,7 +12,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.components.sun.const import STATE_ABOVE_HORIZON
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
-from homeassistant.core import Event, EventStateChangedData, HomeAssistant
+from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect, dispatcher_send
 from homeassistant.helpers.event import (
     async_track_state_change_event,
@@ -655,8 +655,12 @@ class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
         # Setup area state tracker
         self._state_tracker = AreaStateTracker(self.hass, self.area)
 
+        self.async_on_remove(self._destroy_tracker_callbacks)
+
+    def _destroy_tracker_callbacks(self) -> None:
+        """Destroy all callbacks from tracker"""
         for tracked in self._state_tracker.get_tracked_entities():
-            self.async_on_remove(tracked)
+            self.hass.async_add_executor_job(tracked)
 
     async def _restore_state(self) -> None:
         """Restore the state of the presence sensor entity on initialize."""
