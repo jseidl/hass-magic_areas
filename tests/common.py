@@ -11,9 +11,9 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.const import CONF_ID, CONF_NAME
-from homeassistant.setup import async_setup_component
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
 from homeassistant.helpers.entity_registry import async_get as entityreg_async_get
+from homeassistant.setup import async_setup_component
 
 from .const import (
     MOCK_AREA_NAME,

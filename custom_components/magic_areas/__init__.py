@@ -4,23 +4,39 @@ from collections import defaultdict
 import logging
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
 from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 
 from .base.magic import MagicArea, MagicMetaArea
 from .const import (
+    CONF_CLEAR_TIMEOUT,
+    CONF_EXTENDED_TIME,
+    CONF_EXTENDED_TIMEOUT,
     CONF_ID,
     CONF_NAME,
+    CONF_SECONDARY_STATES,
+    CONF_SLEEP_TIMEOUT,
     DATA_AREA_OBJECT,
     DATA_UNDO_UPDATE_LISTENER,
+    DEFAULT_CLEAR_TIMEOUT,
+    DEFAULT_EXTENDED_TIME,
+    DEFAULT_EXTENDED_TIMEOUT,
+    DEFAULT_SLEEP_TIMEOUT,
     META_AREA_EXTERIOR,
     META_AREA_GLOBAL,
     META_AREA_INTERIOR,
     MODULE_DATA,
+    MagicConfigEntryVersion,
     MetaAreaType,
 )
-from .util import basic_area_from_floor, basic_area_from_meta, basic_area_from_object
+from .util import (
+    basic_area_from_floor,
+    basic_area_from_meta,
+    basic_area_from_object,
+    seconds_to_minutes,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -163,3 +179,61 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         hass.data.pop(MODULE_DATA)
 
     return all_unloaded
+
+
+# Example migration function
+async def async_migrate_entry(hass, config_entry: ConfigEntry):
+    """Migrate old entry."""
+    _LOGGER.debug(
+        "%s: Migrating configuration from version %s.%s, current config: %s",
+        config_entry.data[ATTR_NAME],
+        config_entry.version,
+        config_entry.minor_version,
+        str(config_entry.data),
+    )
+
+    if config_entry.version > MagicConfigEntryVersion.MAJOR:
+        # This means the user has downgraded from a future version
+        _LOGGER.debug(
+            "%s: Major version downgrade detection, skipping migration.",
+            config_entry.data[ATTR_NAME],
+        )
+        return False
+
+    if config_entry.version == 1:
+
+        new_data = {**config_entry.data}
+
+        # Update seconds -> minutes
+        if CONF_CLEAR_TIMEOUT in new_data:
+            new_data[CONF_CLEAR_TIMEOUT] = seconds_to_minutes(
+                new_data[CONF_CLEAR_TIMEOUT], DEFAULT_CLEAR_TIMEOUT
+            )
+        if CONF_SECONDARY_STATES in new_data:
+            entries_to_convert = {
+                CONF_EXTENDED_TIMEOUT: DEFAULT_EXTENDED_TIMEOUT,
+                CONF_EXTENDED_TIME: DEFAULT_EXTENDED_TIME,
+                CONF_SLEEP_TIMEOUT: DEFAULT_SLEEP_TIMEOUT,
+            }
+            for option_key, option_value in entries_to_convert.items():
+                if option_key in new_data[CONF_SECONDARY_STATES]:
+                    old_value = new_data[CONF_SECONDARY_STATES][option_key]
+                    new_data[CONF_SECONDARY_STATES][option_key] = seconds_to_minutes(
+                        old_value, option_value
+                    )
+
+        hass.config_entries.async_update_entry(
+            config_entry,
+            data=new_data,
+            minor_version=MagicConfigEntryVersion.MINOR,
+            version=MagicConfigEntryVersion.MAJOR,
+        )
+
+        _LOGGER.debug(
+            "Migration to configuration version %s.%s successful: %s",
+            config_entry.version,
+            config_entry.minor_version,
+            str(new_data),
+        )
+
+    return True

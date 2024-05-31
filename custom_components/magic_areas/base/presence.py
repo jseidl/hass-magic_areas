@@ -45,6 +45,7 @@ from ..const import (
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_SLEEP_TIMEOUT,
     INVALID_STATES,
+    ONE_MINUTE,
     PRESENCE_SENSOR_VALID_ON_STATES,
     AreaStates,
     MagicAreasEvents,
@@ -149,7 +150,7 @@ class AreaStateTracker:
             ATTR_ACTIVE_SENSORS: self._active_sensors,
             ATTR_LAST_ACTIVE_SENSORS: self._last_active_sensors,
             ATTR_STATES: self.area.states,
-            ATTR_CLEAR_TIMEOUT: self._get_clear_timeout(),
+            ATTR_CLEAR_TIMEOUT: self._get_clear_timeout() / ONE_MINUTE,
         }
 
     def force_update(self) -> None:
@@ -394,7 +395,10 @@ class AreaStateTracker:
             CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME
         )
 
-        if AreaStates.OCCUPIED in states and seconds_since_last_change >= extended_time:
+        if (
+            AreaStates.OCCUPIED in states
+            and (seconds_since_last_change / ONE_MINUTE) >= extended_time
+        ):
             states.append(AreaStates.EXTENDED)
 
         configurable_states = self._get_configured_secondary_states()
@@ -553,16 +557,22 @@ class AreaStateTracker:
     def _get_clear_timeout(self) -> int:
         """Return configured clear timeout value."""
         if self.area.has_state(AreaStates.SLEEP):
-            return self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT
+            return (
+                self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+                    CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT
+                )
+                * ONE_MINUTE
             )
 
         if self.area.has_state(AreaStates.EXTENDED):
-            return self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT
+            return (
+                self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+                    CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT
+                )
+                * ONE_MINUTE
             )
 
-        return self.area.config.get(CONF_CLEAR_TIMEOUT)
+        return self.area.config.get(CONF_CLEAR_TIMEOUT) * ONE_MINUTE
 
     def _remove_clear_timeout(self) -> None:
         if not self._clear_timeout_callback:

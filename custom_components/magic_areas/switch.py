@@ -20,6 +20,7 @@ from .const import (
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_PRESENCE_HOLD_TIMEOUT,
     DEFAULT_PRESENCE_HOLD_TIMEOUT,
+    ONE_MINUTE,
     FeatureIcons,
 )
 
@@ -156,10 +157,10 @@ class ResettableMagicSwitch(SimpleMagicSwitch):
         if self._timeout_callback:
             self._timeout_callback()
 
-    def _timeout_turn_off(self, next_interval):
+    async def _timeout_turn_off(self, next_interval):
         """Turn off the presence hold after the timeout."""
         if self._attr_state == STATE_ON:
-            self.turn_off()
+            await self.async_turn_off()
 
     async def async_turn_on(self, **kwargs):
         """Turn on presence hold."""
@@ -173,7 +174,7 @@ class ResettableMagicSwitch(SimpleMagicSwitch):
 
         if timeout and not self._timeout_callback:
             self._timeout_callback = async_call_later(
-                self.hass, timeout, self._timeout_turn_off
+                self.hass, timeout * ONE_MINUTE, self._timeout_turn_off
             )
 
     async def async_turn_off(self, **kwargs):
