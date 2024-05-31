@@ -12,7 +12,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.components.sun.const import STATE_ABOVE_HORIZON
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
-from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
+from homeassistant.core import Event, EventStateChangedData, HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect, dispatcher_send
 from homeassistant.helpers.event import (
     async_track_state_change_event,
@@ -132,12 +132,9 @@ class AreaStateTracker:
             async_track_time_interval(self.hass, self._refresh_states, delta)
         )
 
-    @callback
-    def cleanup_timers(self) -> None:
-        """Cleanup area tracker."""
-        self._remove_clear_timeout()
-        for listener in self._tracker_callbacks:
-            listener()
+    def get_tracked_entities(self) -> None:
+        """Return tracked entity callbacks."""
+        return self._tracker_callbacks
 
     # Public methods
 
@@ -647,7 +644,9 @@ class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
 
         # Setup area state tracker
         self._state_tracker = AreaStateTracker(self.hass, self.area)
-        self.async_on_remove(self._state_tracker.cleanup_timers)
+
+        for tracked in self._state_tracker.get_tracked_entities():
+            self.async_on_remove(tracked)
 
     async def _restore_state(self) -> None:
         """Restore the state of the presence sensor entity on initialize."""

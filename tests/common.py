@@ -12,6 +12,8 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.const import CONF_ID, CONF_NAME
 from homeassistant.setup import async_setup_component
+from homeassistant.helpers.area_registry import async_get as areareg_async_get
+from homeassistant.helpers.entity_registry import async_get as entityreg_async_get
 
 from .const import (
     MOCK_AREA_NAME,
@@ -68,11 +70,11 @@ async def setup_area_with_presence_sensor(hass, extra_opts=None):
     assert hass.states.get(NOCK_PRESENCE_BINARY_SENSOR_ID) is not None
 
     # Create test area
-    area_registry = hass.helpers.area_registry.async_get(hass)
+    area_registry = areareg_async_get(hass)
     test_area = area_registry.async_get_or_create(MOCK_AREA_NAME)
 
     # Add presence sensor to new area
-    entity_registry = hass.helpers.entity_registry.async_get(hass)
+    entity_registry = entityreg_async_get(hass)
     entity = entity_registry.async_get_or_create(
         BINARY_SENSOR_DOMAIN, "template", MOCK_PRESENCE_BINARY_SENSOR_UNIQUEID
     )
@@ -97,7 +99,7 @@ async def setup_area(hass, test_area=None, extra_opts=None):
     """Create an area and corresponding Magic Areas entry."""
 
     if not test_area:
-        area_registry = hass.helpers.area_registry.async_get(hass)
+        area_registry = areareg_async_get(hass)
         test_area = area_registry.async_get_or_create(MOCK_AREA_NAME)
 
     assert test_area is not None

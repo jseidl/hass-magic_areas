@@ -537,15 +537,25 @@ class AreaLightGroup(MagicLightGroup):
                 # Ignore certain events
                 if origin_event.event_type == "state_changed":
                     # Skip non ON/OFF state changes
-                    if origin_event.data["old_state"].state not in [
-                        STATE_ON,
-                        STATE_OFF,
-                    ]:
+                    if (
+                        "old_state" not in origin_event.data
+                        or not origin_event.data["old_state"].state
+                        or origin_event.data["old_state"].state
+                        not in [
+                            STATE_ON,
+                            STATE_OFF,
+                        ]
+                    ):
                         return False
-                    if origin_event.data["new_state"].state not in [
-                        STATE_ON,
-                        STATE_OFF,
-                    ]:
+                    if (
+                        "old_state" not in origin_event.data
+                        or not origin_event.data["new_state"].state
+                        or origin_event.data["new_state"].state
+                        not in [
+                            STATE_ON,
+                            STATE_OFF,
+                        ]
+                    ):
                         return False
 
                     # Skip restored events
