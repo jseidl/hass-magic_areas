@@ -59,6 +59,7 @@ async def test_primary_state_change(hass):
         {ATTR_ENTITY_ID: NOCK_PRESENCE_INPUT_BOOLEAN_ID},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     # Check that binary sensor and area are off
     assert hass.states.get(NOCK_PRESENCE_BINARY_SENSOR_ID).state == STATE_OFF
