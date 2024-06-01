@@ -41,11 +41,19 @@
           "presence_tracking": "Presence tracking options",
           "select_features": "Feature selection",
           "finish": "Save & Exit",
+          "feature_conf_health": "Configure health sensor",
           "feature_conf_climate_groups": "Configure climate groups",
           "feature_conf_light_groups": "Configure light groups",
           "feature_conf_area_aware_media_player": "Configure area-aware media player",
           "feature_conf_aggregates": "Configure aggregate sensors",
           "feature_conf_presence_hold": "Configure presence hold switch"
+        }
+      },
+      "feature_conf_health": {
+        "title": "Health sensor",
+        "description": "You can choose a set of `binary sensor` device clasess that will be tracked by this health sensor that can be used in automations.",
+        "data": {
+          "health_binary_sensor_device_classes": "Device classes to track"
         }
       },
       "feature_conf_light_groups": {
