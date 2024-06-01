@@ -40,6 +40,104 @@ MODULE_DATA = f"{DOMAIN}_data"
 ADDITIONAL_LIGHT_TRACKING_ENTITIES = ["sun.sun"]
 DEFAULT_SENSOR_PRECISION = 2
 
+# Light group options
+CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
+CONF_OVERHEAD_LIGHTS_STATES = "overhead_lights_states"  # cv.ensure_list
+CONF_OVERHEAD_LIGHTS_ACT_ON = "overhead_lights_act_on"  # cv.ensure_list
+CONF_SLEEP_LIGHTS = "sleep_lights"
+CONF_SLEEP_LIGHTS_STATES = "sleep_lights_states"
+CONF_SLEEP_LIGHTS_ACT_ON = "sleep_lights_act_on"
+CONF_ACCENT_LIGHTS = "accent_lights"
+CONF_ACCENT_LIGHTS_STATES = "accent_lights_states"
+CONF_ACCENT_LIGHTS_ACT_ON = "accent_lights_act_on"
+CONF_TASK_LIGHTS = "task_lights"
+CONF_TASK_LIGHTS_STATES = "task_lights_states"
+CONF_TASK_LIGHTS_ACT_ON = "task_lights_act_on"
+
+LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE = "occupancy"
+LIGHT_GROUP_ACT_ON_STATE_CHANGE = "state"
+DEFAULT_LIGHT_GROUP_ACT_ON = [
+    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
+    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
+]
+LIGHT_GROUP_ACT_ON_OPTIONS = [
+    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
+    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
+]
+
+LIGHT_GROUP_DEFAULT_ICON = "mdi:lightbulb-group"
+
+LIGHT_GROUP_ICONS = {
+    CONF_OVERHEAD_LIGHTS: "mdi:ceiling-light",
+    CONF_SLEEP_LIGHTS: "mdi:sleep",
+    CONF_ACCENT_LIGHTS: "mdi:outdoor-lamp",
+    CONF_TASK_LIGHTS: "mdi:desk-lamp",
+}
+
+LIGHT_GROUP_STATES = {
+    CONF_OVERHEAD_LIGHTS: CONF_OVERHEAD_LIGHTS_STATES,
+    CONF_SLEEP_LIGHTS: CONF_SLEEP_LIGHTS_STATES,
+    CONF_ACCENT_LIGHTS: CONF_ACCENT_LIGHTS_STATES,
+    CONF_TASK_LIGHTS: CONF_TASK_LIGHTS_STATES,
+}
+
+LIGHT_GROUP_ACT_ON = {
+    CONF_OVERHEAD_LIGHTS: CONF_OVERHEAD_LIGHTS_ACT_ON,
+    CONF_SLEEP_LIGHTS: CONF_SLEEP_LIGHTS_ACT_ON,
+    CONF_ACCENT_LIGHTS: CONF_ACCENT_LIGHTS_ACT_ON,
+    CONF_TASK_LIGHTS: CONF_TASK_LIGHTS_ACT_ON,
+}
+
+LIGHT_GROUP_CATEGORIES = [
+    CONF_OVERHEAD_LIGHTS,
+    CONF_SLEEP_LIGHTS,
+    CONF_ACCENT_LIGHTS,
+    CONF_TASK_LIGHTS,
+]
+
+AGGREGATE_BINARY_SENSOR_CLASSES = [
+    BinarySensorDeviceClass.WINDOW,
+    BinarySensorDeviceClass.DOOR,
+    BinarySensorDeviceClass.MOTION,
+    BinarySensorDeviceClass.MOISTURE,
+    BinarySensorDeviceClass.LIGHT,
+]
+
+AGGREGATE_MODE_ALL = [
+    BinarySensorDeviceClass.CONNECTIVITY,
+    BinarySensorDeviceClass.PLUG,
+]
+
+# Health related
+DISTRESS_SENSOR_CLASSES = [
+    BinarySensorDeviceClass.PROBLEM,
+    BinarySensorDeviceClass.SMOKE,
+    BinarySensorDeviceClass.MOISTURE,
+    BinarySensorDeviceClass.SAFETY,
+    BinarySensorDeviceClass.GAS,
+]  # @todo make configurable
+DISTRESS_STATES = [STATE_ALARM_TRIGGERED, STATE_ON, STATE_PROBLEM]
+
+# Aggregates
+AGGREGATE_SENSOR_CLASSES = (
+    SensorDeviceClass.CURRENT,
+    SensorDeviceClass.ENERGY,
+    SensorDeviceClass.HUMIDITY,
+    SensorDeviceClass.ILLUMINANCE,
+    SensorDeviceClass.POWER,
+    SensorDeviceClass.TEMPERATURE,
+)
+
+AGGREGATE_MODE_SUM = [
+    SensorDeviceClass.POWER,
+    SensorDeviceClass.CURRENT,
+    SensorDeviceClass.ENERGY,
+]
+
+AGGREGATE_MODE_TOTAL_SENSOR = [
+    SensorDeviceClass.ENERGY,
+]
+
 
 class MagicConfigEntryVersion(IntEnum):
     """Magic Area config entry version."""
@@ -245,6 +343,11 @@ CONF_AGGREGATES_ILLUMINANCE_THRESHOLD, DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD 
     0,  # 0 = disabled
 )  # cv.positive_int
 
+CONF_HEALTH_SENSOR_DEVICE_CLASSES, DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES = (
+    "health_binary_sensor_device_classes",
+    DISTRESS_SENSOR_CLASSES,
+)
+
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT_META = (
     "clear_timeout",
     1,
@@ -318,103 +421,6 @@ CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = (
     AREA_STATE_EXTENDED,
 )
 
-# Light group options
-CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
-CONF_OVERHEAD_LIGHTS_STATES = "overhead_lights_states"  # cv.ensure_list
-CONF_OVERHEAD_LIGHTS_ACT_ON = "overhead_lights_act_on"  # cv.ensure_list
-CONF_SLEEP_LIGHTS = "sleep_lights"
-CONF_SLEEP_LIGHTS_STATES = "sleep_lights_states"
-CONF_SLEEP_LIGHTS_ACT_ON = "sleep_lights_act_on"
-CONF_ACCENT_LIGHTS = "accent_lights"
-CONF_ACCENT_LIGHTS_STATES = "accent_lights_states"
-CONF_ACCENT_LIGHTS_ACT_ON = "accent_lights_act_on"
-CONF_TASK_LIGHTS = "task_lights"
-CONF_TASK_LIGHTS_STATES = "task_lights_states"
-CONF_TASK_LIGHTS_ACT_ON = "task_lights_act_on"
-
-LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE = "occupancy"
-LIGHT_GROUP_ACT_ON_STATE_CHANGE = "state"
-DEFAULT_LIGHT_GROUP_ACT_ON = [
-    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
-    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
-]
-LIGHT_GROUP_ACT_ON_OPTIONS = [
-    LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
-    LIGHT_GROUP_ACT_ON_STATE_CHANGE,
-]
-
-LIGHT_GROUP_DEFAULT_ICON = "mdi:lightbulb-group"
-
-LIGHT_GROUP_ICONS = {
-    CONF_OVERHEAD_LIGHTS: "mdi:ceiling-light",
-    CONF_SLEEP_LIGHTS: "mdi:sleep",
-    CONF_ACCENT_LIGHTS: "mdi:outdoor-lamp",
-    CONF_TASK_LIGHTS: "mdi:desk-lamp",
-}
-
-LIGHT_GROUP_STATES = {
-    CONF_OVERHEAD_LIGHTS: CONF_OVERHEAD_LIGHTS_STATES,
-    CONF_SLEEP_LIGHTS: CONF_SLEEP_LIGHTS_STATES,
-    CONF_ACCENT_LIGHTS: CONF_ACCENT_LIGHTS_STATES,
-    CONF_TASK_LIGHTS: CONF_TASK_LIGHTS_STATES,
-}
-
-LIGHT_GROUP_ACT_ON = {
-    CONF_OVERHEAD_LIGHTS: CONF_OVERHEAD_LIGHTS_ACT_ON,
-    CONF_SLEEP_LIGHTS: CONF_SLEEP_LIGHTS_ACT_ON,
-    CONF_ACCENT_LIGHTS: CONF_ACCENT_LIGHTS_ACT_ON,
-    CONF_TASK_LIGHTS: CONF_TASK_LIGHTS_ACT_ON,
-}
-
-LIGHT_GROUP_CATEGORIES = [
-    CONF_OVERHEAD_LIGHTS,
-    CONF_SLEEP_LIGHTS,
-    CONF_ACCENT_LIGHTS,
-    CONF_TASK_LIGHTS,
-]
-
-AGGREGATE_BINARY_SENSOR_CLASSES = [
-    BinarySensorDeviceClass.WINDOW,
-    BinarySensorDeviceClass.DOOR,
-    BinarySensorDeviceClass.MOTION,
-    BinarySensorDeviceClass.MOISTURE,
-    BinarySensorDeviceClass.LIGHT,
-]
-
-AGGREGATE_MODE_ALL = [
-    BinarySensorDeviceClass.CONNECTIVITY,
-    BinarySensorDeviceClass.PLUG,
-]
-
-# Health related
-DISTRESS_SENSOR_CLASSES = [
-    BinarySensorDeviceClass.PROBLEM,
-    BinarySensorDeviceClass.SMOKE,
-    BinarySensorDeviceClass.MOISTURE,
-    BinarySensorDeviceClass.SAFETY,
-    BinarySensorDeviceClass.GAS,
-]  # @todo make configurable
-DISTRESS_STATES = [STATE_ALARM_TRIGGERED, STATE_ON, STATE_PROBLEM]
-
-# Aggregates
-AGGREGATE_SENSOR_CLASSES = (
-    SensorDeviceClass.CURRENT,
-    SensorDeviceClass.ENERGY,
-    SensorDeviceClass.HUMIDITY,
-    SensorDeviceClass.ILLUMINANCE,
-    SensorDeviceClass.POWER,
-    SensorDeviceClass.TEMPERATURE,
-)
-
-AGGREGATE_MODE_SUM = [
-    SensorDeviceClass.POWER,
-    SensorDeviceClass.CURRENT,
-    SensorDeviceClass.ENERGY,
-]
-
-AGGREGATE_MODE_TOTAL_SENSOR = [
-    SensorDeviceClass.ENERGY,
-]
 
 # Config Schema
 
@@ -435,6 +441,15 @@ AGGREGATE_FEATURE_SCHEMA = vol.Schema(
             CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
             default=DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
         ): cv.positive_int,
+    }
+)
+
+HEALTH_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_HEALTH_SENSOR_DEVICE_CLASSES,
+            default=DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES,
+        ): cv.ensure_list,
     }
 )
 
@@ -495,6 +510,7 @@ CONFIGURABLE_FEATURES = {
     CONF_FEATURE_LIGHT_GROUPS: LIGHT_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_CLIMATE_GROUPS: CLIMATE_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_AGGREGATION: AGGREGATE_FEATURE_SCHEMA,
+    CONF_FEATURE_HEALTH: HEALTH_FEATURE_SCHEMA,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA,
     CONF_FEATURE_PRESENCE_HOLD: PRESENCE_HOLD_FEATURE_SCHEMA,
 }
@@ -697,6 +713,14 @@ OPTIONS_AGGREGATES = [
         CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
         DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
         int,
+    ),
+]
+
+OPTIONS_HEALTH_SENSOR = [
+    (
+        CONF_HEALTH_SENSOR_DEVICE_CLASSES,
+        DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES,
+        cv.ensure_list,
     ),
 ]
 

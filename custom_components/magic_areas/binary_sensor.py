@@ -24,8 +24,9 @@ from .const import (
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
+    CONF_HEALTH_SENSOR_DEVICE_CLASSES,
     DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
-    DISTRESS_SENSOR_CLASSES,
+    DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES,
 )
 from .threshold import create_illuminance_threshold
 
@@ -81,7 +82,9 @@ def create_health_sensors(area: MagicArea) -> list[Entity]:
         if ATTR_DEVICE_CLASS not in entity:
             continue
 
-        if entity[ATTR_DEVICE_CLASS] not in DISTRESS_SENSOR_CLASSES:
+        if entity[ATTR_DEVICE_CLASS] not in area.feature_config(
+            CONF_FEATURE_HEALTH
+        ).get(CONF_HEALTH_SENSOR_DEVICE_CLASSES, DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES):
             continue
 
         distress_entities.append(entity["entity_id"])

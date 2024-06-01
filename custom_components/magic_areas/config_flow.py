@@ -55,11 +55,13 @@ from .const import (
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_CLIMATE_GROUPS,
+    CONF_FEATURE_HEALTH,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_LIST,
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
     CONF_FEATURE_PRESENCE_HOLD,
+    CONF_HEALTH_SENSOR_DEVICE_CLASSES,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
@@ -100,6 +102,7 @@ from .const import (
     OPTIONS_AREA_META,
     OPTIONS_CLIMATE_GROUP,
     OPTIONS_CLIMATE_GROUP_META,
+    OPTIONS_HEALTH_SENSOR,
     OPTIONS_LIGHT_GROUP,
     OPTIONS_PRESENCE_HOLD,
     OPTIONS_PRESENCE_TRACKING,
@@ -921,6 +924,25 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             selectors={
                 CONF_CLIMATE_GROUPS_TURN_ON_STATE: self._build_selector_select(
                     EMPTY_ENTRY + available_states
+                )
+            },
+            user_input=user_input,
+        )
+
+    async def async_step_feature_conf_health(self, user_input=None):
+        """Configure the climate groups feature."""
+
+        return await self.do_feature_config(
+            name=CONF_FEATURE_HEALTH,
+            options=OPTIONS_HEALTH_SENSOR,
+            dynamic_validators={
+                CONF_HEALTH_SENSOR_DEVICE_CLASSES: vol.In(
+                    EMPTY_ENTRY + ALL_BINARY_SENSOR_DEVICE_CLASSES
+                ),
+            },
+            selectors={
+                CONF_HEALTH_SENSOR_DEVICE_CLASSES: self._build_selector_select(
+                    EMPTY_ENTRY + ALL_BINARY_SENSOR_DEVICE_CLASSES, multiple=True
                 )
             },
             user_input=user_input,
