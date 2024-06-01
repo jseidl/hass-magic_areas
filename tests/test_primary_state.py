@@ -43,7 +43,6 @@ async def test_primary_state_change(hass):
         {ATTR_ENTITY_ID: NOCK_PRESENCE_INPUT_BOOLEAN_ID},
         blocking=True,
     )
-    await hass.async_block_till_done()
 
     # Check both binary sensor and area sensor turned on
     assert hass.states.get(NOCK_PRESENCE_BINARY_SENSOR_ID).state == STATE_ON
@@ -54,14 +53,12 @@ async def test_primary_state_change(hass):
 
     # OFF TEST
     # Flip input boolean on
-    await hass.async_block_till_done()
     await hass.services.async_call(
         INPUT_BOOLEAN_DOMAIN,
         SERVICE_TURN_OFF,
         {ATTR_ENTITY_ID: NOCK_PRESENCE_INPUT_BOOLEAN_ID},
         blocking=True,
     )
-    await hass.async_block_till_done()
 
     # Check that binary sensor and area are off
     assert hass.states.get(NOCK_PRESENCE_BINARY_SENSOR_ID).state == STATE_OFF

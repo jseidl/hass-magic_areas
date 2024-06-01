@@ -181,6 +181,30 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     return all_unloaded
 
 
+def migrate_seconds_to_minutes(config_data: dict) -> dict:
+    """Perform migration of seconds-based config options to minutes."""
+
+    # Update seconds -> minutes
+    if CONF_CLEAR_TIMEOUT in config_data:
+        config_data[CONF_CLEAR_TIMEOUT] = seconds_to_minutes(
+            config_data[CONF_CLEAR_TIMEOUT], DEFAULT_CLEAR_TIMEOUT
+        )
+    if CONF_SECONDARY_STATES in config_data:
+        entries_to_convert = {
+            CONF_EXTENDED_TIMEOUT: DEFAULT_EXTENDED_TIMEOUT,
+            CONF_EXTENDED_TIME: DEFAULT_EXTENDED_TIME,
+            CONF_SLEEP_TIMEOUT: DEFAULT_SLEEP_TIMEOUT,
+        }
+        for option_key, option_value in entries_to_convert.items():
+            if option_key in config_data[CONF_SECONDARY_STATES]:
+                old_value = config_data[CONF_SECONDARY_STATES][option_key]
+                config_data[CONF_SECONDARY_STATES][option_key] = seconds_to_minutes(
+                    old_value, option_value
+                )
+
+    return config_data
+
+
 # Example migration function
 async def async_migrate_entry(hass, config_entry: ConfigEntry):
     """Migrate old entry."""
@@ -200,27 +224,13 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         )
         return False
 
+    old_data = {**config_entry.data}
+    new_data = {**config_entry.data}
+
     if config_entry.version == 1:
+        new_data = migrate_seconds_to_minutes(new_data)
 
-        new_data = {**config_entry.data}
-
-        # Update seconds -> minutes
-        if CONF_CLEAR_TIMEOUT in new_data:
-            new_data[CONF_CLEAR_TIMEOUT] = seconds_to_minutes(
-                new_data[CONF_CLEAR_TIMEOUT], DEFAULT_CLEAR_TIMEOUT
-            )
-        if CONF_SECONDARY_STATES in new_data:
-            entries_to_convert = {
-                CONF_EXTENDED_TIMEOUT: DEFAULT_EXTENDED_TIMEOUT,
-                CONF_EXTENDED_TIME: DEFAULT_EXTENDED_TIME,
-                CONF_SLEEP_TIMEOUT: DEFAULT_SLEEP_TIMEOUT,
-            }
-            for option_key, option_value in entries_to_convert.items():
-                if option_key in new_data[CONF_SECONDARY_STATES]:
-                    old_value = new_data[CONF_SECONDARY_STATES][option_key]
-                    new_data[CONF_SECONDARY_STATES][option_key] = seconds_to_minutes(
-                        old_value, option_value
-                    )
+    if old_data != new_data:
 
         hass.config_entries.async_update_entry(
             config_entry,
