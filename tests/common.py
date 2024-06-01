@@ -11,9 +11,9 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.const import CONF_ID, CONF_NAME
-from homeassistant.setup import async_setup_component
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
 from homeassistant.helpers.entity_registry import async_get as entityreg_async_get
+from homeassistant.setup import async_setup_component
 
 from .const import (
     MOCK_AREA_NAME,
@@ -58,7 +58,6 @@ async def setup_area_with_presence_sensor(hass, extra_opts=None):
         INPUT_BOOLEAN_DOMAIN,
         {INPUT_BOOLEAN_DOMAIN: input_boolean_opts},
     )
-    await hass.async_block_till_done()
     await async_setup_component(
         hass,
         BINARY_SENSOR_DOMAIN,
@@ -82,7 +81,6 @@ async def setup_area_with_presence_sensor(hass, extra_opts=None):
         entity.entity_id,
         area_id=test_area.id,
     )
-    await hass.async_block_till_done()
 
     # Setup MA
     entry = await setup_area(hass, test_area, extra_opts)
@@ -121,7 +119,6 @@ async def setup_area(hass, test_area=None, extra_opts=None):
     entry.add_to_hass(hass)
 
     await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
     await hass.async_start()
     await hass.async_block_till_done()
 

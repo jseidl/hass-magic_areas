@@ -109,6 +109,7 @@ from .const import (
     REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
+    MagicConfigEntryVersion,
     MetaAreaType,
 )
 from .util import basic_area_from_floor, basic_area_from_meta, basic_area_from_object
@@ -226,7 +227,8 @@ class NullableEntitySelector(EntitySelector):
 class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
     """Handle a config flow for Magic Areas."""
 
-    VERSION = 1
+    VERSION = MagicConfigEntryVersion.MAJOR
+    MINOR_VERSION = MagicConfigEntryVersion.MINOR
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
@@ -662,8 +664,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(
                 sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
             ),
-            CONF_UPDATE_INTERVAL: self._build_selector_number(),
-            CONF_CLEAR_TIMEOUT: self._build_selector_number(),
+            CONF_UPDATE_INTERVAL: self._build_selector_number(
+                unit_of_measurement="seconds"
+            ),
+            CONF_CLEAR_TIMEOUT: self._build_selector_number(
+                unit_of_measurement="minutes"
+            ),
         }
 
         options = (
@@ -747,9 +753,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     CONF_ACCENT_ENTITY: self._build_selector_entity_simple(
                         self.all_binary_entities
                     ),
-                    CONF_SLEEP_TIMEOUT: self._build_selector_number(),
-                    CONF_EXTENDED_TIME: self._build_selector_number(),
-                    CONF_EXTENDED_TIMEOUT: self._build_selector_number(),
+                    CONF_SLEEP_TIMEOUT: self._build_selector_number(
+                        unit_of_measurement="minutes"
+                    ),
+                    CONF_EXTENDED_TIME: self._build_selector_number(
+                        unit_of_measurement="minutes"
+                    ),
+                    CONF_EXTENDED_TIMEOUT: self._build_selector_number(
+                        unit_of_measurement="minutes"
+                    ),
                 },
             ),
             errors=errors,
@@ -965,7 +977,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
     async def async_step_feature_conf_presence_hold(self, user_input=None):
         """Configure the sensor presence_hold feature."""
 
-        selectors = {CONF_PRESENCE_HOLD_TIMEOUT: self._build_selector_number()}
+        selectors = {
+            CONF_PRESENCE_HOLD_TIMEOUT: self._build_selector_number(
+                min_value=0, unit_of_measurement="minutes"
+            )
+        }
 
         return await self.do_feature_config(
             name=CONF_FEATURE_PRESENCE_HOLD,

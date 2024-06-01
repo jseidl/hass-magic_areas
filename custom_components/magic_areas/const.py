@@ -1,6 +1,6 @@
 """Constants for Magic Areas."""
 
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 from itertools import chain
 
 import voluptuous as vol
@@ -32,11 +32,20 @@ from homeassistant.const import (
 )
 from homeassistant.helpers import config_validation as cv
 
+ONE_MINUTE = 60  # seconds, for conversion
+
 DOMAIN = "magic_areas"
 MODULE_DATA = f"{DOMAIN}_data"
 
 ADDITIONAL_LIGHT_TRACKING_ENTITIES = ["sun.sun"]
 DEFAULT_SENSOR_PRECISION = 2
+
+
+class MagicConfigEntryVersion(IntEnum):
+    """Magic Area config entry version."""
+
+    MAJOR = 3
+    MINOR = 1
 
 
 # Magic Areas Events
@@ -238,7 +247,7 @@ CONF_AGGREGATES_ILLUMINANCE_THRESHOLD, DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD 
 
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT_META = (
     "clear_timeout",
-    60,
+    1,
     0,
 )  # cv.positive_int
 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
@@ -261,8 +270,8 @@ CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT = (
     DEFAULT_CLEAR_TIMEOUT,
 )  # int
 CONF_SLEEP_ENTITY = "sleep_entity"
-CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME = "extended_time", 120  # cv.positive_int
-CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT = "extended_timeout", 300  # int
+CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME = "extended_time", 5  # cv.positive_int
+CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT = "extended_timeout", 10  # int
 
 CONFIGURABLE_AREA_STATE_MAP = {
     AREA_STATE_SLEEP: CONF_SLEEP_ENTITY,

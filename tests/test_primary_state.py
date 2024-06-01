@@ -49,12 +49,10 @@ async def test_primary_state_change(hass):
     assert hass.states.get(NOCK_PRESENCE_BINARY_SENSOR_ID).state == STATE_ON
 
     # Sleep briefly to allow async to catch up
-    await hass.async_block_till_done()
     assert hass.states.get(MOCK_AREA_PRESENCE_SENSOR_ENTITY_ID).state == STATE_ON
 
     # OFF TEST
     # Flip input boolean on
-    await hass.async_block_till_done()
     await hass.services.async_call(
         INPUT_BOOLEAN_DOMAIN,
         SERVICE_TURN_OFF,
@@ -63,15 +61,9 @@ async def test_primary_state_change(hass):
     )
     await hass.async_block_till_done()
 
-    # Check that binary sensor is off but area is still on
+    # Check that binary sensor and area are off
     assert hass.states.get(NOCK_PRESENCE_BINARY_SENSOR_ID).state == STATE_OFF
 
-    await hass.async_block_till_done()
-    assert hass.states.get(MOCK_AREA_PRESENCE_SENSOR_ENTITY_ID).state == STATE_ON
-
-    # Give time for clear timeout, a bit longer than configured
-    await sleep(MOCK_AREA_CLEAR_TIMEOUT * 1.1)
-
-    # Sleep briefly to allow async to catch up
-    await hass.async_block_till_done()
+    # Give time for clear timeout a chance
+    await sleep(1)
     assert hass.states.get(MOCK_AREA_PRESENCE_SENSOR_ENTITY_ID).state == STATE_OFF

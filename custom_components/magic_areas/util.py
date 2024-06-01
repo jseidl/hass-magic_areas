@@ -9,7 +9,7 @@ import logging
 from homeassistant.helpers.area_registry import AreaEntry
 from homeassistant.helpers.floor_registry import FloorEntry
 
-from .const import DATA_AREA_OBJECT, MODULE_DATA
+from .const import DATA_AREA_OBJECT, MODULE_DATA, ONE_MINUTE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -91,3 +91,14 @@ def basic_area_from_floor(floor: FloorEntry) -> BasicArea:
     basic_area.is_meta = True
 
     return basic_area
+
+
+def seconds_to_minutes(current_value: int, default_value: int) -> int:
+    """Convert a value in seconds to minutes with a default value if under a minute."""
+    if current_value <= 0:
+        return 0
+
+    if current_value < ONE_MINUTE:
+        return default_value
+
+    return current_value / ONE_MINUTE
