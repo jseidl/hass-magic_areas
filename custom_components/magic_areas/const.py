@@ -142,7 +142,7 @@ AGGREGATE_MODE_TOTAL_SENSOR = [
 class MagicConfigEntryVersion(IntEnum):
     """Magic Area config entry version."""
 
-    MAJOR = 3
+    MAJOR = 2
     MINOR = 1
 
 

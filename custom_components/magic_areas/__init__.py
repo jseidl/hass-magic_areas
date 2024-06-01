@@ -208,7 +208,7 @@ def migrate_seconds_to_minutes(config_data: dict) -> dict:
 # Example migration function
 async def async_migrate_entry(hass, config_entry: ConfigEntry):
     """Migrate old entry."""
-    _LOGGER.debug(
+    _LOGGER.info(
         "%s: Migrating configuration from version %s.%s, current config: %s",
         config_entry.data[ATTR_NAME],
         config_entry.version,
@@ -218,7 +218,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
 
     if config_entry.version > MagicConfigEntryVersion.MAJOR:
         # This means the user has downgraded from a future version
-        _LOGGER.debug(
+        _LOGGER.warning(
             "%s: Major version downgrade detection, skipping migration.",
             config_entry.data[ATTR_NAME],
         )
@@ -239,7 +239,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
             version=MagicConfigEntryVersion.MAJOR,
         )
 
-        _LOGGER.debug(
+        _LOGGER.info(
             "Migration to configuration version %s.%s successful: %s",
             config_entry.version,
             config_entry.minor_version,

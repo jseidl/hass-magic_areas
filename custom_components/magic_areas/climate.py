@@ -57,6 +57,7 @@ from homeassistant.const import (
 from homeassistant.core import Event, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
@@ -357,8 +358,9 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
         self._name = name
         self._entities = entities
         unit = self.area.hass.config.units.temperature_unit
+        unique_id = slugify(name)
 
-        ClimateGroup.__init__(self, self.unique_id, self._name, self._entities, unit)
+        ClimateGroup.__init__(self, unique_id, self._name, self._entities, unit)
 
         _LOGGER.debug(
             "%s: Climate group created with entities: %s",
