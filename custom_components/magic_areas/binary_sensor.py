@@ -100,6 +100,7 @@ def create_health_sensors(area: MagicArea) -> list[Entity]:
             area,
             device_class=BinarySensorDeviceClass.PROBLEM,
             entity_ids=distress_entities,
+            name=f"Area Health ({area.name})",
         )
     ]
 
@@ -160,13 +161,15 @@ class AreaSensorGroupBinarySensor(MagicEntity, BinarySensorGroup):
         area: MagicArea,
         device_class: BinarySensorDeviceClass,
         entity_ids: list[str],
+        name: str | None = None,
     ) -> None:
         """Initialize an area sensor group binary sensor."""
 
         MagicEntity.__init__(self, area)
 
-        device_class_name = " ".join(device_class.split("_")).title()
-        name = f"Area {device_class_name} ({self.area.name})"
+        if not name:
+            device_class_name = " ".join(device_class.split("_")).title()
+            name = f"Area {device_class_name} ({self.area.name})"
 
         BinarySensorGroup.__init__(
             self,
