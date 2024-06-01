@@ -78,23 +78,32 @@ def create_health_sensors(area: MagicArea) -> list[Entity]:
 
     distress_entities: list[Entity] = []
 
+    health_sensor_device_classes = area.feature_config(CONF_FEATURE_HEALTH).get(
+        CONF_HEALTH_SENSOR_DEVICE_CLASSES, DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES
+    )
+
     for entity in area.entities[BINARY_SENSOR_DOMAIN]:
         if ATTR_DEVICE_CLASS not in entity:
             continue
 
-        if entity[ATTR_DEVICE_CLASS] not in area.feature_config(
-            CONF_FEATURE_HEALTH
-        ).get(CONF_HEALTH_SENSOR_DEVICE_CLASSES, DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES):
+        if entity[ATTR_DEVICE_CLASS] not in health_sensor_device_classes:
             continue
 
         distress_entities.append(entity["entity_id"])
 
-    if len(distress_entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
-        CONF_AGGREGATES_MIN_ENTITIES, 0
-    ):
+    if not distress_entities:
+        _LOGGER.debug(
+            "%s: No binary sensor found for configured device classes: %s.",
+            area.name,
+            str(health_sensor_device_classes),
+        )
         return []
 
-    _LOGGER.debug("Creating health sensor for area (%s)", area.slug)
+    _LOGGER.debug(
+        "%s: Creating health sensor with the following entities: %s",
+        area.slug,
+        str(distress_entities),
+    )
     entities = [
         AreaSensorGroupBinarySensor(
             area,
