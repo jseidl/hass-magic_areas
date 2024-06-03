@@ -145,6 +145,10 @@ class MagicConfigEntryVersion(IntEnum):
     MAJOR = 2
     MINOR = 1
 
+class MagicAreasFeatures(StrEnum):
+    """Magic Areas features."""
+    PRESENCE = 'presence'
+    LIGHT_GROUPS = 'light_groups'
 
 # Magic Areas Events
 class MagicAreasEvents(StrEnum):
@@ -254,7 +258,7 @@ MAGIC_AREAS_COMPONENTS_META = [
 
 MAGIC_AREAS_COMPONENTS_GLOBAL = MAGIC_AREAS_COMPONENTS_META
 
-MAGIC_DEVICE_ID_PREFIX = "magic_area_device_"
+MAGICAREAS_UNIQUEID_PREFIX = "magicareas"
 
 
 class AreaType(StrEnum):
