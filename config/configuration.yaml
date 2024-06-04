@@ -21,6 +21,8 @@ input_boolean:
     name: Fake Fan for Climate
   fake_door:
     name: Fake Door
+  fake_cover:
+    name: Fake Cover
 input_number:
   lr_temp_c:
     name: "Living Room Fake Temperature C"
@@ -34,6 +36,23 @@ input_number:
     name: "Living Room Fake Illuminance"
     min: 0
     max: 1000
+
+cover:
+  - platform: template
+    covers:
+      fake_cover:
+        device_class: shade
+        friendly_name: "Fake Shade"
+        value_template: "{{ is_state('input_boolean.fake_cover','on') }}"
+        unique_id: cover_fake_cover
+        open_cover:
+          service: input_boolean.turn_on
+          data:
+            entity_id: input_boolean.fake_cover
+        close_cover:
+          service: input_boolean.turn_off
+          data:
+            entity_id: input_boolean.fake_cover
 
 template:
   - binary_sensor:

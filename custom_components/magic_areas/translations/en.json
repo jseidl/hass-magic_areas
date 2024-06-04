@@ -192,6 +192,41 @@
         "name": "Thermostats"
       }
     },
+    "cover": {
+      "cover_group_awning": {
+        "name": "Awnings"
+      },
+      "cover_group_blind": {
+        "name": "Blinds"
+      },
+      "cover_group_curtain": {
+        "name": "Curtains"
+      },
+      "cover_group_damper": {
+        "name": "Dampers"
+      },
+      "cover_group_door": {
+        "name": "Doors"
+      },
+      "cover_group_garage": {
+        "name": "Garage doors"
+      },
+      "cover_group_gate": {
+        "name": "Gates"
+      },
+      "cover_group_shade": {
+        "name": "Shades"
+      },
+      "cover_group_shutter": {
+        "name": "Shutters"
+      },
+      "cover_group_window": {
+        "name": "Windows"
+      },
+      "cover_group": {
+        "name": "Covers"
+      }
+    },
     "light": {
       "lights": {
         "name": "All Lights"

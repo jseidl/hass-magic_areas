@@ -90,5 +90,6 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
             self,
             entities=[e["entity_id"] for e in self._entities],
             name=None,
-            unique_id=self.unique_id,
+            unique_id=self._attr_unique_id,
         )
+        delattr(self, "_attr_name")

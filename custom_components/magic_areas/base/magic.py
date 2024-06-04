@@ -198,7 +198,6 @@ class MagicArea:
         """Load entities into entity list."""
 
         entity_list = []
-        magic_area_entities = []
         include_entities = self.config.get(CONF_INCLUDE_ENTITIES)
 
         entity_registry = entityreg_async_get(self.hass)
@@ -228,33 +227,30 @@ class MagicArea:
             ]
         )
 
+        if include_entities and isinstance(include_entities, list):
+            entity_list.extend(include_entities)
+
+        self.load_entity_list(entity_list)
+
+        self.logger.debug(
+            "%s: Found area entities: %s",
+            self.name,
+            str(self.entities),
+        )
+
+    def load_magic_entities(self):
+        """Load magic areas-generated entities."""
+
+        entity_registry = entityreg_async_get(self.hass)
+
         # Add magic are entities
         entities_for_config_id = (
             entity_registry.entities.get_entries_for_config_entry_id(
                 self.hass_config.entry_id
             )
         )
-        magic_area_entities.extend(
-            [entity.entity_id for entity in entities_for_config_id]
-        )
 
-        if include_entities and isinstance(include_entities, list):
-            entity_list.extend(include_entities)
-
-        self.load_magic_entities(magic_area_entities)
-        self.load_entity_list(entity_list)
-
-        self.logger.debug(
-            "%s: Found area entities: %s, magic entities: %s",
-            self.name,
-            str(self.entities),
-            str(self.magic_entities),
-        )
-
-    def load_magic_entities(self, entity_ids):
-        """Load magic areas-generated entities."""
-
-        for entity_id in entity_ids:
+        for entity_id in [entity.entity_id for entity in entities_for_config_id]:
 
             entity_domain = entity_id.split(".")[0]
 
@@ -315,6 +311,9 @@ class MagicArea:
                 self.logger.error(
                     "%s: Unable to load entity '%s': %s", self.name, entity_id, str(err)
                 )
+
+        # Load our own entities
+        self.load_magic_entities()
 
     async def initialize(self, _=None) -> None:
         """Initialize area."""

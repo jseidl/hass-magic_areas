@@ -542,6 +542,7 @@ class AreaLightGroup(MagicLightGroup):
                     # Skip non ON/OFF state changes
                     if (
                         "old_state" not in origin_event.data
+                        or not origin_event.data["old_state"]
                         or not origin_event.data["old_state"].state
                         or origin_event.data["old_state"].state
                         not in [
