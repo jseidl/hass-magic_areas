@@ -229,7 +229,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
             minor_version=MagicConfigEntryVersion.MINOR,
             version=MagicConfigEntryVersion.MAJOR,
         )
-        #return False
+        # return False
         return True
 
     old_data = {**config_entry.data}

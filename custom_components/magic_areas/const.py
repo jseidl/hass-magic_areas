@@ -145,10 +145,112 @@ class MagicConfigEntryVersion(IntEnum):
     MAJOR = 2
     MINOR = 1
 
+
+class MagicAreasFeatureInfo:
+    """Base class for feature information."""
+
+    id: str
+    translation_keys: dict[str, str]
+    icons: dict[str, str] = {}
+
+
+class MagicAreasFeatureInfoPresenceTracking(MagicAreasFeatureInfo):
+    """Feature information for feature: Presence Tracking."""
+
+    id = "presence_tracking"
+    translation_keys = {BINARY_SENSOR_DOMAIN: "area_state"}
+
+
+class MagicAreasFeatureInfoPresenceHold(MagicAreasFeatureInfo):
+    """Feature information for feature: Presence hold."""
+
+    id = "presence_hold"
+    translation_keys = {SWITCH_DOMAIN: "presence_hold"}
+    icons = {SWITCH_DOMAIN: "mdi:car-brake-hold"}
+
+
+class MagicAreasFeatureInfoAggregates(MagicAreasFeatureInfo):
+    """Feature information for feature: Aggregates."""
+
+    id = "aggregates"
+    translation_keys = {
+        BINARY_SENSOR_DOMAIN: "aggregate",
+        SENSOR_DOMAIN: "aggregate",
+    }
+
+
+class MagicAreasFeatureInfoThrehsold(MagicAreasFeatureInfo):
+    """Feature information for feature: Aggregate Threshold Sensors."""
+
+    id = "threshold"
+    translation_keys = {BINARY_SENSOR_DOMAIN: "threshold"}
+
+
+class MagicAreasFeatureInfoHealth(MagicAreasFeatureInfo):
+    """Feature information for feature: Health sensors."""
+
+    id = "health"
+    translation_keys = {BINARY_SENSOR_DOMAIN: "health"}
+
+
+class MagicAreasFeatureInfoLightGroups(MagicAreasFeatureInfo):
+    """Feature information for feature: Light groups."""
+
+    id = "light_groups"
+    translation_keys = {LIGHT_DOMAIN: "lights", SWITCH_DOMAIN: "light_control"}
+    icons = {SWITCH_DOMAIN: "mdi:lightbulb-auto-outline"}
+
+
+class MagicAreasFeatureInfoClimateGroups(MagicAreasFeatureInfo):
+    """Feature information for feature: Climate groups."""
+
+    id = "climate_groups"
+    translation_keys = {
+        CLIMATE_DOMAIN: "climate_group",
+        SWITCH_DOMAIN: "climate_control",
+    }
+    icons = {SWITCH_DOMAIN: "mdi:thermostat-auto"}
+
+
+class MagicAreasFeatureInfoMediaPlayerGroups(MagicAreasFeatureInfo):
+    """Feature information for feature: Media player groups."""
+
+    id = "media_player_groups"
+    translation_keys = {
+        MEDIA_PLAYER_DOMAIN: "media_player_group",
+        SWITCH_DOMAIN: "media_player_control",
+    }
+    icons = {SWITCH_DOMAIN: "mdi:auto-mode"}
+
+
+class MagicAreasFeatureInfoCoverGroups(MagicAreasFeatureInfo):
+    """Feature information for feature: Cover groups."""
+
+    id = "cover_groups"
+    translation_keys = {COVER_DOMAIN: "cover_group"}
+
+
+class MagicAreasFeatureInfoAreaAwareMediaPlayer(MagicAreasFeatureInfo):
+    """Feature information for feature: Area-aware media player."""
+
+    id = "area_aware_media_player"
+    translation_keys = {MEDIA_PLAYER_DOMAIN: "area_aware_media_player"}
+
+
 class MagicAreasFeatures(StrEnum):
     """Magic Areas features."""
-    PRESENCE = 'presence'
-    LIGHT_GROUPS = 'light_groups'
+
+    AREA = "area"  # Default feature
+    PRESENCE_HOLD = "presence_hold"
+    LIGHT_GROUPS = "light_groups"
+    CLIMATE_GROUPS = "climate_groups"
+    COVER_GROUPS = "cover_groups"
+    MEDIA_PLAYER_GROUPS = "media_player_groups"
+    AREA_AWARE_MEDIA_PLAYER = "area_aware_media_player"
+    AGGREGATES = "aggregates"
+    HEALTH = "health"
+    THRESHOLD = "threshold"
+
 
 # Magic Areas Events
 class MagicAreasEvents(StrEnum):
@@ -258,7 +360,8 @@ MAGIC_AREAS_COMPONENTS_META = [
 
 MAGIC_AREAS_COMPONENTS_GLOBAL = MAGIC_AREAS_COMPONENTS_META
 
-MAGICAREAS_UNIQUEID_PREFIX = "magicareas"
+MAGICAREAS_UNIQUEID_PREFIX = "magic_areas"
+MAGIC_DEVICE_ID_PREFIX = "magic_area_device_"
 
 
 class AreaType(StrEnum):

@@ -19,7 +19,6 @@ from homeassistant.helpers.event import (
     async_track_time_interval,
     call_later,
 )
-from homeassistant.util import slugify
 
 from ..const import (
     ATTR_ACTIVE_SENSORS,
@@ -49,6 +48,7 @@ from ..const import (
     PRESENCE_SENSOR_VALID_ON_STATES,
     AreaStates,
     MagicAreasEvents,
+    MagicAreasFeatureInfoPresenceTracking,
     MetaAreaIcons,
     MetaAreaType,
 )
@@ -202,7 +202,7 @@ class AreaStateTracker:
             # MetaAreas track their children
             child_areas = self.area.get_child_areas()
             for child_area in child_areas:
-                entity_id = f"{BINARY_SENSOR_DOMAIN}.area_{child_area}"
+                entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{child_area}_area_state"
                 self._sensors.append(entity_id)
             return
 
@@ -232,7 +232,7 @@ class AreaStateTracker:
         # Append presence_hold switch as a presence_sensor
         if self.area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
             presence_hold_switch_id = (
-                f"{SWITCH_DOMAIN}.area_presence_hold_{self.area.slug}"
+                f"{SWITCH_DOMAIN}.magic_areas_presence_hold_{self.area.slug}"
             )
             self._sensors.append(presence_hold_switch_id)
 
@@ -612,21 +612,19 @@ class AreaStateTracker:
 class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
     """Create an area presence presence sensor entity that tracks the current occupied state."""
 
+    feature_info = MagicAreasFeatureInfoPresenceTracking()
+
     # Init & Teardown
 
     def __init__(self, area: MagicArea) -> None:
         """Initialize the area presence binary sensor."""
 
-        MagicEntity.__init__(self, area)
+        MagicEntity.__init__(self, area, domain=BINARY_SENSOR_DOMAIN)
         BinarySensorEntity.__init__(self)
-
-        name = f"Area ({self.area.name})"
 
         # Load area state tracker
         self._state_tracker: AreaStateTracker | None = None
 
-        self._attr_unique_id = slugify(name)
-        self._attr_name = name
         self._attr_device_class = BinarySensorDeviceClass.OCCUPANCY
         self._attr_extra_state_attributes = {}
         self._attr_is_on: bool = False

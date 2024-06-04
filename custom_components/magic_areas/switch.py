@@ -2,13 +2,16 @@
 
 import logging
 
-from homeassistant.components.switch import SwitchDeviceClass, SwitchEntity
+from homeassistant.components.switch import (
+    DOMAIN as SWITCH_DOMAIN,
+    SwitchDeviceClass,
+    SwitchEntity,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_call_later
-from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
@@ -21,8 +24,12 @@ from .const import (
     CONF_PRESENCE_HOLD_TIMEOUT,
     DEFAULT_PRESENCE_HOLD_TIMEOUT,
     ONE_MINUTE,
-    FeatureIcons,
+    MagicAreasFeatureInfoClimateGroups,
+    MagicAreasFeatureInfoLightGroups,
+    MagicAreasFeatureInfoMediaPlayerGroups,
+    MagicAreasFeatureInfoPresenceHold,
 )
+from .util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,48 +47,26 @@ async def async_setup_entry(
 def add_switches(area: MagicArea, async_add_entities: AddEntitiesCallback):
     """Add all the switch entities for all features that have one."""
 
+    switch_entities = []
+
     if area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
-        async_add_entities(
-            [
-                ResettableMagicSwitch(
-                    area,
-                    f"Area Presence Hold ({area.name})",
-                    icon=FeatureIcons.PRESENCE_HOLD_SWITCH,
-                )
-            ]
-        )
+        switch_entities.append(PresenceHoldSwitch(area))
 
     if area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
-        async_add_entities(
-            [
-                SimpleMagicSwitch(
-                    area,
-                    f"Area Light Control ({area.name})",
-                    icon=FeatureIcons.LIGHT_CONTROL_SWITCH,
-                )
-            ]
-        )
+        switch_entities.append(LightControlSwitch(area))
 
     if area.has_feature(CONF_FEATURE_MEDIA_PLAYER_GROUPS):
-        async_add_entities(
-            [
-                SimpleMagicSwitch(
-                    area,
-                    f"Area Media Player Control ({area.name})",
-                    icon=FeatureIcons.MEDIA_CONTROL_SWITCH,
-                )
-            ]
-        )
+        switch_entities.append(MediaPlayerControlSwitch(area))
 
     if area.has_feature(CONF_FEATURE_CLIMATE_GROUPS):
-        async_add_entities(
-            [
-                SimpleMagicSwitch(
-                    area,
-                    f"Area Climate Control ({area.name})",
-                    icon=FeatureIcons.CLIMATE_CONTROL_SWITCH,
-                )
-            ]
+        switch_entities.append(ClimateControlSwitch(area))
+
+    if switch_entities:
+        async_add_entities(switch_entities)
+
+    if SWITCH_DOMAIN in area.magic_entities:
+        cleanup_removed_entries(
+            area.hass, switch_entities, area.magic_entities[SWITCH_DOMAIN]
         )
 
 
@@ -90,17 +75,11 @@ class SwitchBase(MagicEntity, SwitchEntity):
 
     def __init__(self, area: MagicArea) -> None:
         """Initialize the base switch bits, basic just a mixin for the two types."""
-        MagicEntity.__init__(self, area)
+        MagicEntity.__init__(self, area, domain=SWITCH_DOMAIN)
         SwitchEntity.__init__(self)
         self._attr_device_class = SwitchDeviceClass.SWITCH
         self._attr_should_poll = False
         self._attr_is_on = False
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        name_slug = slugify(self._attr_name)
-        return f"{name_slug}"
 
     async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""
@@ -128,25 +107,12 @@ class SwitchBase(MagicEntity, SwitchEntity):
         self.schedule_update_ha_state()
 
 
-class SimpleMagicSwitch(SwitchBase):
-    """Controls if the system is running and watching state."""
-
-    def __init__(self, area: MagicArea, name: str, icon: str | None = None) -> None:
-        """Initialize the switch."""
-
-        super().__init__(area)
-        self._attr_name = name
-        self._attr_state = STATE_OFF
-        self._attr_is_on = False
-        self._attr_icon = icon
-
-
-class ResettableMagicSwitch(SimpleMagicSwitch):
+class ResettableSwitchBase(SwitchBase):
     """Control the presense/state from being changed for the device."""
 
-    def __init__(self, area: MagicArea, name: str, icon: str | None = None) -> None:
+    def __init__(self, area: MagicArea) -> None:
         """Initialize the switch."""
-        super().__init__(area, name, icon)
+        super().__init__(area)
 
         self._timeout_callback = None
 
@@ -186,3 +152,27 @@ class ResettableMagicSwitch(SimpleMagicSwitch):
         if self._timeout_callback:
             self._timeout_callback()
             self._timeout_callback = None
+
+
+class ClimateControlSwitch(SwitchBase):
+    """Switch to enable/disable climate control."""
+
+    feature_info = MagicAreasFeatureInfoClimateGroups()
+
+
+class LightControlSwitch(SwitchBase):
+    """Switch to enable/disable light control."""
+
+    feature_info = MagicAreasFeatureInfoLightGroups()
+
+
+class MediaPlayerControlSwitch(SwitchBase):
+    """Switch to enable/disable media player control."""
+
+    feature_info = MagicAreasFeatureInfoMediaPlayerGroups()
+
+
+class PresenceHoldSwitch(ResettableSwitchBase):
+    """Switch to enable/disable presence hold."""
+
+    feature_info = MagicAreasFeatureInfoPresenceHold()

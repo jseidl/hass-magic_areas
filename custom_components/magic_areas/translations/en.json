@@ -93,7 +93,7 @@
       },
       "feature_conf_area_aware_media_player": {
         "title": "Feature: Area-aware media player",
-        "description": "Creates a media player device that will forward play calls to other media players in occupied areas only. This is useful if you want to use TTS notifications but only want to notify areas that are occupied to avoid notifying media players in vacant areas.",
+        "description": "Creates a media player device that will forward play calls to other media players in occupied areas only. This is useful if you want to use TTS notifications but only want to notify areas that are occupied to avoid notifying media players in vacant areas. This feature has configuration options in each area but it is only created if you have a `Global` metal area.",
         "data": {
           "notification_devices": "Media Player devices used for broadcasting",
           "notification_states": "Play notifications devices only when on these states"
@@ -173,6 +173,63 @@
     "error": {
       "option_error": "Invalid option",
       "malformed_input": "This field is invalid:"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "area_state": {
+        "name": "Area State"
+      },
+      "health_problem": {
+        "name": "Area Health"
+      },
+      "threshold_light": {
+        "name": "Light (Calculated)"
+      }
+    },
+    "climate": {
+      "climate_group": {
+        "name": "Thermostats"
+      }
+    },
+    "light": {
+      "lights": {
+        "name": "All Lights"
+      },
+      "lights_overhead_lights": {
+        "name": "Overhead Lights"
+      },
+      "lights_task_lights": {
+        "name": "Task Lights"
+      },
+      "lights_accent_lights": {
+        "name": "Accent Lights"
+      },
+      "lights_sleep_lights": {
+        "name": "Sleep Lights"
+      }
+    },
+    "media_player": {
+      "media_player_group": {
+        "name": "Media Players"
+      },
+      "area_aware_media_player": {
+        "name": "Area-aware media player"
+      }
+    },
+    "switch": {
+      "presence_hold": {
+        "name": "Presence Hold"
+      },
+      "light_control": {
+        "name": "Light Control"
+      },
+      "media_player_control": {
+        "name": "Media Player Control"
+      },
+      "climate_control": {
+        "name": "Climate Control"
+      }
     }
   }
 }

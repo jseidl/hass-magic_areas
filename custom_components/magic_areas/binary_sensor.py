@@ -12,7 +12,6 @@ from homeassistant.const import ATTR_DEVICE_CLASS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
@@ -27,8 +26,11 @@ from .const import (
     CONF_HEALTH_SENSOR_DEVICE_CLASSES,
     DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES,
+    MagicAreasFeatureInfoAggregates,
+    MagicAreasFeatureInfoHealth,
 )
 from .threshold import create_illuminance_threshold
+from .util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,6 +68,12 @@ def add_sensors(
 
     # Add all entities
     async_add_entities(entities)
+
+    # Cleanup
+    if BINARY_SENSOR_DOMAIN in area.magic_entities:
+        cleanup_removed_entries(
+            area.hass, entities, area.magic_entities[BINARY_SENSOR_DOMAIN]
+        )
 
 
 def create_health_sensors(area: MagicArea) -> list[Entity]:
@@ -105,11 +113,10 @@ def create_health_sensors(area: MagicArea) -> list[Entity]:
         str(distress_entities),
     )
     entities = [
-        AreaSensorGroupBinarySensor(
+        AreaHealthBinarySensor(
             area,
             device_class=BinarySensorDeviceClass.PROBLEM,
             entity_ids=distress_entities,
-            name=f"Area Health ({area.name})",
         )
     ]
 
@@ -157,7 +164,7 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
             len(entity_list),
             area.slug,
         )
-        aggregates.append(AreaSensorGroupBinarySensor(area, device_class, entity_list))
+        aggregates.append(AreaAggregateBinarySensor(area, device_class, entity_list))
 
     return aggregates
 
@@ -170,21 +177,30 @@ class AreaSensorGroupBinarySensor(MagicEntity, BinarySensorGroup):
         area: MagicArea,
         device_class: BinarySensorDeviceClass,
         entity_ids: list[str],
-        name: str | None = None,
     ) -> None:
         """Initialize an area sensor group binary sensor."""
 
-        MagicEntity.__init__(self, area)
-
-        if not name:
-            device_class_name = " ".join(device_class.split("_")).title()
-            name = f"Area {device_class_name} ({self.area.name})"
-
+        MagicEntity.__init__(
+            self, area, domain=BINARY_SENSOR_DOMAIN, translation_key=device_class
+        )
         BinarySensorGroup.__init__(
             self,
             device_class=device_class,
+            name=None,
+            unique_id=self._attr_unique_id,
             entity_ids=entity_ids,
             mode=device_class in AGGREGATE_MODE_ALL,
-            name=name,
-            unique_id=slugify(name),
         )
+        delattr(self, "_attr_name")
+
+
+class AreaAggregateBinarySensor(AreaSensorGroupBinarySensor):
+    """Aggregate sensor for the area."""
+
+    feature_info = MagicAreasFeatureInfoAggregates()
+
+
+class AreaHealthBinarySensor(AreaSensorGroupBinarySensor):
+    """Aggregate sensor for the area."""
+
+    feature_info = MagicAreasFeatureInfoHealth()

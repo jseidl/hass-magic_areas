@@ -6,7 +6,10 @@ Small helper functions that are used more than once.
 from collections.abc import Iterable
 import logging
 
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import AreaEntry
+from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity_registry import async_get as entityreg_async_get
 from homeassistant.helpers.floor_registry import FloorEntry
 
 from .const import DATA_AREA_OBJECT, MODULE_DATA, ONE_MINUTE
@@ -102,3 +105,21 @@ def seconds_to_minutes(current_value: int, default_value: int) -> int:
         return default_value
 
     return current_value / ONE_MINUTE
+
+
+def cleanup_removed_entries(
+    hass: HomeAssistant, entity_list: list[Entity], old_ids: list[str]
+):
+    """Clean up old magic entities."""
+    new_ids = [entity.entity_id for entity in entity_list]
+    _LOGGER.debug(
+        "Checking for cleanup. Old entityu list: %s, New entity list: %s",
+        old_ids,
+        new_ids,
+    )
+    entity_registry = entityreg_async_get(hass)
+    for entity_id in old_ids:
+        if entity_id in new_ids:
+            continue
+        _LOGGER.info("Cleaning up old entity %s", entity_id)
+        entity_registry.async_remove(entity_id)
