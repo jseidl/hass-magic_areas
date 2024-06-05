@@ -11,16 +11,16 @@
       }
     },
     "abort": {
-      "already_configured": "This device is already configured",
-      "invalid_area": "The selected area does not exist",
-      "no_more_areas": "All your areas are already magic!"
+      "already_configured": "Dit apparaat is reeds geconfigureerd",
+      "invalid_area": "De geselecteerde ruimte bestaat niet",
+      "no_more_areas": "Al uw ruimtes zijn al magisch!"
     }
   },
   "options": {
     "step": {
       "select_features": {
-        "title": "Feature selection",
-        "description": "Select the features you want to enable for this area. A new menu option will show up for configuring the feature if there are configurations options for that feature.",
+        "title": "Functie selectie",
+        "description": "Selecteer de features you want to enable for this area. A new menu option will show up for configuring the feature if there are configurations options for that feature.",
         "data": {
           "climate_groups": "Create climate groups",
           "media_player_groups": "Create media player groups",
@@ -141,38 +141,38 @@
         }
       },
       "area_config": {
-        "title": "Basis area options",
-        "description": "Configure basic options for the area. Area type is used for the Interior/Exterior/Global [Meta-areas](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas) and you can fine-tune which entities are analyzed by Magic Areas by using the include/exclude entities options.",
+        "title": "Primaire ruimte opties",
+        "description": "Configureer basic options for the area. Area type is used for the Interior/Exterior/Global [Meta-areas](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas) and you can fine-tune which entities are analyzed by Magic Areas by using the include/exclude entities options.",
         "data": {
-          "include_entities": "Include entities to this area",
-          "exclude_entities": "Exclude entities from being analyzed",
-          "type": "Area type (interior/exterior)"
+          "include_entities": "Betrek entiteiten bij deze ruimte",
+          "exclude_entities": "Sluit entiteiten uit van analyse",
+          "type": "Ruimte type (binnen/buiten)"
         },
         "data_description": {
           "include_entities": "Magic Areas can consider entities from other areas including other Magic entities. You can use this to make a room's presence binary sensor to act as another room's presence sensor as well.",
-          "exclude_entities": "Entities listed here will be completely ignored by Magic Areas. Use this if you have entities throwing your data off like device temperature sensors.",
-          "type": "Defining an area type allows Meta areas for Interior/Exterior to be created."
+          "exclude_entities": "Entities listed here will be compleet genegeerd door Magic Areas. Use this if you have entities throwing your data off like device temperature sensors.",
+          "type": "Het definieeren van een ruimte type allows Meta ruimtes voor Binnen/Buiten to be created."
         }
       },
       "presence_tracking": {
-        "title": "Presence Tracking",
-        "description": "Configure which platforms and binary sensor device classes are used for [presence tracking](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Sensing). This section also allows you to configure how long Magic Area will wait until clearing the area after the last presence event.",
+        "title": "Aanwezigheids Tracking",
+        "description": "Configureer which platforms en binaire sensor device classes are used for [presence tracking](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Sensing). This section also allows you to configure how long Magic Area will wait until clearing the area after the last presence event.",
         "data": {
           "presence_sensor_device_class": "Presence sensors device classes",
-          "presence_device_platforms": "Platforms to be used for presence sensing",
+          "presence_device_platforms": "Domeinen om to be used for presence sensing",
           "update_interval": "Interval for checking missed events",
           "clear_timeout": "Clear timeout"
         },
         "data_description": {
-          "presence_device_platforms": "Binary sensors are usually the standard source of presence but media devices can be used too.",
-          "presence_sensor_device_class": "Define which device classes of `binary sensors` will be used for presence tracking. Common non-standard options are door and humidity.",
-          "clear_timeout": "How long since last presence event should it wait before clearing the area"
+          "presence_device_platforms": "Binaire sensoren zijn usually de standaard bron voor aanwezigheid maar media devices can be used too.",
+          "presence_sensor_device_class": "Define which device classes of `binary sensors` will be used for presence tracking. Common non-standard options zijn deur en luchtvochtigheid.",
+          "clear_timeout": "Hoe lang wachten na de laatste detectie om de ruimte vrij te geven"
         }
       }
     },
     "error": {
       "option_error": "Invalide optie",
-      "malformed_input": "This field is invalid:"
+      "malformed_input": "Dit veld is invalide:"
     }
   },
   "entity": {
@@ -181,10 +181,10 @@
         "name": "Ruimte Status"
       },
       "health_problem": {
-        "name": "Ruimte Health"
+        "name": "Ruimte Probleem"
       },
       "threshold_light": {
-        "name": "Licht (Calculated)"
+        "name": "Licht (Berekend)"
       }
     },
     "climate": {
@@ -194,10 +194,10 @@
     },
     "cover": {
       "cover_group_awning": {
-        "name": "Awnings"
+        "name": "Luifels"
       },
       "cover_group_blind": {
-        "name": "Blinds"
+        "name": "Jaloezieen"
       },
       "cover_group_curtain": {
         "name": "Gordijnen"
@@ -212,19 +212,19 @@
         "name": "Garage deuren"
       },
       "cover_group_gate": {
-        "name": "Gates"
+        "name": "Poorten"
       },
       "cover_group_shade": {
-        "name": "Shades"
+        "name": "Rolluiken"
       },
       "cover_group_shutter": {
-        "name": "Shutters"
+        "name": "Rolgordijnen"
       },
       "cover_group_window": {
         "name": "Ramen"
       },
       "cover_group": {
-        "name": "Covers"
+        "name": "Bedekkingen"
       }
     },
     "light": {
@@ -246,24 +246,24 @@
     },
     "media_player": {
       "media_player_group": {
-        "name": "Media Players"
+        "name": "Mediaspelers"
       },
       "area_aware_media_player": {
-        "name": "Area-aware media player"
+        "name": "Ruimte-bewuste mediaspeler"
       }
     },
     "switch": {
       "presence_hold": {
-        "name": "Presence Hold"
+        "name": "Houd Aanwezig"
       },
       "light_control": {
-        "name": "Light Control"
+        "name": "Verlichting Bediening"
       },
       "media_player_control": {
-        "name": "Media Player Control"
+        "name": "Mediaspeler Bediening"
       },
       "climate_control": {
-        "name": "Climate Control"
+        "name": "Klimaat Bediening"
       }
     }
   }
