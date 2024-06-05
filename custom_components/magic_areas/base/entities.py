@@ -44,7 +44,10 @@ class MagicEntity(RestoreEntity):
 
         # Allow supplying of additional translation key parts
         # for dealing with device_classes
-        translation_key_parts = [self.feature_info.translation_keys[domain]]
+        translation_key_parts = []
+        feature_translation_key = self.feature_info.translation_keys[domain]
+        if feature_translation_key:
+            translation_key_parts.append(feature_translation_key)
         if translation_key:
             translation_key_parts.append(translation_key)
         self._attr_translation_key = "_".join(translation_key_parts)

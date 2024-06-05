@@ -228,19 +228,19 @@
       }
     },
     "light": {
-      "lights": {
+      "all_lights": {
         "name": "All Lights"
       },
-      "lights_overhead_lights": {
+      "overhead_lights": {
         "name": "Overhead Lights"
       },
-      "lights_task_lights": {
+      "task_lights": {
         "name": "Task Lights"
       },
-      "lights_accent_lights": {
+      "accent_lights": {
         "name": "Accent Lights"
       },
-      "lights_sleep_lights": {
+      "sleep_lights": {
         "name": "Sleep Lights"
       }
     },

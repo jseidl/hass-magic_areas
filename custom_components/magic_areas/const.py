@@ -88,6 +88,17 @@ LIGHT_GROUP_ACT_ON = {
     CONF_TASK_LIGHTS: CONF_TASK_LIGHTS_ACT_ON,
 }
 
+
+class LightGroupCategory(StrEnum):
+    """Categories of light groups."""
+
+    ALL = "all_lights"
+    OVERHEAD = "overhead_lights"
+    TASK = "task_lights"
+    ACCENT = "accent_lights"
+    SLEEP = "sleep_lights"
+
+
 LIGHT_GROUP_CATEGORIES = [
     CONF_OVERHEAD_LIGHTS,
     CONF_SLEEP_LIGHTS,
@@ -197,7 +208,10 @@ class MagicAreasFeatureInfoLightGroups(MagicAreasFeatureInfo):
     """Feature information for feature: Light groups."""
 
     id = "light_groups"
-    translation_keys = {LIGHT_DOMAIN: "lights", SWITCH_DOMAIN: "light_control"}
+    translation_keys = {
+        LIGHT_DOMAIN: None,  # let light category be appended to it
+        SWITCH_DOMAIN: "light_control",
+    }
     icons = {SWITCH_DOMAIN: "mdi:lightbulb-auto-outline"}
 
 

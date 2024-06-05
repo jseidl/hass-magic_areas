@@ -33,6 +33,7 @@ from .const import (
     LIGHT_GROUP_DEFAULT_ICON,
     LIGHT_GROUP_ICONS,
     LIGHT_GROUP_STATES,
+    LightGroupCategory,
     MagicAreasFeatureInfoLightGroups,
 )
 from .util import cleanup_removed_entries
@@ -94,7 +95,10 @@ def add_lights(area, async_add_entities):
         )
         light_groups.append(
             AreaLightGroup(
-                area, light_entities, category=None, child_ids=light_group_ids
+                area,
+                light_entities,
+                category=LightGroupCategory.ALL,
+                child_ids=light_group_ids,
             )
         )
 
@@ -188,11 +192,11 @@ class AreaLightGroup(MagicLightGroup):
 
         self._icon = LIGHT_GROUP_DEFAULT_ICON
 
-        if self.category:
+        if self.category != LightGroupCategory.ALL:
             self._icon = LIGHT_GROUP_ICONS.get(self.category, LIGHT_GROUP_DEFAULT_ICON)
 
         # Get assigned states
-        if category:
+        if category != LightGroupCategory.ALL:
             self.assigned_states = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
                 LIGHT_GROUP_STATES[category], []
             )
@@ -204,7 +208,7 @@ class AreaLightGroup(MagicLightGroup):
         self._attr_extra_state_attributes["lights"] = self._entity_ids
         self._attr_extra_state_attributes["controlling"] = self.controlling
 
-        if not self.category:
+        if self.category == LightGroupCategory.ALL:
             self._attr_extra_state_attributes["child_ids"] = self._child_ids
 
         self.logger.debug(
@@ -284,7 +288,7 @@ class AreaLightGroup(MagicLightGroup):
         self.logger.debug("%s: Light group detected area state change", self.name)
 
         # Handle all lights group
-        if not self.category:
+        if self.category == LightGroupCategory.ALL:
             return self.state_change_primary(states_tuple)
 
         # Handle light category
@@ -534,7 +538,7 @@ class AreaLightGroup(MagicLightGroup):
         else:
             origin_event = event.context.origin_event
 
-            if not self.category:
+            if self.category == LightGroupCategory.ALL:
                 self.handle_group_state_change_primary()
             else:
                 # Ignore certain events
