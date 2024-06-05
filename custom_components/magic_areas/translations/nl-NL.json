@@ -1,0 +1,270 @@
+{
+  "title": "Magische Ruimtes",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Maak een Magische Ruimte",
+        "description": "Kies de ruimte die je magisch wil maken!",
+        "data": {
+          "name": "Ruimte"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This device is already configured",
+      "invalid_area": "The selected area does not exist",
+      "no_more_areas": "All your areas are already magic!"
+    }
+  },
+  "options": {
+    "step": {
+      "select_features": {
+        "title": "Feature selection",
+        "description": "Select the features you want to enable for this area. A new menu option will show up for configuring the feature if there are configurations options for that feature.",
+        "data": {
+          "climate_groups": "Create climate groups",
+          "media_player_groups": "Create media player groups",
+          "light_groups": "Create light groups",
+          "cover_groups": "Create cover groups",
+          "area_aware_media_player": "Area-aware media player",
+          "aggregates": "Create aggregate sensors",
+          "health": "Create health sensors",
+          "presence_hold": "Create presence hold switch"
+        }
+      },
+      "show_menu": {
+        "title": "Magic Areas Options",
+        "description": "Magic Areas does basic presence detection by default but you can unleash its full power by configuring advanced state tracking, tune in your presence tracking parameters and enabling our magic features! Options are not saved unless you select `Save & Exit`.",
+        "menu_options": {
+          "area_config": "Basic area options",
+          "secondary_states": "Advanced area state tracking",
+          "presence_tracking": "Presence tracking options",
+          "select_features": "Feature selection",
+          "finish": "Save & Exit",
+          "feature_conf_health": "Configure health sensor",
+          "feature_conf_climate_groups": "Configure climate groups",
+          "feature_conf_light_groups": "Configure light groups",
+          "feature_conf_area_aware_media_player": "Configure area-aware media player",
+          "feature_conf_aggregates": "Configure aggregate sensors",
+          "feature_conf_presence_hold": "Configure presence hold switch"
+        }
+      },
+      "feature_conf_health": {
+        "title": "Health sensor",
+        "description": "You can choose a set of `binary sensor` device clasess that will be tracked by this health sensor that can be used in automations.",
+        "data": {
+          "health_binary_sensor_device_classes": "Device classes to track"
+        }
+      },
+      "feature_conf_light_groups": {
+        "title": "Light Groups",
+        "description": "Magic Areas creates these four (plus a global one) [light groups](https://github.com/jseidl/hass-magic_areas/wiki/Light-Groups) (if you assign lights to them) for you to use. These by default are plain light groups but can be automatically controlled if you assign them to area states and enable the light control switch (that will be created when you enable this feature). All lights will be turned off when an area is cleared. Additional states can be unlocked by configuring `Advanced area state tracking`.",
+        "data": {
+          "overhead_lights": "Overhead lights",
+          "overhead_lights_states": "States which overhead lights are turned on",
+          "overhead_lights_act_on": "When should overhead lights be controlled?",
+          "sleep_lights": "Sleep lights",
+          "sleep_lights_states": "States which sleep lights are turned on",
+          "sleep_lights_act_on": "When should sleep lights be controlled?",
+          "accent_lights": "Accent lights",
+          "accent_lights_states": "States which accent lights are turned on",
+          "accent_lights_act_on": "When should accent lights be controlled?",
+          "task_lights": "Task lights",
+          "task_lights_states": "States which task lights are turned on",
+          "task_lights_act_on": "When should task lights be controlled?"
+        },
+        "data_description": {
+          "overhead_lights_states": "Configure which area states will trigger this light group. Light groups will be turned `on` while area is on this state and `off` if the area loses these states. For example, if you want the light to stay `on` after an extended period of time, you need to select the `extended` state too.",
+          "overhead_lights_act_on": "Select if this light group should be controlled only when an area first gets occupied, only on area state changes or both.",
+          "sleep_lights_states": "Configure which area states will trigger this light group. Light groups will be turned `on` while area is on this state and `off` if the area loses these states. For example, if you want the light to stay `on` after an extended period of time, you need to select the `extended` state too.",
+          "sleep_lights_act_on": "Select if this light group should be controlled only when an area first gets occupied, only on area state changes or both.",
+          "accent_lights_states": "Configure which area states will trigger this light group. Light groups will be turned `on` while area is on this state and `off` if the area loses these states. For example, if you want the light to stay `on` after an extended period of time, you need to select the `extended` state too.",
+          "accent_lights_act_on": "Select if this light group should be controlled only when an area first gets occupied, only on area state changes or both.",
+          "task_lights_states": "Configure which area states will trigger this light group. Light groups will be turned `on` while area is on this state and `off` if the area loses these states. For example, if you want the light to stay `on` after an extended period of time, you need to select the `extended` state too.",
+          "task_lights_act_on": "Select if this light group should be controlled only when an area first gets occupied, only on area state changes or both."
+        }
+      },
+      "feature_conf_presence_hold": {
+        "title": "Presence Hold",
+        "description": "Creates a switch that will hold an area occupied while it's on. You can configure a timeout to have the switch automatically turn off after a certain period of time, if you often see yourself leaving it on.",
+        "data": {
+          "presence_hold_timeout": "Time after the switch will be automatically turned `off`. (0 = timeout disabled)."
+        }
+      },
+      "feature_conf_area_aware_media_player": {
+        "title": "Feature: Area-aware media player",
+        "description": "Creates a media player device that will forward play calls to other media players in occupied areas only. This is useful if you want to use TTS notifications but only want to notify areas that are occupied to avoid notifying media players in vacant areas. This feature has configuration options in each area but it is only created if you have a `Global` metal area.",
+        "data": {
+          "notification_devices": "Media Player devices used for broadcasting",
+          "notification_states": "Play notifications devices only when on these states"
+        },
+        "data_description": {
+          "notification_states": "Notifications will only be played when an area is on this state. Using `extended` will ensure you don't get notified in rooms you just passed by and not selecting `sleep` will prevent notifications while on this mode."
+        }
+      },
+      "feature_conf_aggregates": {
+        "title": "Feature: Sensor aggregates",
+        "description": "If you have multiple `sensors` (or `binary sensors`) of the same type, Magic Areas can group then into a single entity allowing you to have averages (or sums) of sensors or combined state of binary sensors. It's even useful if you only currently have one sensor of each kind as it allows you to use the aggregate in automations and expand in the future without having to re-write your automations.",
+        "data": {
+          "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates.",
+          "aggregates_binary_sensor_device_classes": "Binary sensor device classes to be aggregated.",
+          "aggregates_sensor_device_classes": "Sensor device classes to be aggregated.",
+          "aggregates_illuminance_threshold": "Illuminance threshold for this area"
+        },
+        "data_description": {
+          "aggregates_illuminance_threshold": "Magic Areas will create a `light` binary sensor that will track when the area's aggregate illuminance goes over this threshold. Requires the device class `illuminance` to be selected for aggregation. Set to 0 to disable."
+        }
+      },
+      "feature_conf_climate_groups": {
+        "title": "Feature: Climate Groups",
+        "description": "Group and control all climate entities in an area. This feature allows climate entities to be controlled automatically according to an area's state.",
+        "data": {
+          "turn_on_state": "State to turn on the climate group."
+        },
+        "data_description": {
+          "turn_on_state": "Climate devices will be turned `on` on this state and turned off when the area is cleared."
+        }
+      },
+      "secondary_states": {
+        "title": "Advanced area state tracking",
+        "description": "You can enable [secondary states](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) for a Magic Area by assigning an entity to it. Secondary states are used by features for turning lights on only when it's dark or only turning on climate devices after an `extended` period of time or not sending notifications to an area if it's on `sleep`.",
+        "data": {
+          "dark_entity": "Area's light sensor",
+          "sleep_entity": "Entity used to track area sleep state",
+          "sleep_timeout": "How long area will wait before clearing the state when on sleep state",
+          "accent_entity": "Entity used to track area accented state",
+          "extended_time": "Area will be marked as 'extended' after being occupied for this long",
+          "extended_timeout": "How long area will wait before clearing the state when on extended state"
+        },
+        "data_description": {
+          "dark_entity": "The area's light sensor will be used to track an area `bright`/`dark` status which is used by features such as Light groups to turn on/off your lights according to the room brightness state.\n\n**Avoid using a `light` sensor in the same area as it may cause a feedback loop.** It is recommended to use either `sun.sun` or an exterior `light` sensor that won't be affected by the lights being controlled."
+        }
+      },
+      "area_config": {
+        "title": "Basis area options",
+        "description": "Configure basic options for the area. Area type is used for the Interior/Exterior/Global [Meta-areas](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas) and you can fine-tune which entities are analyzed by Magic Areas by using the include/exclude entities options.",
+        "data": {
+          "include_entities": "Include entities to this area",
+          "exclude_entities": "Exclude entities from being analyzed",
+          "type": "Area type (interior/exterior)"
+        },
+        "data_description": {
+          "include_entities": "Magic Areas can consider entities from other areas including other Magic entities. You can use this to make a room's presence binary sensor to act as another room's presence sensor as well.",
+          "exclude_entities": "Entities listed here will be completely ignored by Magic Areas. Use this if you have entities throwing your data off like device temperature sensors.",
+          "type": "Defining an area type allows Meta areas for Interior/Exterior to be created."
+        }
+      },
+      "presence_tracking": {
+        "title": "Presence Tracking",
+        "description": "Configure which platforms and binary sensor device classes are used for [presence tracking](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Sensing). This section also allows you to configure how long Magic Area will wait until clearing the area after the last presence event.",
+        "data": {
+          "presence_sensor_device_class": "Presence sensors device classes",
+          "presence_device_platforms": "Platforms to be used for presence sensing",
+          "update_interval": "Interval for checking missed events",
+          "clear_timeout": "Clear timeout"
+        },
+        "data_description": {
+          "presence_device_platforms": "Binary sensors are usually the standard source of presence but media devices can be used too.",
+          "presence_sensor_device_class": "Define which device classes of `binary sensors` will be used for presence tracking. Common non-standard options are door and humidity.",
+          "clear_timeout": "How long since last presence event should it wait before clearing the area"
+        }
+      }
+    },
+    "error": {
+      "option_error": "Invalide optie",
+      "malformed_input": "This field is invalid:"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "area_state": {
+        "name": "Ruimte Status"
+      },
+      "health_problem": {
+        "name": "Ruimte Health"
+      },
+      "threshold_light": {
+        "name": "Licht (Calculated)"
+      }
+    },
+    "climate": {
+      "climate_group": {
+        "name": "Thermostaten"
+      }
+    },
+    "cover": {
+      "cover_group_awning": {
+        "name": "Awnings"
+      },
+      "cover_group_blind": {
+        "name": "Blinds"
+      },
+      "cover_group_curtain": {
+        "name": "Gordijnen"
+      },
+      "cover_group_damper": {
+        "name": "Dampers"
+      },
+      "cover_group_door": {
+        "name": "Deuren"
+      },
+      "cover_group_garage": {
+        "name": "Garage deuren"
+      },
+      "cover_group_gate": {
+        "name": "Gates"
+      },
+      "cover_group_shade": {
+        "name": "Shades"
+      },
+      "cover_group_shutter": {
+        "name": "Shutters"
+      },
+      "cover_group_window": {
+        "name": "Ramen"
+      },
+      "cover_group": {
+        "name": "Covers"
+      }
+    },
+    "light": {
+      "all_lights": {
+        "name": "Alle Verlichting"
+      },
+      "overhead_lights": {
+        "name": "Plafond Verlichting"
+      },
+      "task_lights": {
+        "name": "Taak Verlichting"
+      },
+      "accent_lights": {
+        "name": "Accent Verlichting"
+      },
+      "sleep_lights": {
+        "name": "Slaap Verlichting"
+      }
+    },
+    "media_player": {
+      "media_player_group": {
+        "name": "Media Players"
+      },
+      "area_aware_media_player": {
+        "name": "Area-aware media player"
+      }
+    },
+    "switch": {
+      "presence_hold": {
+        "name": "Presence Hold"
+      },
+      "light_control": {
+        "name": "Light Control"
+      },
+      "media_player_control": {
+        "name": "Media Player Control"
+      },
+      "climate_control": {
+        "name": "Climate Control"
+      }
+    }
+  }
+}
