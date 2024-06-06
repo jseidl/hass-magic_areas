@@ -66,7 +66,9 @@ from .const import (
     CONF_FEATURE_CLIMATE_GROUPS,
     DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
+    MagicAreasFeatureInfoClimateGroups,
 )
+from .util import cleanup_removed_entries
 
 # Climate Group Constants
 
@@ -102,7 +104,16 @@ def setup_climate_group(area, async_add_entities):
         return
 
     climate_entities = [e["entity_id"] for e in area.entities[CLIMATE_DOMAIN]]
-    async_add_entities([AreaClimateGroup(area, climate_entities)])
+
+    climate_groups = [AreaClimateGroup(area, climate_entities)]
+
+    if climate_groups:
+        async_add_entities(climate_groups)
+
+    if CLIMATE_DOMAIN in area.magic_entities:
+        cleanup_removed_entries(
+            area.hass, climate_groups, area.magic_entities[CLIMATE_DOMAIN]
+        )
 
 
 class ClimateGroup(GroupEntity, ClimateEntity):
@@ -348,28 +359,34 @@ class ClimateGroup(GroupEntity, ClimateEntity):
 class AreaClimateGroup(MagicEntity, ClimateGroup):
     """Climate group."""
 
+    feature_info = MagicAreasFeatureInfoClimateGroups()
+
     def __init__(self, area, entities):
         """Initialize climate group."""
-        MagicEntity.__init__(self, area)
+        MagicEntity.__init__(self, area, domain=CLIMATE_DOMAIN)
 
-        name = f"Area Climate ({area.name})"
-
-        self._name = name
         self._entities = entities
         unit = self.area.hass.config.units.temperature_unit
 
-        ClimateGroup.__init__(self, self.unique_id, self._name, self._entities, unit)
+        ClimateGroup.__init__(
+            self,
+            name=None,
+            unique_id=self.unique_id,
+            entity_ids=self._entities,
+            temperature_unit=unit,
+        )
+        delattr(self, "_attr_name")
 
         _LOGGER.debug(
             "%s: Climate group created with entities: %s",
-            self._name,
+            self.area.name,
             str(self._entities),
         )
 
     def _is_control_enabled(self):
         """Check if light climate is enabled by checking climate control switch state."""
 
-        entity_id = f"{SWITCH_DOMAIN}.area_climate_control_{self.area.slug}"
+        entity_id = f"{SWITCH_DOMAIN}.magic_areas_climate_groups_{self.area.slug}_climate_control"
         switch_entity = self.hass.states.get(entity_id)
 
         if not switch_entity:

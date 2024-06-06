@@ -6,3 +6,135 @@ logger:
   default: info
   logs:
     custom_components.magic_areas: debug
+
+# Example configuration.yaml entry
+input_boolean:
+  lr_main_light:
+    name: LR Main Light
+  lr_task_light:
+    name: LR Task Light
+  lr_sleep_light:
+    name: LR Sleep Light
+  lr_accent_light:
+    name: LR Accent Light
+  fake_fan_for_climate:
+    name: Fake Fan for Climate
+  fake_door:
+    name: Fake Door
+  fake_cover:
+    name: Fake Cover
+  sleep_mode:
+    name: Sleep Mode
+input_number:
+  lr_temp_c:
+    name: "Living Room Fake Temperature C"
+    min: 0
+    max: 50
+  lr_temp:
+    name: "Living Room Fake Temperature"
+    min: 34
+    max: 100
+  lr_ilum:
+    name: "Living Room Fake Illuminance"
+    min: 0
+    max: 1000
+
+cover:
+  - platform: template
+    covers:
+      fake_cover:
+        device_class: shade
+        friendly_name: "Fake Shade"
+        value_template: "{{ is_state('input_boolean.fake_cover','on') }}"
+        unique_id: cover_fake_cover
+        open_cover:
+          service: input_boolean.turn_on
+          data:
+            entity_id: input_boolean.fake_cover
+        close_cover:
+          service: input_boolean.turn_off
+          data:
+            entity_id: input_boolean.fake_cover
+
+template:
+  - binary_sensor:
+      - name: "LR Fake Door"
+        device_class: 'door'
+        unique_id: binary_sensor_lr_door
+        state: "{{ is_state('input_boolean.fake_door','on') }}"
+  - sensor:
+      - name: "LR Fake temperature C"
+        device_class: 'temperature'
+        state: "{{ states('input_number.lr_temp_c')|int(0) }}"
+        unique_id: sensor_lr_temp_c
+        unit_of_measurement: '°C'
+      - name: "LR Fake temperature"
+        device_class: 'temperature'
+        state: "{{ states('input_number.lr_temp')|int(0) }}"
+        unique_id: sensor_lr_temp
+        unit_of_measurement: '°F'
+      - name: "LR Fake illuminance"
+        device_class: 'illuminance'
+        state: "{{ states('input_number.lr_ilum')|int(0) }}"
+        unique_id: sensor_lr_ilum
+        unit_of_measurement: 'lx'
+
+climate:
+  - platform: generic_thermostat
+    name: Fake Climate
+    heater: input_boolean.fake_fan_for_climate
+    ac_mode: true
+    target_sensor: sensor.lr_temperature
+    unique_id: climate_fake
+
+light:
+  - platform: template
+    lights:
+      lr_main_light:
+        friendly_name: "LR Main Light"
+        value_template: "{{ is_state('input_boolean.lr_main_light', 'on') }}"
+        unique_id: lr_main_light
+        turn_on:
+          service: input_boolean.turn_on
+          data:
+            entity_id: input_boolean.lr_main_light
+        turn_off:
+          service: input_boolean.turn_off
+          data:
+            entity_id: input_boolean.lr_main_light
+      lr_task_light:
+        friendly_name: "LR Task Light"
+        value_template: "{{ is_state('input_boolean.lr_task_light', 'on') }}"
+        unique_id: lr_task_light
+        turn_on:
+          service: input_boolean.turn_on
+          data:
+            entity_id: input_boolean.lr_task_light
+        turn_off:
+          service: input_boolean.turn_off
+          data:
+            entity_id: input_boolean.lr_task_light
+      lr_sleep_light:
+        friendly_name: "LR Sleep Light"
+        value_template: "{{ is_state('input_boolean.lr_sleep_light', 'on') }}"
+        unique_id: lr_sleep_light
+        turn_on:
+          service: input_boolean.turn_on
+          data:
+            entity_id: input_boolean.lr_sleep_light
+        turn_off:
+          service: input_boolean.turn_off
+          data:
+            entity_id: input_boolean.lr_sleep_light
+      lr_accent_light:
+        friendly_name: "LR Accent Light"
+        value_template: "{{ is_state('input_boolean.lr_accent_light', 'on') }}"
+        unique_id: lr_accent_light
+        turn_on:
+          service: input_boolean.turn_on
+          data:
+            entity_id: input_boolean.lr_accent_light
+        turn_off:
+          service: input_boolean.turn_off
+          data:
+            entity_id: input_boolean.lr_accent_light

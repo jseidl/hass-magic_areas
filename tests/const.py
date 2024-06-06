@@ -6,8 +6,8 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.util import slugify
 
 # Mock entities
-MOCK_AREA_NAME = "MagicAreas Test Area"
-MOCK_AREA_PRESENCE_SENSOR_NAME = slugify(f"Area {MOCK_AREA_NAME}")
+MOCK_AREA_NAME = "MockArea"
+MOCK_AREA_PRESENCE_SENSOR_NAME = "magic_areas_presence_tracking_mockarea_area_state"
 MOCK_AREA_PRESENCE_SENSOR_ENTITY_ID = (
     f"{BINARY_SENSOR_DOMAIN}.{MOCK_AREA_PRESENCE_SENSOR_NAME}"
 )

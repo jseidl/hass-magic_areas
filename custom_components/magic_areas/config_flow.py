@@ -88,6 +88,7 @@ from .const import (
     CONFIGURABLE_AREA_STATE_MAP,
     CONFIGURABLE_FEATURES,
     DATA_AREA_OBJECT,
+    DISTRESS_SENSOR_CLASSES,
     DOMAIN,
     LIGHT_GROUP_ACT_ON_OPTIONS,
     META_AREA_BASIC_OPTIONS_SCHEMA,
@@ -937,12 +938,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             options=OPTIONS_HEALTH_SENSOR,
             dynamic_validators={
                 CONF_HEALTH_SENSOR_DEVICE_CLASSES: vol.In(
-                    EMPTY_ENTRY + ALL_BINARY_SENSOR_DEVICE_CLASSES
+                    EMPTY_ENTRY + DISTRESS_SENSOR_CLASSES
                 ),
             },
             selectors={
                 CONF_HEALTH_SENSOR_DEVICE_CLASSES: self._build_selector_select(
-                    EMPTY_ENTRY + ALL_BINARY_SENSOR_DEVICE_CLASSES, multiple=True
+                    EMPTY_ENTRY + DISTRESS_SENSOR_CLASSES, multiple=True
                 )
             },
             user_input=user_input,

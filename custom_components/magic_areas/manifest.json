@@ -1,13 +1,24 @@
 {
   "domain": "magic_areas",
   "name": "Magic Areas",
-  "after_dependencies": ["template", "group", "binary_sensor", "sensor", "light", "media_player", "device_tracker", "discovery", "camera"],
-  "codeowners": ["@jseidl"],
+  "after_dependencies": [
+    "template",
+    "group",
+    "binary_sensor",
+    "sensor",
+    "light",
+    "media_player",
+    "device_tracker",
+    "discovery"
+  ],
+  "codeowners": [
+    "@jseidl"
+  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/jseidl/hass-magic_areas/wiki",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/jseidl/hass-magic_areas/issues",
   "requirements": [],
-  "version": "3.1.0"
+  "version": "4.0.0"
 }

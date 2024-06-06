@@ -14,7 +14,6 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.util import slugify
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
@@ -34,7 +33,10 @@ from .const import (
     LIGHT_GROUP_DEFAULT_ICON,
     LIGHT_GROUP_ICONS,
     LIGHT_GROUP_STATES,
+    LightGroupCategory,
+    MagicAreasFeatureInfoLightGroups,
 )
+from .util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -83,7 +85,7 @@ def add_lights(area, async_add_entities):
                 light_groups.append(light_group_object)
 
                 # Infer light group entity id from name
-                light_group_id = f"{LIGHT_DOMAIN}.{category.lower()}_{area.slug}"
+                light_group_id = f"{LIGHT_DOMAIN}.magic_areas_light_groups_{area.slug}_lights_{category.lower()}"
                 light_group_ids.append(light_group_id)
 
         _LOGGER.debug(
@@ -93,25 +95,41 @@ def add_lights(area, async_add_entities):
         )
         light_groups.append(
             AreaLightGroup(
-                area, light_entities, category=None, child_ids=light_group_ids
+                area,
+                light_entities,
+                category=LightGroupCategory.ALL,
+                child_ids=light_group_ids,
             )
         )
 
     # Create all groups
-    async_add_entities(light_groups)
+    if light_groups:
+        async_add_entities(light_groups)
+
+    if LIGHT_DOMAIN in area.magic_entities:
+        cleanup_removed_entries(
+            area.hass, light_groups, area.magic_entities[LIGHT_DOMAIN]
+        )
 
 
 class MagicLightGroup(MagicEntity, LightGroup):
     """Magic Light Group for Meta-areas."""
 
-    def __init__(self, area, entities, name=None):
+    feature_info = MagicAreasFeatureInfoLightGroups()
+
+    def __init__(self, area, entities, translation_key: str | None = None):
         """Initialize parent class and state."""
-        MagicEntity.__init__(self, area)
-
-        self._name = name if name else f"{self.area.name} Lights"
-        unique_id = slugify(self._name)
-
-        LightGroup.__init__(self, unique_id, self._name, entities, mode=False)
+        MagicEntity.__init__(
+            self, area, domain=LIGHT_DOMAIN, translation_key=translation_key
+        )
+        LightGroup.__init__(
+            self,
+            name=None,
+            unique_id=self.unique_id,
+            entity_ids=entities,
+            mode=False,
+        )
+        delattr(self, "_attr_name")
 
     def _get_active_lights(self) -> list[str]:
         """Return list of lights that are on."""
@@ -161,16 +179,7 @@ class AreaLightGroup(MagicLightGroup):
     def __init__(self, area, entities, category=None, child_ids=None):
         """Initialize light group."""
 
-        name = f"{area.name} Lights"
-
-        if not child_ids:
-            child_ids = []
-
-        if category:
-            category_title = " ".join(category.split("_")).title()
-            name = f"{category_title} ({area.name})"
-
-        MagicLightGroup.__init__(self, area, entities, name)
+        MagicLightGroup.__init__(self, area, entities, translation_key=category)
 
         self._child_ids = child_ids
 
@@ -181,22 +190,13 @@ class AreaLightGroup(MagicLightGroup):
         self.controlling = True
         self.controlled = False
 
-        # MagicEntity.__init__(self, area)
-        # LightGroup.__init__(
-        #     self,
-        #     entity_ids=entities,
-        #     name=name,
-        #     unique_id=slugify(name),
-        #     mode=False,
-        # )
-
         self._icon = LIGHT_GROUP_DEFAULT_ICON
 
-        if self.category:
+        if self.category != LightGroupCategory.ALL:
             self._icon = LIGHT_GROUP_ICONS.get(self.category, LIGHT_GROUP_DEFAULT_ICON)
 
         # Get assigned states
-        if category:
+        if category != LightGroupCategory.ALL:
             self.assigned_states = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
                 LIGHT_GROUP_STATES[category], []
             )
@@ -205,15 +205,15 @@ class AreaLightGroup(MagicLightGroup):
             )
 
         # Add static attributes
-        self._attributes["lights"] = self._entity_ids
-        self._attributes["controlling"] = self.controlling
+        self._attr_extra_state_attributes["lights"] = self._entity_ids
+        self._attr_extra_state_attributes["controlling"] = self.controlling
 
-        if not self.category:
-            self._attributes["child_ids"] = self._child_ids
+        if self.category == LightGroupCategory.ALL:
+            self._attr_extra_state_attributes["child_ids"] = self._child_ids
 
         self.logger.debug(
             "%s: Light group (%s) created with entities: %s",
-            self.name,
+            self.area.name,
             category,
             str(self._entity_ids),
         )
@@ -237,7 +237,7 @@ class AreaLightGroup(MagicLightGroup):
             if "controlling" in last_state.attributes:
                 controlling = last_state.attributes["controlling"]
                 self.controlling = controlling
-                self._attributes["controlling"] = self.controlling
+                self._attr_extra_state_attributes["controlling"] = self.controlling
         else:
             self._attr_is_on = False
 
@@ -288,7 +288,7 @@ class AreaLightGroup(MagicLightGroup):
         self.logger.debug("%s: Light group detected area state change", self.name)
 
         # Handle all lights group
-        if not self.category:
+        if self.category == LightGroupCategory.ALL:
             return self.state_change_primary(states_tuple)
 
         # Handle light category
@@ -479,22 +479,29 @@ class AreaLightGroup(MagicLightGroup):
 
     def is_control_enabled(self):
         """Check if light control is enabled by checking light control switch state."""
-        entity_id = f"{SWITCH_DOMAIN}.area_light_control_{self.area.slug}"
+        entity_id = (
+            f"{SWITCH_DOMAIN}.magic_areas_light_groups_{self.area.slug}_light_control"
+        )
 
         switch_entity = self.hass.states.get(entity_id)
+
+        if not switch_entity:
+            return False
 
         return switch_entity.state.lower() == STATE_ON
 
     def reset_control(self):
         """Reset control status."""
         self.controlling = True
-        self._attributes["controlling"] = self.controlling
+        self._attr_extra_state_attributes["controlling"] = self.controlling
         self.schedule_update_ha_state()
         self.logger.debug("{self.name}: Control Reset.")
 
     def is_child_controllable(self, entity_id):
         """Check if child entity is controllable."""
         entity_object = self.hass.states.get(entity_id)
+        if not entity_object:
+            return False
         if "controlling" in entity_object.attributes:
             return entity_object.attributes["controlling"]
 
@@ -531,7 +538,7 @@ class AreaLightGroup(MagicLightGroup):
         else:
             origin_event = event.context.origin_event
 
-            if not self.category:
+            if self.category == LightGroupCategory.ALL:
                 self.handle_group_state_change_primary()
             else:
                 # Ignore certain events
@@ -539,6 +546,7 @@ class AreaLightGroup(MagicLightGroup):
                     # Skip non ON/OFF state changes
                     if (
                         "old_state" not in origin_event.data
+                        or not origin_event.data["old_state"]
                         or not origin_event.data["old_state"].state
                         or origin_event.data["old_state"].state
                         not in [
@@ -548,7 +556,8 @@ class AreaLightGroup(MagicLightGroup):
                     ):
                         return False
                     if (
-                        "old_state" not in origin_event.data
+                        "new_state" not in origin_event.data
+                        or not origin_event.data["new_state"]
                         or not origin_event.data["new_state"].state
                         or origin_event.data["new_state"].state
                         not in [
@@ -568,7 +577,7 @@ class AreaLightGroup(MagicLightGroup):
                 self.handle_group_state_change_secondary()
 
         # Update attribute
-        self._attributes["controlling"] = self.controlling
+        self._attr_extra_state_attributes["controlling"] = self.controlling
         self.schedule_update_ha_state()
 
         return True

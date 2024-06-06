@@ -5,7 +5,10 @@ import logging
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
 from homeassistant.helpers.device_registry import async_get as devicereg_async_get
-from homeassistant.helpers.entity_registry import async_get as entityreg_async_get
+from homeassistant.helpers.entity_registry import (
+    RegistryEntry,
+    async_get as entityreg_async_get,
+)
 from homeassistant.util import slugify
 
 from ..const import (
@@ -19,13 +22,11 @@ from ..const import (
     CONF_TYPE,
     CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
-    DOMAIN,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
     MAGIC_AREAS_COMPONENTS_GLOBAL,
     MAGIC_AREAS_COMPONENTS_META,
-    MAGIC_DEVICE_ID_PREFIX,
     META_AREA_GLOBAL,
     MODULE_DATA,
     MetaAreaType,
@@ -67,6 +68,7 @@ class MagicArea:
         self.config = area_config
 
         self.entities = {}
+        self.magic_entities = {}
 
         self.last_changed = datetime.now(UTC)
         self.states = []
@@ -179,78 +181,87 @@ class MagicArea:
         """Return if area type is exterior or not."""
         return self.area_type == AREA_TYPE_EXTERIOR
 
-    def is_valid_entity(self, entity_object) -> bool:
-        """Validate an entity."""
-        # Ignore our own entities
-        if entity_object.device_id:
-            device_registry = devicereg_async_get(self.hass)
-            device_object = device_registry.async_get(entity_object.device_id)
+    def _is_magic_area_entity(self, entity: RegistryEntry) -> bool:
+        """Return if entity belongs to this integration instance."""
+        return entity.config_entry_id == self.hass_config.entry_id
 
-            if device_object:
-                our_device_tuple = (DOMAIN, f"{MAGIC_DEVICE_ID_PREFIX}{self.id}")
-
-                if our_device_tuple in device_object.identifiers:
-                    self.logger.debug(
-                        "%s: Entity '%s' is ours, skipping.",
-                        self.name,
-                        entity_object.entity_id,
-                    )
-                    return False
-
-        if entity_object.disabled:
-            return False
-
-        if entity_object.entity_id in self.config.get(CONF_EXCLUDE_ENTITIES):
-            return False
-
-        return True
-
-    async def _is_entity_from_area(self, entity_object) -> bool:
-        """Check if an entity is from a given area."""
-        # Check entity's area_id
-        if entity_object.area_id == self.id:
-            return True
-
-        # Check device's area id, if available
-        if entity_object.device_id:
-            device_registry = devicereg_async_get(self.hass)
-            if entity_object.device_id in device_registry.devices:
-                device_object = device_registry.devices[entity_object.device_id]
-                if device_object.area_id == self.id:
-                    return True
-
-        # Check if entity_id is in CONF_INCLUDE_ENTITIES
-        if entity_object.entity_id in self.config.get(CONF_INCLUDE_ENTITIES):
-            return True
-
-        return False
+    def _should_exclude_entity(self, entity: RegistryEntry) -> bool:
+        """Exclude entity."""
+        return (
+            entity.config_entry_id == self.hass_config.entry_id  # Is magic_area entity
+            or entity.disabled  # Is disabled
+            or entity.entity_id  # In excluded list
+            in self.config.get(CONF_EXCLUDE_ENTITIES)
+        )
 
     async def load_entities(self) -> None:
         """Load entities into entity list."""
+
         entity_list = []
         include_entities = self.config.get(CONF_INCLUDE_ENTITIES)
 
         entity_registry = entityreg_async_get(self.hass)
+        device_registry = devicereg_async_get(self.hass)
 
-        for entity_object in entity_registry.entities.values():
-            # Check entity validity
-            if not self.is_valid_entity(entity_object):
-                continue
+        # Add entities from devices in this area
+        devices_in_area = device_registry.devices.get_devices_for_area_id(self.id)
+        for device in devices_in_area:
+            entity_list.extend(
+                [
+                    entity.entity_id
+                    for entity in entity_registry.entities.get_entries_for_device_id(
+                        device.id
+                    )
+                    if not self._should_exclude_entity(entity)
+                ]
+            )
 
-            # Check area membership
-            area_membership = await self._is_entity_from_area(entity_object)
-
-            if not area_membership:
-                continue
-
-            entity_list.append(entity_object.entity_id)
+        # Add entities that are specifically set as this area but device is not or has no device.
+        entities_in_area = entity_registry.entities.get_entries_for_area_id(self.id)
+        entity_list.extend(
+            [
+                entity.entity_id
+                for entity in entities_in_area
+                if entity.entity_id not in entity_list
+                and not self._should_exclude_entity(entity)
+            ]
+        )
 
         if include_entities and isinstance(include_entities, list):
             entity_list.extend(include_entities)
 
         self.load_entity_list(entity_list)
 
-        self.logger.debug("%s: Loaded entities: %s", self.name, str(self.entities))
+        self.logger.debug(
+            "%s: Found area entities: %s",
+            self.name,
+            str(self.entities),
+        )
+
+    def load_magic_entities(self):
+        """Load magic areas-generated entities."""
+
+        entity_registry = entityreg_async_get(self.hass)
+
+        # Add magic are entities
+        entities_for_config_id = (
+            entity_registry.entities.get_entries_for_config_entry_id(
+                self.hass_config.entry_id
+            )
+        )
+
+        for entity_id in [entity.entity_id for entity in entities_for_config_id]:
+
+            entity_domain = entity_id.split(".")[0]
+
+            if entity_domain not in self.magic_entities:
+                self.magic_entities[entity_domain] = []
+
+            self.magic_entities[entity_domain].append(entity_id)
+
+        self.logger.debug(
+            "%s: Loaded magic entities: %s", self.name, str(self.magic_entities)
+        )
 
     def load_entity_list(self, entity_list):
         """Populate entity list with loaded entities."""
@@ -300,6 +311,9 @@ class MagicArea:
                 self.logger.error(
                     "%s: Unable to load entity '%s': %s", self.name, entity_id, str(err)
                 )
+
+        # Load our own entities
+        self.load_magic_entities()
 
     async def initialize(self, _=None) -> None:
         """Initialize area."""
