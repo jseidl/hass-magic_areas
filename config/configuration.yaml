@@ -23,6 +23,8 @@ input_boolean:
     name: Fake Door
   fake_cover:
     name: Fake Cover
+  sleep_mode:
+    name: Sleep Mode
 input_number:
   lr_temp_c:
     name: "Living Room Fake Temperature C"

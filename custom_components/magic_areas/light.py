@@ -556,7 +556,8 @@ class AreaLightGroup(MagicLightGroup):
                     ):
                         return False
                     if (
-                        "old_state" not in origin_event.data
+                        "new_state" not in origin_event.data
+                        or not origin_event.data["new_state"]
                         or not origin_event.data["new_state"].state
                         or origin_event.data["new_state"].state
                         not in [
