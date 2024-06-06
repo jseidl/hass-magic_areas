@@ -1,0 +1,270 @@
+{
+  "title": "Magische gebieden",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Creëer een magisch gebied",
+        "description": "Kies het gebied waar je het magisch van wilt maken!",
+        "data": {
+          "name": "Gebied"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Dit apparaat is al geconfigureerd",
+      "invalid_area": "Het geselecteerde gebied bestaat niet",
+      "no_more_areas": "Al je gebieden zijn al magisch!"
+    }
+  },
+  "options": {
+    "step": {
+      "select_features": {
+        "title": "Functieselectie",
+        "description": "Selecteer de functies die u voor dit gebied wilt inschakelen. Er verschijnt een nieuwe menuoptie voor het configureren van de functie als er configuratieopties voor die functie zijn.",
+        "data": {
+          "climate_groups": "Maak klimaatgroepen",
+          "media_player_groups": "Maak mediaspelergroepen",
+          "light_groups": "Maak lichtgroepen",
+          "cover_groups": "Covergroepen maken",
+          "area_aware_media_player": "Gebiedsbewuste mediaspeler",
+          "aggregates": "Creëer geaggregeerde sensoren",
+          "health": "Creëer gezondheidssensoren",
+          "presence_hold": "Maak een aanwezigheids-houdschakelaar"
+        }
+      },
+      "show_menu": {
+        "title": "Opties voor magische gebieden",
+        "description": "Magic Areas voert standaard basisaanwezigheidsdetectie uit, maar u kunt de volledige kracht ervan benutten door geavanceerde statustracking te configureren, uw aanwezigheidstrackingparameters af te stemmen en onze magische functies in te schakelen! Opties worden niet opgeslagen tenzij u 'Opslaan en afsluiten' selecteert.",
+        "menu_options": {
+          "area_config": "Basisgebiedopties",
+          "secondary_states": "Geavanceerde tracking van gebiedsstatus",
+          "presence_tracking": "Opties voor aanwezigheidsregistratie",
+          "select_features": "Functieselectie",
+          "finish": "Opslaan afsluiten",
+          "feature_conf_health": "Configureer de gezondheidssensor",
+          "feature_conf_climate_groups": "Klimaatgroepen configureren",
+          "feature_conf_light_groups": "Lichtgroepen configureren",
+          "feature_conf_area_aware_media_player": "Configureer gebiedsbewuste mediaspeler",
+          "feature_conf_aggregates": "Configureer aggregaatsensoren",
+          "feature_conf_presence_hold": "Configureer de aanwezigheids-houdschakelaar"
+        }
+      },
+      "feature_conf_health": {
+        "title": "Gezondheidssensor",
+        "description": "U kunt een set apparaatklassen met binaire sensoren kiezen die worden gevolgd door deze gezondheidssensor die kan worden gebruikt in automatiseringen.",
+        "data": {
+          "health_binary_sensor_device_classes": "Apparaatklassen om bij te houden"
+        }
+      },
+      "feature_conf_light_groups": {
+        "title": "Lichte groepen",
+        "description": "Magic Areas maakt deze vier (plus een globale) [lichtgroepen](https://github.com/jseidl/hass-magic_areas/wiki/Light-Groups) (als je er lichten aan toewijst) die je kunt gebruiken. Dit zijn standaard gewone lichtgroepen, maar kunnen automatisch worden bestuurd als u ze aan gebiedsstatussen toewijst en de lichtschakelaar inschakelt (die wordt aangemaakt wanneer u deze functie inschakelt). Wanneer een gebied wordt ontruimd, worden alle lichten uitgeschakeld. Extra statussen kunnen worden ontgrendeld door 'Geavanceerde gebiedsstatus volgen' te configureren.",
+        "data": {
+          "overhead_lights": "Bovenlichten",
+          "overhead_lights_states": "Geeft aan welke bovenlichten zijn ingeschakeld",
+          "overhead_lights_act_on": "Wanneer moet bovenverlichting worden aangestuurd?",
+          "sleep_lights": "Slaap lichten",
+          "sleep_lights_states": "Geeft aan welke slaaplichten zijn ingeschakeld",
+          "sleep_lights_act_on": "Wanneer moeten slaaplichten worden aangestuurd?",
+          "accent_lights": "Accentverlichting",
+          "accent_lights_states": "Geeft aan welke accentverlichting is ingeschakeld",
+          "accent_lights_act_on": "Wanneer moet accentverlichting worden aangestuurd?",
+          "task_lights": "Taaklampjes",
+          "task_lights_states": "Geeft aan welke taaklampjes zijn ingeschakeld",
+          "task_lights_act_on": "Wanneer moeten taaklampen worden aangestuurd?"
+        },
+        "data_description": {
+          "overhead_lights_states": "Configureer welke gebiedsstatussen deze lichtgroep activeren. Lichtgroepen worden 'aan' gezet als het gebied zich in deze toestand bevindt en 'uit' als het gebied deze toestanden verliest. Als u bijvoorbeeld wilt dat het licht na een langere periode 'aan' blijft, moet u ook de 'uitgebreide' status selecteren.",
+          "overhead_lights_act_on": "Selecteer of deze lichtgroep alleen moet worden aangestuurd als een gebied voor het eerst bezet wordt, alleen bij veranderingen in de gebiedsstatus of beide.",
+          "sleep_lights_states": "Configureer welke gebiedsstatussen deze lichtgroep activeren. Lichtgroepen worden 'aan' gezet als het gebied zich in deze toestand bevindt en 'uit' als het gebied deze toestanden verliest. Als u bijvoorbeeld wilt dat het licht na een langere periode 'aan' blijft, moet u ook de 'uitgebreide' status selecteren.",
+          "sleep_lights_act_on": "Selecteer of deze lichtgroep alleen moet worden aangestuurd als een gebied voor het eerst bezet wordt, alleen bij veranderingen in de gebiedsstatus of beide.",
+          "accent_lights_states": "Configureer welke gebiedsstatussen deze lichtgroep activeren. Lichtgroepen worden 'aan' gezet als het gebied zich in deze toestand bevindt en 'uit' als het gebied deze toestanden verliest. Als u bijvoorbeeld wilt dat het licht na een langere periode 'aan' blijft, moet u ook de 'uitgebreide' status selecteren.",
+          "accent_lights_act_on": "Selecteer of deze lichtgroep alleen moet worden aangestuurd als een gebied voor het eerst bezet wordt, alleen bij veranderingen in de gebiedsstatus of beide.",
+          "task_lights_states": "Configureer welke gebiedsstatussen deze lichtgroep activeren. Lichtgroepen worden 'aan' gezet als het gebied zich in deze toestand bevindt en 'uit' als het gebied deze toestanden verliest. Als u bijvoorbeeld wilt dat het licht na een langere periode 'aan' blijft, moet u ook de 'uitgebreide' status selecteren.",
+          "task_lights_act_on": "Selecteer of deze lichtgroep alleen moet worden aangestuurd als een gebied voor het eerst bezet wordt, alleen bij veranderingen in de gebiedsstatus of beide."
+        }
+      },
+      "feature_conf_presence_hold": {
+        "title": "Aanwezigheid vasthouden",
+        "description": "Creëert een schakelaar die een gebied bezet houdt terwijl deze aanstaat. U kunt een time-out configureren, zodat de schakelaar na een bepaalde tijd automatisch wordt uitgeschakeld, als u merkt dat u hem vaak aan laat staan.",
+        "data": {
+          "presence_hold_timeout": "De tijd na de schakelaar wordt automatisch uitgeschakeld. (0 = time-out uitgeschakeld)."
+        }
+      },
+      "feature_conf_area_aware_media_player": {
+        "title": "Kenmerk: Gebiedsbewuste mediaspeler",
+        "description": "Creëert een mediaspelerapparaat dat afspeeloproepen alleen doorstuurt naar andere mediaspelers in bezette gebieden. Dit is handig als u TTS-meldingen wilt gebruiken, maar alleen gebieden wilt waarschuwen die bezet zijn, om te voorkomen dat mediaspelers in lege gebieden op de hoogte worden gesteld. Deze functie heeft configuratie-opties in elk gebied, maar wordt alleen gemaakt als u een 'Globaal' metaalgebied heeft.",
+        "data": {
+          "notification_devices": "Media Player-apparaten die worden gebruikt voor uitzendingen",
+          "notification_states": "Speel meldingenapparaten alleen af in deze statussen"
+        },
+        "data_description": {
+          "notification_states": "Meldingen worden alleen afgespeeld als een gebied zich in deze staat bevindt. Als u 'uitgebreid' gebruikt, zorgt u ervoor dat u geen melding krijgt in kamers die u zojuist bent gepasseerd. Als u 'slaap' niet selecteert, worden meldingen in deze modus voorkomen."
+        }
+      },
+      "feature_conf_aggregates": {
+        "title": "Kenmerk: Sensoraggregaten",
+        "description": "Als u meerdere 'sensoren' (of 'binaire sensoren') van hetzelfde type heeft, kunnen Magic Areas zich groeperen in een enkele entiteit, waardoor u gemiddelden (of sommen) van sensoren of een gecombineerde status van binaire sensoren kunt hebben. Het is zelfs handig als u momenteel slechts één sensor van elke soort heeft, omdat u de aggregaat in automatiseringen kunt gebruiken en in de toekomst kunt uitbreiden zonder dat u uw automatiseringen opnieuw hoeft te schrijven.",
+        "data": {
+          "aggregates_min_entities": "Minimumaantal entiteiten van dezelfde apparaatklasse vereist om aggregaten te maken.",
+          "aggregates_binary_sensor_device_classes": "Binaire sensorapparaatklassen die moeten worden samengevoegd.",
+          "aggregates_sensor_device_classes": "Sensorapparaatklassen die moeten worden samengevoegd.",
+          "aggregates_illuminance_threshold": "Verlichtingssterktedrempel voor dit gebied"
+        },
+        "data_description": {
+          "aggregates_illuminance_threshold": "Magic Areas creëert een binaire lichtsensor die bijhoudt wanneer de totale verlichtingssterkte van het gebied deze drempel overschrijdt. Vereist dat de apparaatklasse 'verlichtingssterkte' wordt geselecteerd voor aggregatie. Stel in op 0 om uit te schakelen."
+        }
+      },
+      "feature_conf_climate_groups": {
+        "title": "Kenmerk: Klimaatgroepen",
+        "description": "Groepeer en beheer alle klimaatentiteiten in een gebied. Met deze functie kunnen klimaatentiteiten automatisch worden bestuurd op basis van de staat van een gebied.",
+        "data": {
+          "turn_on_state": "Staat om de klimaatgroep in te schakelen."
+        },
+        "data_description": {
+          "turn_on_state": "Klimaatapparaten worden in deze toestand 'aan' gezet en uitgeschakeld wanneer het gebied wordt ontruimd."
+        }
+      },
+      "secondary_states": {
+        "title": "Geavanceerde tracking van gebiedsstatus",
+        "description": "U kunt [secundaire staten](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) inschakelen voor een Magic Area door er een entiteit aan toe te wijzen. Secundaire statussen worden gebruikt door functies om lampen alleen aan te zetten als het donker is of om klimaatapparaten pas aan te zetten na een 'langere' tijdsperiode of om geen meldingen naar een gebied te sturen als het in de 'slaapstand' staat.",
+        "data": {
+          "dark_entity": "De lichtsensor van Area",
+          "sleep_entity": "Entiteit die wordt gebruikt om de slaapstatus van het gebied bij te houden",
+          "sleep_timeout": "Hoe lang het gebied zal wachten voordat de status wordt gewist wanneer deze zich in de slaapstand bevindt",
+          "accent_entity": "Entiteit die wordt gebruikt om de status met gebiedsaccenten bij te houden",
+          "extended_time": "Het gebied wordt gemarkeerd als 'uitgebreid' nadat het zo lang bezet is geweest",
+          "extended_timeout": "Hoe lang het gebied zal wachten voordat de status wordt gewist wanneer deze zich in de uitgebreide status bevindt"
+        },
+        "data_description": {
+          "dark_entity": "De lichtsensor van het gebied wordt gebruikt om de status 'helder'/'donker' van het gebied bij te houden. Deze wordt gebruikt door functies zoals Lichtgroepen om uw verlichting aan/uit te zetten op basis van de helderheidsstatus van de kamer.\n\n**Vermijd het gebruik van een 'licht'-sensor in hetzelfde gebied, omdat dit een feedbacklus kan veroorzaken.** Het wordt aanbevolen om 'sun.sun' of een externe 'licht'-sensor te gebruiken die niet wordt beïnvloed door de lichten gecontroleerd wordt."
+        }
+      },
+      "area_config": {
+        "title": "Basisgebiedopties",
+        "description": "Configureer basisopties voor het gebied. Gebiedstype wordt gebruikt voor de Interior/Exterior/Global [Meta-areas](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas) en u kunt nauwkeurig afstemmen welke entiteiten worden geanalyseerd door Magic Areas door de opties voor het opnemen/uitsluiten van entiteiten te gebruiken.",
+        "data": {
+          "include_entities": "Voeg entiteiten toe aan dit gebied",
+          "exclude_entities": "Sluit entiteiten uit van analyse",
+          "type": "Gebiedstype (binnen/buiten)"
+        },
+        "data_description": {
+          "include_entities": "Magic Areas kunnen entiteiten uit andere gebieden overwegen, inclusief andere Magic-entiteiten. U kunt dit gebruiken om de binaire aanwezigheidssensor van een kamer ook als aanwezigheidssensor van een andere kamer te laten fungeren.",
+          "exclude_entities": "Entiteiten die hier worden vermeld, worden volledig genegeerd door Magic Areas. Gebruik dit als u entiteiten heeft die uw gegevens weggooien, zoals temperatuursensoren van apparaten.",
+          "type": "Door een gebiedstype te definiëren, kunnen metagebieden voor binnen/buiten worden gemaakt."
+        }
+      },
+      "presence_tracking": {
+        "title": "Aanwezigheid volgen",
+        "description": "Configureer welke platforms en binaire sensorapparaatklassen worden gebruikt voor [aanwezigheidsregistratie] (https://github.com/jseidl/hass-magic_areas/wiki/Presence-Sensing). In deze sectie kunt u ook configureren hoe lang Magic Area wacht tot het gebied wordt leeggemaakt na de laatste aanwezigheidsgebeurtenis.",
+        "data": {
+          "presence_sensor_device_class": "Apparaatklassen aanwezigheidssensoren",
+          "presence_device_platforms": "Platformen voor aanwezigheidsdetectie",
+          "update_interval": "Interval voor het controleren van gemiste gebeurtenissen",
+          "clear_timeout": "Time-out wissen"
+        },
+        "data_description": {
+          "presence_device_platforms": "Binaire sensoren zijn meestal de standaard bron van aanwezigheid, maar media-apparaten kunnen ook worden gebruikt.",
+          "presence_sensor_device_class": "Definieer welke apparaatklassen van 'binaire sensoren' zullen worden gebruikt voor aanwezigheidsregistratie. Veel voorkomende niet-standaard opties zijn deur en vochtigheid.",
+          "clear_timeout": "Hoe lang moet er sinds de laatste aanwezigheidsgebeurtenis worden gewacht voordat het gebied wordt ontruimd?"
+        }
+      }
+    },
+    "error": {
+      "option_error": "Ongeldige optie",
+      "malformed_input": "Dit veld is ongeldig:"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "area_state": {
+        "name": "Gebied staat"
+      },
+      "health_problem": {
+        "name": "Gebied Gezondheid"
+      },
+      "threshold_light": {
+        "name": "Licht (berekend)"
+      }
+    },
+    "climate": {
+      "climate_group": {
+        "name": "Thermostaten"
+      }
+    },
+    "cover": {
+      "cover_group_awning": {
+        "name": "Luifels"
+      },
+      "cover_group_blind": {
+        "name": "Jaloezieën"
+      },
+      "cover_group_curtain": {
+        "name": "Gordijnen"
+      },
+      "cover_group_damper": {
+        "name": "Dempers"
+      },
+      "cover_group_door": {
+        "name": "Deuren"
+      },
+      "cover_group_garage": {
+        "name": "Garagedeuren"
+      },
+      "cover_group_gate": {
+        "name": "Poorten"
+      },
+      "cover_group_shade": {
+        "name": "Tinten"
+      },
+      "cover_group_shutter": {
+        "name": "Luiken"
+      },
+      "cover_group_window": {
+        "name": "ramen"
+      },
+      "cover_group": {
+        "name": "Hoezen"
+      }
+    },
+    "light": {
+      "all_lights": {
+        "name": "Alle lichten"
+      },
+      "overhead_lights": {
+        "name": "Bovenlichten"
+      },
+      "task_lights": {
+        "name": "Taakverlichting"
+      },
+      "accent_lights": {
+        "name": "Accentverlichting"
+      },
+      "sleep_lights": {
+        "name": "Slaap lichten"
+      }
+    },
+    "media_player": {
+      "media_player_group": {
+        "name": "Mediaspelers"
+      },
+      "area_aware_media_player": {
+        "name": "Gebiedsbewuste mediaspeler"
+      }
+    },
+    "switch": {
+      "presence_hold": {
+        "name": "Aanwezigheid vasthouden"
+      },
+      "light_control": {
+        "name": "Licht controle"
+      },
+      "media_player_control": {
+        "name": "Mediaspelerbediening"
+      },
+      "climate_control": {
+        "name": "Klimaatcontrole"
+      }
+    }
+  }
+}
