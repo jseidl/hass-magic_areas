@@ -21,6 +21,8 @@ input_boolean:
     name: Fake Fan for Climate
   fake_door:
     name: Fake Door
+  fake_motion:
+    name: Fake Motion
   fake_cover:
     name: Fake Cover
   sleep_mode:
@@ -62,6 +64,10 @@ template:
         device_class: 'door'
         unique_id: binary_sensor_lr_door
         state: "{{ is_state('input_boolean.fake_door','on') }}"
+      - name: "LR Fake Motion"
+        device_class: 'motion'
+        unique_id: binary_sensor_lr_motion
+        state: "{{ is_state('input_boolean.fake_motion','on') }}"
   - sensor:
       - name: "LR Fake temperature C"
         device_class: 'temperature'
