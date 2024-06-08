@@ -40,7 +40,7 @@
           "secondary_states": "Erweiterte Bereichsstatusverfolgung",
           "presence_tracking": "Optionen zur Anwesenheitsverfolgung",
           "select_features": "Merkmalsauswahl",
-          "finish": "Sicherer Ausgang",
+          "finish": "Konfiguration endgültig speichern",
           "feature_conf_health": "Konfigurieren des Integritätssensors",
           "feature_conf_climate_groups": "Klimagruppen konfigurieren",
           "feature_conf_light_groups": "Lichtgruppen konfigurieren",
