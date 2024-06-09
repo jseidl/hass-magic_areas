@@ -61,8 +61,8 @@
         "description": "Magic Areas erstellt diese vier (plus eine globale) [Lichtgruppen](https://github.com/jseidl/hass-magic_areas/wiki/Light-Groups) (wenn Sie ihnen Lichter zuweisen), die Sie verwenden können. Dies sind standardmäßig einfache Lichtgruppen, können aber automatisch gesteuert werden, wenn Sie sie Bereichszuständen zuweisen und den Lichtsteuerungsschalter aktivieren (der erstellt wird, wenn Sie diese Funktion aktivieren). Alle Lichter werden ausgeschaltet, wenn ein Bereich gelöscht wird. Zusätzliche Zustände können durch Konfigurieren von „Erweiterte Bereichszustandsverfolgung“ freigeschaltet werden.",
         "data": {
           "overhead_lights": "Deckenleuchten",
-          "overhead_lights_states": "Gibt an, welche Deckenleuchten eingeschaltet sind",
-          "overhead_lights_act_on": "Wann sollte die Deckenbeleuchtung gesteuert werden?",
+          "overhead_lights_states": "Gibt an, welche Lichter eingeschaltet sind",
+          "overhead_lights_act_on": "Wann sollten die Lichter gesteuert werden?",
           "sleep_lights": "Schlaflichter",
           "sleep_lights_states": "Gibt an, welche Schlaflichter eingeschaltet sind",
           "sleep_lights_act_on": "Wann sollen Schlaflichter gesteuert werden?",
