@@ -1,6 +1,6 @@
 -r requirements.txt
 colorlog~=6.8
-flake8~=7.0
+flake8~=7.1
 flake8-docstrings~=1.7
 fnv-hash-fast~=0.5
 mypy~=1.10
