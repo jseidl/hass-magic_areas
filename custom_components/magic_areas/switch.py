@@ -15,20 +15,14 @@ from homeassistant.helpers.event import async_call_later
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
-from .base.magic import MagicArea
-from .const import (
-    CONF_FEATURE_CLIMATE_GROUPS,
-    CONF_FEATURE_LIGHT_GROUPS,
-    CONF_FEATURE_MEDIA_PLAYER_GROUPS,
-    CONF_FEATURE_PRESENCE_HOLD,
-    CONF_PRESENCE_HOLD_TIMEOUT,
-    DEFAULT_PRESENCE_HOLD_TIMEOUT,
-    ONE_MINUTE,
+from .base.feature import (
     MagicAreasFeatureInfoClimateGroups,
     MagicAreasFeatureInfoLightGroups,
     MagicAreasFeatureInfoMediaPlayerGroups,
     MagicAreasFeatureInfoPresenceHold,
 )
+from .base.magic import MagicArea
+from .const import ONE_MINUTE, MagicAreasFeatures, OptionSetKey, PresenceHoldOptionKey
 from .util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,16 +43,16 @@ def add_switches(area: MagicArea, async_add_entities: AddEntitiesCallback):
 
     switch_entities = []
 
-    if area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
+    if area.config.has_feature(MagicAreasFeatures.PRESENCE_HOLD):
         switch_entities.append(PresenceHoldSwitch(area))
 
-    if area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
+    if area.config.has_feature(MagicAreasFeatures.LIGHT_GROUPS):
         switch_entities.append(LightControlSwitch(area))
 
-    if area.has_feature(CONF_FEATURE_MEDIA_PLAYER_GROUPS):
+    if area.config.has_feature(MagicAreasFeatures.MEDIA_PLAYER_GROUPS):
         switch_entities.append(MediaPlayerControlSwitch(area))
 
-    if area.has_feature(CONF_FEATURE_CLIMATE_GROUPS):
+    if area.config.has_feature(MagicAreasFeatures.CLIMATE_GROUPS):
         switch_entities.append(ClimateControlSwitch(area))
 
     if switch_entities:
@@ -134,8 +128,10 @@ class ResettableSwitchBase(SwitchBase):
         self._attr_is_on = True
         self.schedule_update_ha_state()
 
-        timeout = self.area.feature_config(CONF_FEATURE_PRESENCE_HOLD).get(
-            CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT
+        timeout = (
+            self.area.config.get(OptionSetKey.PRESENCE_HOLD)
+            .get(PresenceHoldOptionKey.TIMEOUT)
+            .value()
         )
 
         if timeout and not self._timeout_callback:

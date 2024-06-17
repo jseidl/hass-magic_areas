@@ -5,12 +5,8 @@ import logging
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import (
-    DOMAIN,
-    MAGIC_DEVICE_ID_PREFIX,
-    MAGICAREAS_UNIQUEID_PREFIX,
-    MagicAreasFeatureInfo,
-)
+from ..base.feature import MagicAreasFeatureInfo
+from ..const import DOMAIN, MagicAreasPrefix
 from .magic import MagicArea
 
 _LOGGER = logging.getLogger(__name__)
@@ -71,7 +67,7 @@ class MagicEntity(RestoreEntity):
     def _generate_entity_id(self, domain: str):
 
         entity_id_parts = [
-            MAGICAREAS_UNIQUEID_PREFIX,
+            MagicAreasPrefix.UNIQUE_ID,
             self.feature_info.id,
             self.area.slug,
         ]
@@ -94,7 +90,7 @@ class MagicEntity(RestoreEntity):
         # Format: magicareas_feature_domain_areaname_name
 
         unique_id_parts = [
-            MAGICAREAS_UNIQUEID_PREFIX,
+            MagicAreasPrefix.UNIQUE_ID,
             self.feature_info.id,
             domain,
             self.area.slug,
@@ -119,7 +115,7 @@ class MagicEntity(RestoreEntity):
         return DeviceInfo(
             identifiers={
                 # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, f"{MAGIC_DEVICE_ID_PREFIX}{self.area.id}")
+                (DOMAIN, f"{MagicAreasPrefix.DEVICE_ID}{self.area.id}")
             },
             name=self.area.name,
             manufacturer="Magic Areas",

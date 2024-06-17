@@ -60,13 +60,13 @@ from homeassistant.helpers.event import async_track_state_change_event
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
+from .base.feature import MagicAreasFeatureInfoClimateGroups
 from .const import (
-    AREA_STATE_CLEAR,
-    CONF_CLIMATE_GROUPS_TURN_ON_STATE,
-    CONF_FEATURE_CLIMATE_GROUPS,
-    DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
-    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
-    MagicAreasFeatureInfoClimateGroups,
+    AreaState,
+    ClimateGroupOptionKey,
+    MagicAreasEvent,
+    MagicAreasFeatures,
+    OptionSetKey,
 )
 from .util import cleanup_removed_entries
 
@@ -95,7 +95,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 def setup_climate_group(area, async_add_entities):
     """Add all the climate entities for all features that have one."""
     # Check feature availability
-    if not area.has_feature(CONF_FEATURE_CLIMATE_GROUPS):
+    if not area.config.has_feature(MagicAreasFeatures.CLIMATE_GROUPS):
         return
 
     # Check if there are any climate entities
@@ -419,17 +419,17 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
         _LOGGER.debug("%s: Climate group detected area state change.", self.name)
 
-        if AREA_STATE_CLEAR in new_states and self._attr_hvac_action != HVACAction.OFF:
+        if AreaState.CLEAR in new_states and self._attr_hvac_action != HVACAction.OFF:
             _LOGGER.debug(
                 "%s: Area %s clear, turning off climate.", self.name, self.area.name
             )
             return self._turn_off()
 
         if self.area.is_occupied() and self._attr_hvac_action == HVACAction.OFF:
-            configured_state = self.area.feature_config(
-                CONF_FEATURE_CLIMATE_GROUPS
-            ).get(
-                CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE
+            configured_state = (
+                self.area.config.get(OptionSetKey.CLIMATE_GROUPS)
+                .get(ClimateGroupOptionKey.TURN_ON_STATE)
+                .value()
             )
 
             if (
@@ -473,7 +473,7 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
         if not self.area.is_meta():
             async_dispatcher_connect(
-                self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed
+                self.hass, MagicAreasEvent.AREA_STATE_CHANGED, self.area_state_changed
             )
 
         await super().async_added_to_hass()

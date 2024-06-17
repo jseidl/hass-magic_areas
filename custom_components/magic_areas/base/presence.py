@@ -4,16 +4,12 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 import logging
 
-from homeassistant.components.binary_sensor import (
-    DOMAIN as BINARY_SENSOR_DOMAIN,
-    BinarySensorDeviceClass,
-    BinarySensorEntity,
-)
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.sun.const import STATE_ABOVE_HORIZON
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant
-from homeassistant.helpers.dispatcher import async_dispatcher_connect, dispatcher_send
+from homeassistant.helpers.dispatcher import dispatcher_send
 from homeassistant.helpers.event import (
     async_track_state_change_event,
     async_track_time_interval,
@@ -21,38 +17,18 @@ from homeassistant.helpers.event import (
 )
 
 from ..const import (
-    ATTR_ACTIVE_SENSORS,
-    ATTR_AREAS,
-    ATTR_CLEAR_TIMEOUT,
-    ATTR_LAST_ACTIVE_SENSORS,
-    ATTR_PRESENCE_SENSORS,
-    ATTR_STATES,
-    ATTR_TYPE,
-    CONF_CLEAR_TIMEOUT,
-    CONF_EXTENDED_TIME,
-    CONF_EXTENDED_TIMEOUT,
-    CONF_FEATURE_PRESENCE_HOLD,
-    CONF_PRESENCE_DEVICE_PLATFORMS,
-    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
-    CONF_SECONDARY_STATES,
-    CONF_SLEEP_TIMEOUT,
-    CONF_TYPE,
-    CONF_UPDATE_INTERVAL,
     CONFIGURABLE_AREA_STATE_MAP,
-    DEFAULT_EXTENDED_TIME,
-    DEFAULT_EXTENDED_TIMEOUT,
-    DEFAULT_PRESENCE_DEVICE_PLATFORMS,
-    DEFAULT_SLEEP_TIMEOUT,
     INVALID_STATES,
     ONE_MINUTE,
     PRESENCE_SENSOR_VALID_ON_STATES,
-    AreaStates,
-    MagicAreasEvents,
-    MagicAreasFeatureInfoPresenceTracking,
-    MetaAreaIcons,
-    MetaAreaType,
+    AreaInfoOptionKey,
+    AreaState,
+    CustomAttribute,
+    MagicAreasEvent,
+    MagicAreasFeatures,
+    OptionSetKey,
+    SecondaryStatesOptionKey,
 )
-from .entities import MagicEntity
 from .magic import MagicArea
 
 _LOGGER = logging.getLogger(__name__)
@@ -107,9 +83,12 @@ class AreaStateTracker:
         for configurable_state in configurable_states:
 
             configurable_state_entity = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
-            tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                configurable_state_entity, None
+            tracked_entity = (
+                self.area.config.get(OptionSetKey.SECONDARY_STATES)
+                .get(configurable_state_entity)
+                .value()
             )
+
             if not tracked_entity:
                 continue
 
@@ -128,7 +107,11 @@ class AreaStateTracker:
             )
 
         # Timed self update
-        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+        delta = timedelta(
+            seconds=self.area.config.get(OptionSetKey.AREA_INFO)
+            .get(AreaInfoOptionKey.UPDATE_INTERVAL)
+            .value()
+        )
         self._track_listener(
             async_track_time_interval(self.hass, self._refresh_states, delta)
         )
@@ -146,11 +129,11 @@ class AreaStateTracker:
     def get_metadata(self) -> dict:
         """Return metadata information about the area's occupancy."""
         return {
-            ATTR_PRESENCE_SENSORS: self._sensors,
-            ATTR_ACTIVE_SENSORS: self._active_sensors,
-            ATTR_LAST_ACTIVE_SENSORS: self._last_active_sensors,
-            ATTR_STATES: self.area.states,
-            ATTR_CLEAR_TIMEOUT: self._get_clear_timeout() / ONE_MINUTE,
+            CustomAttribute.PRESENCE_SENSORS: self._sensors,
+            CustomAttribute.ACTIVE_SENSORS: self._active_sensors,
+            CustomAttribute.LAST_ACTIVE_SENSORS: self._last_active_sensors,
+            CustomAttribute.STATES: self.area.states,
+            CustomAttribute.CLEAR_TIMEOUT: self._get_clear_timeout() / ONE_MINUTE,
         }
 
     def force_update(self) -> None:
@@ -178,9 +161,11 @@ class AreaStateTracker:
             configurable_state_entity,
         ) in CONFIGURABLE_AREA_STATE_MAP.items():
 
-            secondary_state_entity = self.area.config.get(
-                CONF_SECONDARY_STATES, {}
-            ).get(configurable_state_entity, None)
+            secondary_state_entity = (
+                self.area.config.get(OptionSetKey.SECONDARY_STATES)
+                .get(configurable_state_entity)
+                .value()
+            )
 
             if not secondary_state_entity:
                 continue
@@ -206,8 +191,10 @@ class AreaStateTracker:
                 self._sensors.append(entity_id)
             return
 
-        valid_presence_platforms = self.area.config.get(
-            CONF_PRESENCE_DEVICE_PLATFORMS, DEFAULT_PRESENCE_DEVICE_PLATFORMS
+        valid_presence_platforms = (
+            self.area.config.get(OptionSetKey.AREA_INFO)
+            .get(AreaInfoOptionKey.PRESENCE_SENSOR_DOMAINS)
+            .value()
         )
 
         for component, entities in self.area.entities.items():
@@ -222,15 +209,18 @@ class AreaStateTracker:
                     if ATTR_DEVICE_CLASS not in entity:
                         continue
 
-                    if entity[ATTR_DEVICE_CLASS] not in self.area.config.get(
-                        CONF_PRESENCE_SENSOR_DEVICE_CLASS
+                    if (
+                        entity[ATTR_DEVICE_CLASS]
+                        not in self.area.config.get(OptionSetKey.AREA_INFO)
+                        .get(AreaInfoOptionKey.PRESENCE_SENSOR_DEVICE_CLASSES)
+                        .value()
                     ):
                         continue
 
                 self._sensors.append(entity[ATTR_ENTITY_ID])
 
         # Append presence_hold switch as a presence_sensor
-        if self.area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
+        if self.area.config.has_feature(MagicAreasFeatures.PRESENCE_HOLD):
             presence_hold_switch_id = (
                 f"{SWITCH_DOMAIN}.magic_areas_presence_hold_{self.area.slug}"
             )
@@ -313,7 +303,7 @@ class AreaStateTracker:
         new_states, lost_states = states_tuple
 
         state_changed = any(
-            state in new_states for state in [AreaStates.OCCUPIED, AreaStates.CLEAR]
+            state in new_states for state in [AreaState.OCCUPIED, AreaState.CLEAR]
         )
 
         _LOGGER.debug(
@@ -339,8 +329,15 @@ class AreaStateTracker:
             str(lost_states),
         )
         dispatcher_send(
-            self.hass, MagicAreasEvents.AREA_STATE_CHANGED, self.area.id, states_tuple
+            self.hass, MagicAreasEvent.AREA_STATE_CHANGED, self.area.id, states_tuple
         )
+
+        event_data = {
+            "area_id": self.area.id,
+            "new_states": new_states,
+            "lost_states": lost_states,
+        }
+        self.hass.bus.fire(MagicAreasEvent.AREA_STATE_CHANGED, event_data=event_data)
 
     # Area state calculations
 
@@ -377,7 +374,7 @@ class AreaStateTracker:
         current_state = self._get_occupancy_state()
         last_state = self.area.is_occupied()
 
-        states.append(AreaStates.OCCUPIED if current_state else AreaStates.CLEAR)
+        states.append(AreaState.OCCUPIED if current_state else AreaState.CLEAR)
         if current_state != last_state:
             self.area.last_changed = datetime.now(UTC)
             _LOGGER.debug(
@@ -391,28 +388,32 @@ class AreaStateTracker:
             datetime.now(UTC) - self.area.last_changed
         ).total_seconds()
 
-        extended_time = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-            CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME
+        extended_time = (
+            self.area.config.get(OptionSetKey.SECONDARY_STATES)
+            .get(SecondaryStatesOptionKey.EXTENDED_TIME)
+            .value()
         )
 
         if (
-            AreaStates.OCCUPIED in states
+            AreaState.OCCUPIED in states
             and (seconds_since_last_change / ONE_MINUTE) >= extended_time
         ):
-            states.append(AreaStates.EXTENDED)
+            states.append(AreaState.EXTENDED)
 
         configurable_states = self._get_configured_secondary_states()
 
-        # Assume AreaStates.DARK if not configured
-        if AreaStates.DARK not in configurable_states:
-            states.append(AreaStates.DARK)
+        # Assume AreaState.DARK if not configured
+        if AreaState.DARK not in configurable_states:
+            states.append(AreaState.DARK)
 
         for configurable_state in configurable_states:
             configurable_state_entity = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
 
-            secondary_state_entity = self.area.config.get(
-                CONF_SECONDARY_STATES, {}
-            ).get(configurable_state_entity, None)
+            secondary_state_entity = (
+                self.area.config.get(OptionSetKey.SECONDARY_STATES)
+                .get(configurable_state_entity)
+                .value()
+            )
 
             if not secondary_state_entity:
                 continue
@@ -424,7 +425,7 @@ class AreaStateTracker:
             state_to_add = None
 
             # Handle dark state from light sensor as an inverted configurable state
-            inverted_states = [AreaStates.DARK]
+            inverted_states = [AreaState.DARK]
 
             # Handle both forward and inverted configurable state
             if configurable_state in inverted_states:
@@ -445,8 +446,8 @@ class AreaStateTracker:
                 states.append(configurable_state)
 
         # Meta-state bright
-        if AreaStates.DARK in configurable_states and AreaStates.DARK not in states:
-            states.append(AreaStates.BRIGHT)
+        if AreaState.DARK in configurable_states and AreaState.DARK not in states:
+            states.append(AreaState.BRIGHT)
 
         return states
 
@@ -556,23 +557,28 @@ class AreaStateTracker:
 
     def _get_clear_timeout(self) -> int:
         """Return configured clear timeout value."""
-        if self.area.has_state(AreaStates.SLEEP):
+        if self.area.has_state(AreaState.SLEEP):
             return (
-                self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                    CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT
-                )
+                self.area.config.get(OptionSetKey.SECONDARY_STATES)
+                .get(SecondaryStatesOptionKey.SLEEP_TIMEOUT)
+                .value()
                 * ONE_MINUTE
             )
 
-        if self.area.has_state(AreaStates.EXTENDED):
+        if self.area.has_state(AreaState.EXTENDED):
             return (
-                self.area.config.get(CONF_SECONDARY_STATES, {}).get(
-                    CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT
-                )
+                self.area.config.get(OptionSetKey.SECONDARY_STATES)
+                .get(SecondaryStatesOptionKey.EXTENDED_TIMEOUT)
+                .value()
                 * ONE_MINUTE
             )
 
-        return self.area.config.get(CONF_CLEAR_TIMEOUT) * ONE_MINUTE
+        return (
+            self.area.config.get(OptionSetKey.AREA_INFO)
+            .get(AreaInfoOptionKey.CLEAR_TIMEOUT)
+            .value()
+            * ONE_MINUTE
+        )
 
     def _remove_clear_timeout(self) -> None:
         if not self._clear_timeout_callback:
@@ -607,138 +613,3 @@ class AreaStateTracker:
             return True
 
         return False
-
-
-class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
-    """Create an area presence presence sensor entity that tracks the current occupied state."""
-
-    feature_info = MagicAreasFeatureInfoPresenceTracking()
-
-    # Init & Teardown
-
-    def __init__(self, area: MagicArea) -> None:
-        """Initialize the area presence binary sensor."""
-
-        MagicEntity.__init__(self, area, domain=BINARY_SENSOR_DOMAIN)
-        BinarySensorEntity.__init__(self)
-
-        # Load area state tracker
-        self._state_tracker: AreaStateTracker | None = None
-
-        self._attr_device_class = BinarySensorDeviceClass.OCCUPANCY
-        self._attr_extra_state_attributes = {}
-        self._attr_is_on: bool = False
-
-    async def async_added_to_hass(self) -> None:
-        """Call to add the system to hass."""
-        await super().async_added_to_hass()
-        await self._restore_state()
-        await self._load_attributes()
-
-        # Setup the listeners
-        await self._setup_listeners()
-
-        if self._state_tracker:
-            self._state_tracker.force_update()
-
-        _LOGGER.debug("%s: area presence binary sensor initialized", self.area.name)
-
-    async def _setup_listeners(self) -> None:
-
-        # Setup state chagne listener
-        async_dispatcher_connect(
-            self.hass, MagicAreasEvents.AREA_STATE_CHANGED, self._area_state_changed
-        )
-
-        # Setup area state tracker
-        self._state_tracker = AreaStateTracker(self.hass, self.area)
-
-        self.async_on_remove(self._destroy_tracker_callbacks)
-
-    def _destroy_tracker_callbacks(self) -> None:
-        """Destroy all callbacks from tracker."""
-        for tracked in self._state_tracker.get_tracked_entities():
-            self.hass.async_add_executor_job(tracked)
-
-    async def _restore_state(self) -> None:
-        """Restore the state of the presence sensor entity on initialize."""
-        last_state = await self.async_get_last_state()
-
-        if last_state is None:
-            _LOGGER.debug("%s: New presence sensor created", self.area.name)
-            self._attr_is_on = False
-        else:
-            _LOGGER.debug(
-                "%s: presence sensor restored [state=%s]",
-                self.area.name,
-                last_state.state,
-            )
-            self._attr_is_on = last_state.state == STATE_ON
-            self._attr_extra_state_attributes = dict(last_state.attributes)
-
-        self.schedule_update_ha_state()
-
-    # Binary sensor overrides
-
-    @property
-    def icon(self):
-        """Return the icon to be used for this entity."""
-        if self.area.is_meta():
-            if self.area.id == MetaAreaType.EXTERIOR:
-                return MetaAreaIcons.EXTERIOR
-            if self.area.id == MetaAreaType.INTERIOR:
-                return MetaAreaIcons.INTERIOR
-            if self.area.id == MetaAreaType.GLOBAL:
-                return MetaAreaIcons.GLOBAL
-
-        return self.area.icon
-
-    # Helpers
-
-    async def _load_attributes(self) -> None:
-        # Set attributes
-        if self.area.is_meta():
-            self._attr_extra_state_attributes.update(
-                {
-                    ATTR_AREAS: self.area.get_child_areas(),
-                }
-            )
-
-        # Add common attributes
-        self._attr_extra_state_attributes.update(
-            {
-                ATTR_STATES: [],
-                ATTR_ACTIVE_SENSORS: [],
-                ATTR_LAST_ACTIVE_SENSORS: [],
-                ATTR_PRESENCE_SENSORS: [],
-                ATTR_TYPE: self.area.config.get(CONF_TYPE),
-                ATTR_CLEAR_TIMEOUT: 0,
-            }
-        )
-
-    # Area change handlers
-    def _area_state_changed(
-        self, area_id: str, states_tuple: tuple[list[str], list[str]]
-    ) -> None:
-        """Handle area state change event."""
-
-        # pylint: disable-next=unused-variable
-        new_states, old_states = states_tuple
-
-        if area_id != self.area.id:
-            _LOGGER.debug(
-                "%s: Area state change event not for us. Skipping. (req: %s}/self: %s)",
-                self.area.name,
-                area_id,
-                self.area.id,
-            )
-            return
-
-        _LOGGER.debug(
-            "%s: Binary presence sensor detected area state change.", self.area.name
-        )
-
-        if self._state_tracker:
-            self._attr_is_on = self.area.is_occupied()
-            self._attr_extra_state_attributes.update(self._state_tracker.get_metadata())
-            self.schedule_update_ha_state()

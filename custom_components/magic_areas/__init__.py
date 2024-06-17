@@ -4,32 +4,20 @@ from collections import defaultdict
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_NAME
+from homeassistant.const import ATTR_ID, ATTR_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
 from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 
 from .base.magic import MagicArea, MagicMetaArea
 from .const import (
-    CONF_CLEAR_TIMEOUT,
-    CONF_EXTENDED_TIME,
-    CONF_EXTENDED_TIMEOUT,
-    CONF_ID,
-    CONF_NAME,
-    CONF_SECONDARY_STATES,
-    CONF_SLEEP_TIMEOUT,
-    DATA_AREA_OBJECT,
-    DATA_UNDO_UPDATE_LISTENER,
-    DEFAULT_CLEAR_TIMEOUT,
-    DEFAULT_EXTENDED_TIME,
-    DEFAULT_EXTENDED_TIMEOUT,
-    DEFAULT_SLEEP_TIMEOUT,
-    META_AREA_EXTERIOR,
-    META_AREA_GLOBAL,
-    META_AREA_INTERIOR,
-    MODULE_DATA,
+    AreaInfoOptionKey,
+    MagicAreasDataKey,
+    MagicAreasFeatures,
     MagicConfigEntryVersion,
     MetaAreaType,
+    OptionSetKey,
+    SecondaryStatesOptionKey,
 )
 from .util import (
     basic_area_from_floor,
@@ -48,9 +36,9 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Set up the component."""
-    data = hass.data.setdefault(MODULE_DATA, {})
-    area_id = config_entry.data[CONF_ID]
-    area_name = config_entry.data[CONF_NAME]
+    data = hass.data.setdefault(MagicAreasDataKey.MODULE_DATA, {})
+    area_id = config_entry.data[ATTR_ID]
+    area_name = config_entry.data[ATTR_NAME]
 
     _LOGGER.debug("%s: Setting up entry.", area_name)
 
@@ -97,8 +85,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     undo_listener = config_entry.add_update_listener(async_update_options)
 
     data[config_entry.entry_id] = {
-        DATA_AREA_OBJECT: magic_area,
-        DATA_UNDO_UPDATE_LISTENER: undo_listener,
+        MagicAreasDataKey.AREA: magic_area,
+        MagicAreasDataKey.TRACKED_LISTENERS: undo_listener,
     }
 
     # Setup platforms
@@ -115,16 +103,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     meta_areas = defaultdict()
 
     for area in data.values():
-        area_obj = area[DATA_AREA_OBJECT]
+        area_obj = area[MagicAreasDataKey.AREA]
         if area_obj.is_meta():
             meta_areas[area_obj.id] = area_obj
 
     # Handle non-meta areas
     if not magic_area.is_meta():
         meta_area_key = (
-            META_AREA_EXTERIOR.lower()
-            if magic_area.is_exterior()
-            else META_AREA_INTERIOR.lower()
+            MetaAreaType.EXTERIOR if magic_area.is_exterior() else MetaAreaType.INTERIOR
         )
 
         if meta_area_key in meta_areas:
@@ -135,7 +121,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                     meta_area_object.hass_config.entry_id
                 )
     else:
-        meta_area_global_id = META_AREA_GLOBAL.lower()
+        meta_area_global_id = MetaAreaType.GLOBAL
 
         if magic_area.id != meta_area_global_id and meta_area_global_id in meta_areas:
             if meta_areas[meta_area_global_id].initialized:
@@ -158,9 +144,9 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     """Unload a config entry."""
 
     platforms_unloaded = []
-    data = hass.data[MODULE_DATA]
+    data = hass.data[MagicAreasDataKey.MODULE_DATA]
     area_data = data[config_entry.entry_id]
-    area = area_data[DATA_AREA_OBJECT]
+    area = area_data[MagicAreasDataKey.AREA]
 
     for platform in area.loaded_platforms:
         unload_ok = await hass.config_entries.async_forward_entry_unload(
@@ -168,7 +154,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         )
         platforms_unloaded.append(unload_ok)
 
-    area_data[DATA_UNDO_UPDATE_LISTENER]()
+    area_data[MagicAreasDataKey.TRACKED_LISTENERS]()
 
     all_unloaded = all(platforms_unloaded)
 
@@ -176,7 +162,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         data.pop(config_entry.entry_id)
 
     if not data:
-        hass.data.pop(MODULE_DATA)
+        hass.data.pop(MagicAreasDataKey.MODULE_DATA)
 
     return all_unloaded
 
@@ -184,23 +170,23 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 def migrate_seconds_to_minutes(config_data: dict) -> dict:
     """Perform migration of seconds-based config options to minutes."""
 
-    # Update seconds -> minutes
-    if CONF_CLEAR_TIMEOUT in config_data:
-        config_data[CONF_CLEAR_TIMEOUT] = seconds_to_minutes(
-            config_data[CONF_CLEAR_TIMEOUT], DEFAULT_CLEAR_TIMEOUT
-        )
-    if CONF_SECONDARY_STATES in config_data:
-        entries_to_convert = {
-            CONF_EXTENDED_TIMEOUT: DEFAULT_EXTENDED_TIMEOUT,
-            CONF_EXTENDED_TIME: DEFAULT_EXTENDED_TIME,
-            CONF_SLEEP_TIMEOUT: DEFAULT_SLEEP_TIMEOUT,
-        }
-        for option_key, option_value in entries_to_convert.items():
-            if option_key in config_data[CONF_SECONDARY_STATES]:
-                old_value = config_data[CONF_SECONDARY_STATES][option_key]
-                config_data[CONF_SECONDARY_STATES][option_key] = seconds_to_minutes(
-                    old_value, option_value
-                )
+    # # Update seconds -> minutes
+    # if CONF_CLEAR_TIMEOUT in config_data:
+    #     config_data[CONF_CLEAR_TIMEOUT] = seconds_to_minutes(
+    #         config_data[CONF_CLEAR_TIMEOUT], DEFAULT_CLEAR_TIMEOUT
+    #     )
+    # if CONF_SECONDARY_STATES in config_data:
+    #     entries_to_convert = {
+    #         CONF_EXTENDED_TIMEOUT: DEFAULT_EXTENDED_TIMEOUT,
+    #         CONF_EXTENDED_TIME: DEFAULT_EXTENDED_TIME,
+    #         CONF_SLEEP_TIMEOUT: DEFAULT_SLEEP_TIMEOUT,
+    #     }
+    #     for option_key, option_value in entries_to_convert.items():
+    #         if option_key in config_data[CONF_SECONDARY_STATES]:
+    #             old_value = config_data[CONF_SECONDARY_STATES][option_key]
+    #             config_data[CONF_SECONDARY_STATES][option_key] = seconds_to_minutes(
+    #                 old_value, option_value
+    #             )
 
     return config_data
 

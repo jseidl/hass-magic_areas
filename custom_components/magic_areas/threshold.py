@@ -13,15 +13,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 
 from .base.entities import MagicEntity
+from .base.feature import MagicAreasFeatureInfoThrehsold
 from .base.magic import MagicArea
-from .const import (
-    CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
-    CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
-    CONF_FEATURE_AGGREGATION,
-    DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
-    DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
-    MagicAreasFeatureInfoThrehsold,
-)
+from .const import AggregatesOptionKey, OptionSetKey
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,20 +23,23 @@ _LOGGER = logging.getLogger(__name__)
 def create_illuminance_threshold(area: MagicArea, hass: HomeAssistant) -> Entity:
     """Create threhsold light binary sensor based off illuminance aggregate."""
 
-    if not area.has_feature(CONF_FEATURE_AGGREGATION):
+    if not area.config.has_feature(OptionSetKey.AGGREGATES):
         return None
 
-    illuminance_threshold = area.feature_config(CONF_FEATURE_AGGREGATION).get(
-        CONF_AGGREGATES_ILLUMINANCE_THRESHOLD, DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD
+    illuminance_threshold = (
+        area.config.get(OptionSetKey.AGGREGATES)
+        .get(AggregatesOptionKey.ILLUMINANCE_THRESHOLD)
+        .value()
     )
 
     if illuminance_threshold == 0:
         return None
 
-    if SensorDeviceClass.ILLUMINANCE not in area.feature_config(
-        CONF_FEATURE_AGGREGATION
-    ).get(
-        CONF_AGGREGATES_SENSOR_DEVICE_CLASSES, DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES
+    if (
+        SensorDeviceClass.ILLUMINANCE
+        not in area.config.get(OptionSetKey.AGGREGATES)
+        .get(AggregatesOptionKey.SENSOR_DEVICE_CLASSES)
+        .value()
     ):
         return None
 

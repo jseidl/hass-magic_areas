@@ -13,8 +13,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
+from .base.feature import MagicAreasFeatureInfoCoverGroups
 from .base.magic import MagicArea
-from .const import CONF_FEATURE_COVER_GROUPS, MagicAreasFeatureInfoCoverGroups
+from .const import MagicAreasFeatures
 from .util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ async def async_setup_entry(
 
 def _add_cover_groups(area: MagicArea, async_add_entities: AddEntitiesCallback):
     # Check feature availability
-    if not area.has_feature(CONF_FEATURE_COVER_GROUPS):
+    if not area.config.has_feature(MagicAreasFeatures.COVER_GROUPS):
         return
 
     # Check if there are any covers

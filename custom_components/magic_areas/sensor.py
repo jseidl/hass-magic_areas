@@ -22,18 +22,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
+from .base.feature import MagicAreasFeatureInfoAggregates
 from .base.magic import MagicArea
-from .const import (
-    AGGREGATE_MODE_SUM,
-    AGGREGATE_MODE_TOTAL_SENSOR,
-    CONF_AGGREGATES_MIN_ENTITIES,
-    CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
-    CONF_FEATURE_AGGREGATION,
-    DEFAULT_AGGREGATES_MIN_ENTITIES,
-    DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
-    DEFAULT_SENSOR_PRECISION,
-    MagicAreasFeatureInfoAggregates,
-)
+from .const import AggregatesOptionKey, MagicAreasFeatures, OptionSetKey
 from .util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
@@ -54,7 +45,7 @@ def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback):
 
     entities_to_add = []
 
-    if area.has_feature(CONF_FEATURE_AGGREGATION):
+    if area.config.has_feature(MagicAreasFeatures.AGGREGATES):
         entities_to_add.extend(create_aggregate_sensors(area))
 
     if entities_to_add:
@@ -75,7 +66,7 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
     if SENSOR_DOMAIN not in area.entities:
         return []
 
-    if not area.has_feature(CONF_FEATURE_AGGREGATION):
+    if not area.config.has_feature(MagicAreasFeatures.AGGREGATES):
         return []
 
     for entity in area.entities[SENSOR_DOMAIN]:
@@ -102,14 +93,19 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
     # Create aggregates
     for device_class, entities in eligible_entities.items():
 
-        if len(entities) < area.feature_config(CONF_FEATURE_AGGREGATION).get(
-            CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES
+        if (
+            len(entities)
+            < area.config.get(OptionSetKey.AGGREGATES)
+            .get(AggregatesOptionKey.MIN_ENTITIES)
+            .value()
         ):
             continue
 
-        if device_class not in area.feature_config(CONF_FEATURE_AGGREGATION).get(
-            CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
-            DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
+        if (
+            device_class
+            not in area.config.get(OptionSetKey.AGGREGATES)
+            .get(AggregatesOptionKey.SENSOR_DEVICE_CLASSES)
+            .value()
         ):
             continue
 
@@ -156,7 +152,11 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
             else:
                 unit_of_measurement = list(DEVICE_CLASS_UNITS[device_class])[0]
 
-        self._attr_suggested_display_precision = DEFAULT_SENSOR_PRECISION
+        self._attr_suggested_display_precision = (
+            area.config.get(OptionSetKey.AGGREGATES)
+            .get(AggregatesOptionKey.SENSOR_PRECISION)
+            .value()
+        )
         self.device_class = device_class
 
         SensorGroup.__init__(
@@ -165,10 +165,20 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
             device_class=device_class,
             entity_ids=entity_ids,
             ignore_non_numeric=True,
-            sensor_type=ATTR_SUM if device_class in AGGREGATE_MODE_SUM else ATTR_MEAN,
+            sensor_type=(
+                ATTR_SUM
+                if device_class
+                in area.config.get(OptionSetKey.AGGREGATES)
+                .get(AggregatesOptionKey.MODE_SUM)
+                .value()
+                else ATTR_MEAN
+            ),
             state_class=(
                 SensorStateClass.TOTAL
-                if device_class in AGGREGATE_MODE_TOTAL_SENSOR
+                if device_class
+                in area.config.get(OptionSetKey.AGGREGATES)
+                .get(AggregatesOptionKey.SENSOR_METRICS_TOTAL)
+                .value()
                 else SensorStateClass.MEASUREMENT
             ),
             unit_of_measurement=unit_of_measurement,

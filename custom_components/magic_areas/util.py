@@ -12,7 +12,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_registry import async_get as entityreg_async_get
 from homeassistant.helpers.floor_registry import FloorEntry
 
-from .const import DATA_AREA_OBJECT, MODULE_DATA, ONE_MINUTE
+from .const import ONE_MINUTE, MagicAreasDataKey
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,12 +46,12 @@ def flatten_entity_list(input_list):
 def areas_loaded(hass):
     """Check if all Magic Areas are loaded."""
 
-    if MODULE_DATA not in hass.data:
+    if MagicAreasDataKey.MODULE_DATA not in hass.data:
         return False
 
-    data = hass.data[MODULE_DATA]
+    data = hass.data[MagicAreasDataKey.MODULE_DATA]
     for area_info in data.values():
-        area = area_info[DATA_AREA_OBJECT]
+        area = area_info[MagicAreasDataKey.AREA]
         if not area.is_meta():
             if not area.initialized:
                 return False

@@ -20,21 +20,18 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
-from .const import (
-    AREA_STATE_CLEAR,
-    AREA_STATE_SLEEP,
-    CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
-    CONF_FEATURE_MEDIA_PLAYER_GROUPS,
-    CONF_NOTIFICATION_DEVICES,
-    CONF_NOTIFY_STATES,
-    DATA_AREA_OBJECT,
-    DEFAULT_NOTIFICATION_DEVICES,
-    DEFAULT_NOTIFY_STATES,
-    EVENT_MAGICAREAS_AREA_STATE_CHANGED,
-    META_AREA_GLOBAL,
-    MODULE_DATA,
+from .base.feature import (
     MagicAreasFeatureInfoAreaAwareMediaPlayer,
     MagicAreasFeatureInfoMediaPlayerGroups,
+)
+from .const import (
+    AreaAwareMediaPlayerOptionKey,
+    AreaState,
+    MagicAreasDataKey,
+    MagicAreasEvent,
+    MagicAreasFeatures,
+    MetaAreaType,
+    OptionSetKey,
 )
 from .util import cleanup_removed_entries
 
@@ -52,12 +49,12 @@ def add_media_players(area, async_add_entities):
     entities_to_add: list[str] = []
 
     # Media Player Groups
-    if area.has_feature(CONF_FEATURE_MEDIA_PLAYER_GROUPS):
+    if area.config.has_feature(MagicAreasFeatures.MEDIA_PLAYER_GROUPS):
         _LOGGER.debug("%s: Setting up media player groups.", area.name)
         entities_to_add.extend(setup_media_player_group(area))
 
     # Check if we are the Global Meta Area
-    if area.is_meta() and area.id == META_AREA_GLOBAL.lower():
+    if area.is_meta() and area.id == MetaAreaType.GLOBAL:
         # Try to setup AAMP
         _LOGGER.debug("%s: Setting up Area-Aware media player", area.name)
         entities_to_add.extend(setup_area_aware_media_player(area))
@@ -85,13 +82,13 @@ def setup_media_player_group(area):
 
 def setup_area_aware_media_player(area):
     """Create Area-aware media player."""
-    ma_data = area.hass.data[MODULE_DATA]
+    ma_data = area.hass.data[MagicAreasDataKey.MODULE_DATA]
 
     # Check if we have areas with MEDIA_PLAYER_DOMAIN entities
     areas_with_media_players = []
 
     for entry in ma_data.values():
-        current_area = entry[DATA_AREA_OBJECT]
+        current_area = entry[MagicAreasDataKey.AREA]
 
         # Skip meta areas
         if current_area.is_meta():
@@ -99,7 +96,9 @@ def setup_area_aware_media_player(area):
             continue
 
         # Skip areas with feature not enabled
-        if not current_area.has_feature(CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER):
+        if not current_area.config.has_feature(
+            MagicAreasFeatures.AREA_AWARE_MEDIA_PLAYER
+        ):
             _LOGGER.debug(
                 "%s: Does not have Area-aware media player feature enabled, skipping.",
                 current_area.name,
@@ -114,9 +113,11 @@ def setup_area_aware_media_player(area):
             continue
 
         # Skip areas without notification devices set
-        notification_devices = current_area.feature_config(
-            CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER
-        ).get(CONF_NOTIFICATION_DEVICES)
+        notification_devices = (
+            current_area.config.get(OptionSetKey.AREA_AWARE_MEDIA_PLAYER)
+            .get(AreaAwareMediaPlayerOptionKey.NOTIFICATION_DEVICES)
+            .value()
+        )
 
         if not notification_devices:
             _LOGGER.debug(
@@ -178,10 +179,11 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
         """Return media players for a given area."""
         entity_ids = []
 
-        notification_devices = area.feature_config(
-            CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER
-        ).get(CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES)
-
+        notification_devices = (
+            area.config.get(OptionSetKey.AREA_AWARE_MEDIA_PLAYER)
+            .get(AreaAwareMediaPlayerOptionKey.NOTIFICATION_DEVICES)
+            .value()
+        )
         _LOGGER.debug("%s: Notification devices: %s", area.name, notification_devices)
 
         area_media_players = [
@@ -241,13 +243,15 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
                 continue
 
             # Check notification states
-            notification_states = area.feature_config(
-                CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER
-            ).get(CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES)
+            notification_states = (
+                area.config.get(OptionSetKey.AREA_AWARE_MEDIA_PLAYER)
+                .get(AreaAwareMediaPlayerOptionKey.NOTIFY_STATES)
+                .value()
+            )
 
             # Check sleep
-            if area.has_state(AREA_STATE_SLEEP) and (
-                AREA_STATE_SLEEP not in notification_states
+            if area.has_state(AreaState.SLEEP) and (
+                AreaState.SLEEP not in notification_states
             ):
                 continue
 
@@ -363,7 +367,7 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
 
         _LOGGER.debug("%s: Media Player group detected area state change.", self.name)
 
-        if AREA_STATE_CLEAR in new_states:
+        if AreaState.CLEAR in new_states:
             _LOGGER.debug("%s: Area clear, turning off media players", self.name)
             self._turn_off()
 
@@ -376,7 +380,7 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
         """Register callbacks."""
 
         async_dispatcher_connect(
-            self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed
+            self.hass, MagicAreasEvent.AREA_STATE_CHANGED, self.area_state_changed
         )
 
         await super().async_added_to_hass()
