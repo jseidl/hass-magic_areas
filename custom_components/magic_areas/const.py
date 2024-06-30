@@ -1,5 +1,7 @@
 """Constants for Magic Areas."""
 
+from collections.abc import Iterator
+from dataclasses import dataclass
 from enum import IntEnum, StrEnum
 
 import voluptuous as vol
@@ -13,10 +15,12 @@ from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
 from homeassistant.components.device_tracker.const import (
     DOMAIN as DEVICE_TRACKER_DOMAIN,
 )
+from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
+from homeassistant.components.sun import DOMAIN as SUN_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     STATE_ALARM_TRIGGERED,
@@ -30,6 +34,7 @@ from homeassistant.const import (
 from homeassistant.helpers import config_validation as cv
 
 from .base.config import MagicAreasConfigOption, MagicAreasConfigOptionSet
+from .util import BasicArea
 
 
 # Enums
@@ -154,6 +159,26 @@ class OptionSetKey(StrEnum):
     SECONDARY_STATES = "secondary_states"
 
 
+class MagicConfigEntryVersion(IntEnum):
+    """Magic Area config entry version."""
+
+    MAJOR = 2
+    MINOR = 1
+
+
+## Basic Area Info
+class AreaInfoOptionKey(StrEnum):
+    """Option keys for area info option set."""
+
+    TYPE = "type"
+    INCLUDE_ENTITIES = "include_entities"
+    EXCLUDE_ENTITIES = "exclude_entities"
+    PRESENCE_SENSOR_DOMAINS = "presence_sensor_domains"
+    PRESENCE_SENSOR_DEVICE_CLASSES = "presence_sensor_device_class"
+    CLEAR_TIMEOUT = "clear_timeout"
+    UPDATE_INTERVAL = "update_interval"
+
+
 # General
 DOMAIN = "magic_areas"
 
@@ -203,6 +228,40 @@ DISTRESS_SENSOR_CLASSES = [
 DISTRESS_STATES = [STATE_ALARM_TRIGGERED, STATE_ON, STATE_PROBLEM]
 
 
+@dataclass
+class EntityFilters:
+    """Dataclass with domains of entities for selectors."""
+
+    general = [
+        BINARY_SENSOR_DOMAIN,
+        SENSOR_DOMAIN,
+        SWITCH_DOMAIN,
+        INPUT_BOOLEAN_DOMAIN,
+    ]
+    binary = [
+        BINARY_SENSOR_DOMAIN,
+        SWITCH_DOMAIN,
+        INPUT_BOOLEAN_DOMAIN,
+    ]
+    extended = [
+        BINARY_SENSOR_DOMAIN,
+        SENSOR_DOMAIN,
+        SWITCH_DOMAIN,
+        INPUT_BOOLEAN_DOMAIN,
+        LIGHT_DOMAIN,
+        MEDIA_PLAYER_DOMAIN,
+        CLIMATE_DOMAIN,
+        SUN_DOMAIN,
+    ]
+    presence = [
+        MEDIA_PLAYER_DOMAIN,
+        BINARY_SENSOR_DOMAIN,
+        REMOTE_DOMAIN,
+        DEVICE_TRACKER_DOMAIN,
+    ]
+
+
+@dataclass
 class AreaStateGroups:
     """Shortcut class for groups of area states."""
 
@@ -212,26 +271,6 @@ class AreaStateGroups:
 
 
 # Options
-class MagicConfigEntryVersion(IntEnum):
-    """Magic Area config entry version."""
-
-    MAJOR = 2
-    MINOR = 1
-
-
-## Basic Area Info
-class AreaInfoOptionKey(StrEnum):
-    """Option keys for area info option set."""
-
-    TYPE = "type"
-    INCLUDE_ENTITIES = "include_entities"
-    EXCLUDE_ENTITIES = "exclude_entities"
-    PRESENCE_SENSOR_DOMAINS = "presence_sensor_domains"
-    PRESENCE_SENSOR_DEVICE_CLASSES = "presence_sensor_device_class"
-    CLEAR_TIMEOUT = "clear_timeout"
-    UPDATE_INTERVAL = "update_interval"
-
-
 class AreaInfoOptionSet(MagicAreasConfigOptionSet):
     """Area info option set."""
 
@@ -573,13 +612,24 @@ ALL_OPTION_SETS = [
 class MagicAreasConfig:
     """Magic Areas configuration object."""
 
-    _config_object: dict = None
+    _area: BasicArea
     _option_sets: dict[str, MagicAreasConfigOptionSet]
 
-    def __init__(self, config_object: dict | None = None) -> None:
+    _features = [
+        ClimateGroupOptionSet.key,
+        LightGroupOptionSet.key,
+        PresenceHoldOptionSet.key,
+        AreaAwareMediaPlayerOptionSet.key,
+        AggregatesOptionSet.key,
+    ]
+
+    def __init__(self, area: BasicArea, config_object: dict | None = None) -> None:
         """Initialize option sets and load config if provided."""
 
+        self._area = area
+
         # Load and map option sets
+        # @FIXME make use of _features instead of having another const
         for option_set_class in ALL_OPTION_SETS:
             option_set = option_set_class()
             self._option_sets[option_set.key] = option_set
@@ -590,13 +640,18 @@ class MagicAreasConfig:
     def _load_config(self, config_object: dict) -> None:
         """Loads current option values from dictionary."""
 
-        if OptionSetKey.SECONDARY_STATES in config_object:
-            self._option_sets[OptionSetKey.SECONDARY_STATES].load(
-                config_object[OptionSetKey.SECONDARY_STATES]
-            )
-            del config_object[OptionSetKey.SECONDARY_STATES]
+        for feature in self.get_configurable_features():
+            if feature in config_object:
+                self._option_sets[feature].load(config_object[feature])
+                del config_object[feature]
 
-        self._option_sets[OptionSetKey.AREA_INFO].load(config_object)
+        if SecondaryStatesOptionSet.key in config_object:
+            self._option_sets[SecondaryStatesOptionSet.key].load(
+                config_object[SecondaryStatesOptionSet.key]
+            )
+            del config_object[SecondaryStatesOptionSet.key]
+
+        self._option_sets[AreaInfoOptionSet.key].load(config_object)
 
     def get(self, option_set_key: str) -> MagicAreasConfigOptionSet:
         """Return option set for given key."""
@@ -605,6 +660,64 @@ class MagicAreasConfig:
             raise ValueError(f"Invalid option: {option_set_key}")
 
         return self._option_sets.get(option_set_key)
+
+    def get_schema(self, raw: bool = False) -> dict:
+        """Return vol schema for the whole configuration."""
+
+        schema = self._option_sets[AreaInfoOptionSet.key].generate_schema(
+            as_object=False
+        )
+        schema[SecondaryStatesOptionSet.key] = self._option_sets[
+            SecondaryStatesOptionSet.key
+        ].generate_schema(as_object=False)
+        schema["features"] = {}
+
+        # @FIXME this currently pulls all features not only enabled ones
+        for feature in self._features:
+            if not self._option_sets[feature].active:
+                continue
+            schema["features"][feature] = self._option_sets[feature].generate_schema(
+                as_object=False
+            )
+
+        if raw:
+            return schema
+
+        return vol.Schema(schema)
+
+    def get_values(self) -> dict[str, str]:
+        """Return dictionary with key => value pairs."""
+        values = self._option_sets[AreaInfoOptionSet.key].get_values()
+        values[SecondaryStatesOptionSet.key] = self._option_sets[
+            SecondaryStatesOptionSet.key
+        ].get_values()
+
+        for feature in self.get_enabled_features():
+            if not self._option_sets[feature].active:
+                continue
+            values[feature] = self._option_sets[feature].get_values()
+
+        return values
+
+    def get_available_features(self) -> list[str]:
+        """Return list of available features."""
+        return self._features
+
+    def get_enabled_features(self) -> list[str]:
+        """Return list of selected features."""
+        return [
+            feature for feature in self._features if self._option_sets[feature].active
+        ]
+
+    def get_configurable_features(self) -> Iterator[str]:
+        """Return list of features that can be configured."""
+
+        for feature in self._features:
+            options = self._option_sets[feature]
+            for option in options:
+                if option.configurable:
+                    yield feature
+                    break
 
 
 CONF_FEATURE_LIST_META = [

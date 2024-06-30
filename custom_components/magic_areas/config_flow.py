@@ -11,48 +11,48 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.const import ATTR_DEVICE_CLASS, CONF_NAME, CONF_ID
+from homeassistant.const import ATTR_DEVICE_CLASS, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 
-from homeassistant.util import slugify
-
+from .base.config import ConfigOptionSelector
 from .const import (
-    _DOMAIN_SCHEMA,
     ADDITIONAL_LIGHT_TRACKING_ENTITIES,
     ALL_BINARY_SENSOR_DEVICE_CLASSES,
-    AreaInfoOptionKey,
     ALL_SENSOR_DEVICE_CLASSES,
-    AreaState,
-    AreaType,
-    AreaStateGroups,
-    AreaEventType,
-    SecondaryStatesOptionKey,
-    SecondaryStatesOptionSet,
-    AreaHealthOptionKey,
-    AreaAwareMediaPlayerOptionKey,
-    AreaAwareMediaPlayerOptionSet,
-    LightGroupOptionKey,
-    LightGroupOptionSet,
-    AggregatesOptionKey,
-    AggregatesOptionSet,
-    PresenceHoldOptionKey,
-    PresenceHoldOptionSet,
-    CustomAttribute,
-    LightGroupOptionKey,
-    ClimateGroupOptionKey,
-    AggregatesOptionKey,
     CONF_FEATURE_LIST,
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
     CONFIGURABLE_AREA_STATE_MAP,
     DISTRESS_SENSOR_CLASSES,
-    MagicAreasDataKey,
     DOMAIN,
+    AggregatesOptionKey,
+    AggregatesOptionSet,
+    AreaAwareMediaPlayerOptionKey,
+    AreaAwareMediaPlayerOptionSet,
+    AreaEventType,
+    AreaHealthOptionKey,
+    AreaHealthOptionSet,
+    AreaInfoOptionKey,
+    AreaInfoOptionSet,
+    AreaState,
+    AreaStateGroups,
+    AreaType,
+    ClimateGroupOptionKey,
+    ClimateGroupOptionSet,
+    EntityFilters,
+    LightGroupOptionKey,
+    LightGroupOptionSet,
+    MagicAreasConfig,
+    MagicAreasDataKey,
     MagicConfigEntryVersion,
     MetaAreaType,
+    PresenceHoldOptionKey,
+    PresenceHoldOptionSet,
+    SecondaryStatesOptionKey,
+    SecondaryStatesOptionSet,
 )
 from .util import basic_area_from_floor, basic_area_from_meta, basic_area_from_object
 
@@ -209,19 +209,21 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
             self._abort_if_unique_id_configured()
 
             # Create area entry with default config
-            config_entry = _DOMAIN_SCHEMA({f"{area_object.id}": {}})[area_object.id]
-            extra_opts = {CONF_NAME: area_object.name, CONF_ID: area_object.id}
-            config_entry.update(extra_opts)
+            config_entry = MagicAreasConfig(area_object)
 
             # Handle Meta area
-            if slugify(area_object.id) in reserved_names:
+            if area_object.is_meta:
                 _LOGGER.debug(
                     "ConfigFlow: Meta area %s found, setting correct type.",
                     area_object.id,
                 )
-                config_entry.update({CustomAttribute.AREA_TYPE: AreaType.META})
+                config_entry.get(AreaInfoOptionSet.key).load(
+                    {AreaInfoOptionKey.TYPE: AreaType.META}
+                )
 
-            return self.async_create_entry(title=area_object.name, data=config_entry)
+            return self.async_create_entry(
+                title=area_object.name, data=config_entry.get_schema()
+            )
 
         # Filter out already-configured areas
         configured_areas = []
@@ -270,22 +272,26 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
     def __init__(self, config_entry: config_entries.ConfigEntry):
         """Initialize options flow."""
         self.config_entry = config_entry
-        self.data = None
-        self.area = None
-        self.all_entities = []
-        self.area_entities = []
-        self.all_area_entities = []
-        self.all_lights = []
-        self.all_media_players = []
-        self.all_binary_entities = []
-        self.all_light_tracking_entities = []
-        self.area_options = {}
+        self.config = MagicAreasConfig(
+            config_entry.runtime_data.area, config_object=config_entry
+        )
+        self.entity_helpers = {
+            "all_entities": [],
+            "area_entities": [],
+            "all_area_entities": [],
+            "all_lights": [],
+            "all_media_players": [],
+            "all_binary_entities": [],
+            "all_light_tracking_entities": [],
+        }
 
     def _get_feature_list(self) -> list[str]:
         """Return list of available features for area type."""
 
         feature_list = CONF_FEATURE_LIST
-        area_type = self.area.config.get(AreaInfoOptionKey.TYPE)
+        area_type = (
+            self.config.get(AreaInfoOptionSet.key).get(AreaInfoOptionKey.TYPE).value()
+        )
         if area_type == AreaType.META:
             feature_list = CONF_FEATURE_LIST_META
         if self.area.id == MetaAreaType.GLOBAL:
@@ -293,24 +299,16 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         return feature_list
 
-    def _get_configurable_features(self) -> list[str]:
-        """Return configurable features for area type."""
-        filtered_configurable_features = list(CONFIGURABLE_FEATURES.keys())
-        if self.area.is_meta():
-            for feature in NON_CONFIGURABLE_FEATURES_META:
-                if feature in filtered_configurable_features:
-                    filtered_configurable_features.remove(feature)
-
-        return filtered_configurable_features
-
     async def _update_options(self):
         """Update config entry options."""
-        return self.async_create_entry(title="", data=dict(self.area_options))
+        return self.async_create_entry(title="", data=dict(self.config.get_values()))
 
     async def async_step_init(self, user_input=None):
         """Initialize the options flow."""
 
-        self.data = self.hass.data[MagicAreasDataKey.MODULE_DATA][self.config_entry.entry_id]
+        self.data = self.hass.data[MagicAreasDataKey.MODULE_DATA][
+            self.config_entry.entry_id
+        ]
         self.area = self.data[MagicAreasDataKey.AREA]
 
         _LOGGER.debug(
@@ -327,14 +325,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             self.resolve_groups(
                 entity_id
                 for entity_id in self.hass.states.async_entity_ids()
-                if entity_id.split(".")[0] in CONFIG_FLOW_ENTITY_FILTER_EXT
+                if entity_id.split(".")[0] in EntityFilters.extended
             )
         )
 
         # Return all relevant area entities that exists
         # in self.all_entities
         filtered_area_entities = []
-        for domain in CONFIG_FLOW_ENTITY_FILTER_EXT:
+        for domain in EntityFilters.extended:
             filtered_area_entities.extend(
                 [
                     entity["entity_id"]
@@ -350,13 +348,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             self.resolve_groups(
                 entity_id
                 for entity_id in self.all_entities
-                if entity_id.split(".")[0] in CONFIG_FLOW_ENTITY_FILTER_BOOL
+                if entity_id.split(".")[0] in EntityFilters.binary
             )
         )
 
         self.all_area_entities = sorted(
             self.area_entities
-            + self.config_entry.options.get(CONF_EXCLUDE_ENTITIES, [])
+            + self.config.get(AreaInfoOptionSet.key)
+            .get(AreaInfoOptionKey.EXCLUDE_ENTITIES)
+            .value()
         )
 
         self.all_lights = sorted(
@@ -396,11 +396,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             self.resolve_groups(eligible_light_tracking_entities)
         )
 
-        area_schema = META_AREA_SCHEMA if self.area.is_meta() else REGULAR_AREA_SCHEMA
-        self.area_options = area_schema(dict(self.config_entry.options))
-
         _LOGGER.debug(
-            "%s: Loaded area options: %s", self.area.name, str(self.area_options)
+            "%s: Loaded area options: %s",
+            self.area.name,
+            str(self.config.get_schema(raw=True)),
         )
 
         return await self.async_step_show_menu()
@@ -419,10 +418,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         # Add entries for features
         menu_options_features = []
-        configurable_features = self._get_configurable_features()
-        for feature in self.area_options.get(CONF_ENABLED_FEATURES, {}):
-            if feature not in configurable_features:
-                continue
+        for feature in self.config.get_enabled_features():
             menu_options_features.append(f"feature_conf_{feature}")
 
         menu_options.extend(sorted(menu_options_features))
@@ -458,7 +454,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 else REGULAR_AREA_BASIC_OPTIONS_SCHEMA
             )
             try:
-                self.area_options.update(options_schema(user_input))
+                self.config.get(AreaInfoOptionSet.key).load(user_input)
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
                 _LOGGER.debug(
@@ -478,19 +474,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 _LOGGER.debug(
                     "OptionsFlow: Saving area %s base config: %s",
                     self.area.name,
-                    str(self.area_options),
+                    str(self.config.get(AreaInfoOptionSet.key).get_values()),
                 )
 
                 return await self.async_step_show_menu()
 
         all_selectors = {
-            CONF_TYPE: self._build_selector_select(
-                sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])
+            AreaInfoOptionKey.TYPE: ConfigOptionSelector.select(
+                sorted([AreaType.INTERIOR, AreaType.EXTERIOR])
             ),
-            CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(
+            AreaInfoOptionKey.INCLUDE_ENTITIES: ConfigOptionSelector.entity(
                 self.all_entities, multiple=True
             ),
-            CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(
+            AreaInfoOptionKey.EXCLUDE_ENTITIES: ConfigOptionSelector.entity(
                 self.all_area_entities, multiple=True
             ),
         }
@@ -504,7 +500,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             selectors[option_key] = all_selectors[option_key]
 
         data_schema = self._build_options_schema(
-            options=options, saved_options=self.area_options, selectors=selectors
+            options=options,
+            saved_options=self.config.get(AreaInfoOptionSet.key).get_values(),
+            selectors=selectors,
         )
 
         return self.async_show_form(
@@ -528,7 +526,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 else REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA
             )
             try:
-                self.area_options.update(options_schema(user_input))
+                self.config.get(AreaInfoOptionSet.key).load(user_input)
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
                 _LOGGER.debug(
@@ -548,22 +546,22 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 _LOGGER.debug(
                     "OptionsFlow: Saving area %s base config: %s",
                     self.area.name,
-                    str(self.area_options),
+                    str(self.config.get(AreaInfoOptionSet.key).get_values()),
                 )
 
                 return await self.async_step_show_menu()
 
         all_selectors = {
-            CONF_PRESENCE_DEVICE_PLATFORMS: self._build_selector_select(
-                sorted(ALL_PRESENCE_DEVICE_PLATFORMS), multiple=True
+            AreaInfoOptionKey.PRESENCE_SENSOR_DOMAINS: ConfigOptionSelector.select(
+                sorted(EntityFilters.presence), multiple=True
             ),
-            CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(
+            AreaInfoOptionKey.PRESENCE_SENSOR_DEVICE_CLASSES: ConfigOptionSelector.select(
                 sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
             ),
-            CONF_UPDATE_INTERVAL: self._build_selector_number(
+            AreaInfoOptionKey.UPDATE_INTERVAL: ConfigOptionSelector.number(
                 unit_of_measurement="seconds"
             ),
-            CONF_CLEAR_TIMEOUT: self._build_selector_number(
+            AreaInfoOptionKey.CLEAR_TIMEOUT: ConfigOptionSelector.number(
                 unit_of_measurement="minutes"
             ),
         }
@@ -581,7 +579,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             selectors[option_key] = all_selectors[option_key]
 
         data_schema = self._build_options_schema(
-            options=options, saved_options=self.area_options, selectors=selectors
+            options=options,
+            saved_options=self.config.get(AreaInfoOptionSet.key).get_values(),
+            selectors=selectors,
         )
 
         return self.async_show_form(
@@ -599,11 +599,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 self.area.name,
                 str(user_input),
             )
-            area_state_schema = SecondaryStatesOptionSet.generate_schema(as_object=True)
             try:
-                self.area_options[SecondaryStatesOptionSet.key].update(
-                    area_state_schema(user_input)
-                )
+                self.config.get(SecondaryStatesOptionSet.key).load(user_input)
             except vol.MultipleInvalid as validation:
                 errors = {error.path[0]: error.msg for error in validation.errors}
                 _LOGGER.debug(
@@ -623,39 +620,47 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 _LOGGER.debug(
                     "OptionsFlow: Saving area secondary state config for area %s: %s",
                     self.area.name,
-                    str(self.area_options),
+                    str(self.config.get(SecondaryStatesOptionSet.key).get_values()),
                 )
                 return await self.async_step_show_menu()
 
         return self.async_show_form(
             step_id="secondary_states",
             data_schema=self._build_options_schema(
-                options=(SecondaryStatesOptionSet.generate_options()),
-                saved_options=self.area_options.get(SecondaryStatesOptionSet.key, {}),
+                options=self.config.get(
+                    SecondaryStatesOptionSet.key
+                ).generate_options(),
+                saved_options=self.config.get(
+                    SecondaryStatesOptionSet.key
+                ).get_values(),
                 dynamic_validators={
                     SecondaryStatesOptionKey.AREA_LIGHT_SENSOR: vol.In(
                         EMPTY_ENTRY + self.all_light_tracking_entities
                     ),
-                    SecondaryStatesOptionKey.SLEEP_ENTITY: vol.In(EMPTY_ENTRY + self.all_binary_entities),
-                    SecondaryStatesOptionKey.ACCENT_ENTITY: vol.In(EMPTY_ENTRY + self.all_binary_entities),
+                    SecondaryStatesOptionKey.SLEEP_ENTITY: vol.In(
+                        EMPTY_ENTRY + self.all_binary_entities
+                    ),
+                    SecondaryStatesOptionKey.ACCENT_ENTITY: vol.In(
+                        EMPTY_ENTRY + self.all_binary_entities
+                    ),
                 },
                 selectors={
-                    SecondaryStatesOptionKey.AREA_LIGHT_SENSOR: self._build_selector_entity_simple(
+                    SecondaryStatesOptionKey.AREA_LIGHT_SENSOR: ConfigOptionSelector.entity(
                         self.all_light_tracking_entities
                     ),
-                    SecondaryStatesOptionKey.SLEEP_ENTITY: self._build_selector_entity_simple(
+                    SecondaryStatesOptionKey.SLEEP_ENTITY: ConfigOptionSelector.entity(
                         self.all_binary_entities
                     ),
-                    SecondaryStatesOptionKey.ACCENT_ENTITY: self._build_selector_entity_simple(
+                    SecondaryStatesOptionKey.ACCENT_ENTITY: ConfigOptionSelector.entity(
                         self.all_binary_entities
                     ),
-                    SecondaryStatesOptionKey.SLEEP_TIMEOUT: self._build_selector_number(
+                    SecondaryStatesOptionKey.SLEEP_TIMEOUT: ConfigOptionSelector.number(
                         unit_of_measurement="minutes"
                     ),
-                    SecondaryStatesOptionKey.EXTENDED_TIME: self._build_selector_number(
+                    SecondaryStatesOptionKey.EXTENDED_TIME: ConfigOptionSelector.number(
                         unit_of_measurement="minutes"
                     ),
-                    SecondaryStatesOptionKey.EXTENDED_TIMEOUT: self._build_selector_number(
+                    SecondaryStatesOptionKey.EXTENDED_TIMEOUT: ConfigOptionSelector.number(
                         unit_of_measurement="minutes"
                     ),
                 },
@@ -666,7 +671,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
     async def async_step_select_features(self, user_input=None):
         """Ask the user to select features to enable for the area."""
 
-        feature_list = self._get_feature_list()
+        feature_list = self.config.get_available_features()
 
         if user_input is not None:
             selected_features = [
@@ -679,19 +684,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 str(selected_features),
             )
 
-            if CONF_ENABLED_FEATURES not in self.area_options:
-                self.area_options[CONF_ENABLED_FEATURES] = {}
-
-            for c_feature in feature_list:
-                if c_feature in selected_features:
-                    if c_feature not in self.area_options.get(
-                        CONF_ENABLED_FEATURES, {}
-                    ):
-                        self.area_options[CONF_ENABLED_FEATURES][c_feature] = {}
-                else:
-                    # Remove feature if we had previously enabled
-                    if c_feature in self.area_options.get(CONF_ENABLED_FEATURES, {}):
-                        self.area_options[CONF_ENABLED_FEATURES].pop(c_feature)
+            for feature in feature_list:
+                self.config.get(feature).active = feature in selected_features
 
             return await self.async_step_show_menu()
 
@@ -701,15 +695,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             feature_list,
         )
 
+        enabled_features = self.config.get_enabled_features()
+
         return self.async_show_form(
             step_id="select_features",
             data_schema=self._build_options_schema(
                 options=[(feature, False, bool) for feature in feature_list],
                 saved_options={
-                    feature: (
-                        feature in self.area_options.get(CONF_ENABLED_FEATURES, {})
-                    )
-                    for feature in feature_list
+                    feature: (feature in enabled_features) for feature in feature_list
                 },
             ),
         )
@@ -719,7 +712,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         _LOGGER.debug(
             "OptionsFlow: All features configured for area %s, saving config: %s",
             self.area.name,
-            str(self.area_options),
+            str(self.config.get_values()),
         )
         return await self._update_options()
 
@@ -734,66 +727,84 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             if extra_state in light_group_state_exempt:
                 continue
 
-            if self.area_options[CONF_SECONDARY_STATES].get(extra_state_entity, None):
+            if (
+                self.config.get(SecondaryStatesOptionSet.key)
+                .get(extra_state_entity)
+                .value()
+            ):
                 available_states.append(extra_state)
 
-        LIGHT_GROUP_ACT_ON_OPTIONS = [AreaEventType.OCCUPANCY, AreaEventType.STATE]
+        light_group_act_on_options = [AreaEventType.OCCUPANCY, AreaEventType.STATE]
 
         return await self.do_feature_config(
             name=LightGroupOptionSet.key,
-            options=LightGroupOptionSet.generate_options(),
+            options=self.config.get(LightGroupOptionSet.key).generate_options(),
             dynamic_validators={
                 LightGroupOptionKey.OVERHEAD_LIGHTS: cv.multi_select(self.all_lights),
-                LightGroupOptionKey.OVERHEAD_LIGHTS_STATES: cv.multi_select(available_states),
+                LightGroupOptionKey.OVERHEAD_LIGHTS_STATES: cv.multi_select(
+                    available_states
+                ),
                 LightGroupOptionKey.OVERHEAD_LIGHTS_CONTROL_ON: cv.multi_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS
+                    light_group_act_on_options
                 ),
                 LightGroupOptionKey.SLEEP_LIGHTS: cv.multi_select(self.all_lights),
-                LightGroupOptionKey.SLEEP_LIGHTS_STATES: cv.multi_select(available_states),
-                LightGroupOptionKey.SLEEP_LIGHTS_CONTROL_ON: cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
+                LightGroupOptionKey.SLEEP_LIGHTS_STATES: cv.multi_select(
+                    available_states
+                ),
+                LightGroupOptionKey.SLEEP_LIGHTS_CONTROL_ON: cv.multi_select(
+                    light_group_act_on_options
+                ),
                 LightGroupOptionKey.ACCENT_LIGHTS: cv.multi_select(self.all_lights),
-                LightGroupOptionKey.ACCENT_LIGHTS_STATES: cv.multi_select(available_states),
-                LightGroupOptionKey.ACCENT_LIGHTS_CONTROL_ON: cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
+                LightGroupOptionKey.ACCENT_LIGHTS_STATES: cv.multi_select(
+                    available_states
+                ),
+                LightGroupOptionKey.ACCENT_LIGHTS_CONTROL_ON: cv.multi_select(
+                    light_group_act_on_options
+                ),
                 LightGroupOptionKey.TASK_LIGHTS: cv.multi_select(self.all_lights),
-                LightGroupOptionKey.TASK_LIGHTS_STATES: cv.multi_select(available_states),
-                LightGroupOptionKey.TASK_LIGHTS_CONTROL_ON: cv.multi_select(LIGHT_GROUP_ACT_ON_OPTIONS),
+                LightGroupOptionKey.TASK_LIGHTS_STATES: cv.multi_select(
+                    available_states
+                ),
+                LightGroupOptionKey.TASK_LIGHTS_CONTROL_ON: cv.multi_select(
+                    light_group_act_on_options
+                ),
             },
             selectors={
-                LightGroupOptionKey.OVERHEAD_LIGHTS: self._build_selector_entity_simple(
+                LightGroupOptionKey.OVERHEAD_LIGHTS: ConfigOptionSelector.entity(
                     self.all_lights, multiple=True
                 ),
-                LightGroupOptionKey.OVERHEAD_LIGHTS_STATES: self._build_selector_select(
+                LightGroupOptionKey.OVERHEAD_LIGHTS_STATES: ConfigOptionSelector.select(
                     available_states, multiple=True
                 ),
-                LightGroupOptionKey.OVERHEAD_LIGHTS_CONTROL_ON: self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                LightGroupOptionKey.OVERHEAD_LIGHTS_CONTROL_ON: ConfigOptionSelector.select(
+                    light_group_act_on_options, multiple=True
                 ),
-                LightGroupOptionKey.SLEEP_LIGHTS: self._build_selector_entity_simple(
+                LightGroupOptionKey.SLEEP_LIGHTS: ConfigOptionSelector.entity(
                     self.all_lights, multiple=True
                 ),
-                LightGroupOptionKey.SLEEP_LIGHTS_STATES: self._build_selector_select(
+                LightGroupOptionKey.SLEEP_LIGHTS_STATES: ConfigOptionSelector.select(
                     available_states, multiple=True
                 ),
-                LightGroupOptionKey.SLEEP_LIGHTS_CONTROL_ON: self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                LightGroupOptionKey.SLEEP_LIGHTS_CONTROL_ON: ConfigOptionSelector.select(
+                    light_group_act_on_options, multiple=True
                 ),
-                CONF_ACCENT_LIGHTS: self._build_selector_entity_simple(
+                LightGroupOptionKey.ACCENT_LIGHTS: ConfigOptionSelector.entity(
                     self.all_lights, multiple=True
                 ),
-                CONF_ACCENT_LIGHTS_STATES: self._build_selector_select(
+                LightGroupOptionKey.ACCENT_LIGHTS_STATES: ConfigOptionSelector.select(
                     available_states, multiple=True
                 ),
-                CONF_ACCENT_LIGHTS_ACT_ON: self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                LightGroupOptionKey.ACCENT_LIGHTS_CONTROL_ON: ConfigOptionSelector.select(
+                    light_group_act_on_options, multiple=True
                 ),
-                CONF_TASK_LIGHTS: self._build_selector_entity_simple(
+                LightGroupOptionKey.TASK_LIGHTS: ConfigOptionSelector.entity(
                     self.all_lights, multiple=True
                 ),
-                CONF_TASK_LIGHTS_STATES: self._build_selector_select(
+                LightGroupOptionKey.TASK_LIGHTS_STATES: ConfigOptionSelector.select(
                     available_states, multiple=True
                 ),
-                CONF_TASK_LIGHTS_ACT_ON: self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                LightGroupOptionKey.TASK_LIGHTS_CONTROL_ON: ConfigOptionSelector.select(
+                    light_group_act_on_options, multiple=True
                 ),
             },
             user_input=user_input,
@@ -805,7 +816,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         available_states = [AreaState.OCCUPIED, AreaState.EXTENDED]
 
         return await self.do_feature_config(
-            name=CONF_FEATURE_CLIMATE_GROUPS,
+            name=ClimateGroupOptionSet.key,
             options=(
                 OPTIONS_CLIMATE_GROUP
                 if not self.area.is_meta()
@@ -817,7 +828,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 ),
             },
             selectors={
-                ClimateGroupOptionKey.TURN_ON_STATE: self._build_selector_select(
+                ClimateGroupOptionKey.TURN_ON_STATE: ConfigOptionSelector.select(
                     EMPTY_ENTRY + available_states
                 )
             },
@@ -828,15 +839,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         """Configure the climate groups feature."""
 
         return await self.do_feature_config(
-            name=CONF_FEATURE_HEALTH,
-            options=OPTIONS_HEALTH_SENSOR,
+            name=AreaHealthOptionSet.key,
+            options=self.config.get(AreaHealthOptionSet.key).generate_options(),
             dynamic_validators={
                 AreaHealthOptionKey.DEVICE_CLASSES: vol.In(
                     EMPTY_ENTRY + DISTRESS_SENSOR_CLASSES
                 ),
             },
             selectors={
-                AreaHealthOptionKey.DEVICE_CLASSES: self._build_selector_select(
+                AreaHealthOptionKey.DEVICE_CLASSES: ConfigOptionSelector.select(
                     EMPTY_ENTRY + DISTRESS_SENSOR_CLASSES, multiple=True
                 )
             },
@@ -846,20 +857,24 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
     async def async_step_feature_conf_area_aware_media_player(self, user_input=None):
         """Configure the area aware media player feature."""
 
-        available_states = [AreaState.OCCUPIED, AreaState.EXTENDED, AREA_STATE_SLEEP]
+        available_states = [AreaState.OCCUPIED, AreaState.EXTENDED, AreaState.SLEEP]
 
         return await self.do_feature_config(
             name=AreaAwareMediaPlayerOptionSet.key,
-            options=AreaAwareMediaPlayerOptionSet.generate_options(),
+            options=self.config.get(AreaAwareMediaPlayerOptionSet).generate_options(),
             dynamic_validators={
-                AreaAwareMediaPlayerOptionKey.NOTIFICATION_DEVICES: cv.multi_select(self.all_media_players),
-                AreaAwareMediaPlayerOptionKey.NOTIFY_STATES: cv.multi_select(available_states),
+                AreaAwareMediaPlayerOptionKey.NOTIFICATION_DEVICES: cv.multi_select(
+                    self.all_media_players
+                ),
+                AreaAwareMediaPlayerOptionKey.NOTIFY_STATES: cv.multi_select(
+                    available_states
+                ),
             },
             selectors={
-                AreaAwareMediaPlayerOptionKey.NOTIFICATION_DEVICES: self._build_selector_entity_simple(
+                AreaAwareMediaPlayerOptionKey.NOTIFICATION_DEVICES: ConfigOptionSelector.entity(
                     self.all_media_players, multiple=True
                 ),
-                AreaAwareMediaPlayerOptionKey.NOTIFY_STATES: self._build_selector_select(
+                AreaAwareMediaPlayerOptionKey.NOTIFY_STATES: ConfigOptionSelector.select(
                     available_states, multiple=True
                 ),
             },
@@ -870,23 +885,23 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         """Configure the sensor aggregates feature."""
 
         selectors = {
-            AggregatesOptionKey.MIN_ENTITIES: self._build_selector_number(
+            AggregatesOptionKey.MIN_ENTITIES: ConfigOptionSelector.number(
                 unit_of_measurement="entities"
             ),
-            AggregatesOptionKey.BINARY_SENSOR_DEVICE_CLASSES: self._build_selector_select(
+            AggregatesOptionKey.BINARY_SENSOR_DEVICE_CLASSES: ConfigOptionSelector.select(
                 sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
             ),
-            AggregatesOptionKey.SENSOR_DEVICE_CLASSES: self._build_selector_select(
+            AggregatesOptionKey.SENSOR_DEVICE_CLASSES: ConfigOptionSelector.select(
                 sorted(ALL_SENSOR_DEVICE_CLASSES), multiple=True
             ),
-            AggregatesOptionKey.ILLUMINANCE_THRESHOLD: self._build_selector_number(
+            AggregatesOptionKey.ILLUMINANCE_THRESHOLD: ConfigOptionSelector.number(
                 unit_of_measurement="lx", mode="slider", min_value=0, max_value=1000
             ),
         }
 
         return await self.do_feature_config(
             name=AggregatesOptionSet.key,
-            options=AggregatesOptionSet.generate_options(),
+            options=self.config.get(AggregatesOptionSet).generate_options(),
             selectors=selectors,
             user_input=user_input,
         )
@@ -895,14 +910,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         """Configure the sensor presence_hold feature."""
 
         selectors = {
-            PresenceHoldOptionKey.TIMEOUT: self._build_selector_number(
+            PresenceHoldOptionKey.TIMEOUT: ConfigOptionSelector.number(
                 min_value=0, unit_of_measurement="minutes"
             )
         }
 
         return await self.do_feature_config(
             name=PresenceHoldOptionSet.key,
-            options=PresenceHoldOptionSet.generate_options(),
+            options=self.config.get(PresenceHoldOptionSet).generate_options(),
             selectors=selectors,
             user_input=user_input,
         )
@@ -927,7 +942,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 str(user_input),
             )
             try:
-                validated_input = CONFIGURABLE_FEATURES[name](user_input)
+                self.config.get(name).load(user_input)
             except vol.MultipleInvalid as validation:
                 errors = {
                     error.path[0]: "malformed_input" for error in validation.errors
@@ -938,9 +953,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     "OptionsFlow: Saving %s feature config for area %s: %s",
                     name,
                     self.area.name,
-                    str(validated_input),
+                    str(self.config.get(name).get_values()),
                 )
-                self.area_options[CONF_ENABLED_FEATURES][name] = validated_input
                 return await self.async_step_show_menu()
 
         _LOGGER.debug(
@@ -949,13 +963,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             str(self.config_entry.options),
         )
 
-        saved_options = self.area_options.get(CONF_ENABLED_FEATURES, {})
-
         return self.async_show_form(
             step_id=f"feature_conf_{name}",
             data_schema=self._build_options_schema(
                 options=options,
-                saved_options=saved_options.get(name, {}),
+                saved_options=self.config.get(name).get_values(),
                 dynamic_validators=dynamic_validators,
                 selectors=selectors,
             ),
