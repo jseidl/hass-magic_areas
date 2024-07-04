@@ -1,2 +1,2 @@
-homeassistant>=2023.8.0
+homeassistant>=2024.7.0
 pip

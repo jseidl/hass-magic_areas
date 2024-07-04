@@ -42,14 +42,10 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Area config entry."""
 
-    add_entities_when_ready(
-        hass, async_add_entities, config_entry, add_sensors, with_hass=True
-    )
+    add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
 
 
-def add_sensors(
-    area: MagicArea, hass: HomeAssistant, async_add_entities: AddEntitiesCallback
-) -> None:
+def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback) -> None:
     """Add the basic sensors for the area."""
     entities = []
 
@@ -59,7 +55,7 @@ def add_sensors(
     # Create extra sensors
     if area.has_feature(CONF_FEATURE_AGGREGATION):
         entities.extend(create_aggregate_sensors(area))
-        illuminance_threshold_sensor = create_illuminance_threshold(area, hass)
+        illuminance_threshold_sensor = create_illuminance_threshold(area)
         if illuminance_threshold_sensor:
             entities.append(illuminance_threshold_sensor)
 
