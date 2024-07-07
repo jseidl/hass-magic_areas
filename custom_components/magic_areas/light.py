@@ -1,12 +1,20 @@
 """Platform file for Magic Area's light entities."""
 
+import asyncio
 import logging
 
 from homeassistant.components.group.light import LightGroup
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.light import (
+    ATTR_COLOR_TEMP,
+    ATTR_HS_COLOR,
+    DOMAIN as LIGHT_DOMAIN,
+    SUPPORT_COLOR,
+    SUPPORT_COLOR_TEMP,
+)
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
+    ATTR_SUPPORTED_FEATURES,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
     STATE_OFF,
@@ -14,6 +22,7 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.util import color as color_util
 
 from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
@@ -153,6 +162,7 @@ class MagicLightGroup(MagicEntity, LightGroup):
 
         # Active lights
         active_lights = self._get_active_lights()
+        targeted_lights = self._entity_ids
 
         if active_lights:
             _LOGGER.debug(
@@ -161,16 +171,83 @@ class MagicLightGroup(MagicEntity, LightGroup):
                 str(active_lights),
             )
 
-        data[ATTR_ENTITY_ID] = active_lights if active_lights else self._entity_ids
+            targeted_lights = active_lights
 
-        # Forward call
-        await self.hass.services.async_call(
-            LIGHT_DOMAIN,
-            SERVICE_TURN_ON,
-            data,
-            blocking=True,
-            context=self._context,
+        # Split entities by supported features
+        entity_map = {SUPPORT_COLOR: [], SUPPORT_COLOR_TEMP: []}
+        for entity_id in targeted_lights:
+            state = self.hass.states.get(entity_id)
+            if not state:
+                continue
+            support = state.attributes.get(ATTR_SUPPORTED_FEATURES)
+
+            if bool(support & SUPPORT_COLOR):
+                if bool(support & SUPPORT_COLOR_TEMP):
+                    entity_map[SUPPORT_COLOR_TEMP].append(entity_id)
+                else:
+                    entity_map[SUPPORT_COLOR].append(entity_id)
+
+        no_color_support = list(
+            set(targeted_lights)
+            - set(entity_map[SUPPORT_COLOR])
+            - set(entity_map[SUPPORT_COLOR_TEMP])
         )
+
+        service_calls = []
+
+        if entity_map[SUPPORT_COLOR_TEMP]:
+            service_data = data.copy()
+            service_data[ATTR_ENTITY_ID] = entity_map[SUPPORT_COLOR_TEMP]
+            service_call = self.hass.services.async_call(
+                LIGHT_DOMAIN,
+                SERVICE_TURN_ON,
+                service_data,
+                blocking=True,
+                context=self._context,
+            )
+            service_calls.append(service_call)
+
+        if entity_map[SUPPORT_COLOR]:
+            service_data = data.copy()
+            service_data[ATTR_ENTITY_ID] = entity_map[SUPPORT_COLOR]
+
+            # Perform color_temp emulation if ATTR_COLOR_TEMP is passed
+            if ATTR_COLOR_TEMP in service_data:
+                temp_k = color_util.color_temperature_mired_to_kelvin(
+                    service_data[ATTR_COLOR_TEMP]
+                )
+                hs_color = color_util.color_temperature_to_hs(temp_k)
+                service_data[ATTR_HS_COLOR] = hs_color
+                del service_data[ATTR_COLOR_TEMP]
+
+            service_call = self.hass.services.async_call(
+                LIGHT_DOMAIN,
+                SERVICE_TURN_ON,
+                service_data,
+                blocking=True,
+                context=self._context,
+            )
+            service_calls.append(service_call)
+
+        if no_color_support:
+            service_data = data.copy()
+            service_data[ATTR_ENTITY_ID] = no_color_support
+            if ATTR_COLOR_TEMP in service_data:
+                del service_data[ATTR_COLOR_TEMP]
+            if ATTR_HS_COLOR in service_data:
+                del service_data[ATTR_HS_COLOR]
+
+            service_call = self.hass.services.async_call(
+                LIGHT_DOMAIN,
+                SERVICE_TURN_ON,
+                service_data,
+                blocking=True,
+                context=self._context,
+            )
+            service_calls.append(service_call)
+
+        # Perform calls
+        await asyncio.gather(*service_calls)
 
 
 class AreaLightGroup(MagicLightGroup):

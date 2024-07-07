@@ -102,15 +102,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     }
 
     # Setup platforms
-    for platform in magic_area.available_platforms():
-        _LOGGER.debug("%s: Loading platform '%s'...", magic_area.name, platform)
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(config_entry, platform)
-        )
-        magic_area.loaded_platforms.append(platform)
+    await hass.config_entries.async_forward_entry_setups(
+        config_entry, magic_area.available_platforms()
+    )
 
     # Conditional reload of related meta-areas
-
     # Populate dict with all meta-areas with ID as key
     meta_areas = defaultdict()
 
@@ -157,28 +153,21 @@ async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Unload a config entry."""
 
-    platforms_unloaded = []
     data = hass.data[MODULE_DATA]
     area_data = data[config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
 
-    for platform in area.loaded_platforms:
-        unload_ok = await hass.config_entries.async_forward_entry_unload(
-            config_entry, platform
-        )
-        platforms_unloaded.append(unload_ok)
+    await hass.config_entries.async_unload_platforms(
+        config_entry, area.available_platforms()
+    )
 
     area_data[DATA_UNDO_UPDATE_LISTENER]()
-
-    all_unloaded = all(platforms_unloaded)
-
-    if all_unloaded:
-        data.pop(config_entry.entry_id)
+    data.pop(config_entry.entry_id)
 
     if not data:
         hass.data.pop(MODULE_DATA)
 
-    return all_unloaded
+    return True
 
 
 def migrate_seconds_to_minutes(config_data: dict) -> dict:
