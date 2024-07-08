@@ -14,12 +14,12 @@ _LOGGER = logging.getLogger(__name__)
 
 async def test_area_primary_state_change(
     hass: HomeAssistant,
-    one_motion: list[MockBinarySensor],
+    entities_binary_sensor_motion_one: list[MockBinarySensor],
     _setup_integration,
 ) -> None:
     """Test loading the integration."""
 
-    motion_sensor_entity_id = one_motion[0].entity_id
+    motion_sensor_entity_id = entities_binary_sensor_motion_one[0].entity_id
     area_sensor_entity_id = (
         f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_kitchen_area_state"
     )
