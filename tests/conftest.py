@@ -2,22 +2,22 @@
 
 from collections.abc import AsyncGenerator, Generator
 import logging
+from random import randint
 from typing import Any
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
-from random import randint
 
 from custom_components.magic_areas.const import (
     CONF_ACCENT_ENTITY,
+    CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_DARK_ENTITY,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
     CONF_EXTENDED_TIMEOUT,
-    CONF_ID,
     CONF_FEATURE_AGGREGATION,
-    CONF_AGGREGATES_MIN_ENTITIES,
+    CONF_ID,
     CONF_INCLUDE_ENTITIES,
     CONF_NAME,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -33,12 +33,9 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
-from homeassistant.components.sensor import (
-    DOMAIN as SENSOR_DOMAIN,
-    SensorDeviceClass,
-)
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import CONF_PLATFORM, UnitOfTemperature, UnitOfElectricCurrent
+from homeassistant.const import CONF_PLATFORM, UnitOfElectricCurrent, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
 from homeassistant.helpers.entity_registry import async_get as async_get_er
@@ -120,7 +117,9 @@ def auto_enable_custom_integrations(
     _ = enable_custom_integrations  # unused
     yield
 
+
 # Config entries
+
 
 @pytest.fixture(name="config_entry")
 def mock_config_entry() -> MockConfigEntry:
@@ -144,6 +143,7 @@ def mock_config_entry_secondary_states() -> MockConfigEntry:
     )
     return MockConfigEntry(domain=DOMAIN, data=data)
 
+
 @pytest.fixture(name="aggregates_config_entry")
 def mock_config_entry_aggregates() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
@@ -151,15 +151,15 @@ def mock_config_entry_aggregates() -> MockConfigEntry:
     data.update(
         {
             CONF_ENABLED_FEATURES: {
-                CONF_FEATURE_AGGREGATION: {
-                    CONF_AGGREGATES_MIN_ENTITIES: 1
-                }
+                CONF_FEATURE_AGGREGATION: {CONF_AGGREGATES_MIN_ENTITIES: 1}
             }
         }
     )
     return MockConfigEntry(domain=DOMAIN, data=data)
 
+
 # Entities
+
 
 @pytest.fixture(name="secondary_states_sensors")
 async def setup_secondary_state_sensors(hass: HomeAssistant) -> list[MockBinarySensor]:
@@ -186,7 +186,9 @@ async def setup_secondary_state_sensors(hass: HomeAssistant) -> list[MockBinaryS
 
 
 @pytest.fixture(name="entities_binary_sensor_motion_one")
-async def setup_entities_binary_sensor_motion_one(hass: HomeAssistant) -> list[MockBinarySensor]:
+async def setup_entities_binary_sensor_motion_one(
+    hass: HomeAssistant,
+) -> list[MockBinarySensor]:
     """Create one mock sensor and setup the system with it."""
     mock_binary_sensor_entities = [
         MockBinarySensor(
@@ -198,8 +200,11 @@ async def setup_entities_binary_sensor_motion_one(hass: HomeAssistant) -> list[M
     await setup_mock_entities(hass, BINARY_SENSOR_DOMAIN, mock_binary_sensor_entities)
     return mock_binary_sensor_entities
 
+
 @pytest.fixture(name="entities_binary_sensor_motion_multiple")
-async def setup_entities_binary_sensor_motion_multiple(hass: HomeAssistant) -> list[MockBinarySensor]:
+async def setup_entities_binary_sensor_motion_multiple(
+    hass: HomeAssistant,
+) -> list[MockBinarySensor]:
     """Create multiple mock sensor and setup the system with it."""
     nr_entities = 3
     mock_binary_sensor_entities = []
@@ -208,14 +213,17 @@ async def setup_entities_binary_sensor_motion_multiple(hass: HomeAssistant) -> l
             MockBinarySensor(
                 name=f"motion_sensor_{i}",
                 unique_id=f"motion_sensor_{i}",
-                device_class=BinarySensorDeviceClass.MOTION
+                device_class=BinarySensorDeviceClass.MOTION,
             )
         )
     await setup_mock_entities(hass, BINARY_SENSOR_DOMAIN, mock_binary_sensor_entities)
     return mock_binary_sensor_entities
 
+
 @pytest.fixture(name="entities_binary_sensor_connectivity_multiple")
-async def setup_entities_binary_sensor_connectivity_multiple(hass: HomeAssistant) -> list[MockBinarySensor]:
+async def setup_entities_binary_sensor_connectivity_multiple(
+    hass: HomeAssistant,
+) -> list[MockBinarySensor]:
     """Create multiple mock sensor and setup the system with it."""
     nr_entities = 3
     mock_binary_sensor_entities = []
@@ -224,14 +232,17 @@ async def setup_entities_binary_sensor_connectivity_multiple(hass: HomeAssistant
             MockBinarySensor(
                 name=f"connectivity_sensor_{i}",
                 unique_id=f"connectivity_sensor_{i}",
-                device_class=BinarySensorDeviceClass.CONNECTIVITY
+                device_class=BinarySensorDeviceClass.CONNECTIVITY,
             )
         )
     await setup_mock_entities(hass, BINARY_SENSOR_DOMAIN, mock_binary_sensor_entities)
     return mock_binary_sensor_entities
 
+
 @pytest.fixture(name="entities_sensor_temperature_multiple")
-async def setup_entities_sensor_temperature_multiple(hass: HomeAssistant) -> list[MockSensor]:
+async def setup_entities_sensor_temperature_multiple(
+    hass: HomeAssistant,
+) -> list[MockSensor]:
     """Create multiple mock sensor and setup the system with it."""
     nr_entities = 3
     mock_sensor_entities = []
@@ -253,8 +264,11 @@ async def setup_entities_sensor_temperature_multiple(hass: HomeAssistant) -> lis
     await setup_mock_entities(hass, SENSOR_DOMAIN, mock_sensor_entities)
     return mock_sensor_entities
 
+
 @pytest.fixture(name="entities_sensor_current_multiple")
-async def setup_entities_sensor_current_multiple(hass: HomeAssistant) -> list[MockSensor]:
+async def setup_entities_sensor_current_multiple(
+    hass: HomeAssistant,
+) -> list[MockSensor]:
     """Create multiple mock sensor and setup the system with it."""
     nr_entities = 3
     mock_sensor_entities = []
@@ -276,7 +290,9 @@ async def setup_entities_sensor_current_multiple(hass: HomeAssistant) -> list[Mo
     await setup_mock_entities(hass, SENSOR_DOMAIN, mock_sensor_entities)
     return mock_sensor_entities
 
+
 # Integration set-ups
+
 
 @pytest.fixture(name="_setup_integration")
 async def setup_integration(
@@ -300,6 +316,7 @@ async def setup_integration_secondary_states(
     await init_integration(hass, secondary_states_config_entry)
     yield
     await shutdown_integration(hass, secondary_states_config_entry)
+
 
 @pytest.fixture(name="_setup_integration_aggregates")
 async def setup_integration_aggregates(
