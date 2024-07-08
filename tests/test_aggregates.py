@@ -1,3 +1,5 @@
+"""Test for aggregate (group) sensor behavior."""
+
 import logging
 
 from homeassistant.core import HomeAssistant
