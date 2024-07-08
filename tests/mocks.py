@@ -158,42 +158,46 @@ class MockModule:
         platform_schema: vol.Schema | None = None,
         platform_schema_base: vol.Schema | None = None,
         async_setup: Callable[[], Awaitable[data_entry_flow.FlowHandler]] | None = None,
-        async_setup_entry: Callable[
-            [HomeAssistant, ConfigEntry, AddEntitiesCallback], Awaitable[None]
-        ]
-        | None = None,
-        async_unload_entry: Callable[[HomeAssistant, ConfigEntry], Awaitable[bool]]
-        | None = None,
-        async_migrate_entry: Callable[[HomeAssistant, ConfigEntry], Awaitable[bool]]
-        | None = None,
-        async_remove_entry: Callable[[HomeAssistant, ConfigEntry], Awaitable[bool]]
-        | None = None,
+        async_setup_entry: (
+            Callable[[HomeAssistant, ConfigEntry, AddEntitiesCallback], Awaitable[None]]
+            | None
+        ) = None,
+        async_unload_entry: (
+            Callable[[HomeAssistant, ConfigEntry], Awaitable[bool]] | None
+        ) = None,
+        async_migrate_entry: (
+            Callable[[HomeAssistant, ConfigEntry], Awaitable[bool]] | None
+        ) = None,
+        async_remove_entry: (
+            Callable[[HomeAssistant, ConfigEntry], Awaitable[bool]] | None
+        ) = None,
         partial_manifest: dict[str, str] | None = None,
-        async_remove_config_entry_device: Callable[
-            [HomeAssistant, ConfigEntry, DeviceEntry], Awaitable[bool]
-        ]
-        | None = None,
+        async_remove_config_entry_device: (
+            Callable[[HomeAssistant, ConfigEntry, DeviceEntry], Awaitable[bool]] | None
+        ) = None,
     ) -> None:
         """Initialize the mock module."""
         self.__name__ = f"homeassistant.components.{domain}"
         self.__file__ = f"homeassistant/components/{domain}"
-        self.DOMAIN = domain
-        self.DEPENDENCIES = dependencies or []
-        self.REQUIREMENTS = requirements or []
+        self.DOMAIN = domain  # pylint: disable=invalid-name
+        self.DEPENDENCIES = dependencies or []  # pylint: disable=invalid-name
+        self.REQUIREMENTS = requirements or []  # pylint: disable=invalid-name
         # Overlay to be used when generating manifest from this module
         self._partial_manifest = partial_manifest
 
         if config_schema is not None:
-            self.CONFIG_SCHEMA = config_schema
+            self.CONFIG_SCHEMA = config_schema  # pylint: disable=invalid-name
 
         if platform_schema is not None:
-            self.PLATFORM_SCHEMA = platform_schema
+            self.PLATFORM_SCHEMA = platform_schema  # pylint: disable=invalid-name
 
         if platform_schema_base is not None:
+            # pylint: disable-next=invalid-name
             self.PLATFORM_SCHEMA_BASE = platform_schema_base
 
         if setup:
             # We run this in executor, wrap it in function
+            # pylint: disable-next=unnecessary-lambda
             self.setup: Callable[[], data_entry_flow.FlowHandler] = lambda: setup()
 
         if async_setup is not None:
@@ -233,32 +237,47 @@ class MockPlatform:
 
     def __init__(
         self,
-        setup_platform: Callable[
-            [HomeAssistant, ConfigType, AddEntitiesCallback, DiscoveryInfoType | None],
-            None,
-        ]
-        | None = None,
+        setup_platform: (
+            Callable[
+                [
+                    HomeAssistant,
+                    ConfigType,
+                    AddEntitiesCallback,
+                    DiscoveryInfoType | None,
+                ],
+                None,
+            ]
+            | None
+        ) = None,
         dependencies: list[str] | None = None,
         platform_schema: vol.Schema | None = None,
-        async_setup_platform: Callable[
-            [HomeAssistant, ConfigType, AddEntitiesCallback, DiscoveryInfoType | None],
-            Awaitable[None],
-        ]
-        | None = None,
-        async_setup_entry: Callable[
-            [HomeAssistant, ConfigEntry, AddEntitiesCallback], Awaitable[None]
-        ]
-        | None = None,
+        async_setup_platform: (
+            Callable[
+                [
+                    HomeAssistant,
+                    ConfigType,
+                    AddEntitiesCallback,
+                    DiscoveryInfoType | None,
+                ],
+                Awaitable[None],
+            ]
+            | None
+        ) = None,
+        async_setup_entry: (
+            Callable[[HomeAssistant, ConfigEntry, AddEntitiesCallback], Awaitable[None]]
+            | None
+        ) = None,
         scan_interval: int | None = None,
     ) -> None:
         """Initialize the platform."""
+        # pylint: disable-next=invalid-name
         self.DEPENDENCIES = dependencies or []
 
         if platform_schema is not None:
-            self.PLATFORM_SCHEMA = platform_schema
+            self.PLATFORM_SCHEMA = platform_schema  # pylint: disable=invalid-name
 
         if scan_interval is not None:
-            self.SCAN_INTERVAL = scan_interval
+            self.SCAN_INTERVAL = scan_interval  # pylint: disable=invalid-name
 
         if setup_platform is not None:
             # We run this in executor, wrap it in function
@@ -293,13 +312,16 @@ class MockToggleEntity(MockEntity, ToggleEntity):
         return self._name
 
     @property
-    def state(self) -> Literal["on", "off"] | None:  # type: ignore  # noqa: PGH003
+    # pylint: disable-next=overridden-final-method
+    def state(
+        self,
+    ) -> Literal["on", "off"] | None:
         """Return the state of the entity if any."""
         self.calls.append(("state", {}))
-        return self._state  # type: ignore  # noqa: PGH003
+        return self._state
 
     @property
-    def is_on(self) -> bool:  # type: ignore  # noqa: PGH003
+    def is_on(self) -> bool:
         """Return true if entity is on."""
         self.calls.append(("is_on", {}))
         return self._state == STATE_ON
@@ -378,7 +400,7 @@ class MockBinarySensor(MockEntity, BinarySensorEntity):
     _state = STATE_OFF
 
     @property
-    def is_on(self) -> bool:  # type: ignore  # noqa: PGH003
+    def is_on(self) -> bool:  # pylint: disable=overridden-final-method
         """Return true if the binary sensor is on."""
         return self._state == STATE_ON
 
@@ -408,6 +430,7 @@ class MockFan(MockEntity, FanEntity):
         """Return true if the binary sensor is on."""
         return self._state == STATE_ON
 
+    # pylint: disable-next=arguments-differ
     def turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         self._state = STATE_ON
@@ -475,11 +498,15 @@ class MockCover(MockEntity, CoverEntity):
     _reports_opening_closing = False
 
     @property
-    def supported_features(self) -> CoverEntityFeature:  # type: ignore  # noqa: PGH003
+    def supported_features(
+        self,
+    ) -> CoverEntityFeature:  # pylint: disable=overridden-final-method
         """Return the supported features of the cover."""
         if "supported_feautes" in self._values:
             return self._values["supported_features"]
-        return CoverEntity.supported_features.fget(self)  # type: ignore  # noqa: PGH003
+        return CoverEntity.supported_features.fget(
+            self
+        )  # pylint: disable=overridden-final-method
 
     @cached_property
     def is_closed(self) -> bool:

@@ -68,48 +68,6 @@ def setup_test_component_platform(
     return platform
 
 
-def setup_mqtt_room_component_platform(
-    hass: HomeAssistant,
-    domain: str,
-    entities: Sequence[Entity],
-    from_config_entry: bool = False,
-    built_in: bool = True,
-) -> MockPlatform:
-    """Mock a mqtt room component platform for tests."""
-
-    _LOGGER.info("Setting up mqtt room platform")
-
-    async def _async_setup_platform(
-        hass: HomeAssistant,
-        config: ConfigType,
-        async_add_entities: AddEntitiesCallback,
-        discovery_info: DiscoveryInfoType | None = None,
-    ) -> None:
-        """Set up a mqtt room component platform."""
-        async_add_entities(entities)
-
-    platform = MockPlatform(
-        async_setup_platform=_async_setup_platform,
-    )
-
-    # avoid creating config entry setup if not needed
-    if from_config_entry:
-
-        async def _async_setup_entry(
-            hass: HomeAssistant,
-            entry: ConfigEntry,
-            async_add_entities: AddEntitiesCallback,
-        ) -> None:
-            """Set up a mqtt room component platform."""
-            async_add_entities(entities)
-
-        platform.async_setup_entry = _async_setup_entry
-        platform.async_setup_platform = None
-
-    mock_platform(hass, f"mqtt_room.{domain}", platform, built_in=built_in)
-    return platform
-
-
 def mock_integration(
     hass: HomeAssistant, module: MockModule, built_in: bool = True
 ) -> loader.Integration:
