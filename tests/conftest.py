@@ -10,6 +10,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.magic_areas.const import (
     CONF_ACCENT_ENTITY,
+    CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_DARK_ENTITY,
@@ -17,6 +18,7 @@ from custom_components.magic_areas.const import (
     CONF_EXCLUDE_ENTITIES,
     CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_AGGREGATION,
+    CONF_FEATURE_COVER_GROUPS,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
     CONF_NAME,
@@ -33,16 +35,22 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
+from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, CoverDeviceClass
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import CONF_PLATFORM, UnitOfElectricCurrent, UnitOfTemperature
+from homeassistant.const import (
+    CONF_PLATFORM,
+    LIGHT_LUX,
+    UnitOfElectricCurrent,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
 from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.setup import async_setup_component
 
 from .common import setup_test_component_platform
-from .mocks import MockBinarySensor, MockSensor
+from .mocks import MockBinarySensor, MockCover, MockSensor
 
 AREA_NAME = "kitchen"
 _LOGGER = logging.getLogger(__name__)
@@ -155,6 +163,31 @@ def mock_config_entry_aggregates() -> MockConfigEntry:
             }
         }
     )
+    return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="threshold_config_entry")
+def mock_config_entry_threshold() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data.update(
+        {
+            CONF_ENABLED_FEATURES: {
+                CONF_FEATURE_AGGREGATION: {
+                    CONF_AGGREGATES_MIN_ENTITIES: 1,
+                    CONF_AGGREGATES_ILLUMINANCE_THRESHOLD: 600,
+                },
+            }
+        }
+    )
+    return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="cover_groups_config_entry")
+def mock_config_entry_cover_groups() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data.update({CONF_ENABLED_FEATURES: {CONF_FEATURE_COVER_GROUPS: {}}})
     return MockConfigEntry(domain=DOMAIN, data=data)
 
 
@@ -291,6 +324,53 @@ async def setup_entities_sensor_current_multiple(
     return mock_sensor_entities
 
 
+@pytest.fixture(name="entities_sensor_illuminance_multiple")
+async def setup_entities_sensor_illuminance_multiple(
+    hass: HomeAssistant,
+) -> list[MockSensor]:
+    """Create multiple mock sensor and setup the system with it."""
+    nr_entities = 3
+    mock_sensor_entities = []
+    for i in range(nr_entities):
+        mock_sensor_entities.append(
+            MockSensor(
+                name=f"illuminance_sensor_{i}",
+                unique_id=f"illuminance_sensor_{i}",
+                native_value=0.0,
+                device_class=SensorDeviceClass.ILLUMINANCE,
+                native_unit_of_measurement=LIGHT_LUX,
+                unit_of_measurement=LIGHT_LUX,
+                extra_state_attributes={
+                    "unit_of_measurement": LIGHT_LUX,
+                },
+            )
+        )
+    await setup_mock_entities(hass, SENSOR_DOMAIN, mock_sensor_entities)
+    return mock_sensor_entities
+
+
+@pytest.fixture(name="entities_sensor_cover_all_classes_multiple")
+async def setup_entities_sensor_cover_all_classes_multiple(
+    hass: HomeAssistant,
+) -> list[MockCover]:
+    """Create multiple mock sensor and setup the system with it."""
+
+    nr_entities = 3
+    mock_cover_entities = []
+
+    for dc in CoverDeviceClass:
+        for i in range(nr_entities):
+            mock_cover_entities.append(
+                MockCover(
+                    name=f"cover_{dc.value}_{i}",
+                    unique_id=f"cover_{dc.value}_{i}",
+                    device_class=dc.value,
+                )
+            )
+    await setup_mock_entities(hass, COVER_DOMAIN, mock_cover_entities)
+    return mock_cover_entities
+
+
 # Integration set-ups
 
 
@@ -328,3 +408,27 @@ async def setup_integration_aggregates(
     await init_integration(hass, aggregates_config_entry)
     yield
     await shutdown_integration(hass, aggregates_config_entry)
+
+
+@pytest.fixture(name="_setup_integration_threshold")
+async def setup_integration_threshold(
+    hass: HomeAssistant,
+    threshold_config_entry: MockConfigEntry,
+) -> AsyncGenerator[Any]:
+    """Set up integration with secondary states config."""
+
+    await init_integration(hass, threshold_config_entry)
+    yield
+    await shutdown_integration(hass, threshold_config_entry)
+
+
+@pytest.fixture(name="_setup_integration_cover_group")
+async def setup_integration_cover_group(
+    hass: HomeAssistant,
+    cover_groups_config_entry: MockConfigEntry,
+) -> AsyncGenerator[Any]:
+    """Set up integration with secondary states config."""
+
+    await init_integration(hass, cover_groups_config_entry)
+    yield
+    await shutdown_integration(hass, cover_groups_config_entry)
