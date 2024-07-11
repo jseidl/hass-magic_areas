@@ -1,17 +1,16 @@
 """Test for cover groups."""
 
+from collections import defaultdict
 import logging
 
-from collections import defaultdict
-
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, CoverDeviceClass
-
+from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_OPEN
 from homeassistant.core import HomeAssistant
-from homeassistant.const import STATE_OPEN, STATE_CLOSED, SERVICE_CLOSE_COVER, ATTR_ENTITY_ID, ATTR_DEVICE_CLASS
 
 from .mocks import MockCover
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def test_cover_group_basic(
     hass: HomeAssistant,
@@ -20,7 +19,9 @@ async def test_cover_group_basic(
 ) -> None:
     """Test the light from illuminance threshold sensor."""
 
-    cover_group_entity_id_base = f"{COVER_DOMAIN}.magic_areas_cover_groups_kitchen_cover_group_"
+    cover_group_entity_id_base = (
+        f"{COVER_DOMAIN}.magic_areas_cover_groups_kitchen_cover_group_"
+    )
     entity_map = defaultdict(list)
 
     # Ensure all mock entities exist and map
@@ -38,4 +39,6 @@ async def test_cover_group_basic(
         assert group_entity_state is not None
         assert group_entity_state.state == STATE_OPEN
         for child_cover in entity_map[dc.value]:
-            assert child_cover.entity_id in group_entity_state.attributes[ATTR_ENTITY_ID]
+            assert (
+                child_cover.entity_id in group_entity_state.attributes[ATTR_ENTITY_ID]
+            )

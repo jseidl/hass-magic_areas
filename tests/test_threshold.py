@@ -4,15 +4,14 @@ import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from random import randint
-
-from homeassistant.core import HomeAssistant
-from homeassistant.const import STATE_ON, STATE_OFF, LIGHT_LUX
 from homeassistant.components.threshold.binary_sensor import ATTR_UPPER
+from homeassistant.const import LIGHT_LUX, STATE_OFF, STATE_ON
+from homeassistant.core import HomeAssistant
 
 from .mocks import MockBinarySensor
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def test_threshold_sensor_light(
     hass: HomeAssistant,
@@ -45,8 +44,8 @@ async def test_threshold_sensor_light(
     for mock_entity in entities_sensor_illuminance_multiple:
         hass.states.async_set(
             mock_entity.entity_id,
-            sensor_threhsold_upper*2,
-            attributes={"unit_of_measurement": LIGHT_LUX}
+            sensor_threhsold_upper * 2,
+            attributes={"unit_of_measurement": LIGHT_LUX},
         )
     await hass.async_block_till_done()
 
@@ -58,9 +57,7 @@ async def test_threshold_sensor_light(
     # Reset illuminance sensor values to 0
     for mock_entity in entities_sensor_illuminance_multiple:
         hass.states.async_set(
-            mock_entity.entity_id,
-            0.0,
-            attributes={"unit_of_measurement": LIGHT_LUX}
+            mock_entity.entity_id, 0.0, attributes={"unit_of_measurement": LIGHT_LUX}
         )
     await hass.async_block_till_done()
 
