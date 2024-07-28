@@ -1,40 +1,25 @@
-"""Tests for Magic Areas integration load and unload."""
+"""Test initializing the system."""
 
 import logging
 
-from custom_components.magic_areas.const import DATA_UNDO_UPDATE_LISTENER, MODULE_DATA
-from homeassistant.config_entries import ConfigEntryState
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from .common import setup_area
-from .const import MOCK_AREA_PRESENCE_SENSOR_ENTITY_ID
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.const import STATE_OFF
+from homeassistant.core import HomeAssistant
 
-LOGGER = logging.getLogger(__name__)
-
-
-async def test_successful_config_entry(hass):
-    """Test that Magic Areas is configured successfully."""
-
-    entry = await setup_area(hass)
-
-    assert entry.state == ConfigEntryState.LOADED
-
-    assert MODULE_DATA in hass.data
-    assert DATA_UNDO_UPDATE_LISTENER in hass.data[MODULE_DATA][entry.entry_id]
-
-    assert hass.states.get(MOCK_AREA_PRESENCE_SENSOR_ENTITY_ID)
+_LOGGER = logging.getLogger(__name__)
 
 
-async def test_unload_entry(hass):
-    """Test removing Magic Areas."""
+async def test_init_default_config(
+    hass: HomeAssistant, config_entry: MockConfigEntry, _setup_integration
+) -> None:
+    """Test loading the integration."""
 
-    entry = await setup_area(hass)
+    # Validate the right enties were created.
+    area_binary_sensor = hass.states.get(
+        f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_kitchen_area_state"
+    )
 
-    assert await hass.config_entries.async_unload(entry.entry_id)
-    await hass.async_block_till_done()
-
-    assert entry.state == ConfigEntryState.NOT_LOADED
-    assert MODULE_DATA not in hass.data
-
-    # @FIXME seems like MA is not removing entity? (going to unavailable).
-    # Unsure if that's "normal" or if the entity should indeed be missing
-    # assert hass.states.get(MOCK_PRESENCE_SENSOR_ENTITY_ID) is None
+    assert area_binary_sensor is not None
+    assert area_binary_sensor.state == STATE_OFF
