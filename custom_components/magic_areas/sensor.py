@@ -151,10 +151,10 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
         if hasattr(area.hass.config.units, unit_attr_name):
             unit_of_measurement = getattr(area.hass.config.units, unit_attr_name)
         else:
-            if device_class in UNIT_CONVERTERS:
-                unit_of_measurement = UNIT_CONVERTERS[device_class].NORMALIZED_UNIT
-            else:
-                unit_of_measurement = list(DEVICE_CLASS_UNITS[device_class])[0]
+            # if device_class in UNIT_CONVERTERS:
+            #     unit_of_measurement = UNIT_CONVERTERS[device_class].NORMALIZED_UNIT
+            # else:
+            unit_of_measurement = list(DEVICE_CLASS_UNITS[device_class])[0]
 
         self._attr_suggested_display_precision = DEFAULT_SENSOR_PRECISION
         self.device_class = device_class
