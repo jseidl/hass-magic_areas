@@ -19,9 +19,11 @@ from custom_components.magic_areas.const import (
     CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_COVER_GROUPS,
+    CONF_FEATURE_LIGHT_GROUPS,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
     CONF_NAME,
+    CONF_OVERHEAD_LIGHTS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SECONDARY_STATES,
     CONF_SLEEP_ENTITY,
@@ -36,11 +38,13 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
 )
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, CoverDeviceClass
+from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import (
     CONF_PLATFORM,
     LIGHT_LUX,
+    STATE_OFF,
     UnitOfElectricCurrent,
     UnitOfTemperature,
 )
@@ -50,7 +54,7 @@ from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.setup import async_setup_component
 
 from .common import setup_test_component_platform
-from .mocks import MockBinarySensor, MockCover, MockSensor
+from .mocks import MockBinarySensor, MockCover, MockLight, MockSensor
 
 AREA_NAME = "kitchen"
 _LOGGER = logging.getLogger(__name__)
@@ -58,7 +62,7 @@ _LOGGER = logging.getLogger(__name__)
 BASIC_CONFIG_ENTRY_DATA = {
     CONF_NAME: AREA_NAME,
     CONF_ID: AREA_NAME,
-    CONF_CLEAR_TIMEOUT: 0,  # @FIXME change this back to 1 once i fix the timeout waiting thing
+    CONF_CLEAR_TIMEOUT: 0,
     CONF_UPDATE_INTERVAL: 60,
     CONF_EXTENDED_TIMEOUT: 5,
     CONF_TYPE: AreaType.INTERIOR,
@@ -188,6 +192,26 @@ def mock_config_entry_cover_groups() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
     data = dict(BASIC_CONFIG_ENTRY_DATA)
     data.update({CONF_ENABLED_FEATURES: {CONF_FEATURE_COVER_GROUPS: {}}})
+    return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="basic_light_group_config_entry")
+def mock_config_entry_light_group_basic() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data.update(
+        {
+            CONF_ENABLED_FEATURES: {
+                CONF_FEATURE_LIGHT_GROUPS: {
+                    CONF_OVERHEAD_LIGHTS: [
+                        "lihgt.mock_light_1",
+                        "lihgt.mock_light_2",
+                        "lihgt.mock_light_3",
+                    ]
+                },
+            }
+        }
+    )
     return MockConfigEntry(domain=DOMAIN, data=data)
 
 
@@ -371,6 +395,23 @@ async def setup_entities_sensor_cover_all_classes_multiple(
     return mock_cover_entities
 
 
+@pytest.fixture(name="entities_light_many")
+async def setup_entities_light_many(
+    hass: HomeAssistant,
+) -> list[MockLight]:
+    """Create multiple mock sensor and setup the system with it."""
+
+    nr_entities = 3
+    mock_light_entities = []
+
+    for i in range(nr_entities):
+        mock_light_entities.append(
+            MockLight(name=f"light_{i}", unique_id=f"light_{i}", state=STATE_OFF)
+        )
+    await setup_mock_entities(hass, LIGHT_DOMAIN, mock_light_entities)
+    return mock_light_entities
+
+
 # Integration set-ups
 
 
@@ -432,3 +473,15 @@ async def setup_integration_cover_group(
     await init_integration(hass, cover_groups_config_entry)
     yield
     await shutdown_integration(hass, cover_groups_config_entry)
+
+
+@pytest.fixture(name="_setup_integration_light_group_basic")
+async def setup_integration_light_basic(
+    hass: HomeAssistant,
+    basic_light_group_config_entry: MockConfigEntry,
+) -> AsyncGenerator[Any]:
+    """Set up integration with secondary states config."""
+
+    await init_integration(hass, basic_light_group_config_entry)
+    yield
+    await shutdown_integration(hass, basic_light_group_config_entry)

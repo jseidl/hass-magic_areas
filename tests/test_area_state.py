@@ -48,7 +48,9 @@ async def test_area_primary_state_change(
     hass.states.async_set(motion_sensor_entity_id, STATE_OFF)
     await hass.async_block_till_done()
 
-    # asyncio.sleep(5) @FIXME once I get the timers fixed call_later -> async_call_later
+    # @FIXME figure out why this is blocking instead of doing the VirtualClock trick
+    # await asyncio.sleep(60)
+    # await hass.async_block_till_done()
 
     # Update states
     area_binary_sensor = hass.states.get(area_sensor_entity_id)
@@ -113,3 +115,6 @@ async def test_area_secondary_state_change(
         assert state_tuples[0] not in area_binary_sensor.attributes["states"]
         if state_tuples[1]:
             assert state_tuples[1] in area_binary_sensor.attributes["states"]
+
+
+# Test extended state
