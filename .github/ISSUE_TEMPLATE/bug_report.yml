@@ -1,5 +1,5 @@
-name: Bug Report
-description: File a bug report.
+name: 'Bug Report'
+description: 'File a bug report.'
 title: "[Bug]: "
 labels: ["bug", "triage"]
 assignees:
@@ -13,25 +13,25 @@ body:
       label: "System Health details"
       description: "Paste the data from the System Health card in Home Assistant (https://www.home-assistant.io/more-info/system-health#github-issues)"
     validations:
-      required: true
+      required: 'true'
   - type: checkboxes
     attributes:
       label: Checklist
       options:
         - label: I have enabled debug logging for my installation.
-          required: true
+          required: 'true'
         - label: I have filled out the issue template to the best of my ability.
-          required: true
+          required: 'true'
         - label: This issue only contains 1 issue (if you have multiple issues, open one issue for each issue).
-          required: true
+          required: 'true'
         - label: This issue is not a duplicate issue of any [previous issues](https://github.com/jseidl/hass-magic_areas/issues?q=is%3Aissue+label%3A%22Bug%22+)..
-          required: true
+          required: 'true'
   - type: textarea
     attributes:
       label: "Describe the issue"
       description: "A clear and concise description of what the issue is."
     validations:
-      required: true
+      required: 'true'
   - type: textarea
     attributes:
       label: Reproduction steps
@@ -42,16 +42,15 @@ body:
         3.
         ...
     validations:
-      required: true
+      required: 'true'
   - type: textarea
     attributes:
       label: "Debug logs"
       description: "To enable debug logs check this https://www.home-assistant.io/integrations/logger/, this **needs** to include _everything_ from startup of Home Assistant to the point where you encounter the issue."
       render: text
     validations:
-      required: true
-
-- type: textarea
-  attributes:
-    label: "Diagnostics dump"
-    description: "Drag the diagnostics dump file here. (see https://www.home-assistant.io/integrations/diagnostics/ for info)"
+      required: 'true'
+  - type: textarea
+    attributes:
+      label: "Diagnostics dump"
+      description: "Drag the diagnostics dump file here. (see https://www.home-assistant.io/integrations/diagnostics/ for info)"
