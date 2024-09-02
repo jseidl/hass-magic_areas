@@ -1,1 +1,1 @@
-"""Tests for the Magic Areas integration."""
+"""Tests for Magic Areas."""

@@ -1,5 +1,6 @@
 """Main presence tracking entity for Magic Areas."""
 
+import asyncio
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 import logging
@@ -12,12 +13,12 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.components.sun.const import STATE_ABOVE_HORIZON
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
-from homeassistant.core import Event, EventStateChangedData, HomeAssistant
+from homeassistant.core import Event, EventStateChangedData, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect, dispatcher_send
 from homeassistant.helpers.event import (
+    async_call_later,
     async_track_state_change_event,
     async_track_time_interval,
-    call_later,
 )
 
 from ..const import (
@@ -58,16 +59,17 @@ from .magic import MagicArea
 _LOGGER = logging.getLogger(__name__)
 
 
-class AreaStateTracker:
+class AreaStateTrackerEntity(MagicEntity):
     """Tracks an area's state by tracking the configured entities."""
 
     # Init & Teardown
 
-    def __init__(self, hass: HomeAssistant, area: MagicArea) -> None:
+    def __init__(self, area: MagicArea) -> None:
         """Initialize the area tracker."""
 
+        MagicEntity.__init__(self, area, domain=BINARY_SENSOR_DOMAIN)
+
         self.area: MagicArea = area
-        self.hass: HomeAssistant = hass
 
         self._state: bool = False
 
@@ -78,23 +80,14 @@ class AreaStateTracker:
         self._active_sensors: list[str] = []
         self._last_active_sensors: list[str] = []
 
-        self._tracker_callbacks: list[Callable] = []
-
         self._load_presence_sensors()
-
-        # Setup the listeners
-        self._setup_listeners()
 
         _LOGGER.debug("%s: presence tracker initialized", self.area.name)
 
-    def _track_listener(self, callback_listener: Callable) -> None:
-
-        self._tracker_callbacks.append(callback_listener)
-
-    def _setup_listeners(self) -> None:
+    def _setup_tracking_listeners(self) -> None:
 
         # Track presence sensor
-        self._track_listener(
+        self.async_on_remove(
             async_track_state_change_event(
                 self.hass, self._sensors, self._sensor_state_change
             )
@@ -121,7 +114,7 @@ class AreaStateTracker:
                 self.area.name,
                 str(secondary_state_entities),
             )
-            self._track_listener(
+            self.async_on_remove(
                 async_track_state_change_event(
                     self.hass, secondary_state_entities, self._secondary_state_change
                 )
@@ -129,13 +122,16 @@ class AreaStateTracker:
 
         # Timed self update
         delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
-        self._track_listener(
-            async_track_time_interval(self.hass, self._refresh_states, delta)
+        self.async_on_remove(
+            async_track_time_interval(self.hass, self._update_state, delta)
         )
 
-    def get_tracked_entities(self) -> None:
-        """Return tracked entity callbacks."""
-        return self._tracker_callbacks
+        self.async_on_remove(self._cleanup_timers)
+
+    @callback
+    def _cleanup_timers(self) -> None:
+        """Remove pending timers."""
+        self._remove_clear_timeout()
 
     # Public methods
 
@@ -152,10 +148,6 @@ class AreaStateTracker:
             ATTR_STATES: self.area.states,
             ATTR_CLEAR_TIMEOUT: self._get_clear_timeout() / ONE_MINUTE,
         }
-
-    def force_update(self) -> None:
-        """Force instant state update."""
-        self._update_state()
 
     # Helpers
 
@@ -188,11 +180,6 @@ class AreaStateTracker:
             secondary_states.append(configurable_state)
 
         return secondary_states
-
-    def _refresh_states(self, next_interval) -> None:
-        """Refresh sensor state from tracked sensors."""
-        _LOGGER.debug("%s: Refreshing sensor states.", self.area.name)
-        self._update_state()
 
     # Entity loading
 
@@ -261,7 +248,7 @@ class AreaStateTracker:
             )
             return None
 
-        self._update_state()
+        self.hass.loop.call_soon_threadsafe(self._update_state, datetime.now(UTC))
 
     def _sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
         """Actions when the sensor state has changed."""
@@ -304,9 +291,14 @@ class AreaStateTracker:
             # Clear the timeout
             self._remove_clear_timeout()
 
+        self.hass.loop.call_soon_threadsafe(self._update_state, datetime.now(UTC))
+
+    async def _async_update_state(self, timeout: int) -> None:
+        await asyncio.sleep(timeout)
         self._update_state()
 
-    def _update_state(self) -> None:
+    @callback
+    def _update_state(self, extra: datetime | None = None) -> None:
         """Update the area's state and report changes."""
 
         states_tuple = self._update_area_states()
@@ -547,12 +539,9 @@ class AreaStateTracker:
         timeout = self._get_clear_timeout()
 
         _LOGGER.debug("%s: Scheduling clear in %s seconds", self.area.name, timeout)
-        self._clear_timeout_callback = call_later(
-            self.hass, timeout, self._refresh_states
+        self._clear_timeout_callback = async_call_later(
+            self.hass, timeout, self._update_state
         )
-
-        # Schedule task for cancellation on removal
-        self._track_listener(self._clear_timeout_callback)
 
     def _get_clear_timeout(self) -> int:
         """Return configured clear timeout value."""
@@ -584,6 +573,7 @@ class AreaStateTracker:
         )
 
         # pylint: disable-next=not-callable
+        # asyncio.run_coroutine_threadsafe(self._clear_timeout_callback()).result()
         self._clear_timeout_callback()
         self._clear_timeout_callback = None
 
@@ -609,7 +599,7 @@ class AreaStateTracker:
         return False
 
 
-class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
+class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
     """Create an area presence presence sensor entity that tracks the current occupied state."""
 
     feature_info = MagicAreasFeatureInfoPresenceTracking()
@@ -619,11 +609,8 @@ class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
     def __init__(self, area: MagicArea) -> None:
         """Initialize the area presence binary sensor."""
 
-        MagicEntity.__init__(self, area, domain=BINARY_SENSOR_DOMAIN)
+        AreaStateTrackerEntity.__init__(self, area)
         BinarySensorEntity.__init__(self)
-
-        # Load area state tracker
-        self._state_tracker: AreaStateTracker | None = None
 
         self._attr_device_class = BinarySensorDeviceClass.OCCUPANCY
         self._attr_extra_state_attributes = {}
@@ -638,8 +625,8 @@ class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
         # Setup the listeners
         await self._setup_listeners()
 
-        if self._state_tracker:
-            self._state_tracker.force_update()
+        # self.force_update()
+        self.hass.loop.call_soon_threadsafe(self._update_state, datetime.now(UTC))
 
         _LOGGER.debug("%s: area presence binary sensor initialized", self.area.name)
 
@@ -650,15 +637,7 @@ class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
             self.hass, MagicAreasEvents.AREA_STATE_CHANGED, self._area_state_changed
         )
 
-        # Setup area state tracker
-        self._state_tracker = AreaStateTracker(self.hass, self.area)
-
-        self.async_on_remove(self._destroy_tracker_callbacks)
-
-    def _destroy_tracker_callbacks(self) -> None:
-        """Destroy all callbacks from tracker."""
-        for tracked in self._state_tracker.get_tracked_entities():
-            self.hass.async_add_executor_job(tracked)
+        self._setup_tracking_listeners()
 
     async def _restore_state(self) -> None:
         """Restore the state of the presence sensor entity on initialize."""
@@ -738,7 +717,6 @@ class AreaStateBinarySensor(MagicEntity, BinarySensorEntity):
             "%s: Binary presence sensor detected area state change.", self.area.name
         )
 
-        if self._state_tracker:
-            self._attr_is_on = self.area.is_occupied()
-            self._attr_extra_state_attributes.update(self._state_tracker.get_metadata())
-            self.schedule_update_ha_state()
+        self._attr_is_on = self.area.is_occupied()
+        self._attr_extra_state_attributes.update(self.get_metadata())
+        self.schedule_update_ha_state()
