@@ -211,15 +211,8 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
             "%s: Major version downgrade detection, skipping migration.",
             config_entry.data[ATTR_NAME],
         )
-        # FIXING MY MESS @FIXME remove before release
-        hass.config_entries.async_update_entry(
-            config_entry,
-            data={**config_entry.data},
-            minor_version=MagicConfigEntryVersion.MINOR,
-            version=MagicConfigEntryVersion.MAJOR,
-        )
-        # return False
-        return True
+
+        return False
 
     old_data = {**config_entry.data}
     new_data = {**config_entry.data}
