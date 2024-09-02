@@ -1,7 +1,9 @@
----
-name: "Bug report"
-description: "Report a bug with the integration"
-labels: "Bug"
+name: Bug Report
+description: File a bug report
+title: "Bug: "
+labels: ["bug"]
+assignees:
+  - jseidl
 body:
 - type: markdown
   attributes:
