@@ -98,9 +98,10 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
 
         # Dictionary of seen unit of measurements by device class.
         if device_class not in unit_of_measurement_map:
-            unit_of_measurement_map[device_class] = entity[ATTR_UNIT_OF_MEASUREMENT]
+            unit_of_measurement_map[device_class] = []
 
-        eligible_entities[entity[ATTR_DEVICE_CLASS]].append(entity["entity_id"])
+        unit_of_measurement_map[device_class].append(entity[ATTR_UNIT_OF_MEASUREMENT])
+        eligible_entities[device_class].append(entity["entity_id"])
 
     # Create aggregates
     for device_class, entities in eligible_entities.items():
