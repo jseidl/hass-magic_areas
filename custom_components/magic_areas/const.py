@@ -563,7 +563,8 @@ AGGREGATE_FEATURE_SCHEMA = vol.Schema(
             CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
             default=DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
         ): cv.positive_int,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 HEALTH_FEATURE_SCHEMA = vol.Schema(
@@ -572,7 +573,8 @@ HEALTH_FEATURE_SCHEMA = vol.Schema(
             CONF_HEALTH_SENSOR_DEVICE_CLASSES,
             default=DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES,
         ): cv.ensure_list,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 PRESENCE_HOLD_FEATURE_SCHEMA = vol.Schema(
@@ -580,7 +582,8 @@ PRESENCE_HOLD_FEATURE_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_PRESENCE_HOLD_TIMEOUT, default=DEFAULT_PRESENCE_HOLD_TIMEOUT
         ): cv.positive_int,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
@@ -589,7 +592,8 @@ CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
             CONF_CLIMATE_GROUPS_TURN_ON_STATE,
             default=DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
         ): str,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
@@ -616,14 +620,16 @@ LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_TASK_LIGHTS_ACT_ON, default=DEFAULT_LIGHT_GROUP_ACT_ON
         ): cv.ensure_list,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_NOTIFICATION_DEVICES, default=[]): cv.entity_ids,
         vol.Optional(CONF_NOTIFY_STATES, default=DEFAULT_NOTIFY_STATES): cv.ensure_list,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
@@ -652,7 +658,8 @@ FEATURES_SCHEMA = vol.Schema(
         for feature, feature_schema in chain(
             CONFIGURABLE_FEATURES.items(), NON_CONFIGURABLE_FEATURES.items()
         )
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 SECONDARY_STATES_SCHEMA = vol.Schema(
@@ -669,7 +676,8 @@ SECONDARY_STATES_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_EXTENDED_TIMEOUT, default=DEFAULT_EXTENDED_TIMEOUT
         ): cv.positive_int,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 # Basic Area Options Schema
@@ -680,14 +688,16 @@ REGULAR_AREA_BASIC_OPTIONS_SCHEMA = vol.Schema(
         ),
         vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 META_AREA_BASIC_OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_TYPE, default=AREA_TYPE_META): AREA_TYPE_META,
         vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 # Presence Tracking Schema
@@ -708,7 +718,8 @@ REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 META_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA = vol.Schema(
@@ -719,7 +730,8 @@ META_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 # Magic Areas
@@ -747,7 +759,8 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         ): cv.positive_int,
         vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
         vol.Optional(CONF_SECONDARY_STATES, default={}): SECONDARY_STATES_SCHEMA,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
 META_AREA_SCHEMA = vol.Schema(
@@ -761,12 +774,17 @@ META_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
-    }
+    },
+    extra=vol.REMOVE_EXTRA,
 )
 
-AREA_SCHEMA = vol.Schema(vol.Any(REGULAR_AREA_SCHEMA, META_AREA_SCHEMA))
+AREA_SCHEMA = vol.Schema(
+    vol.Any(REGULAR_AREA_SCHEMA, META_AREA_SCHEMA), extra=vol.REMOVE_EXTRA
+)
 
-_DOMAIN_SCHEMA = vol.Schema({cv.slug: vol.Any(AREA_SCHEMA, None)})
+_DOMAIN_SCHEMA = vol.Schema(
+    {cv.slug: vol.Any(AREA_SCHEMA, None)}, extra=vol.REMOVE_EXTRA
+)
 
 # VALIDATION_TUPLES
 OPTIONS_AREA = [
