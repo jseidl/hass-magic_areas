@@ -2,7 +2,7 @@
 colorlog~=6.8
 flake8~=7.1
 flake8-docstrings~=1.7
-fnv-hash-fast~=0.5
+fnv-hash-fast~=1.0
 mypy~=1.11
 psutil-home-assistant==0.0.1
 pylint~=3.2
