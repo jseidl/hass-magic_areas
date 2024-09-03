@@ -66,6 +66,10 @@ async def test_threshold_sensor_light(
         )
     await hass.async_block_till_done()
 
+    # Wait a bit for threshold sensor to trigger
+    await asyncio.sleep(5)
+    await hass.async_block_till_done()
+
     # Ensure threhsold sensor is cleared
     threshold_sensor_state = hass.states.get(threshold_sensor_id)
     assert threshold_sensor_state is not None
