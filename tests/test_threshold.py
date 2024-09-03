@@ -1,7 +1,7 @@
 """Test for aggregate (group) sensor behavior."""
 
-import logging
 import asyncio
+import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
