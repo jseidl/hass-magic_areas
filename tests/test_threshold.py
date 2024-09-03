@@ -1,6 +1,7 @@
 """Test for aggregate (group) sensor behavior."""
 
 import logging
+import asyncio
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
@@ -47,6 +48,10 @@ async def test_threshold_sensor_light(
             sensor_threhsold_upper * 2,
             attributes={"unit_of_measurement": LIGHT_LUX},
         )
+    await hass.async_block_till_done()
+
+    # Wait a bit for threshold sensor to trigger
+    asyncio.sleep(5)
     await hass.async_block_till_done()
 
     # Ensure threhsold sensor is triggered
