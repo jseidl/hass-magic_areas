@@ -1043,7 +1043,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     error.path[0]: "malformed_input" for error in validation.errors
                 }
                 _LOGGER.debug("OptionsFlow: Found the following errors: %s", errors)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 _LOGGER.warning(
                     "OptionsFlow: Unexpected error caught on area %s: %s",
                     self.area.name,
