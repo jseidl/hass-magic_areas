@@ -11,6 +11,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.magic_areas.const import (
     CONF_ACCENT_ENTITY,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
+    CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_DARK_ENTITY,
@@ -189,6 +190,7 @@ def mock_config_entry_threshold() -> MockConfigEntry:
                 CONF_FEATURE_AGGREGATION: {
                     CONF_AGGREGATES_MIN_ENTITIES: 1,
                     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD: 600,
+                    CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS: 10,
                 },
             }
         }
