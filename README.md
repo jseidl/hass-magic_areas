@@ -1,15 +1,15 @@
-# Magic Areas for Home Assistant
-
 ![Build Status][ci-status] [![GitHub Release][releases-shield]][releases] [![License][license-shield]](LICENSE) [![GitHub Last Commit][last-commit-shield]][commits]
 ![Project Maintenance][maintenance-shield] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
 ![integration-usage-badge] [![Discord][discord-shield]][discord]
 
-## Your areas so smart it's almost magic!
+![ma-logo]
 
-Magic Areas makes sense of the devices and entities in your areas so you don't have to! It's main purpose is tracking presence in your Home Assistant's areas but in reality it's much, much more than that.
+# Your areas so smart it's almost magic! 🪄
 
-<img align="left" width='450' src="assets/images/readme_combined_presence_sources.gif" style="margin-right: 30px; margin-top: 8px;">
+Magic Areas is a custom component for [Home Assistant](https://www.home-assistant.io/) that magically makes sense of the devices and entities in your areas so you don't have to! It's main purpose is tracking presence in your Home Assistant's areas but in reality it's much, much more than that.
+
+<img align="right" width='450' src="assets/images/readme_combined_presence_sources.gif" style="margin-left: 30px; margin-top: 8px;">
 
 ### Multiple sources of presence
 
@@ -33,7 +33,7 @@ Some features (such aggregation and groups) are available for meta-areas which a
 
 Meta-areas simplify things by allowing you to use their aggregate sensors such as "Interior Motion" and "Exterior Door" in your alarm setups, "Exterior Light" as your area light sensors and much more!
 
-<img align="left" width='450' src="assets/images/temperature-aggregate.png" style="margin-right: 30px; margin-top: 8px">
+<img align="right" width='450' src="assets/images/temperature-aggregate.png" style="margin-left: 30px; margin-top: 8px">
 
 ### Aggregate sensors
 
@@ -138,6 +138,6 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [releases]: https://github.com/jseidl/hass-magic_areas/releases
 [ci-status]: https://img.shields.io/github/actions/workflow/status/jseidl/hass-magic_areas/validation.yaml?style=for-the-badge
 [last-commit-shield]: https://img.shields.io/github/last-commit/jseidl/hass-magic_areas?style=for-the-badge
-[ma-logo]: https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/magic_areas/icon.png
+[ma-logo]: https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/magic_areas/logo.png
 [contributors-badge]: https://flat.badgen.net/github/contributors/jseidl/hass-magic_areas
 [integration-usage-badge]: https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.magic_areas.total&style=for-the-badge
