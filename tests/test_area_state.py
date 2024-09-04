@@ -118,3 +118,75 @@ async def test_area_secondary_state_change(
 
 
 # Test extended state
+# @TODO pending figuring out virtualclock
+
+# Test keep-only sensors
+async def test_area_primary_state_change(
+    hass: HomeAssistant,
+    entities_binary_sensor_motion_multiple: list[MockBinarySensor],
+    _setup_integration_keep_only_sensor,
+) -> None:
+    """Test loading the integration."""
+
+    motion_sensor_entity_id = entities_binary_sensor_motion_multiple[0].entity_id
+    flappy_sensor_entity_id = entities_binary_sensor_motion_multiple[1].entity_id
+    area_sensor_entity_id = (
+        f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_kitchen_area_state"
+    )
+
+    # Validate the right enties were created.
+    area_binary_sensor = hass.states.get(area_sensor_entity_id)
+
+    assert area_binary_sensor is not None
+    assert area_binary_sensor.state == STATE_OFF
+    assert motion_sensor_entity_id in area_binary_sensor.attributes["presence_sensors"]
+    assert flappy_sensor_entity_id in area_binary_sensor.attributes["presence_sensors"]
+    assert AreaStates.CLEAR in area_binary_sensor.attributes["states"]
+
+    # Turn on flappy sensor
+    hass.states.async_set(flappy_sensor_entity_id, STATE_ON)
+    await hass.async_block_till_done()
+
+    # Update states, ensure area remains clear
+    area_binary_sensor = hass.states.get(area_sensor_entity_id)
+    flappy_sensor = hass.states.get(flappy_sensor_entity_id)
+
+    assert flappy_sensor.state == STATE_ON
+    assert area_binary_sensor.state == STATE_OFF
+    assert AreaStates.CLEAR in area_binary_sensor.attributes["states"]
+
+    # Turn on motion sensor
+    hass.states.async_set(motion_sensor_entity_id, STATE_ON)
+    await hass.async_block_till_done()
+
+    # Update states, ensure area is now occupied
+    area_binary_sensor = hass.states.get(area_sensor_entity_id)
+    motion_sensor = hass.states.get(motion_sensor_entity_id)
+
+    assert motion_sensor.state == STATE_ON
+    assert area_binary_sensor.state == STATE_ON
+    assert AreaStates.OCCUPIED in area_binary_sensor.attributes["states"]
+
+    # Turn off motion sensor
+    hass.states.async_set(motion_sensor_entity_id, STATE_OFF)
+    await hass.async_block_till_done()
+
+    # Update states, ensure area remains occupied
+    area_binary_sensor = hass.states.get(area_sensor_entity_id)
+    motion_sensor = hass.states.get(motion_sensor_entity_id)
+
+    assert motion_sensor.state == STATE_OFF
+    assert area_binary_sensor.state == STATE_ON
+    assert AreaStates.OCCUPIED in area_binary_sensor.attributes["states"]
+
+    # Turn off flappy sensor
+    hass.states.async_set(flappy_sensor_entity_id, STATE_OFF)
+    await hass.async_block_till_done()
+
+    # Update states, ensure area clears
+    area_binary_sensor = hass.states.get(area_sensor_entity_id)
+    flappy_sensor = hass.states.get(flappy_sensor_entity_id)
+
+    assert flappy_sensor.state == STATE_OFF
+    assert area_binary_sensor.state == STATE_OFF
+    assert AreaStates.CLEAR in area_binary_sensor.attributes["states"]
