@@ -464,6 +464,13 @@ CONF_AGGREGATES_ILLUMINANCE_THRESHOLD, DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD 
     "aggregates_illuminance_threshold",
     0,  # 0 = disabled
 )  # cv.positive_int
+(
+    CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
+    DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
+) = (
+    "aggregates_illuminance_threshold_hysteresis",
+    0,  # 0 = disabled
+)  # cv.positive_int
 
 CONF_HEALTH_SENSOR_DEVICE_CLASSES, DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES = (
     "health_binary_sensor_device_classes",
@@ -562,6 +569,10 @@ AGGREGATE_FEATURE_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
             default=DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
+            default=DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
         ): cv.positive_int,
     },
     extra=vol.REMOVE_EXTRA,
@@ -855,6 +866,11 @@ OPTIONS_AGGREGATES = [
     (
         CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
         DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
+        int,
+    ),
+    (
+        CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
+        DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
         int,
     ),
 ]

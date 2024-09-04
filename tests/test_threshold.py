@@ -5,7 +5,7 @@ import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.components.threshold.binary_sensor import ATTR_UPPER
+from homeassistant.components.threshold.binary_sensor import ATTR_HYSTERESIS, ATTR_UPPER
 from homeassistant.const import LIGHT_LUX, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
@@ -40,18 +40,22 @@ async def test_threshold_sensor_light(
     assert threshold_sensor_state.state == STATE_OFF
 
     sensor_threhsold_upper = int(threshold_sensor_state.attributes[ATTR_UPPER])
+    sensor_hysteresis = int(threshold_sensor_state.attributes[ATTR_HYSTERESIS])
 
-    # Set illuminance sensor values to double the threhsold upper value
+    assert sensor_threhsold_upper == 600
+    assert sensor_hysteresis == 600 / 10  # 10%, configured value
+
+    # Set illuminance sensor values to over the threhsold upper value (incl. hysteresis)
     for mock_entity in entities_sensor_illuminance_multiple:
         hass.states.async_set(
             mock_entity.entity_id,
-            sensor_threhsold_upper * 2,
+            sensor_threhsold_upper + sensor_hysteresis + 1,
             attributes={"unit_of_measurement": LIGHT_LUX},
         )
     await hass.async_block_till_done()
 
     # Wait a bit for threshold sensor to trigger
-    await asyncio.sleep(5)
+    await asyncio.sleep(1)
     await hass.async_block_till_done()
 
     # Ensure threhsold sensor is triggered
@@ -67,7 +71,7 @@ async def test_threshold_sensor_light(
     await hass.async_block_till_done()
 
     # Wait a bit for threshold sensor to trigger
-    await asyncio.sleep(5)
+    await asyncio.sleep(1)
     await hass.async_block_till_done()
 
     # Ensure threhsold sensor is cleared

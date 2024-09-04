@@ -109,10 +109,12 @@
           "aggregates_min_entities": "Mindestanzahl von Entitäten derselben Geräteklasse, die zum Erstellen von Aggregaten erforderlich ist.",
           "aggregates_binary_sensor_device_classes": "Zu aggregierende binäre Sensorgeräteklassen.",
           "aggregates_sensor_device_classes": "Zu aggregierende Sensorgeräteklassen.",
-          "aggregates_illuminance_threshold": "Beleuchtungsstärkeschwelle für diesen Bereich"
+          "aggregates_illuminance_threshold": "Beleuchtungsstärkeschwelle für diesen Bereich",
+          "aggregates_illuminance_threshold_hysteresis": "Hysterese voor verlichtingsdrempelsensor"
         },
         "data_description": {
-          "aggregates_illuminance_threshold": "Magic Areas erstellt einen binären „Licht“-Sensor, der erkennt, wenn die Gesamtbeleuchtungsstärke des Bereichs diesen Schwellenwert überschreitet. Erfordert, dass die Geräteklasse „Beleuchtungsstärke“ für die Aggregation ausgewählt ist. Zum Deaktivieren auf 0 setzen."
+          "aggregates_illuminance_threshold": "Magic Areas erstellt einen binären „Licht“-Sensor, der erkennt, wenn die Gesamtbeleuchtungsstärke des Bereichs diesen Schwellenwert überschreitet. Erfordert, dass die Geräteklasse „Beleuchtungsstärke“ für die Aggregation ausgewählt ist. Zum Deaktivieren auf 0 setzen.",
+          "aggregates_illuminance_threshold_hysteresis": "[Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) definieert hoe gevoelig de sensor is voor veranderingen in zijn waarde. Een waarde van nul zal de sensorstatus omkeren wanneer de verlichtingssterkte de bovenstaande drempelwaarde overschrijdt. Positieve waarden betekenen dat de sensor alleen van status verandert als de drempelwaarde wordt overschreden met een bepaald bedrag, uitgedrukt in percentage van de hierboven ingestelde drempelwaarde. Het kan handig zijn om deze waarde op te voeren als u deze sensor wilt gebruiken als lichtsensor voor zijn eigen gebied."
         }
       },
       "feature_conf_climate_groups": {
