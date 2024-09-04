@@ -161,11 +161,13 @@
           "presence_sensor_device_class": "Clases de dispositivos de sensores de presencia",
           "presence_device_platforms": "Plataformas que se utilizarán para la detección de presencia.",
           "update_interval": "Intervalo para comprobar eventos perdidos",
+          "keep_only_entities": "Entidades de conservación de estado",
           "clear_timeout": "Borrar tiempo de espera"
         },
         "data_description": {
           "presence_device_platforms": "Los sensores binarios suelen ser la fuente estándar de presencia, pero también se pueden utilizar dispositivos multimedia.",
           "presence_sensor_device_class": "Defina qué clases de dispositivos de \"sensores binarios\" se utilizarán para el seguimiento de presencia. Las opciones no estándar comunes son la puerta y la humedad.",
+          "keep_only_entities": "Seleccione entidades de seguimiento de presencia que solo se tendrán en cuenta cuando la sala ya esté ocupada. Esto es útil para evitar que sensores demasiado sensibles, como sensores de ondas milimétricas y rastreadores BLE, activen falsamente la presencia en un área.",
           "clear_timeout": "¿Cuánto tiempo debe esperar desde el último evento de presencia antes de despejar el área?"
         }
       }

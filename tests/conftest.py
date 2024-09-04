@@ -22,6 +22,7 @@ from custom_components.magic_areas.const import (
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
+    CONF_KEEP_ONLY_ENTITIES,
     CONF_NAME,
     CONF_OVERHEAD_LIGHTS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -153,6 +154,14 @@ def mock_config_entry_secondary_states() -> MockConfigEntry:
             }
         }
     )
+    return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="keep_only_sensor_config_entry")
+def mock_config_entry_keep_only_sensor() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data.update({CONF_KEEP_ONLY_ENTITIES: ["binary_sensor.motion_sensor_1"]})
     return MockConfigEntry(domain=DOMAIN, data=data)
 
 
@@ -437,6 +446,18 @@ async def setup_integration_secondary_states(
     await init_integration(hass, secondary_states_config_entry)
     yield
     await shutdown_integration(hass, secondary_states_config_entry)
+
+
+@pytest.fixture(name="_setup_integration_keep_only_sensor")
+async def setup_integration_keep_only_sensor(
+    hass: HomeAssistant,
+    keep_only_sensor_config_entry: MockConfigEntry,
+) -> AsyncGenerator[Any]:
+    """Set up integration with secondary states config."""
+
+    await init_integration(hass, keep_only_sensor_config_entry)
+    yield
+    await shutdown_integration(hass, keep_only_sensor_config_entry)
 
 
 @pytest.fixture(name="_setup_integration_aggregates")

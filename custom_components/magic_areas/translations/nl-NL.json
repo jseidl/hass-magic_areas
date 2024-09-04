@@ -160,12 +160,14 @@
         "data": {
           "presence_sensor_device_class": "Apparaatklassen aanwezigheidssensoren",
           "presence_device_platforms": "Platformen voor aanwezigheidsdetectie",
+          "keep_only_entities": "Entiteiten die alleen behouden mogen worden",
           "update_interval": "Interval voor het controleren van gemiste gebeurtenissen",
           "clear_timeout": "Time-out wissen"
         },
         "data_description": {
           "presence_device_platforms": "Binaire sensoren zijn meestal de standaard bron van aanwezigheid, maar media-apparaten kunnen ook worden gebruikt.",
           "presence_sensor_device_class": "Definieer welke apparaatklassen van 'binaire sensoren' zullen worden gebruikt voor aanwezigheidsregistratie. Veel voorkomende niet-standaard opties zijn deur en vochtigheid.",
+          "keep_only_entities": "Selecteer aanwezigheidsregistratie-entiteiten die alleen worden overwogen wanneer de kamer al bezet is. Dit is handig om te voorkomen dat overgevoelige sensoren zoals mmWave-sensoren en BLE-trackers de aanwezigheid van een gebied vals triggeren.",
           "clear_timeout": "Hoe lang moet er sinds de laatste aanwezigheidsgebeurtenis worden gewacht voordat het gebied wordt ontruimd?"
         }
       }
