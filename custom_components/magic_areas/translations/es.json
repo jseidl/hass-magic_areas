@@ -109,10 +109,12 @@
           "aggregates_min_entities": "Número mínimo de entidades de la misma clase de dispositivo necesarias para crear agregados.",
           "aggregates_binary_sensor_device_classes": "Clases de dispositivos de sensores binarios que se agregarán.",
           "aggregates_sensor_device_classes": "Clases de dispositivos sensores que se agregarán.",
-          "aggregates_illuminance_threshold": "Umbral de iluminancia para esta zona"
+          "aggregates_illuminance_threshold": "Umbral de iluminancia para esta zona",
+          "aggregates_illuminance_threshold_hysteresis": "Histéresis para sensor de umbral de iluminancia"
         },
         "data_description": {
-          "aggregates_illuminance_threshold": "Magic Areas creará un sensor binario de \"luz\" que rastreará cuando la iluminancia agregada del área supere este umbral. Requiere que se seleccione la clase de dispositivo \"iluminación\" para la agregación. Establezca en 0 para desactivar."
+          "aggregates_illuminance_threshold": "Magic Areas creará un sensor binario de \"luz\" que rastreará cuando la iluminancia agregada del área supere este umbral. Requiere que se seleccione la clase de dispositivo \"iluminación\" para la agregación. Establezca en 0 para desactivar.",
+          "aggregates_illuminance_threshold_hysteresis": "[Histéresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) define la sensibilidad del sensor a los cambios en su valor. Un valor de cero cambiará el estado del sensor cada vez que la iluminancia supere el umbral indicado anteriormente. Los valores positivos significan que el sensor solo cambiará de estado si se supera el umbral en una cantidad determinada, expresada en porcentaje del umbral establecido anteriormente. Aumentar este valor puede ser útil si intentas usar este sensor como sensor de luz de su propia área."
         }
       },
       "feature_conf_climate_groups": {
