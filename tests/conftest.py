@@ -11,7 +11,6 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.magic_areas.const import (
     CONF_ACCENT_ENTITY,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
-    CONF_KEEP_ONLY_ENTITIES,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_DARK_ENTITY,
@@ -23,6 +22,7 @@ from custom_components.magic_areas.const import (
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
+    CONF_KEEP_ONLY_ENTITIES,
     CONF_NAME,
     CONF_OVERHEAD_LIGHTS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
@@ -156,17 +156,12 @@ def mock_config_entry_secondary_states() -> MockConfigEntry:
     )
     return MockConfigEntry(domain=DOMAIN, data=data)
 
+
 @pytest.fixture(name="keep_only_sensor_config_entry")
 def mock_config_entry_keep_only_sensor() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
     data = dict(BASIC_CONFIG_ENTRY_DATA)
-    data.update(
-        {
-            CONF_KEEP_ONLY_ENTITIES: [
-                'binary_sensor.motion_sensor_1'
-            ]
-        }
-    )
+    data.update({CONF_KEEP_ONLY_ENTITIES: ["binary_sensor.motion_sensor_1"]})
     return MockConfigEntry(domain=DOMAIN, data=data)
 
 
@@ -452,6 +447,7 @@ async def setup_integration_secondary_states(
     yield
     await shutdown_integration(hass, secondary_states_config_entry)
 
+
 @pytest.fixture(name="_setup_integration_keep_only_sensor")
 async def setup_integration_keep_only_sensor(
     hass: HomeAssistant,
@@ -462,7 +458,6 @@ async def setup_integration_keep_only_sensor(
     await init_integration(hass, keep_only_sensor_config_entry)
     yield
     await shutdown_integration(hass, keep_only_sensor_config_entry)
-
 
 
 @pytest.fixture(name="_setup_integration_aggregates")

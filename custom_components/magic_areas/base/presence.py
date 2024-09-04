@@ -31,10 +31,10 @@ from ..const import (
     CONF_CLEAR_TIMEOUT,
     CONF_EXTENDED_TIME,
     CONF_EXTENDED_TIMEOUT,
+    CONF_KEEP_ONLY_ENTITIES,
     CONF_SECONDARY_STATES,
     CONF_SLEEP_TIMEOUT,
     CONF_TYPE,
-    CONF_KEEP_ONLY_ENTITIES,
     CONF_UPDATE_INTERVAL,
     CONFIGURABLE_AREA_STATE_MAP,
     DEFAULT_EXTENDED_TIME,
@@ -444,7 +444,9 @@ class AreaStateTrackerEntity(MagicEntity):
         # Filter out keep-only sensors if the area isn't occupied
         if not self.area.is_occupied():
             keep_only_entities = self.area.config.get(CONF_KEEP_ONLY_ENTITIES, [])
-            available_sensors = [sensor for sensor in self._sensors if sensor not in keep_only_entities]
+            available_sensors = [
+                sensor for sensor in self._sensors if sensor not in keep_only_entities
+            ]
 
         # Loop over all entities and check their state
         for sensor in available_sensors:

@@ -120,8 +120,9 @@ async def test_area_secondary_state_change(
 # Test extended state
 # @TODO pending figuring out virtualclock
 
+
 # Test keep-only sensors
-async def test_area_primary_state_change(
+async def test_keep_only_sensors(
     hass: HomeAssistant,
     entities_binary_sensor_motion_multiple: list[MockBinarySensor],
     _setup_integration_keep_only_sensor,
