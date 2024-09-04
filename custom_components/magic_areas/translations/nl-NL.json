@@ -109,10 +109,12 @@
           "aggregates_min_entities": "Minimumaantal entiteiten van dezelfde apparaatklasse vereist om aggregaten te maken.",
           "aggregates_binary_sensor_device_classes": "Binaire sensorapparaatklassen die moeten worden samengevoegd.",
           "aggregates_sensor_device_classes": "Sensorapparaatklassen die moeten worden samengevoegd.",
-          "aggregates_illuminance_threshold": "Verlichtingssterktedrempel voor dit gebied"
+          "aggregates_illuminance_threshold": "Verlichtingssterktedrempel voor dit gebied",
+          "aggregates_illuminance_threshold_hysteresis": "Hysterese voor verlichtingsdrempelsensor"
         },
         "data_description": {
-          "aggregates_illuminance_threshold": "Magic Areas creëert een binaire lichtsensor die bijhoudt wanneer de totale verlichtingssterkte van het gebied deze drempel overschrijdt. Vereist dat de apparaatklasse 'verlichtingssterkte' wordt geselecteerd voor aggregatie. Stel in op 0 om uit te schakelen."
+          "aggregates_illuminance_threshold": "Magic Areas creëert een binaire lichtsensor die bijhoudt wanneer de totale verlichtingssterkte van het gebied deze drempel overschrijdt. Vereist dat de apparaatklasse 'verlichtingssterkte' wordt geselecteerd voor aggregatie. Stel in op 0 om uit te schakelen.",
+          "aggregates_illuminance_threshold_hysteresis": "[Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) definieert hoe gevoelig de sensor is voor veranderingen in zijn waarde. Een waarde van nul zal de sensorstatus omkeren wanneer de verlichtingssterkte de bovenstaande drempelwaarde overschrijdt. Positieve waarden betekenen dat de sensor alleen van status verandert als de drempelwaarde wordt overschreden met een bepaald bedrag, uitgedrukt in percentage van de hierboven ingestelde drempelwaarde. Het kan handig zijn om deze waarde op te voeren als u deze sensor wilt gebruiken als lichtsensor voor zijn eigen gebied."
         }
       },
       "feature_conf_climate_groups": {
@@ -160,12 +162,14 @@
         "data": {
           "presence_sensor_device_class": "Apparaatklassen aanwezigheidssensoren",
           "presence_device_platforms": "Platformen voor aanwezigheidsdetectie",
+          "keep_only_entities": "Entiteiten die alleen behouden mogen worden",
           "update_interval": "Interval voor het controleren van gemiste gebeurtenissen",
           "clear_timeout": "Time-out wissen"
         },
         "data_description": {
           "presence_device_platforms": "Binaire sensoren zijn meestal de standaard bron van aanwezigheid, maar media-apparaten kunnen ook worden gebruikt.",
           "presence_sensor_device_class": "Definieer welke apparaatklassen van 'binaire sensoren' zullen worden gebruikt voor aanwezigheidsregistratie. Veel voorkomende niet-standaard opties zijn deur en vochtigheid.",
+          "keep_only_entities": "Selecteer aanwezigheidsregistratie-entiteiten die alleen worden overwogen wanneer de kamer al bezet is. Dit is handig om te voorkomen dat overgevoelige sensoren zoals mmWave-sensoren en BLE-trackers de aanwezigheid van een gebied vals triggeren.",
           "clear_timeout": "Hoe lang moet er sinds de laatste aanwezigheidsgebeurtenis worden gewacht voordat het gebied wordt ontruimd?"
         }
       }

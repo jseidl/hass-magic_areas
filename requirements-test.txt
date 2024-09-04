@@ -1,9 +1,9 @@
 -r requirements.txt
 colorlog~=6.8
-flake8~=7.0
+flake8~=7.1
 flake8-docstrings~=1.7
-fnv-hash-fast~=0.5
-mypy~=1.10
+fnv-hash-fast
+mypy~=1.11
 psutil-home-assistant==0.0.1
 pylint~=3.2
 pylint-strict-informational==0.1
@@ -12,4 +12,4 @@ pytest-cov
 pytest-homeassistant-custom-component
 pytest-asyncio>=0.20
 tzdata
-ruff~=0.4
+ruff~=0.6

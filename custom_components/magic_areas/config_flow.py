@@ -43,6 +43,7 @@ from .const import (
     CONF_ACCENT_LIGHTS_STATES,
     CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
+    CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_CLEAR_TIMEOUT,
@@ -64,6 +65,7 @@ from .const import (
     CONF_HEALTH_SENSOR_DEVICE_CLASSES,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
+    CONF_KEEP_ONLY_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
     CONF_OVERHEAD_LIGHTS,
@@ -668,6 +670,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(
                 sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
             ),
+            CONF_KEEP_ONLY_ENTITIES: self._build_selector_entity_simple(
+                sorted(self.area.get_presence_sensors()), multiple=True
+            ),
             CONF_UPDATE_INTERVAL: self._build_selector_number(
                 unit_of_measurement="seconds"
             ),
@@ -988,6 +993,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             CONF_AGGREGATES_ILLUMINANCE_THRESHOLD: self._build_selector_number(
                 unit_of_measurement="lx", mode="slider", min_value=0, max_value=1000
             ),
+            CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS: self._build_selector_number(
+                unit_of_measurement="%", mode="slider", min_value=0, max_value=100
+            ),
         }
 
         return await self.do_feature_config(
@@ -1039,6 +1047,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     error.path[0]: "malformed_input" for error in validation.errors
                 }
                 _LOGGER.debug("OptionsFlow: Found the following errors: %s", errors)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                _LOGGER.warning(
+                    "OptionsFlow: Unexpected error caught on area %s: %s",
+                    self.area.name,
+                    str(e),
+                )
             else:
                 _LOGGER.debug(
                     "OptionsFlow: Saving %s feature config for area %s: %s",

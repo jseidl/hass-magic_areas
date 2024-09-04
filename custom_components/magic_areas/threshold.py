@@ -9,16 +9,17 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.components.threshold.binary_sensor import ThresholdSensor
 from homeassistant.const import ATTR_DEVICE_CLASS
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 
 from .base.entities import MagicEntity
 from .base.magic import MagicArea
 from .const import (
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
+    CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_FEATURE_AGGREGATION,
     DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
+    DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
     DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
     MagicAreasFeatureInfoThrehsold,
 )
@@ -26,7 +27,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def create_illuminance_threshold(area: MagicArea, hass: HomeAssistant) -> Entity:
+def create_illuminance_threshold(area: MagicArea) -> Entity:
     """Create threhsold light binary sensor based off illuminance aggregate."""
 
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
@@ -59,16 +60,37 @@ def create_illuminance_threshold(area: MagicArea, hass: HomeAssistant) -> Entity
     if not illuminance_sensors:
         return None
 
+    illuminance_threshold_hysteresis_percentage = area.feature_config(
+        CONF_FEATURE_AGGREGATION
+    ).get(
+        CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
+        DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
+    )
+    illuminance_threshold_hysteresis = 0
+
+    if illuminance_threshold_hysteresis_percentage > 0:
+        illuminance_threshold_hysteresis = illuminance_threshold * (
+            illuminance_threshold_hysteresis_percentage / 100
+        )
+
     illuminance_aggregate_entity_id = (
         f"{SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_illuminance"
     )
 
+    _LOGGER.debug(
+        "Creating illuminance threhsold sensor for area '%s': Threhsold: %d, HYSTERESIS: %d (%d%%)",
+        area.slug,
+        illuminance_threshold,
+        illuminance_threshold_hysteresis,
+        illuminance_threshold_hysteresis_percentage,
+    )
+
     threshold_sensor = AreaThresholdSensor(
         area,
-        hass=hass,
         device_class=BinarySensorDeviceClass.LIGHT,
         entity_id=illuminance_aggregate_entity_id,
         upper=illuminance_threshold,
+        hysteresis=illuminance_threshold_hysteresis,
     )
 
     return threshold_sensor
@@ -82,11 +104,11 @@ class AreaThresholdSensor(MagicEntity, ThresholdSensor):
     def __init__(
         self,
         area: MagicArea,
-        hass: HomeAssistant,
         device_class: BinarySensorDeviceClass,
         entity_id: str,
         upper: int | None = None,
         lower: int | None = None,
+        hysteresis: int = 0,
     ) -> None:
         """Initialize an area sensor group binary sensor."""
 
@@ -95,13 +117,12 @@ class AreaThresholdSensor(MagicEntity, ThresholdSensor):
         )
         ThresholdSensor.__init__(
             self,
-            hass=hass,
             entity_id=entity_id,
             name=None,
             unique_id=self.unique_id,
             lower=lower,
             upper=upper,
-            hysteresis=0,
+            hysteresis=hysteresis,
             device_class=device_class,
         )
         delattr(self, "_attr_name")

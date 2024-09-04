@@ -93,7 +93,7 @@
       },
       "feature_conf_area_aware_media_player": {
         "title": "Feature: Area-aware media player",
-        "description": "Creates a media player device that will forward play calls to other media players in occupied areas only. This is useful if you want to use TTS notifications but only want to notify areas that are occupied to avoid notifying media players in vacant areas. This feature has configuration options in each area but it is only created if you have a `Global` metal area.",
+        "description": "Creates a media player device that will forward play calls to other media players in occupied areas only. This is useful if you want to use TTS notifications but only want to notify areas that are occupied to avoid notifying media players in vacant areas. This feature has configuration options in each area but it is only created if you have a `Global` meta area.",
         "data": {
           "notification_devices": "Media Player devices used for broadcasting",
           "notification_states": "Play notifications devices only when on these states"
@@ -109,10 +109,12 @@
           "aggregates_min_entities": "Minimum number of entities of the same device class required to create aggregates.",
           "aggregates_binary_sensor_device_classes": "Binary sensor device classes to be aggregated.",
           "aggregates_sensor_device_classes": "Sensor device classes to be aggregated.",
-          "aggregates_illuminance_threshold": "Illuminance threshold for this area"
+          "aggregates_illuminance_threshold": "Illuminance threshold for this area",
+          "aggregates_illuminance_threshold_hysteresis": "Hysteresis for Illuminance threshold sensor"
         },
         "data_description": {
-          "aggregates_illuminance_threshold": "Magic Areas will create a `light` binary sensor that will track when the area's aggregate illuminance goes over this threshold. Requires the device class `illuminance` to be selected for aggregation. Set to 0 to disable."
+          "aggregates_illuminance_threshold": "Magic Areas will create a `light` binary sensor that will track when the area's aggregate illuminance goes over this threshold. Requires the device class `illuminance` to be selected for aggregation. Set to 0 to disable.",
+          "aggregates_illuminance_threshold_hysteresis": "[Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) defines how sensitive the sensor is to changes on its value. A value of zero will flip the sensor state whenever the illuminance crosses the threshold above. Positive values means that the sensor will only change state if the threshold is surpassed by a given amount, expressed in percentage of the threshold set above. Ramping up this value might be useful if you're trying to use this sensor as its own area's light sensor."
         }
       },
       "feature_conf_climate_groups": {
@@ -160,12 +162,14 @@
         "data": {
           "presence_sensor_device_class": "Presence sensors device classes",
           "presence_device_platforms": "Platforms to be used for presence sensing",
+          "keep_only_entities": "Keep-only entities",
           "update_interval": "Interval for checking missed events",
           "clear_timeout": "Clear timeout"
         },
         "data_description": {
           "presence_device_platforms": "Binary sensors are usually the standard source of presence but media devices can be used too.",
           "presence_sensor_device_class": "Define which device classes of `binary sensors` will be used for presence tracking. Common non-standard options are door and humidity.",
+          "keep_only_entities": "Select presence-tracking entities that will only be considered when the room is already occupied. This is useful for preventing over-sensitive sensors such as mmWave sensors and BLE trackers false-triggering an area's presence.",
           "clear_timeout": "How long since last presence event should it wait before clearing the area"
         }
       }

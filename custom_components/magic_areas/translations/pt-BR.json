@@ -109,10 +109,12 @@
           "aggregates_min_entities": "Número mínimo de entidades da mesma classe de dispositivo necessárias para criar agregações.",
           "aggregates_binary_sensor_device_classes": "Classes de dispositivos sensores binários a serem agregadas.",
           "aggregates_sensor_device_classes": "Classes de dispositivos sensores a serem agregadas.",
-          "aggregates_illuminance_threshold": "Limite de iluminância para esta área"
+          "aggregates_illuminance_threshold": "Limite de iluminância para esta área",
+          "aggregates_illuminance_threshold_hysteresis": "Histerese para sensor de limiar de iluminância"
         },
         "data_description": {
-          "aggregates_illuminance_threshold": "Magic Areas criará um sensor binário de “luz” que rastreará quando a iluminância agregada da área ultrapassar esse limite. Requer que a classe de dispositivo `iluminância` seja selecionada para agregação. Defina como 0 para desativar."
+          "aggregates_illuminance_threshold": "Magic Areas criará um sensor binário de “luz” que rastreará quando a iluminância agregada da área ultrapassar esse limite. Requer que a classe de dispositivo `iluminância` seja selecionada para agregação. Defina como 0 para desativar.",
+          "aggregates_illuminance_threshold_hysteresis": "[Histerese](https://www.home-assistant.io/integrations/threshold/#hysteresis) define o quão sensível o sensor é a mudanças em seu valor. Um valor de zero inverterá o estado do sensor sempre que a iluminância cruzar o limite acima. Valores positivos significam que o sensor só mudará de estado se o limite for ultrapassado por uma determinada quantidade, expressa em porcentagem do limite definido acima. Aumentar esse valor pode ser útil se você estiver tentando usar esse sensor como o sensor de luz de sua própria área."
         }
       },
       "feature_conf_climate_groups": {
@@ -160,12 +162,14 @@
         "data": {
           "presence_sensor_device_class": "Classes de dispositivos sensores de presença",
           "presence_device_platforms": "Plataformas a serem usadas para detecção de presença",
+          "keep_only_entities": "Entidades de retenção de estado.",
           "update_interval": "Intervalo para verificação de eventos perdidos",
           "clear_timeout": "Limpar tempo limite"
         },
         "data_description": {
           "presence_device_platforms": "Sensores binários são geralmente a fonte padrão de presença, mas dispositivos de mídia também podem ser usados.",
           "presence_sensor_device_class": "Defina quais classes de dispositivos de `sensores binários` serão usadas para rastreamento de presença. As opções não padronizadas comuns são porta e umidade.",
+          "keep_only_entities": "Selecione entidades de rastreamento de presença que serão consideradas somente quando a sala já estiver ocupada. Isso é útil para evitar que sensores supersensíveis, como sensores mmWave e rastreadores BLE, disparem falsamente a presença de uma área.",
           "clear_timeout": "Quanto tempo desde o último evento de presença deve esperar antes de limpar a área"
         }
       }

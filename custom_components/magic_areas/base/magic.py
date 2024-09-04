@@ -3,7 +3,14 @@
 from datetime import UTC, datetime
 import logging
 
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, STATE_ON
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.const import (
+    ATTR_DEVICE_CLASS,
+    ATTR_ENTITY_ID,
+    EVENT_HOMEASSISTANT_STARTED,
+    STATE_ON,
+)
 from homeassistant.helpers.device_registry import async_get as devicereg_async_get
 from homeassistant.helpers.entity_registry import (
     RegistryEntry,
@@ -18,10 +25,14 @@ from ..const import (
     AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
+    CONF_FEATURE_PRESENCE_HOLD,
     CONF_INCLUDE_ENTITIES,
+    CONF_PRESENCE_DEVICE_PLATFORMS,
+    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_TYPE,
     CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
+    DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     EVENT_MAGICAREAS_AREA_READY,
     EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
@@ -314,6 +325,51 @@ class MagicArea:
 
         # Load our own entities
         self.load_magic_entities()
+
+    def get_presence_sensors(self) -> list[str]:
+        """Return list of entities used for presence tracking."""
+
+        sensors: list[str] = []
+
+        if self.is_meta():
+            # MetaAreas track their children
+            child_areas = self.get_child_areas()  # pylint: disable=no-member
+            for child_area in child_areas:
+                entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{child_area}_area_state"
+                sensors.append(entity_id)
+            return sensors
+
+        valid_presence_platforms = self.config.get(
+            CONF_PRESENCE_DEVICE_PLATFORMS, DEFAULT_PRESENCE_DEVICE_PLATFORMS
+        )
+
+        for component, entities in self.entities.items():
+            if component not in valid_presence_platforms:
+                continue
+
+            for entity in entities:
+                if not entity:
+                    continue
+
+                if component == BINARY_SENSOR_DOMAIN:
+                    if ATTR_DEVICE_CLASS not in entity:
+                        continue
+
+                    if entity[ATTR_DEVICE_CLASS] not in self.config.get(
+                        CONF_PRESENCE_SENSOR_DEVICE_CLASS
+                    ):
+                        continue
+
+                sensors.append(entity[ATTR_ENTITY_ID])
+
+        # Append presence_hold switch as a presence_sensor
+        if self.has_feature(CONF_FEATURE_PRESENCE_HOLD):
+            presence_hold_switch_id = (
+                f"{SWITCH_DOMAIN}.magic_areas_presence_hold_{self.slug}"
+            )
+            sensors.append(presence_hold_switch_id)
+
+        return sensors
 
     async def initialize(self, _=None) -> None:
         """Initialize area."""

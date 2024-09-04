@@ -22,14 +22,14 @@
         "title": "Merkmalsauswahl",
         "description": "Wählen Sie die Funktionen aus, die Sie für diesen Bereich aktivieren möchten. Eine neue Menüoption zum Konfigurieren der Funktion wird angezeigt, wenn Konfigurationsoptionen für diese Funktion vorhanden sind.",
         "data": {
-          "climate_groups": "Klimagruppen gründen",
+          "climate_groups": "Erstellen von Klimagruppen",
           "media_player_groups": "Erstellen von Media Player-Gruppen",
-          "light_groups": "Lichtgruppen erstellen",
+          "light_groups": "Erstellen von Lichtgruppen ",
           "cover_groups": "Erstellen von Deckungsgruppen",
           "area_aware_media_player": "Bereichsabhängiger Mediaplayer",
           "aggregates": "Erstellen Sie aggregierte Sensoren",
           "health": "Erstellen Sie Integritätssensoren",
-          "presence_hold": "Anwesenheitshalteschalter erstellen"
+          "presence_hold": "Erstellen von Anwesenheitshalteschalter "
         }
       },
       "show_menu": {
@@ -37,10 +37,10 @@
         "description": "Magic Areas führt standardmäßig eine grundlegende Anwesenheitserkennung durch, Sie können jedoch seine volle Leistungsfähigkeit nutzen, indem Sie die erweiterte Statusverfolgung konfigurieren, Ihre Anwesenheitsverfolgungsparameter anpassen und unsere magischen Funktionen aktivieren! Optionen werden nicht gespeichert, es sei denn, Sie wählen „Speichern und beenden“.",
         "menu_options": {
           "area_config": "Grundlegende Bereichsoptionen",
-          "secondary_states": "Erweiterte Gebietsstatusverfolgung",
+          "secondary_states": "Erweiterte Bereichsstatusverfolgung",
           "presence_tracking": "Optionen zur Anwesenheitsverfolgung",
           "select_features": "Merkmalsauswahl",
-          "finish": "Sicherer Ausgang",
+          "finish": "Konfiguration endgültig speichern",
           "feature_conf_health": "Konfigurieren des Integritätssensors",
           "feature_conf_climate_groups": "Klimagruppen konfigurieren",
           "feature_conf_light_groups": "Lichtgruppen konfigurieren",
@@ -61,8 +61,8 @@
         "description": "Magic Areas erstellt diese vier (plus eine globale) [Lichtgruppen](https://github.com/jseidl/hass-magic_areas/wiki/Light-Groups) (wenn Sie ihnen Lichter zuweisen), die Sie verwenden können. Dies sind standardmäßig einfache Lichtgruppen, können aber automatisch gesteuert werden, wenn Sie sie Bereichszuständen zuweisen und den Lichtsteuerungsschalter aktivieren (der erstellt wird, wenn Sie diese Funktion aktivieren). Alle Lichter werden ausgeschaltet, wenn ein Bereich gelöscht wird. Zusätzliche Zustände können durch Konfigurieren von „Erweiterte Bereichszustandsverfolgung“ freigeschaltet werden.",
         "data": {
           "overhead_lights": "Deckenleuchten",
-          "overhead_lights_states": "Gibt an, welche Deckenleuchten eingeschaltet sind",
-          "overhead_lights_act_on": "Wann sollte die Deckenbeleuchtung gesteuert werden?",
+          "overhead_lights_states": "Gibt an, welche Lichter eingeschaltet sind",
+          "overhead_lights_act_on": "Wann sollten die Lichter gesteuert werden?",
           "sleep_lights": "Schlaflichter",
           "sleep_lights_states": "Gibt an, welche Schlaflichter eingeschaltet sind",
           "sleep_lights_act_on": "Wann sollen Schlaflichter gesteuert werden?",
@@ -109,10 +109,12 @@
           "aggregates_min_entities": "Mindestanzahl von Entitäten derselben Geräteklasse, die zum Erstellen von Aggregaten erforderlich ist.",
           "aggregates_binary_sensor_device_classes": "Zu aggregierende binäre Sensorgeräteklassen.",
           "aggregates_sensor_device_classes": "Zu aggregierende Sensorgeräteklassen.",
-          "aggregates_illuminance_threshold": "Beleuchtungsstärkeschwelle für diesen Bereich"
+          "aggregates_illuminance_threshold": "Beleuchtungsstärkeschwelle für diesen Bereich",
+          "aggregates_illuminance_threshold_hysteresis": "Hysterese voor verlichtingsdrempelsensor"
         },
         "data_description": {
-          "aggregates_illuminance_threshold": "Magic Areas erstellt einen binären „Licht“-Sensor, der erkennt, wenn die Gesamtbeleuchtungsstärke des Bereichs diesen Schwellenwert überschreitet. Erfordert, dass die Geräteklasse „Beleuchtungsstärke“ für die Aggregation ausgewählt ist. Zum Deaktivieren auf 0 setzen."
+          "aggregates_illuminance_threshold": "Magic Areas erstellt einen binären „Licht“-Sensor, der erkennt, wenn die Gesamtbeleuchtungsstärke des Bereichs diesen Schwellenwert überschreitet. Erfordert, dass die Geräteklasse „Beleuchtungsstärke“ für die Aggregation ausgewählt ist. Zum Deaktivieren auf 0 setzen.",
+          "aggregates_illuminance_threshold_hysteresis": "[Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) definieert hoe gevoelig de sensor is voor veranderingen in zijn waarde. Een waarde van nul zal de sensorstatus omkeren wanneer de verlichtingssterkte de bovenstaande drempelwaarde overschrijdt. Positieve waarden betekenen dat de sensor alleen van status verandert als de drempelwaarde wordt overschreden met een bepaald bedrag, uitgedrukt in percentage van de hierboven ingestelde drempelwaarde. Het kan handig zijn om deze waarde op te voeren als u deze sensor wilt gebruiken als lichtsensor voor zijn eigen gebied."
         }
       },
       "feature_conf_climate_groups": {
@@ -126,13 +128,13 @@
         }
       },
       "secondary_states": {
-        "title": "Erweiterte Gebietsstatusverfolgung",
+        "title": "Erweiterte Bereichsstatusverfolgung",
         "description": "Sie können [sekundäre Zustände](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) für einen magischen Bereich aktivieren, indem Sie ihm eine Entität zuweisen. Sekundäre Zustände werden von Funktionen verwendet, um Lichter nur einzuschalten, wenn es dunkel ist, oder um Klimageräte erst nach einer „längeren“ Zeitspanne einzuschalten oder um keine Benachrichtigungen an einen Bereich zu senden, wenn dieser im „Ruhezustand“ ist.",
         "data": {
           "dark_entity": "Lichtsensor des Bereichs",
           "sleep_entity": "Entität zum Verfolgen des Schlafzustands eines Bereichs",
           "sleep_timeout": "Wie lange wird der Bereich warten, bevor der Status im Ruhezustand gelöscht wird?",
-          "accent_entity": "Entität zur Verfolgung des akzentuierten Zustands eines Gebiets",
+          "accent_entity": "Entität zur Verfolgung des akzentuierten Zustands eines Bereichs",
           "extended_time": "Der Bereich wird nach einer so langen Belegung als „erweitert“ markiert",
           "extended_timeout": "Wie lange wird der Bereich warten, bevor der Status gelöscht wird, wenn er sich im erweiterten Status befindet?"
         },
@@ -160,12 +162,14 @@
         "data": {
           "presence_sensor_device_class": "Geräteklassen für Anwesenheitssensoren",
           "presence_device_platforms": "Plattformen zur Anwesenheitserkennung",
+          "keep_only_entities": "Nur behaltende Entitäten",
           "update_interval": "Intervall zur Überprüfung verpasster Ereignisse",
           "clear_timeout": "Zeitüberschreitung löschen"
         },
         "data_description": {
           "presence_device_platforms": "Normalerweise sind binäre Sensoren die Standardquelle für die Anwesenheitserkennung, es können jedoch auch Mediengeräte verwendet werden.",
           "presence_sensor_device_class": "Definieren Sie, welche Geräteklassen von „binären Sensoren“ für die Anwesenheitsverfolgung verwendet werden. Übliche nicht standardmäßige Optionen sind Tür und Feuchtigkeit.",
+          "keep_only_entities": "Wählen Sie Präsenzverfolgungselemente aus, die nur berücksichtigt werden, wenn der Raum bereits belegt ist. Dies ist nützlich, um zu verhindern, dass überempfindliche Sensoren wie mmWave-Sensoren und BLE-Tracker die Präsenz eines Bereichs fälschlicherweise auslösen.",
           "clear_timeout": "Wie lange soll seit dem letzten Anwesenheitsereignis gewartet werden, bevor der Bereich gelöscht wird?"
         }
       }
@@ -178,7 +182,7 @@
   "entity": {
     "binary_sensor": {
       "area_state": {
-        "name": "Gebiet Staat"
+        "name": "Bereich Status"
       },
       "health_problem": {
         "name": "Bereich Gesundheit"

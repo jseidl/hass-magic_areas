@@ -15,7 +15,7 @@ jobs:
       contents: write
     steps:
       - name: "Checkout the repository"
-        uses: "actions/checkout@v4.1.6"
+        uses: "actions/checkout@v4.1.7"
 
       - name: "Adjust version number"
         shell: "bash"
@@ -30,6 +30,6 @@ jobs:
           zip magic_areas.zip -r ./
 
       - name: "Upload the ZIP file to the release"
-        uses: softprops/action-gh-release@v2.0.5
+        uses: softprops/action-gh-release@v2.0.8
         with:
           files: ${{ github.workspace }}/custom_components/magic_areas/magic_areas.zip
