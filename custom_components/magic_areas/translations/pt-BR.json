@@ -160,12 +160,14 @@
         "data": {
           "presence_sensor_device_class": "Classes de dispositivos sensores de presença",
           "presence_device_platforms": "Plataformas a serem usadas para detecção de presença",
+          "keep_only_entities": "Entidades de retenção de estado.",
           "update_interval": "Intervalo para verificação de eventos perdidos",
           "clear_timeout": "Limpar tempo limite"
         },
         "data_description": {
           "presence_device_platforms": "Sensores binários são geralmente a fonte padrão de presença, mas dispositivos de mídia também podem ser usados.",
           "presence_sensor_device_class": "Defina quais classes de dispositivos de `sensores binários` serão usadas para rastreamento de presença. As opções não padronizadas comuns são porta e umidade.",
+          "keep_only_entities": "Selecione entidades de rastreamento de presença que serão consideradas somente quando a sala já estiver ocupada. Isso é útil para evitar que sensores supersensíveis, como sensores mmWave e rastreadores BLE, disparem falsamente a presença de uma área.",
           "clear_timeout": "Quanto tempo desde o último evento de presença deve esperar antes de limpar a área"
         }
       }

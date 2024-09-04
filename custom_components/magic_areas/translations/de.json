@@ -160,12 +160,14 @@
         "data": {
           "presence_sensor_device_class": "Geräteklassen für Anwesenheitssensoren",
           "presence_device_platforms": "Plattformen zur Anwesenheitserkennung",
+          "keep_only_entities": "Nur behaltende Entitäten",
           "update_interval": "Intervall zur Überprüfung verpasster Ereignisse",
           "clear_timeout": "Zeitüberschreitung löschen"
         },
         "data_description": {
           "presence_device_platforms": "Normalerweise sind binäre Sensoren die Standardquelle für die Anwesenheitserkennung, es können jedoch auch Mediengeräte verwendet werden.",
           "presence_sensor_device_class": "Definieren Sie, welche Geräteklassen von „binären Sensoren“ für die Anwesenheitsverfolgung verwendet werden. Übliche nicht standardmäßige Optionen sind Tür und Feuchtigkeit.",
+          "keep_only_entities": "Wählen Sie Präsenzverfolgungselemente aus, die nur berücksichtigt werden, wenn der Raum bereits belegt ist. Dies ist nützlich, um zu verhindern, dass überempfindliche Sensoren wie mmWave-Sensoren und BLE-Tracker die Präsenz eines Bereichs fälschlicherweise auslösen.",
           "clear_timeout": "Wie lange soll seit dem letzten Anwesenheitsereignis gewartet werden, bevor der Bereich gelöscht wird?"
         }
       }
