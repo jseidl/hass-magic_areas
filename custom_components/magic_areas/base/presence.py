@@ -11,8 +11,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.components.sun.const import STATE_ABOVE_HORIZON
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
+from homeassistant.const import STATE_ON
 from homeassistant.core import Event, EventStateChangedData, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect, dispatcher_send
 from homeassistant.helpers.event import (
@@ -32,9 +31,7 @@ from ..const import (
     CONF_CLEAR_TIMEOUT,
     CONF_EXTENDED_TIME,
     CONF_EXTENDED_TIMEOUT,
-    CONF_FEATURE_PRESENCE_HOLD,
-    CONF_PRESENCE_DEVICE_PLATFORMS,
-    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_KEEP_ONLY_ENTITIES,
     CONF_SECONDARY_STATES,
     CONF_SLEEP_TIMEOUT,
     CONF_TYPE,
@@ -42,7 +39,6 @@ from ..const import (
     CONFIGURABLE_AREA_STATE_MAP,
     DEFAULT_EXTENDED_TIME,
     DEFAULT_EXTENDED_TIMEOUT,
-    DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_SLEEP_TIMEOUT,
     INVALID_STATES,
     ONE_MINUTE,
@@ -185,43 +181,8 @@ class AreaStateTrackerEntity(MagicEntity):
 
     def _load_presence_sensors(self) -> None:
         """Load sensors that are relevant for presence sensing."""
-        if self.area.is_meta():
-            # MetaAreas track their children
-            child_areas = self.area.get_child_areas()
-            for child_area in child_areas:
-                entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{child_area}_area_state"
-                self._sensors.append(entity_id)
-            return
 
-        valid_presence_platforms = self.area.config.get(
-            CONF_PRESENCE_DEVICE_PLATFORMS, DEFAULT_PRESENCE_DEVICE_PLATFORMS
-        )
-
-        for component, entities in self.area.entities.items():
-            if component not in valid_presence_platforms:
-                continue
-
-            for entity in entities:
-                if not entity:
-                    continue
-
-                if component == BINARY_SENSOR_DOMAIN:
-                    if ATTR_DEVICE_CLASS not in entity:
-                        continue
-
-                    if entity[ATTR_DEVICE_CLASS] not in self.area.config.get(
-                        CONF_PRESENCE_SENSOR_DEVICE_CLASS
-                    ):
-                        continue
-
-                self._sensors.append(entity[ATTR_ENTITY_ID])
-
-        # Append presence_hold switch as a presence_sensor
-        if self.area.has_feature(CONF_FEATURE_PRESENCE_HOLD):
-            presence_hold_switch_id = (
-                f"{SWITCH_DOMAIN}.magic_areas_presence_hold_{self.area.slug}"
-            )
-            self._sensors.append(presence_hold_switch_id)
+        self._sensors = self.area.get_presence_sensors()
 
     # Entity state tracking & reporting
     def _secondary_state_change(self, event: Event[EventStateChangedData]) -> None:
@@ -478,9 +439,17 @@ class AreaStateTrackerEntity(MagicEntity):
         )
 
         active_sensors = []
+        available_sensors = self._sensors.copy()
+
+        # Filter out keep-only sensors if the area isn't occupied
+        if not self.area.is_occupied():
+            keep_only_entities = self.area.config.get(CONF_KEEP_ONLY_ENTITIES, [])
+            available_sensors = [
+                sensor for sensor in self._sensors if sensor not in keep_only_entities
+            ]
 
         # Loop over all entities and check their state
-        for sensor in self._sensors:
+        for sensor in available_sensors:
             try:
                 entity = self.hass.states.get(sensor)
 

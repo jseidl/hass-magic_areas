@@ -64,6 +64,7 @@ from .const import (
     CONF_HEALTH_SENSOR_DEVICE_CLASSES,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
+    CONF_KEEP_ONLY_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
     CONF_OVERHEAD_LIGHTS,
@@ -667,6 +668,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             ),
             CONF_PRESENCE_SENSOR_DEVICE_CLASS: self._build_selector_select(
                 sorted(ALL_BINARY_SENSOR_DEVICE_CLASSES), multiple=True
+            ),
+            CONF_KEEP_ONLY_ENTITIES: self._build_selector_entity_simple(
+                sorted(self.area.get_presence_sensors()), multiple=True
             ),
             CONF_UPDATE_INTERVAL: self._build_selector_number(
                 unit_of_measurement="seconds"

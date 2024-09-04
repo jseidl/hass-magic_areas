@@ -417,6 +417,7 @@ CONF_ENABLED_FEATURES, DEFAULT_ENABLED_FEATURES = "features", {}  # cv.ensure_li
 CONF_SECONDARY_STATES, DEFAULT_AREA_STATES = "secondary_states", {}  # cv.ensure_list
 CONF_INCLUDE_ENTITIES = "include_entities"  # cv.entity_ids
 CONF_EXCLUDE_ENTITIES = "exclude_entities"  # cv.entity_ids
+CONF_KEEP_ONLY_ENTITIES = "keep_only_entities"  # cv.entity_ids
 (
     CONF_PRESENCE_DEVICE_PLATFORMS,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
@@ -710,6 +711,7 @@ REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA = vol.Schema(
             CONF_PRESENCE_SENSOR_DEVICE_CLASS,
             default=DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
         ): cv.ensure_list,
+        vol.Optional(CONF_KEEP_ONLY_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
         ): cv.positive_int,
@@ -740,6 +742,7 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         ),
         vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+        vol.Optional(CONF_KEEP_ONLY_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(
             CONF_PRESENCE_DEVICE_PLATFORMS,
             default=DEFAULT_PRESENCE_DEVICE_PLATFORMS,
@@ -800,6 +803,7 @@ OPTIONS_PRESENCE_TRACKING = [
         DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
         cv.ensure_list,
     ),
+    (CONF_KEEP_ONLY_ENTITIES, [], cv.entity_ids),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
     (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
 ]
