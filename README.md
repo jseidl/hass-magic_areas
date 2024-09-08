@@ -15,9 +15,9 @@ Magic Areas is a custom component for [Home Assistant](https://www.home-assistan
 
 Motion-activated lights are so 2000s. Magic Areas tracks multiple sources of presence in order to gauge an area's `occupancy` state, which you can use on automations but as you'll see, you might not even have to.
 
-Motion sensors, doors, media devices, device presence (`device_trackers`) are supported and you can use [Threhsold](https://www.home-assistant.io/integrations/threshold/) and [Template](https://www.home-assistant.io/integrations/template/) binary sensors to track presence from power consumption and other entities' states!
+Motion sensors, doors, media devices, device presence (`device_trackers`) are supported and you can use [Threshold](https://www.home-assistant.io/integrations/threshold/) and [Template](https://www.home-assistant.io/integrations/template/) binary sensors to track presence from power consumption and other entities' states!
 
-In the demo on the left, the area gets cleared instantly for illustration purposes but in reality you can configure the timeout you wwant for an area to not receive any presence event before it gets marked as clear/not occupied.
+In the demo on the left, the area gets cleared instantly for illustration purposes but in reality you can configure the timeout you want for an area to not receive any presence event before it gets marked as clear/not occupied.
 
 The "Presence Hold" feature gives you a `switch` that is considered a source of presence and will let users hold an area `occupied` while the switch is `on`.
 
@@ -27,7 +27,7 @@ The "Presence Hold" feature gives you a `switch` that is considered a source of 
 
 Magic Areas allows you to specify if an area is `interior` or `exterior` which allows it to create Meta-areas which groups all entities from said areas into their respective meta-areas.
 
-Since the addition of `floors` to Home Assistant, Magic Areas now supports `floor` meta-areas in the same way as it does for the `exterior` / `inteiror` ones!
+Since the addition of `floors` to Home Assistant, Magic Areas now supports `floor` meta-areas in the same way as it does for the `exterior` / `interior` ones!
 
 Some features (such aggregation and groups) are available for meta-areas which allows you to control all your lights, media player devices, covers and climate devices of exterior areas, interior areas or whole floors in a single place.
 
@@ -59,7 +59,7 @@ It (usually) doesn't make sense to have your fans running when you're not there,
 
 Sending Text-to-speech notifications to media players is awesome, but sending notifications where no-one will hear isn't very smart and not magical at all. Area-aware media player is a media player group that will only forward `play` events to configured notification devices (i.e. media players) in areas that are currently `occupied`.
 
-But wait, you won't wkae up your kids! Magic areas allows you to specify states in which an area must be in order to receive notifications. Since Magic Areas supports a `sleep` state, if you leave that state out, areas that are sleeping won't be notified!
+But wait, you won't wake up your kids! Magic areas allows you to specify states in which an area must be in order to receive notifications. Since Magic Areas supports a `sleep` state, if you leave that state out, areas that are sleeping won't be notified!
 
 _And that's just the coolest ones, for all the features Magic Areas provides, check out the [wiki](https://github.com/jseidl/hass-magic_areas/wiki/Features)._
 
