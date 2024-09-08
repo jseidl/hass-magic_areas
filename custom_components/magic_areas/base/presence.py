@@ -491,10 +491,10 @@ class AreaStateTrackerEntity(MagicEntity):
                 )
 
         # Populate metadata
-        self._active_sensors = active_sensors
-
         if active_sensors:
-            self._last_active_sensors = active_sensors
+            self._last_active_sensors = self._active_sensors
+
+        self._active_sensors = active_sensors
 
         return len(active_sensors) > 0
 
