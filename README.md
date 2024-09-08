@@ -7,13 +7,13 @@
 
 # Your areas so smart it's almost magic! 🪄
 
-Magic Areas is a custom component for [Home Assistant](https://www.home-assistant.io/) that magically makes sense of the devices and entities in your areas so you don't have to! It's main purpose is tracking presence in your Home Assistant's areas but in reality it's much, much more than that.
+Magic Areas is a custom component for [Home Assistant](https://www.home-assistant.io/) that magically makes sense of the devices and entities in your areas so you don't have to! Its main purpose is tracking presence in your Home Assistant's areas but in reality it's much, much more than that.
 
 <img align="right" width='450' src="assets/images/readme_combined_presence_sources.gif" style="margin-left: 30px; margin-top: 8px;">
 
 ### Multiple sources of presence
 
-Motion-activated lights are so 2000s. Magic Areas tracks multiple sources of presence in order to gauge an area's `occupancy` state, which you can use on automations but as you'll see, you might not even have to.
+Motion-activated lights are so 2000s. Magic Areas tracks multiple sources of presence in order to gauge an area's `occupancy` state, which you can use in automations but as you'll see, you might not even have to.
 
 Motion sensors, doors, media devices, device presence (`device_trackers`) are supported and you can use [Threshold](https://www.home-assistant.io/integrations/threshold/) and [Template](https://www.home-assistant.io/integrations/template/) binary sensors to track presence from power consumption and other entities' states!
 
@@ -29,7 +29,7 @@ Magic Areas allows you to specify if an area is `interior` or `exterior` which a
 
 Since the addition of `floors` to Home Assistant, Magic Areas now supports `floor` meta-areas in the same way as it does for the `exterior` / `interior` ones!
 
-Some features (such aggregation and groups) are available for meta-areas which allows you to control all your lights, media player devices, covers and climate devices of exterior areas, interior areas or whole floors in a single place.
+Some features (such as aggregation and groups) are available for meta-areas which allows you to control all your lights, media player devices, covers and climate devices of exterior areas, interior areas or whole floors in a single place.
 
 Meta-areas simplify things by allowing you to use their aggregate sensors such as "Interior Motion" and "Exterior Door" in your alarm setups, "Exterior Light" as your area light sensors and much more!
 
@@ -39,15 +39,15 @@ Meta-areas simplify things by allowing you to use their aggregate sensors such a
 
 Group and automatically convert different unit sensors of the same `device class` together!
 
-Aggregates are plain Home Assistant's [Groups](https://www.home-assistant.io/integrations/group/) and behave the same. Sensors of the same `device class` but with different `units of measurement` will be normalized and converted according to your unit system.
+Aggregates are plain Home Assistant [Groups](https://www.home-assistant.io/integrations/group/) and behave the same. Sensors of the same `device class` but with different `units of measurement` will be normalized and converted according to your unit system.
 
-Even if you only have one sensor of each `device class`, aggregates allows you to reference a single entity on your auotmations while considering all others of the same `device class` but also allowing you to add new devices/entities to an area and having them automatically be considered in your automations that reference their aggregates.
+Even if you only have one sensor of each `device class`, aggregates allows you to reference a single entity in your automations while considering all others of the same `device class` but also allowing you to add new devices/entities to an area and having them automatically be considered in your automations that reference their aggregates.
 
 ### Light Groups
 
-Probably the most utilized feature of Magic Areas, allows you to automatically control your areas' lights according an area's state. Would you like to have your overhead lights turned on when dark, but only your accent lights when watching TV unless you're sleeping then only a small light strip under your bed? Magic Areas got you covered!
+Probably the most utilized feature of Magic Areas, allows you to automatically control your area's lights according an area's state. Would you like to have your overhead lights turned on when dark, but only your accent lights when watching TV unless you're sleeping then only a small light strip under your bed? Magic Areas has got you covered!
 
-Our light groups are also smarter, meaning when you change brightness or color, for example, in a Magic Light Group, unlike regular Light Groups, it won't turn on other lights member of the same group that are off, effecively allowing changes in a light group to affect only lights that are currently on!
+Our light groups are also smarter, meaning when you, for example, change brightness or color in a Magic Light Group, unlike regular Light Groups, it won't turn on other lights that are members of the same group that are off, effecively allowing changes in a light group to affect only lights that are currently on!
 
 When an area is clear or it gets bright, Magic Areas will take care of turning the lights off for you!
 
@@ -78,7 +78,7 @@ Configuration options for `Magic Areas` are on a per-area basis.
 
 > 💡 Light Groups won't control any lights unless the `Light Control` switch for that area is turned `on`!
 
-Go to **Configuration** > **Integrations**. You shall see the *Magic Areas* integration and configure each area (and [Meta-Areas](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas)!).
+Go to **Configuration** > **Integrations**. You will see the *Magic Areas* integration and configure each area (and [Meta-Areas](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas)!).
 
 See all configuration options in the [wiki](https://github.com/jseidl/hass-magic_areas/wiki/Configuration).
 
@@ -98,7 +98,7 @@ If your language isn't available and you would like to contribute, please check 
 
 ### Questions?
 
-Come talk to me on the `#support` channel at my [Discord server](https://discord.gg/8vxJpJ2vP4) or pop up a question on our [Q&A Discussions page](https://github.com/jseidl/hass-magic_areas/discussions/categories/q-a)!
+Come talk to me on the `#support` channel at my [Discord server](https://discord.gg/8vxJpJ2vP4) or pop a question on our [Q&A Discussions page](https://github.com/jseidl/hass-magic_areas/discussions/categories/q-a)!
 
 ### Issues?
 
@@ -111,7 +111,7 @@ logger:
         custom_components.magic_areas: debug
 ```
 
-As soon as the issue occurs capture the contents of the the log (`/config/home-assistant.log`) and open up a [ticket](https://github.com/jseidl/hass-magic_areas/issues) or join the `#support` channel on my [Discord server](https://discord.gg/8vxJpJ2vP4)!
+As soon as the issue occurs capture the contents of the log (`/config/home-assistant.log`) and open up a [ticket](https://github.com/jseidl/hass-magic_areas/issues) or join the `#support` channel on my [Discord server](https://discord.gg/8vxJpJ2vP4)!
 
 ### Feature requests
 
