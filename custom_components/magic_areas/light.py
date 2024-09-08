@@ -73,7 +73,11 @@ def add_lights(area, async_add_entities):
 
     # Create light groups
     if area.is_meta():
-        light_groups.append(MagicLightGroup(area, light_entities))
+        light_groups.append(
+            MagicLightGroup(
+                area, light_entities, translation_key=LightGroupCategory.ALL
+            )
+        )
     else:
         light_group_ids = []
 
