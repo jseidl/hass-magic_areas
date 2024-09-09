@@ -170,7 +170,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
     def update_attributes(self):
         """Update entity attributes."""
         self._attr_extra_state_attributes["areas"] = [
-            f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}" for area in self.areas
+            f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{area.slug}_area_state" for area in self.areas
         ]
         self._attr_extra_state_attributes["entity_id"] = self._tracked_entities
 
@@ -225,7 +225,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
         active_areas = []
 
         for area in self.areas:
-            area_binary_sensor_name = f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}"
+            area_binary_sensor_name = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{area.slug}_area_state"
             area_binary_sensor_state = self.hass.states.get(area_binary_sensor_name)
 
             if not area_binary_sensor_state:
