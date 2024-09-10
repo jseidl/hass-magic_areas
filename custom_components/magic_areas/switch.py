@@ -8,7 +8,7 @@ from homeassistant.components.switch import (
     SwitchEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.const import STATE_OFF, STATE_ON, EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_call_later
@@ -158,21 +158,25 @@ class ClimateControlSwitch(SwitchBase):
     """Switch to enable/disable climate control."""
 
     feature_info = MagicAreasFeatureInfoClimateGroups()
+    _attr_entity_category = EntityCategory.CONFIG
 
 
 class LightControlSwitch(SwitchBase):
     """Switch to enable/disable light control."""
 
     feature_info = MagicAreasFeatureInfoLightGroups()
+    _attr_entity_category = EntityCategory.CONFIG
 
 
 class MediaPlayerControlSwitch(SwitchBase):
     """Switch to enable/disable media player control."""
 
     feature_info = MagicAreasFeatureInfoMediaPlayerGroups()
+    _attr_entity_category = EntityCategory.CONFIG
 
 
 class PresenceHoldSwitch(ResettableSwitchBase):
     """Switch to enable/disable presence hold."""
 
     feature_info = MagicAreasFeatureInfoPresenceHold()
+    _attr_entity_category = EntityCategory.CONFIG
