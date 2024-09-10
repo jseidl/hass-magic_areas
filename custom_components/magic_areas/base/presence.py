@@ -491,7 +491,7 @@ class AreaStateTrackerEntity(MagicEntity):
                 )
 
         # Populate metadata
-        if active_sensors:
+        if self._active_sensors:
             self._last_active_sensors = self._active_sensors
 
         self._active_sensors = active_sensors
