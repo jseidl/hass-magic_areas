@@ -1,18 +1,19 @@
 """Magic Areas component for Home Assistant."""
 
 from collections import defaultdict
-import logging
 from datetime import UTC, datetime
+import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_NAME, EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
-from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 from homeassistant.helpers.entity_registry import (
     EVENT_ENTITY_REGISTRY_UPDATED,
     EventEntityRegistryUpdatedData,
 )
+from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
+
 from .base.magic import MagicArea, MagicMetaArea
 from .const import (
     CONF_CLEAR_TIMEOUT,
@@ -23,8 +24,8 @@ from .const import (
     CONF_SECONDARY_STATES,
     CONF_SLEEP_TIMEOUT,
     DATA_AREA_OBJECT,
-    DATA_UNDO_UPDATE_LISTENER,
     DATA_ENTITY_LISTENER,
+    DATA_UNDO_UPDATE_LISTENER,
     DEFAULT_CLEAR_TIMEOUT,
     DEFAULT_EXTENDED_TIME,
     DEFAULT_EXTENDED_TIMEOUT,
@@ -54,9 +55,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     @callback
     def _async_registry_updated(event: Event[EventEntityRegistryUpdatedData]) -> None:
-        """Reloads integration when entity registry is updated."""
+        """Reload integration when entity registry is updated."""
         _LOGGER.debug(
-            "%s: Reloading entry due entity registry change", config_entry.data[CONF_NAME]
+            "%s: Reloading entry due entity registry change",
+            config_entry.data[CONF_NAME],
         )
         hass.config_entries.async_update_entry(
             config_entry,
@@ -120,7 +122,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         data[config_entry.entry_id] = {
             DATA_AREA_OBJECT: magic_area,
             DATA_UNDO_UPDATE_LISTENER: undo_listener,
-            DATA_ENTITY_LISTENER: entity_listener
+            DATA_ENTITY_LISTENER: entity_listener,
         }
 
         # Setup platforms
@@ -155,7 +157,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         else:
             meta_area_global_id = META_AREA_GLOBAL.lower()
 
-            if magic_area.id != meta_area_global_id and meta_area_global_id in meta_areas:
+            if (
+                magic_area.id != meta_area_global_id
+                and meta_area_global_id in meta_areas
+            ):
                 if meta_areas[meta_area_global_id].initialized:
                     await hass.config_entries.async_reload(
                         meta_areas[meta_area_global_id].hass_config.entry_id
@@ -177,6 +182,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         )
 
     return True
+
 
 async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
     """Update options."""
@@ -274,6 +280,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         )
 
     return True
+
 
 @callback
 def _entity_registry_filter(event_data: EventEntityRegistryUpdatedData) -> bool:
