@@ -6,13 +6,17 @@ Small helper functions that are used more than once.
 from collections.abc import Iterable
 import logging
 
+from custom_components.magic_areas.const import (
+    DATA_AREA_OBJECT,
+    MODULE_DATA,
+    ONE_MINUTE,
+)
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import AreaEntry
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_registry import async_get as entityreg_async_get
 from homeassistant.helpers.floor_registry import FloorEntry
-
-from .const import DATA_AREA_OBJECT, MODULE_DATA, ONE_MINUTE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -123,3 +127,9 @@ def cleanup_removed_entries(
             continue
         _LOGGER.info("Cleaning up old entity %s", entity_id)
         entity_registry.async_remove(entity_id)
+
+
+def get_area_from_config_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+    """Return area object for given config entry."""
+
+    return hass.data[MODULE_DATA][config_entry.entry_id][DATA_AREA_OBJECT]
