@@ -24,8 +24,8 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import color as color_util
 
-from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
+from .base.magic import MagicArea
 from .const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,
@@ -45,19 +45,16 @@ from .const import (
     LightGroupCategory,
     MagicAreasFeatureInfoLightGroups,
 )
-from .util import cleanup_removed_entries
+from .util import cleanup_removed_entries, get_area_from_config_entry
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up the Area config entry."""
+    """Set up the area light config entry."""
 
-    add_entities_when_ready(hass, async_add_entities, config_entry, add_lights)
+    area: MagicArea = get_area_from_config_entry(hass, config_entry)
 
-
-def add_lights(area, async_add_entities):
-    """Add all the light entities for all features that have one."""
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
         return
