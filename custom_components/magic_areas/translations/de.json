@@ -270,5 +270,16 @@
         "name": "Klimakontrolle"
       }
     }
+  },
+  "device": {
+    "global": {
+      "name": "Global"
+    },
+    "interior": {
+      "name": "Innen"
+    },
+    "exterior": {
+      "name": "Außen"
+    }
   }
 }
