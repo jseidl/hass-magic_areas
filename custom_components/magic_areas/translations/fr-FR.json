@@ -172,103 +172,114 @@
           "keep_only_entities": "Sélectionnez les entités de suivi de présence qui seront prises en compte uniquement lorsque la pièce est déjà occupée. Cela est utile pour éviter que des capteurs trop sensibles tels que les capteurs mmWave et les trackers BLE ne déclenchent de manière incorrecte la présence d'une pièce.",
           "clear_timeout": "Combien de temps après le dernier événement de présence doit-il attendre avant de vider la pièce"
         }
-            }
-          },
-          "error": {
-            "option_error": "Option invalide",
-            "malformed_input": "Ce champ est invalide :"
-          }
-        },
-        "entity": {
-          "binary_sensor": {
-            "area_state": {
-        "name": "État de la pièce"
-            },
-            "health_problem": {
-        "name": "Santé de la pièce"
-            },
-            "threshold_light": {
-        "name": "Lumière (Calculée)"
-            }
-          },
-          "climate": {
-            "climate_group": {
-        "name": "Thermostats"
-            }
-          },
-          "cover": {
-            "cover_group_awning": {
-        "name": "Auvents"
-            },
-            "cover_group_blind": {
-        "name": "Stores"
-            },
-            "cover_group_curtain": {
-        "name": "Rideaux"
-            },
-            "cover_group_damper": {
-        "name": "Amortisseurs"
-            },
-            "cover_group_door": {
-        "name": "Portes"
-            },
-            "cover_group_garage": {
-        "name": "Portes de garage"
-            },
-            "cover_group_gate": {
-        "name": "Portails"
-            },
-            "cover_group_shade": {
-        "name": "Stores"
-            },
-            "cover_group_shutter": {
-        "name": "Volets"
-            },
-            "cover_group_window": {
-        "name": "Fenêtres"
-            },
-            "cover_group": {
-        "name": "Couvertures"
-            }
-          },
-          "light": {
-            "all_lights": {
-        "name": "Toutes les lumières"
-            },
-            "overhead_lights": {
-        "name": "Lumières du plafond"
-            },
-            "task_lights": {
-        "name": "Lumières de tâche"
-            },
-            "accent_lights": {
-        "name": "Lumières d'accentuation"
-            },
-            "sleep_lights": {
-        "name": "Lumières de sommeil"
-            }
-          },
-          "media_player": {
-            "media_player_group": {
-        "name": "Lecteurs multimédias"
-            },
-            "area_aware_media_player": {
-        "name": "Lecteur multimédia intelligent de la pièce"
-            }
-          },
-          "switch": {
-            "presence_hold": {
-        "name": "Maintien de présence"
-            },
-            "light_control": {
-        "name": "Contrôle des lumières"
-            },
-            "media_player_control": {
-        "name": "Contrôle du lecteur multimédia"
-            },
-            "climate_control": {
-        "name": "Contrôle de la climatisation"
-            }
-          }
-        }
       }
+    },
+    "error": {
+      "option_error": "Option invalide",
+      "malformed_input": "Ce champ est invalide :"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "area_state": {
+        "name": "État de la pièce"
+      },
+      "health_problem": {
+        "name": "Santé de la pièce"
+      },
+      "threshold_light": {
+        "name": "Lumière (Calculée)"
+      }
+    },
+    "climate": {
+      "climate_group": {
+        "name": "Thermostats"
+      }
+    },
+    "cover": {
+      "cover_group_awning": {
+        "name": "Auvents"
+      },
+      "cover_group_blind": {
+        "name": "Stores"
+      },
+      "cover_group_curtain": {
+        "name": "Rideaux"
+      },
+      "cover_group_damper": {
+        "name": "Amortisseurs"
+      },
+      "cover_group_door": {
+        "name": "Portes"
+      },
+      "cover_group_garage": {
+        "name": "Portes de garage"
+      },
+      "cover_group_gate": {
+        "name": "Portails"
+      },
+      "cover_group_shade": {
+        "name": "Stores"
+      },
+      "cover_group_shutter": {
+        "name": "Volets"
+      },
+      "cover_group_window": {
+        "name": "Fenêtres"
+      },
+      "cover_group": {
+        "name": "Couvertures"
+      }
+    },
+    "light": {
+      "all_lights": {
+        "name": "Toutes les lumières"
+      },
+      "overhead_lights": {
+        "name": "Lumières du plafond"
+      },
+      "task_lights": {
+        "name": "Lumières de tâche"
+      },
+      "accent_lights": {
+        "name": "Lumières d'accentuation"
+      },
+      "sleep_lights": {
+        "name": "Lumières de sommeil"
+      }
+    },
+    "media_player": {
+      "media_player_group": {
+        "name": "Lecteurs multimédias"
+      },
+      "area_aware_media_player": {
+        "name": "Lecteur multimédia intelligent de la pièce"
+      }
+    },
+    "switch": {
+      "presence_hold": {
+        "name": "Maintien de présence"
+      },
+      "light_control": {
+        "name": "Contrôle des lumières"
+      },
+      "media_player_control": {
+        "name": "Contrôle du lecteur multimédia"
+      },
+      "climate_control": {
+        "name": "Contrôle de la climatisation"
+      }
+    }
+  },
+  "device": {
+    "global": {
+      "name": "Global"
+    },
+    "interior": {
+      "name": "Intérieur"
+    },
+    "exterior": {
+      "name": "Extérieur"
+    }
+  }
+}

@@ -270,5 +270,16 @@
         "name": "Control climatico"
       }
     }
+  },
+  "device": {
+    "global": {
+      "name": "Global"
+    },
+    "interior": {
+      "name": "Interior"
+    },
+    "exterior": {
+      "name": "Exterior"
+    }
   }
 }
