@@ -124,5 +124,5 @@ class MagicEntity(RestoreEntity):
             name=self.area.name,
             manufacturer="Magic Areas",
             model="Magic Area",
-            translation_key=self.area.slug,
+            translation_key=self.area.slug if self.area.is_meta() else None,
         )
