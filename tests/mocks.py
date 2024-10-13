@@ -16,13 +16,17 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.cover import CoverEntity, CoverEntityFeature
 from homeassistant.components.fan import FanEntity
-from homeassistant.components.media_player import MediaPlayerEntity, MediaPlayerEntityFeature
 from homeassistant.components.light import ColorMode, LightEntity
+from homeassistant.components.media_player import (
+    MediaPlayerEntity,
+    MediaPlayerEntityFeature,
+)
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     STATE_CLOSED,
     STATE_CLOSING,
+    STATE_IDLE,
     STATE_OFF,
     STATE_ON,
     STATE_OPEN,
@@ -563,30 +567,41 @@ class MockCover(MockEntity, CoverEntity):
 class MockMediaPlayer(MockEntity, MediaPlayerEntity):
     """Mock Media Player class."""
 
-
-    _state = STATE_OFF
+    _attr_state = STATE_OFF
 
     @property
     def is_on(self) -> bool:
         """Return true if the binary sensor is on."""
-        return self._state == STATE_ON
+        return self._attr_state == STATE_ON
 
     # pylint: disable-next=arguments-differ
     def turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        self._state = STATE_ON
+        self._attr_state = STATE_ON
         self.schedule_update_ha_state()
 
     def turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        self._state = STATE_OFF
+        self._attr_state = STATE_OFF
         self.schedule_update_ha_state()
 
     @property
     def supported_features(self):
         """Flag media player features that are supported."""
-        return MediaPlayerEntityFeature.PLAY_MEDIA
+        return (
+            MediaPlayerEntityFeature.PLAY_MEDIA
+            | MediaPlayerEntityFeature.STOP
+            | MediaPlayerEntityFeature.TURN_OFF
+        )
 
     def play_media(self, media_type, media_id, **kwargs):
-        self._state = STATE_PLAYING
+        """Handle play service calls."""
+        self._attr_state = STATE_PLAYING
+        self.schedule_update_ha_state()
+        return True
+
+    def media_stop(self):
+        """Handle stop service calls."""
+        self._attr_state = STATE_IDLE
+        self.schedule_update_ha_state()
         return True
