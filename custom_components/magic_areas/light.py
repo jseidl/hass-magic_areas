@@ -24,8 +24,8 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import color as color_util
 
-from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
+from .base.magic import MagicArea
 from .const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,
@@ -45,19 +45,16 @@ from .const import (
     LightGroupCategory,
     MagicAreasFeatureInfoLightGroups,
 )
-from .util import cleanup_removed_entries
+from .util import cleanup_removed_entries, get_area_from_config_entry
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up the Area config entry."""
+    """Set up the area light config entry."""
 
-    add_entities_when_ready(hass, async_add_entities, config_entry, add_lights)
+    area: MagicArea = get_area_from_config_entry(hass, config_entry)
 
-
-def add_lights(area, async_add_entities):
-    """Add all the light entities for all features that have one."""
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
         return
@@ -154,65 +151,28 @@ class MagicLightGroup(MagicEntity, LightGroup):
 
     async def async_turn_on(self, **kwargs) -> None:
         """Forward the turn_on command to all lights in the light group."""
-        data = {}
+        data = kwargs.copy()
 
-        # Copy parameters over
-        for arg_keyword, arg_value in kwargs.items():
-            data[arg_keyword] = arg_value
-
-        # Active lights
-        active_lights = self._get_active_lights()
-        targeted_lights = self._entity_ids
-
-        if active_lights:
-            _LOGGER.debug(
-                "%s: restricting call to active lights: %s",
-                self.area.name,
-                str(active_lights),
-            )
-
-            targeted_lights = active_lights
-
-        # Split entities by supported features
-        entity_map = {SUPPORT_COLOR: [], SUPPORT_COLOR_TEMP: []}
-        for entity_id in targeted_lights:
-            state = self.hass.states.get(entity_id)
-            if not state:
-                continue
-            support = state.attributes.get(ATTR_SUPPORTED_FEATURES)
-
-            if bool(support & SUPPORT_COLOR):
-                if bool(support & SUPPORT_COLOR_TEMP):
-                    entity_map[SUPPORT_COLOR_TEMP].append(entity_id)
-                else:
-                    entity_map[SUPPORT_COLOR].append(entity_id)
-
-        no_color_support = list(
-            set(targeted_lights)
-            - set(entity_map[SUPPORT_COLOR])
-            - set(entity_map[SUPPORT_COLOR_TEMP])
+        # Get active lights or default to all lights
+        active_lights = self._get_active_lights() or self._entity_ids
+        _LOGGER.debug(
+            "%s: restricting call to active lights: %s",
+            self.area.name,
+            str(active_lights),
         )
 
         service_calls = []
 
-        if entity_map[SUPPORT_COLOR_TEMP]:
+        for entity_id in active_lights:
             service_data = data.copy()
-            service_data[ATTR_ENTITY_ID] = entity_map[SUPPORT_COLOR_TEMP]
-            service_call = self.hass.services.async_call(
-                LIGHT_DOMAIN,
-                SERVICE_TURN_ON,
-                service_data,
-                blocking=True,
-                context=self._context,
-            )
-            service_calls.append(service_call)
+            state = self.hass.states.get(entity_id)
+            if not state:
+                continue
 
-        if entity_map[SUPPORT_COLOR]:
-            service_data = data.copy()
-            service_data[ATTR_ENTITY_ID] = entity_map[SUPPORT_COLOR]
+            support = state.attributes.get(ATTR_SUPPORTED_FEATURES, 0)
 
-            # Perform color_temp emulation if ATTR_COLOR_TEMP is passed
-            if ATTR_COLOR_TEMP in service_data:
+            # Handle color temperature and color support
+            if support & SUPPORT_COLOR_TEMP and ATTR_COLOR_TEMP in service_data:
                 temp_k = color_util.color_temperature_mired_to_kelvin(
                     service_data[ATTR_COLOR_TEMP]
                 )
@@ -220,33 +180,22 @@ class MagicLightGroup(MagicEntity, LightGroup):
                 service_data[ATTR_HS_COLOR] = hs_color
                 del service_data[ATTR_COLOR_TEMP]
 
-            service_call = self.hass.services.async_call(
-                LIGHT_DOMAIN,
-                SERVICE_TURN_ON,
-                service_data,
-                blocking=True,
-                context=self._context,
+            if not support & SUPPORT_COLOR:
+                service_data.pop(ATTR_COLOR_TEMP, None)
+                service_data.pop(ATTR_HS_COLOR, None)
+
+            service_data[ATTR_ENTITY_ID] = entity_id
+            service_calls.append(
+                self.hass.services.async_call(
+                    LIGHT_DOMAIN,
+                    SERVICE_TURN_ON,
+                    service_data,
+                    blocking=True,
+                    context=self._context,
+                )
             )
-            service_calls.append(service_call)
 
-        if no_color_support:
-            service_data = data.copy()
-            service_data[ATTR_ENTITY_ID] = no_color_support
-            if ATTR_COLOR_TEMP in service_data:
-                del service_data[ATTR_COLOR_TEMP]
-            if ATTR_HS_COLOR in service_data:
-                del service_data[ATTR_HS_COLOR]
-
-            service_call = self.hass.services.async_call(
-                LIGHT_DOMAIN,
-                SERVICE_TURN_ON,
-                service_data,
-                blocking=True,
-                context=self._context,
-            )
-            service_calls.append(service_call)
-
-        # Perform calls
+        # Perform all service calls concurrently
         await asyncio.gather(*service_calls)
 
 

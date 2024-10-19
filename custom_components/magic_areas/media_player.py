@@ -18,8 +18,8 @@ from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_IDLE, STATE_ON
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
+from .base.magic import MagicArea
 from .const import (
     AREA_STATE_CLEAR,
     AREA_STATE_SLEEP,
@@ -36,18 +36,15 @@ from .const import (
     MagicAreasFeatureInfoAreaAwareMediaPlayer,
     MagicAreasFeatureInfoMediaPlayerGroups,
 )
-from .util import cleanup_removed_entries
+from .util import cleanup_removed_entries, get_area_from_config_entry
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up the Area config entry."""
-    add_entities_when_ready(hass, async_add_entities, config_entry, add_media_players)
+    """Set up the area media player config entry."""
 
-
-def add_media_players(area, async_add_entities):
-    """Add all the media_player entities for all features that have one."""
+    area: MagicArea = get_area_from_config_entry(hass, config_entry)
 
     entities_to_add: list[str] = []
 

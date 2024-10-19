@@ -13,7 +13,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .add_entities_when_ready import add_entities_when_ready
 from .base.entities import MagicEntity
 from .base.magic import MagicArea
 from .base.presence import AreaStateBinarySensor
@@ -30,7 +29,7 @@ from .const import (
     MagicAreasFeatureInfoHealth,
 )
 from .threshold import create_illuminance_threshold
-from .util import cleanup_removed_entries
+from .util import cleanup_removed_entries, get_area_from_config_entry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,13 +39,10 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the Area config entry."""
+    """Set up the area binary sensor config entry."""
 
-    add_entities_when_ready(hass, async_add_entities, config_entry, add_sensors)
+    area: MagicArea = get_area_from_config_entry(hass, config_entry)
 
-
-def add_sensors(area: MagicArea, async_add_entities: AddEntitiesCallback) -> None:
-    """Add the basic sensors for the area."""
     entities = []
 
     # Create main presence sensor
