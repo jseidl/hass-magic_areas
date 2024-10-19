@@ -8,8 +8,8 @@ from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_ID,
     ATTR_MEDIA_CONTENT_TYPE,
-    MEDIA_TYPE_MUSIC,
     SERVICE_PLAY_MEDIA,
+    MediaType,
 )
 from homeassistant.const import (
     ATTR_ENTITY_ID,
@@ -63,7 +63,7 @@ async def test_area_aware_media_player(
     # Send play to AAMP
     service_data = {
         ATTR_ENTITY_ID: area_aware_media_player_id,
-        ATTR_MEDIA_CONTENT_TYPE: MEDIA_TYPE_MUSIC,
+        ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
         ATTR_MEDIA_CONTENT_ID: 42,
     }
     await hass.services.async_call(
@@ -96,7 +96,7 @@ async def test_area_aware_media_player(
     # Send play to AAMP
     service_data = {
         ATTR_ENTITY_ID: area_aware_media_player_id,
-        ATTR_MEDIA_CONTENT_TYPE: MEDIA_TYPE_MUSIC,
+        ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
         ATTR_MEDIA_CONTENT_ID: 42,
     }
     await hass.services.async_call(

@@ -294,11 +294,14 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
             )
             return False
 
-        data = {
-            ATTR_MEDIA_CONTENT_ID: media_id,
-            ATTR_MEDIA_CONTENT_TYPE: media_type,
-            ATTR_ENTITY_ID: media_players,
-        }
+        data = kwargs.copy()
+        data.update(
+            {
+                ATTR_MEDIA_CONTENT_ID: media_id,
+                ATTR_MEDIA_CONTENT_TYPE: media_type,
+                ATTR_ENTITY_ID: media_players,
+            }
+        )
 
         self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA, data)
 
