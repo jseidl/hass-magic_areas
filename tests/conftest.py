@@ -19,12 +19,15 @@ from custom_components.magic_areas.const import (
     CONF_EXCLUDE_ENTITIES,
     CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_AGGREGATION,
+    CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_COVER_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_ID,
     CONF_INCLUDE_ENTITIES,
     CONF_KEEP_ONLY_ENTITIES,
     CONF_NAME,
+    CONF_NOTIFICATION_DEVICES,
+    CONF_NOTIFY_STATES,
     CONF_OVERHEAD_LIGHTS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SECONDARY_STATES,
@@ -33,6 +36,7 @@ from custom_components.magic_areas.const import (
     CONF_UPDATE_INTERVAL,
     DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
     DOMAIN,
+    AreaStates,
     AreaType,
 )
 from homeassistant.components.binary_sensor import (
@@ -41,6 +45,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, CoverDeviceClass
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import (
@@ -56,7 +61,7 @@ from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.setup import async_setup_component
 
 from .common import setup_test_component_platform
-from .mocks import MockBinarySensor, MockCover, MockLight, MockSensor
+from .mocks import MockBinarySensor, MockCover, MockLight, MockMediaPlayer, MockSensor
 
 AREA_NAME = "kitchen"
 _LOGGER = logging.getLogger(__name__)
@@ -77,29 +82,37 @@ BASIC_CONFIG_ENTRY_DATA = {
 # Helpers
 
 
-async def init_integration(hass: HomeAssistant, config_entry: MockConfigEntry) -> None:
+async def init_integration(
+    hass: HomeAssistant, config_entries: list[MockConfigEntry]
+) -> None:
     """Set up the integration."""
     registry = async_get_ar(hass)
     registry.async_get_or_create(AREA_NAME)
 
-    config_entry.add_to_hass(hass)
+    for config_entry in config_entries:
+        config_entry.add_to_hass(hass)
+
     assert await async_setup_component(hass, DOMAIN, {})
     await hass.async_block_till_done()
 
-    assert config_entry.state is ConfigEntryState.LOADED
+    for config_entry in config_entries:
+        assert config_entry.state is ConfigEntryState.LOADED
 
 
 async def shutdown_integration(
-    hass: HomeAssistant, config_entry: MockConfigEntry
+    hass: HomeAssistant, config_entries: list[MockConfigEntry]
 ) -> None:
     """Teardown the integration."""
 
     _LOGGER.info("Unloading integration.")
-    await hass.config_entries.async_unload(config_entry.entry_id)
-    await hass.async_block_till_done()
+    for config_entry in config_entries:
+        await hass.config_entries.async_unload(config_entry.entry_id)
+        await hass.async_block_till_done()
 
     assert not hass.data.get(DOMAIN)
-    assert config_entry.state is ConfigEntryState.NOT_LOADED
+
+    for config_entry in config_entries:
+        assert config_entry.state is ConfigEntryState.NOT_LOADED
     _LOGGER.info("Integration unloaded.")
 
 
@@ -220,6 +233,38 @@ def mock_config_entry_light_group_basic() -> MockConfigEntry:
                         "lihgt.mock_light_3",
                     ]
                 },
+            }
+        }
+    )
+    return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="area_aware_media_player_global_config_entry")
+def mock_config_entry_area_aware_media_player_global() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = {
+        CONF_NAME: "Global",  # @FIXME use constant
+        CONF_ID: "global",  # @FIXME use constant
+        CONF_TYPE: AreaType.META,
+        CONF_EXCLUDE_ENTITIES: [],
+        CONF_UPDATE_INTERVAL: 60,
+        CONF_CLEAR_TIMEOUT: 0,
+        CONF_ENABLED_FEATURES: {},
+    }
+    return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="area_aware_media_player_area_config_entry")
+def mock_config_entry_area_aware_media_player_area() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data.update(
+        {
+            CONF_ENABLED_FEATURES: {
+                CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: {
+                    CONF_NOTIFICATION_DEVICES: ["media_player.media_player_1"],
+                    CONF_NOTIFY_STATES: [AreaStates.OCCUPIED],
+                }
             }
         }
     )
@@ -423,6 +468,21 @@ async def setup_entities_light_many(
     return mock_light_entities
 
 
+@pytest.fixture(name="entities_media_player_single")
+async def setup_entities_media_player_single(
+    hass: HomeAssistant,
+) -> list[MockMediaPlayer]:
+    """Create multiple mock sensor and setup the system with it."""
+
+    mock_media_player_entities = []
+
+    mock_media_player_entities.append(
+        MockMediaPlayer(name="media_player_1", unique_id="media_player_1")
+    )
+    await setup_mock_entities(hass, MEDIA_PLAYER_DOMAIN, mock_media_player_entities)
+    return mock_media_player_entities
+
+
 # Integration set-ups
 
 
@@ -433,9 +493,9 @@ async def setup_integration(
 ) -> AsyncGenerator[Any]:
     """Set up integration with basic config."""
 
-    await init_integration(hass, config_entry)
+    await init_integration(hass, [config_entry])
     yield
-    await shutdown_integration(hass, config_entry)
+    await shutdown_integration(hass, [config_entry])
 
 
 @pytest.fixture(name="_setup_integration_secondary_states")
@@ -445,9 +505,9 @@ async def setup_integration_secondary_states(
 ) -> AsyncGenerator[Any]:
     """Set up integration with secondary states config."""
 
-    await init_integration(hass, secondary_states_config_entry)
+    await init_integration(hass, [secondary_states_config_entry])
     yield
-    await shutdown_integration(hass, secondary_states_config_entry)
+    await shutdown_integration(hass, [secondary_states_config_entry])
 
 
 @pytest.fixture(name="_setup_integration_keep_only_sensor")
@@ -457,9 +517,9 @@ async def setup_integration_keep_only_sensor(
 ) -> AsyncGenerator[Any]:
     """Set up integration with secondary states config."""
 
-    await init_integration(hass, keep_only_sensor_config_entry)
+    await init_integration(hass, [keep_only_sensor_config_entry])
     yield
-    await shutdown_integration(hass, keep_only_sensor_config_entry)
+    await shutdown_integration(hass, [keep_only_sensor_config_entry])
 
 
 @pytest.fixture(name="_setup_integration_aggregates")
@@ -469,9 +529,9 @@ async def setup_integration_aggregates(
 ) -> AsyncGenerator[Any]:
     """Set up integration with secondary states config."""
 
-    await init_integration(hass, aggregates_config_entry)
+    await init_integration(hass, [aggregates_config_entry])
     yield
-    await shutdown_integration(hass, aggregates_config_entry)
+    await shutdown_integration(hass, [aggregates_config_entry])
 
 
 @pytest.fixture(name="_setup_integration_threshold")
@@ -481,9 +541,9 @@ async def setup_integration_threshold(
 ) -> AsyncGenerator[Any]:
     """Set up integration with secondary states config."""
 
-    await init_integration(hass, threshold_config_entry)
+    await init_integration(hass, [threshold_config_entry])
     yield
-    await shutdown_integration(hass, threshold_config_entry)
+    await shutdown_integration(hass, [threshold_config_entry])
 
 
 @pytest.fixture(name="_setup_integration_cover_group")
@@ -493,9 +553,9 @@ async def setup_integration_cover_group(
 ) -> AsyncGenerator[Any]:
     """Set up integration with secondary states config."""
 
-    await init_integration(hass, cover_groups_config_entry)
+    await init_integration(hass, [cover_groups_config_entry])
     yield
-    await shutdown_integration(hass, cover_groups_config_entry)
+    await shutdown_integration(hass, [cover_groups_config_entry])
 
 
 @pytest.fixture(name="_setup_integration_light_group_basic")
@@ -505,6 +565,31 @@ async def setup_integration_light_basic(
 ) -> AsyncGenerator[Any]:
     """Set up integration with secondary states config."""
 
-    await init_integration(hass, basic_light_group_config_entry)
+    await init_integration(hass, [basic_light_group_config_entry])
     yield
-    await shutdown_integration(hass, basic_light_group_config_entry)
+    await shutdown_integration(hass, [basic_light_group_config_entry])
+
+
+@pytest.fixture(name="_setup_integration_area_aware_media_player")
+async def setup_integration_area_aware_media_player(
+    hass: HomeAssistant,
+    area_aware_media_player_global_config_entry: MockConfigEntry,
+    area_aware_media_player_area_config_entry: MockConfigEntry,
+) -> AsyncGenerator[Any]:
+    """Set up integration with secondary states config."""
+
+    await init_integration(
+        hass,
+        [
+            area_aware_media_player_area_config_entry,
+            area_aware_media_player_global_config_entry,
+        ],
+    )
+    yield
+    await shutdown_integration(
+        hass,
+        [
+            area_aware_media_player_area_config_entry,
+            area_aware_media_player_global_config_entry,
+        ],
+    )
