@@ -1,6 +1,5 @@
 """Magic Areas component for Home Assistant."""
 
-from collections import defaultdict
 from datetime import UTC, datetime
 import logging
 
@@ -30,9 +29,6 @@ from .const import (
     DEFAULT_EXTENDED_TIME,
     DEFAULT_EXTENDED_TIMEOUT,
     DEFAULT_SLEEP_TIMEOUT,
-    META_AREA_EXTERIOR,
-    META_AREA_GLOBAL,
-    META_AREA_INTERIOR,
     MODULE_DATA,
     MagicConfigEntryVersion,
     MetaAreaType,
@@ -130,42 +126,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             config_entry, magic_area.available_platforms()
         )
 
-        # Conditional reload of related meta-areas
-        # Populate dict with all meta-areas with ID as key
-        meta_areas = defaultdict()
-
-        for area in data.values():
-            area_obj = area[DATA_AREA_OBJECT]
-            if area_obj.is_meta():
-                meta_areas[area_obj.id] = area_obj
-
-        # Handle non-meta areas
-        if not magic_area.is_meta():
-            meta_area_key = (
-                META_AREA_EXTERIOR.lower()
-                if magic_area.is_exterior()
-                else META_AREA_INTERIOR.lower()
-            )
-
-            if meta_area_key in meta_areas:
-                meta_area_object = meta_areas[meta_area_key]
-
-                if meta_area_object.initialized:
-                    await hass.config_entries.async_reload(
-                        meta_area_object.hass_config.entry_id
-                    )
-        else:
-            meta_area_global_id = META_AREA_GLOBAL.lower()
-
-            if (
-                magic_area.id != meta_area_global_id
-                and meta_area_global_id in meta_areas
-            ):
-                if meta_areas[meta_area_global_id].initialized:
-                    await hass.config_entries.async_reload(
-                        meta_areas[meta_area_global_id].hass_config.entry_id
-                    )
-
         return True
 
     hass.data.setdefault(MODULE_DATA, {})
@@ -191,11 +151,21 @@ async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -
     )
     await hass.config_entries.async_reload(config_entry.entry_id)
 
+    # @TODO Reload corresponding meta areas (floor+interior/exterior+global)
+
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Unload a config entry."""
 
     data = hass.data[MODULE_DATA]
+
+    if config_entry.entry_id not in data:
+        _LOGGER.debug(
+            "Config entry '%s' not on data dictionary, probably already unloaded. Skipping.",
+            config_entry.entry_id,
+        )
+        return True
+
     area_data = data[config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
 
