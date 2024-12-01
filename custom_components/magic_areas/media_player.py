@@ -169,7 +169,8 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
     def update_attributes(self):
         """Update entity attributes."""
         self._attr_extra_state_attributes["areas"] = [
-            f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}" for area in self.areas
+            f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{area.slug}_area_state"
+            for area in self.areas
         ]
         self._attr_extra_state_attributes["entity_id"] = self._tracked_entities
 
@@ -224,7 +225,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
         active_areas = []
 
         for area in self.areas:
-            area_binary_sensor_name = f"{BINARY_SENSOR_DOMAIN}.area_{area.slug}"
+            area_binary_sensor_name = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{area.slug}_area_state"
             area_binary_sensor_state = self.hass.states.get(area_binary_sensor_name)
 
             if not area_binary_sensor_state:
@@ -295,11 +296,14 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
             )
             return False
 
-        data = {
-            ATTR_MEDIA_CONTENT_ID: media_id,
-            ATTR_MEDIA_CONTENT_TYPE: media_type,
-            ATTR_ENTITY_ID: media_players,
-        }
+        data = kwargs.copy()
+        data.update(
+            {
+                ATTR_MEDIA_CONTENT_ID: media_id,
+                ATTR_MEDIA_CONTENT_TYPE: media_type,
+                ATTR_ENTITY_ID: media_players,
+            }
+        )
 
         self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA, data)
 
