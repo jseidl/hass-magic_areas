@@ -371,6 +371,9 @@ class AreaStateTrackerEntity(MagicEntity):
                 continue
 
             entity = self.hass.states.get(secondary_state_entity)
+            if not entity:
+                continue
+
             has_valid_state = entity.state.lower() in self._valid_on_states(
                 [STATE_ABOVE_HORIZON]
             )

@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_NAME, EVENT_HOMEASSISTANT_STARTED
+from homeassistant.const import ATTR_NAME
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
 from homeassistant.helpers.entity_registry import (
@@ -45,86 +45,78 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             data={**config_entry.data, "entity_ts": datetime.now(UTC)},
         )
 
-    async def _async_setup_integration(*args, **kwargs) -> None:
-        """Load integration when Hass has finished starting."""
-
-        _LOGGER.debug("%s: Setting up entry.", area_name)
-
-        # Load floors
-        floor_registry = floorreg_async_get(hass)
-        floors = floor_registry.async_list_floors()
-
-        non_floor_meta_ids = [
-            meta_area_type
-            for meta_area_type in MetaAreaType
-            if meta_area_type != MetaAreaType.FLOOR
-        ]
-        floor_ids = [f.floor_id for f in floors]
-
-        if area_id in non_floor_meta_ids:
-            meta_area = basic_area_from_meta(area_id)
-            magic_area = MagicMetaArea(hass, meta_area, config_entry)
-        elif area_id in floor_ids:
-            meta_area = basic_area_from_floor(floor_registry.async_get_floor(area_id))
-            magic_area = MagicMetaArea(hass, meta_area, config_entry)
-        else:
-            area_registry = areareg_async_get(hass)
-            area = area_registry.async_get_area(area_id)
-
-            if not area:
-                _LOGGER.warning("%s: ID '%s' not found on registry", area_name, area_id)
-                return False
-
-            _LOGGER.debug("%s: Got area from registry: %s", area_name, str(area))
-
-            magic_area = MagicArea(
-                hass,
-                basic_area_from_object(area),
-                config_entry,
-            )
-
-        await magic_area.initialize()
-
-        _LOGGER.debug(
-            "%s: Magic Area (%s) created: %s",
-            magic_area.name,
-            magic_area.id,
-            str(magic_area.config),
-        )
-
-        # Setup config uptate listener
-        undo_listener = config_entry.add_update_listener(async_update_options)
-
-        # Watch for area changes.
-        entity_listener = hass.bus.async_listen(
-            EVENT_ENTITY_REGISTRY_UPDATED,
-            _async_registry_updated,
-            _entity_registry_filter,
-        )
-
-        hass.data[MODULE_DATA][config_entry.entry_id] = {
-            DATA_AREA_OBJECT: magic_area,
-            DATA_UNDO_UPDATE_LISTENER: undo_listener,
-            DATA_ENTITY_LISTENER: entity_listener,
-        }
-
-        # Setup platforms
-        await hass.config_entries.async_forward_entry_setups(
-            config_entry, magic_area.available_platforms()
-        )
-
     hass.data.setdefault(MODULE_DATA, {})
 
     area_id = config_entry.data[CONF_ID]
     area_name = config_entry.data[CONF_NAME]
 
-    # Wait for Hass to have started before setting up.
-    if hass.is_running:
-        hass.create_task(_async_setup_integration())
+    _LOGGER.debug("%s: Setting up entry.", area_name)
+
+    # Load floors
+    floor_registry = floorreg_async_get(hass)
+    floors = floor_registry.async_list_floors()
+
+    non_floor_meta_ids = [
+        meta_area_type
+        for meta_area_type in MetaAreaType
+        if meta_area_type != MetaAreaType.FLOOR
+    ]
+    floor_ids = [f.floor_id for f in floors]
+
+    if area_id in non_floor_meta_ids:
+        # Non-floor Meta-Area (Global/Interior/Exterior)
+        meta_area = basic_area_from_meta(area_id)
+        magic_area = MagicMetaArea(hass, meta_area, config_entry)
+    elif area_id in floor_ids:
+        # Floor Meta-Area
+        meta_area = basic_area_from_floor(floor_registry.async_get_floor(area_id))
+        magic_area = MagicMetaArea(hass, meta_area, config_entry)
     else:
-        hass.bus.async_listen_once(
-            EVENT_HOMEASSISTANT_STARTED, _async_setup_integration
+        # Regular Area
+        area_registry = areareg_async_get(hass)
+        area = area_registry.async_get_area(area_id)
+
+        if not area:
+            _LOGGER.warning("%s: ID '%s' not found on registry", area_name, area_id)
+            return False
+
+        _LOGGER.debug("%s: Got area from registry: %s", area_name, str(area))
+
+        magic_area = MagicArea(
+            hass,
+            basic_area_from_object(area),
+            config_entry,
         )
+
+    await magic_area.initialize()
+
+    _LOGGER.debug(
+        "%s: Magic Area (%s) created: %s",
+        magic_area.name,
+        magic_area.id,
+        str(magic_area.config),
+    )
+
+    # Setup config uptate listener
+    undo_listener = config_entry.add_update_listener(async_update_options)
+
+    # Watch for area changes.
+    entity_listener = hass.bus.async_listen(
+        EVENT_ENTITY_REGISTRY_UPDATED,
+        _async_registry_updated,
+        _entity_registry_filter,
+    )
+
+    hass.data[MODULE_DATA][config_entry.entry_id] = {
+        DATA_AREA_OBJECT: magic_area,
+        DATA_UNDO_UPDATE_LISTENER: undo_listener,
+        DATA_ENTITY_LISTENER: entity_listener,
+    }
+
+    # Setup platforms
+    await hass.config_entries.async_forward_entry_setups(
+        config_entry, magic_area.available_platforms()
+    )
 
     return True
 
