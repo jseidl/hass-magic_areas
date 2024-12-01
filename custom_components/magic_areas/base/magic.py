@@ -1,5 +1,6 @@
 """Classes for Magic Areas and Meta Areas."""
 
+from collections.abc import Iterable
 from datetime import UTC, datetime
 import logging
 
@@ -37,7 +38,36 @@ from ..const import (
     MODULE_DATA,
     MetaAreaType,
 )
-from ..util import BasicArea, flatten_entity_list, is_entity_list
+
+# Helpers
+
+
+def is_entity_list(item):
+    """Check if item is a list."""
+    basestring = (str, bytes)
+    return isinstance(item, Iterable) and not isinstance(item, basestring)
+
+
+def flatten_entity_list(input_list):
+    """Recursively flatten a nested list into a flat list."""
+    for i in input_list:
+        if is_entity_list(i):
+            yield from flatten_entity_list(i)
+        else:
+            yield i
+
+
+# Classes
+
+
+class BasicArea:
+    """An interchangeable area object for Magic Areas to consume."""
+
+    id: str
+    name: str | None = None
+    icon: str | None = None
+    floor_id: str | None = None
+    is_meta: bool = False
 
 
 class MagicArea:

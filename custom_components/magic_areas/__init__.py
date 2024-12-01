@@ -6,25 +6,20 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_NAME
 from homeassistant.core import Event, HomeAssistant, callback
-from homeassistant.helpers.area_registry import async_get as areareg_async_get
 from homeassistant.helpers.entity_registry import (
     EVENT_ENTITY_REGISTRY_UPDATED,
     EventEntityRegistryUpdatedData,
 )
-from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 
-from .base.magic import MagicArea, MagicMetaArea
+from .base.magic import MagicArea
 from .const import (
-    CONF_ID,
-    CONF_NAME,
     DATA_AREA_OBJECT,
     DATA_ENTITY_LISTENER,
     DATA_UNDO_UPDATE_LISTENER,
     MODULE_DATA,
     MagicConfigEntryVersion,
-    MetaAreaType,
 )
-from .util import basic_area_from_floor, basic_area_from_meta, basic_area_from_object
+from .util import get_magic_area_for_config_entry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,7 +33,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
         _LOGGER.debug(
             "%s: Reloading entry due entity registry change",
-            config_entry.data[CONF_NAME],
+            config_entry.data[ATTR_NAME],
         )
         hass.config_entries.async_update_entry(
             config_entry,
@@ -47,47 +42,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     hass.data.setdefault(MODULE_DATA, {})
 
-    area_id = config_entry.data[CONF_ID]
-    area_name = config_entry.data[CONF_NAME]
-
-    _LOGGER.debug("%s: Setting up entry.", area_name)
-
-    # Load floors
-    floor_registry = floorreg_async_get(hass)
-    floors = floor_registry.async_list_floors()
-
-    non_floor_meta_ids = [
-        meta_area_type
-        for meta_area_type in MetaAreaType
-        if meta_area_type != MetaAreaType.FLOOR
-    ]
-    floor_ids = [f.floor_id for f in floors]
-
-    if area_id in non_floor_meta_ids:
-        # Non-floor Meta-Area (Global/Interior/Exterior)
-        meta_area = basic_area_from_meta(area_id)
-        magic_area = MagicMetaArea(hass, meta_area, config_entry)
-    elif area_id in floor_ids:
-        # Floor Meta-Area
-        meta_area = basic_area_from_floor(floor_registry.async_get_floor(area_id))
-        magic_area = MagicMetaArea(hass, meta_area, config_entry)
-    else:
-        # Regular Area
-        area_registry = areareg_async_get(hass)
-        area = area_registry.async_get_area(area_id)
-
-        if not area:
-            _LOGGER.warning("%s: ID '%s' not found on registry", area_name, area_id)
-            return False
-
-        _LOGGER.debug("%s: Got area from registry: %s", area_name, str(area))
-
-        magic_area = MagicArea(
-            hass,
-            basic_area_from_object(area),
-            config_entry,
-        )
-
+    magic_area: MagicArea = get_magic_area_for_config_entry(hass, config_entry)
+    assert magic_area is not None
     await magic_area.initialize()
 
     _LOGGER.debug(
