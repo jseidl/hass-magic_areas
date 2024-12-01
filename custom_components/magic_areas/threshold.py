@@ -86,7 +86,7 @@ def create_illuminance_threshold(area: MagicArea) -> Entity:
     )
 
     threshold_sensor = AreaThresholdSensor(
-        area,
+        area=area,
         device_class=BinarySensorDeviceClass.LIGHT,
         entity_id=illuminance_aggregate_entity_id,
         upper=illuminance_threshold,
@@ -103,6 +103,7 @@ class AreaThresholdSensor(MagicEntity, ThresholdSensor):
 
     def __init__(
         self,
+        *,
         area: MagicArea,
         device_class: BinarySensorDeviceClass,
         entity_id: str,

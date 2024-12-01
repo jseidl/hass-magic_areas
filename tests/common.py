@@ -69,7 +69,7 @@ def setup_test_component_platform(
 
 
 def mock_integration(
-    hass: HomeAssistant, module: MockModule, built_in: bool = True
+    hass: HomeAssistant, *, module: MockModule, built_in: bool = True
 ) -> loader.Integration:
     """Mock an integration."""
     integration = loader.Integration(
@@ -118,7 +118,7 @@ def mock_platform(
     module_cache = hass.data[loader.DATA_COMPONENTS]
 
     if domain not in integration_cache:
-        mock_integration(hass, MockModule(domain), built_in=built_in)
+        mock_integration(hass, module=MockModule(domain), built_in=built_in)
 
     # pylint: disable-next=protected-access
     integration_cache[domain]._top_level_files.add(f"{platform_name}.py")
@@ -127,6 +127,7 @@ def mock_platform(
 
 
 def async_mock_service(
+    *,
     hass: HomeAssistant,
     domain: str,
     service: str,

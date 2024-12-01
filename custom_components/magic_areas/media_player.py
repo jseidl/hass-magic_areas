@@ -45,6 +45,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the area media player config entry."""
 
     area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    assert area is not None
 
     entities_to_add: list[str] = []
 

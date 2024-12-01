@@ -28,6 +28,7 @@ async def async_setup_entry(
     """Set up the area cover config entry."""
 
     area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    assert area is not None
 
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_COVER_GROUPS):

@@ -270,17 +270,9 @@ class MagicAreasFeatures(StrEnum):
 class MagicAreasEvents(StrEnum):
     """Magic Areas events."""
 
-    STARTED = "magicareas_start"
-    READY = "magicareas_ready"
-    AREA_READY = "magicareas_area_ready"
     AREA_STATE_CHANGED = "magicareas_area_state_changed"
 
 
-EVENT_MAGICAREAS_STARTED = "magicareas_start"
-EVENT_MAGICAREAS_READY = "magicareas_ready"
-EVENT_MAGICAREAS_AREA_READY = "magicareas_area_ready"
-EVENT_MAGICAREAS_AREA_OCCUPIED = "magicareas_area_occupied"
-EVENT_MAGICAREAS_AREA_CLEAR = "magicareas_area_clear"
 EVENT_MAGICAREAS_AREA_STATE_CHANGED = "magicareas_area_state_changed"
 
 

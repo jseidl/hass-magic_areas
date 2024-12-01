@@ -151,6 +151,7 @@ class MockModule:
     def __init__(
         self,
         domain: str,
+        *,
         dependencies: list[str] | None = None,
         setup: Callable[[], data_entry_flow.FlowHandler] | None = None,
         requirements: list[str] | None = None,
@@ -237,6 +238,7 @@ class MockPlatform:
 
     def __init__(
         self,
+        *,
         setup_platform: (
             Callable[
                 [

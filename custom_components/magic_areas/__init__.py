@@ -15,43 +15,27 @@ from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 
 from .base.magic import MagicArea, MagicMetaArea
 from .const import (
-    CONF_CLEAR_TIMEOUT,
-    CONF_EXTENDED_TIME,
-    CONF_EXTENDED_TIMEOUT,
     CONF_ID,
     CONF_NAME,
-    CONF_SECONDARY_STATES,
-    CONF_SLEEP_TIMEOUT,
     DATA_AREA_OBJECT,
     DATA_ENTITY_LISTENER,
     DATA_UNDO_UPDATE_LISTENER,
-    DEFAULT_CLEAR_TIMEOUT,
-    DEFAULT_EXTENDED_TIME,
-    DEFAULT_EXTENDED_TIMEOUT,
-    DEFAULT_SLEEP_TIMEOUT,
     MODULE_DATA,
     MagicConfigEntryVersion,
     MetaAreaType,
 )
-from .util import (
-    basic_area_from_floor,
-    basic_area_from_meta,
-    basic_area_from_object,
-    seconds_to_minutes,
-)
+from .util import basic_area_from_floor, basic_area_from_meta, basic_area_from_object
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Set up the component."""
-    data = hass.data.setdefault(MODULE_DATA, {})
-    area_id = config_entry.data[CONF_ID]
-    area_name = config_entry.data[CONF_NAME]
 
     @callback
     def _async_registry_updated(event: Event[EventEntityRegistryUpdatedData]) -> None:
         """Reload integration when entity registry is updated."""
+
         _LOGGER.debug(
             "%s: Reloading entry due entity registry change",
             config_entry.data[CONF_NAME],
@@ -99,6 +83,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                 config_entry,
             )
 
+        await magic_area.initialize()
+
         _LOGGER.debug(
             "%s: Magic Area (%s) created: %s",
             magic_area.name,
@@ -106,6 +92,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             str(magic_area.config),
         )
 
+        # Setup config uptate listener
         undo_listener = config_entry.add_update_listener(async_update_options)
 
         # Watch for area changes.
@@ -115,7 +102,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             _entity_registry_filter,
         )
 
-        data[config_entry.entry_id] = {
+        hass.data[MODULE_DATA][config_entry.entry_id] = {
             DATA_AREA_OBJECT: magic_area,
             DATA_UNDO_UPDATE_LISTENER: undo_listener,
             DATA_ENTITY_LISTENER: entity_listener,
@@ -125,8 +112,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         await hass.config_entries.async_forward_entry_setups(
             config_entry, magic_area.available_platforms()
         )
-
-        return True
 
     hass.data.setdefault(MODULE_DATA, {})
 
@@ -157,6 +142,7 @@ async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Unload a config entry."""
 
+    platforms_unloaded = []
     data = hass.data[MODULE_DATA]
 
     if config_entry.entry_id not in data:
@@ -169,13 +155,19 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     area_data = data[config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
 
-    await hass.config_entries.async_unload_platforms(
-        config_entry, area.available_platforms()
-    )
+    for platform in area.available_platforms():
+        unload_ok = await hass.config_entries.async_forward_entry_unload(
+            config_entry, platform
+        )
+        platforms_unloaded.append(unload_ok)
 
     area_data[DATA_UNDO_UPDATE_LISTENER]()
     area_data[DATA_ENTITY_LISTENER]()
-    data.pop(config_entry.entry_id)
+
+    all_unloaded = all(platforms_unloaded)
+
+    if all_unloaded:
+        data.pop(config_entry.entry_id)
 
     if not data:
         hass.data.pop(MODULE_DATA)
@@ -183,31 +175,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     return True
 
 
-def migrate_seconds_to_minutes(config_data: dict) -> dict:
-    """Perform migration of seconds-based config options to minutes."""
-
-    # Update seconds -> minutes
-    if CONF_CLEAR_TIMEOUT in config_data:
-        config_data[CONF_CLEAR_TIMEOUT] = seconds_to_minutes(
-            config_data[CONF_CLEAR_TIMEOUT], DEFAULT_CLEAR_TIMEOUT
-        )
-    if CONF_SECONDARY_STATES in config_data:
-        entries_to_convert = {
-            CONF_EXTENDED_TIMEOUT: DEFAULT_EXTENDED_TIMEOUT,
-            CONF_EXTENDED_TIME: DEFAULT_EXTENDED_TIME,
-            CONF_SLEEP_TIMEOUT: DEFAULT_SLEEP_TIMEOUT,
-        }
-        for option_key, option_value in entries_to_convert.items():
-            if option_key in config_data[CONF_SECONDARY_STATES]:
-                old_value = config_data[CONF_SECONDARY_STATES][option_key]
-                config_data[CONF_SECONDARY_STATES][option_key] = seconds_to_minutes(
-                    old_value, option_value
-                )
-
-    return config_data
-
-
-# Example migration function
+# Update config version
 async def async_migrate_entry(hass, config_entry: ConfigEntry):
     """Migrate old entry."""
     _LOGGER.info(
@@ -227,27 +195,18 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
 
         return False
 
-    old_data = {**config_entry.data}
-    new_data = {**config_entry.data}
+    hass.config_entries.async_update_entry(
+        config_entry,
+        minor_version=MagicConfigEntryVersion.MINOR,
+        version=MagicConfigEntryVersion.MAJOR,
+    )
 
-    if config_entry.version == 1:
-        new_data = migrate_seconds_to_minutes(new_data)
-
-    if old_data != new_data:
-
-        hass.config_entries.async_update_entry(
-            config_entry,
-            data=new_data,
-            minor_version=MagicConfigEntryVersion.MINOR,
-            version=MagicConfigEntryVersion.MAJOR,
-        )
-
-        _LOGGER.info(
-            "Migration to configuration version %s.%s successful: %s",
-            config_entry.version,
-            config_entry.minor_version,
-            str(new_data),
-        )
+    _LOGGER.info(
+        "Migration to configuration version %s.%s successful: %s",
+        config_entry.version,
+        config_entry.minor_version,
+        str(config_entry.data),
+    )
 
     return True
 

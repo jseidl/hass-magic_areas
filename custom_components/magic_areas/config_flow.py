@@ -167,6 +167,7 @@ class ConfigBase:
     def _build_options_schema(
         self,
         options,
+        *,
         saved_options=None,
         dynamic_validators=None,
         selectors=None,
@@ -1022,7 +1023,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
     async def do_feature_config(
-        self, name, options, dynamic_validators=None, selectors=None, user_input=None
+        self, *, name, options, dynamic_validators=None, selectors=None, user_input=None
     ):
         """Execute step for a generic feature."""
         errors = {}

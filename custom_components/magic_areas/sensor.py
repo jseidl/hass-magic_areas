@@ -42,6 +42,7 @@ async def async_setup_entry(
     """Set up the area sensor config entry."""
 
     area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    assert area is not None
 
     entities_to_add = []
 

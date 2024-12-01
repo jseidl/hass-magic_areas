@@ -47,22 +47,6 @@ def flatten_entity_list(input_list):
             yield i
 
 
-def areas_loaded(hass):
-    """Check if all Magic Areas are loaded."""
-
-    if MODULE_DATA not in hass.data:
-        return False
-
-    data = hass.data[MODULE_DATA]
-    for area_info in data.values():
-        area = area_info[DATA_AREA_OBJECT]
-        if not area.is_meta():
-            if not area.initialized:
-                return False
-
-    return True
-
-
 def basic_area_from_meta(area_id: str, name: str | None = None) -> BasicArea:
     """Create a BasicArea from a name."""
 
@@ -113,7 +97,7 @@ def seconds_to_minutes(current_value: int, default_value: int) -> int:
 
 def cleanup_removed_entries(
     hass: HomeAssistant, entity_list: list[Entity], old_ids: list[str]
-):
+) -> None:
     """Clean up old magic entities."""
     new_ids = [entity.entity_id for entity in entity_list]
     _LOGGER.debug(
@@ -129,7 +113,12 @@ def cleanup_removed_entries(
         entity_registry.async_remove(entity_id)
 
 
-def get_area_from_config_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+def get_area_from_config_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry
+) -> dict | None:
     """Return area object for given config entry."""
+
+    if config_entry.entry_id not in hass.data[MODULE_DATA]:
+        return None
 
     return hass.data[MODULE_DATA][config_entry.entry_id][DATA_AREA_OBJECT]
