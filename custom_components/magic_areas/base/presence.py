@@ -20,7 +20,9 @@ from homeassistant.helpers.event import (
     async_track_time_interval,
 )
 
-from ..const import (
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
     ATTR_ACTIVE_SENSORS,
     ATTR_AREAS,
     ATTR_CLEAR_TIMEOUT,
@@ -49,8 +51,6 @@ from ..const import (
     MetaAreaIcons,
     MetaAreaType,
 )
-from .entities import MagicEntity
-from .magic import MagicArea
 
 _LOGGER = logging.getLogger(__name__)
 

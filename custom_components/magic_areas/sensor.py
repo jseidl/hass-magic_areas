@@ -16,9 +16,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .base.entities import MagicEntity
-from .base.magic import MagicArea
-from .const import (
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
     AGGREGATE_MODE_SUM,
     AGGREGATE_MODE_TOTAL_SENSOR,
     CONF_AGGREGATES_MIN_ENTITIES,
@@ -29,7 +29,8 @@ from .const import (
     DEFAULT_SENSOR_PRECISION,
     MagicAreasFeatureInfoAggregates,
 )
-from .util import cleanup_removed_entries, get_area_from_config_entry
+from custom_components.magic_areas.helpers.area import get_area_from_config_entry
+from custom_components.magic_areas.util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
 

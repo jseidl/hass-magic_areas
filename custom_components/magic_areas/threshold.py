@@ -11,9 +11,9 @@ from homeassistant.components.threshold.binary_sensor import ThresholdSensor
 from homeassistant.const import ATTR_DEVICE_CLASS
 from homeassistant.helpers.entity import Entity
 
-from .base.entities import MagicEntity
-from .base.magic import MagicArea
-from .const import (
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,

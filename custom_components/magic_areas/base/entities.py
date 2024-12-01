@@ -5,14 +5,14 @@ import logging
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import (
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
     DOMAIN,
     MAGIC_DEVICE_ID_PREFIX,
     MAGICAREAS_UNIQUEID_PREFIX,
     META_AREAS,
     MagicAreasFeatureInfo,
 )
-from .magic import MagicArea
 
 _LOGGER = logging.getLogger(__name__)
 

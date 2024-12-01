@@ -24,9 +24,9 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import color as color_util
 
-from .base.entities import MagicEntity
-from .base.magic import MagicArea
-from .const import (
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,
     AREA_STATE_CLEAR,
@@ -45,7 +45,8 @@ from .const import (
     LightGroupCategory,
     MagicAreasFeatureInfoLightGroups,
 )
-from .util import cleanup_removed_entries, get_area_from_config_entry
+from custom_components.magic_areas.helpers.area import get_area_from_config_entry
+from custom_components.magic_areas.util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
 

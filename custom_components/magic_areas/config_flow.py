@@ -118,7 +118,11 @@ from .const import (
     MagicConfigEntryVersion,
     MetaAreaType,
 )
-from .util import basic_area_from_floor, basic_area_from_meta, basic_area_from_object
+from custom_components.magic_areas.helpers.area import (
+    basic_area_from_floor,
+    basic_area_from_meta,
+    basic_area_from_object,
+)
 
 _LOGGER = logging.getLogger(__name__)
 

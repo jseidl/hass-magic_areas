@@ -11,15 +11,15 @@ from homeassistant.helpers.entity_registry import (
     EventEntityRegistryUpdatedData,
 )
 
-from .base.magic import MagicArea
-from .const import (
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
     DATA_AREA_OBJECT,
     DATA_ENTITY_LISTENER,
     DATA_UNDO_UPDATE_LISTENER,
     MODULE_DATA,
     MagicConfigEntryVersion,
 )
-from .util import get_magic_area_for_config_entry
+from custom_components.magic_areas.helpers.area import get_magic_area_for_config_entry
 
 _LOGGER = logging.getLogger(__name__)
 

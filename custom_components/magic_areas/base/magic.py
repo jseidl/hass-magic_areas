@@ -16,7 +16,7 @@ from homeassistant.helpers.entity_registry import (
 )
 from homeassistant.util import slugify
 
-from ..const import (
+from custom_components.magic_areas.const import (
     AREA_STATE_OCCUPIED,
     AREA_TYPE_EXTERIOR,
     AREA_TYPE_INTERIOR,

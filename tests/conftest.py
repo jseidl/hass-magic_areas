@@ -8,6 +8,28 @@ from typing import Any
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
+)
+from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, CoverDeviceClass
+from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import (
+    CONF_PLATFORM,
+    LIGHT_LUX,
+    STATE_OFF,
+    UnitOfElectricCurrent,
+    UnitOfTemperature,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.area_registry import async_get as async_get_ar
+from homeassistant.helpers.entity_registry import async_get as async_get_er
+from homeassistant.setup import async_setup_component
+
+from .common import setup_test_component_platform
+from .mocks import MockBinarySensor, MockCover, MockLight, MockSensor
 from custom_components.magic_areas.const import (
     CONF_ACCENT_ENTITY,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
@@ -35,28 +57,6 @@ from custom_components.magic_areas.const import (
     DOMAIN,
     AreaType,
 )
-from homeassistant.components.binary_sensor import (
-    DOMAIN as BINARY_SENSOR_DOMAIN,
-    BinarySensorDeviceClass,
-)
-from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, CoverDeviceClass
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
-from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import (
-    CONF_PLATFORM,
-    LIGHT_LUX,
-    STATE_OFF,
-    UnitOfElectricCurrent,
-    UnitOfTemperature,
-)
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.area_registry import async_get as async_get_ar
-from homeassistant.helpers.entity_registry import async_get as async_get_er
-from homeassistant.setup import async_setup_component
-
-from .common import setup_test_component_platform
-from .mocks import MockBinarySensor, MockCover, MockLight, MockSensor
 
 AREA_NAME = "kitchen"
 _LOGGER = logging.getLogger(__name__)

@@ -2,12 +2,12 @@
 
 import logging
 
-from custom_components.magic_areas.const import AreaStates
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
 from .mocks import MockBinarySensor
+from custom_components.magic_areas.const import AreaStates
 
 _LOGGER = logging.getLogger(__name__)
 
