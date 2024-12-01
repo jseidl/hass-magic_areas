@@ -2,7 +2,6 @@
 
 import logging
 
-from custom_components.magic_areas.const import AreaStates
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.media_player.const import (
@@ -22,6 +21,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 
 from .mocks import MockBinarySensor, MockMediaPlayer
+from custom_components.magic_areas.const import AreaStates
 
 _LOGGER = logging.getLogger(__name__)
 

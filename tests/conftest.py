@@ -14,6 +14,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, CoverDeviceClass
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import (
@@ -29,7 +30,7 @@ from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.setup import async_setup_component
 
 from .common import setup_test_component_platform
-from .mocks import MockBinarySensor, MockCover, MockLight, MockSensor
+from .mocks import MockBinarySensor, MockCover, MockLight, MockMediaPlayer, MockSensor
 from custom_components.magic_areas.const import (
     CONF_ACCENT_ENTITY,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,

@@ -5,16 +5,8 @@ Small helper functions for area and Magic Area objects.
 
 import logging
 
-from custom_components.magic_areas.base.magic import BasicArea, MagicArea, MagicMetaArea
-from custom_components.magic_areas.const import (
-    DATA_AREA_OBJECT,
-    MODULE_DATA,
-    MetaAreaType,
-)
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ID, ATTR_NAME
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import (
     AreaEntry,
@@ -25,7 +17,15 @@ from homeassistant.helpers.floor_registry import (
     async_get as floorreg_async_get,
 )
 
+from custom_components.magic_areas.base.magic import BasicArea, MagicArea, MagicMetaArea
+from custom_components.magic_areas.const import (
+    DATA_AREA_OBJECT,
+    MODULE_DATA,
+    MetaAreaType,
+)
+
 _LOGGER = logging.getLogger(__name__)
+
 
 def basic_area_from_meta(area_id: str, name: str | None = None) -> BasicArea:
     """Create a BasicArea from a name."""
@@ -62,7 +62,6 @@ def basic_area_from_floor(floor: FloorEntry) -> BasicArea:
     basic_area.is_meta = True
 
     return basic_area
-
 
 
 def get_magic_area_for_config_entry(hass: HomeAssistant, config_entry: ConfigEntry):
