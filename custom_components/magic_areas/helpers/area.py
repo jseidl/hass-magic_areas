@@ -21,6 +21,7 @@ from custom_components.magic_areas.base.magic import BasicArea, MagicArea, Magic
 from custom_components.magic_areas.const import (
     DATA_AREA_OBJECT,
     MODULE_DATA,
+    MetaAreaIcons,
     MetaAreaType,
 )
 
@@ -30,13 +31,21 @@ _LOGGER = logging.getLogger(__name__)
 def basic_area_from_meta(area_id: str, name: str | None = None) -> BasicArea:
     """Create a BasicArea from a name."""
 
-    area = BasicArea()
+    basic_area = BasicArea()
     if not name:
-        area.name = area_id.capitalize()
-    area.id = area_id
-    area.is_meta = True
+        basic_area.name = area_id.capitalize()
+    basic_area.id = area_id
+    basic_area.is_meta = True
 
-    return area
+    meta_area_icon_map = {
+        MetaAreaType.EXTERIOR: MetaAreaIcons.EXTERIOR,
+        MetaAreaType.INTERIOR: MetaAreaIcons.INTERIOR,
+        MetaAreaType.GLOBAL: MetaAreaIcons.GLOBAL,
+    }
+
+    basic_area.icon = meta_area_icon_map.get(area_id, None)
+
+    return basic_area
 
 
 def basic_area_from_object(area: AreaEntry) -> BasicArea:
@@ -57,7 +66,12 @@ def basic_area_from_floor(floor: FloorEntry) -> BasicArea:
     basic_area = BasicArea()
     basic_area.name = floor.name
     basic_area.id = floor.floor_id
-    basic_area.icon = floor.icon
+    default_icon = (
+        f"mdi:home-floor-{floor.level}"  # noqa: E231
+        if floor.level is not None
+        else "mdi:home"  # noqa: E231
+    )
+    basic_area.icon = floor.icon or default_icon
     basic_area.floor_id = floor.floor_id
     basic_area.is_meta = True
 
