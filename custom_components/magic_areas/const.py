@@ -149,6 +149,11 @@ AGGREGATE_MODE_TOTAL_SENSOR = [
     SensorDeviceClass.ENERGY,
 ]
 
+AGGREGATE_MODE_TOTAL_INCREASING_SENSOR = [
+    SensorDeviceClass.GAS,
+    SensorDeviceClass.WATER,
+]
+
 
 class MagicConfigEntryVersion(IntEnum):
     """Magic Area config entry version."""
