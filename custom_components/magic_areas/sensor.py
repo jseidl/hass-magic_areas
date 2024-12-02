@@ -21,6 +21,7 @@ from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
     AGGREGATE_MODE_SUM,
     AGGREGATE_MODE_TOTAL_SENSOR,
+    AGGREGATE_MODE_TOTAL_INCREASING_SENSOR,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_FEATURE_AGGREGATION,
@@ -165,6 +166,13 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
         self._attr_suggested_display_precision = DEFAULT_SENSOR_PRECISION
         self.device_class = device_class
 
+        state_class = SensorStateClass.MEASUREMENT
+
+        if device_class in AGGREGATE_MODE_TOTAL_INCREASING_SENSOR:
+            state_class = SensorStateClass.TOTAL_INCREASING
+        elif device_class in AGGREGATE_MODE_TOTAL_SENSOR:
+            state_class = SensorStateClass.TOTAL
+
         SensorGroup.__init__(
             self,
             hass=area.hass,
@@ -172,11 +180,7 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
             entity_ids=entity_ids,
             ignore_non_numeric=True,
             sensor_type=ATTR_SUM if device_class in AGGREGATE_MODE_SUM else ATTR_MEAN,
-            state_class=(
-                SensorStateClass.TOTAL
-                if device_class in AGGREGATE_MODE_TOTAL_SENSOR
-                else SensorStateClass.MEASUREMENT
-            ),
+            state_class=state_class,
             unit_of_measurement=final_unit_of_measurement,
             name=None,
             unique_id=self._attr_unique_id,
