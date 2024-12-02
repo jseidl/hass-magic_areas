@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_NAME
+from homeassistant.const import ATTR_NAME, EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.entity_registry import (
     EVENT_ENTITY_REGISTRY_UPDATED,
@@ -40,39 +40,51 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             data={**config_entry.data, "entity_ts": datetime.now(UTC)},
         )
 
+    async def _async_setup_integration(*args, **kwargs) -> None:
+        """Load integration when Hass has finished starting."""
+        _LOGGER.debug("Setting up entry for %s", config_entry.data[ATTR_NAME])
+
+        magic_area: MagicArea = get_magic_area_for_config_entry(hass, config_entry)
+        assert magic_area is not None
+        await magic_area.initialize()
+
+        _LOGGER.debug(
+            "%s: Magic Area (%s) created: %s",
+            magic_area.name,
+            magic_area.id,
+            str(magic_area.config),
+        )
+
+        # Setup config uptate listener
+        undo_listener = config_entry.add_update_listener(async_update_options)
+
+        # Watch for area changes.
+        entity_listener = hass.bus.async_listen(
+            EVENT_ENTITY_REGISTRY_UPDATED,
+            _async_registry_updated,
+            _entity_registry_filter,
+        )
+
+        hass.data[MODULE_DATA][config_entry.entry_id] = {
+            DATA_AREA_OBJECT: magic_area,
+            DATA_UNDO_UPDATE_LISTENER: undo_listener,
+            DATA_ENTITY_LISTENER: entity_listener,
+        }
+
+        # Setup platforms
+        await hass.config_entries.async_forward_entry_setups(
+            config_entry, magic_area.available_platforms()
+        )
+
     hass.data.setdefault(MODULE_DATA, {})
 
-    magic_area: MagicArea = get_magic_area_for_config_entry(hass, config_entry)
-    assert magic_area is not None
-    await magic_area.initialize()
-
-    _LOGGER.debug(
-        "%s: Magic Area (%s) created: %s",
-        magic_area.name,
-        magic_area.id,
-        str(magic_area.config),
-    )
-
-    # Setup config uptate listener
-    undo_listener = config_entry.add_update_listener(async_update_options)
-
-    # Watch for area changes.
-    entity_listener = hass.bus.async_listen(
-        EVENT_ENTITY_REGISTRY_UPDATED,
-        _async_registry_updated,
-        _entity_registry_filter,
-    )
-
-    hass.data[MODULE_DATA][config_entry.entry_id] = {
-        DATA_AREA_OBJECT: magic_area,
-        DATA_UNDO_UPDATE_LISTENER: undo_listener,
-        DATA_ENTITY_LISTENER: entity_listener,
-    }
-
-    # Setup platforms
-    await hass.config_entries.async_forward_entry_setups(
-        config_entry, magic_area.available_platforms()
-    )
+    # Wait for Hass to have started before setting up.
+    if hass.is_running:
+        hass.create_task(_async_setup_integration())
+    else:
+        hass.bus.async_listen_once(
+            EVENT_HOMEASSISTANT_STARTED, _async_setup_integration
+        )
 
     return True
 
