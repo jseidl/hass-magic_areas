@@ -48,8 +48,6 @@ from custom_components.magic_areas.const import (
     AreaStates,
     MagicAreasEvents,
     MagicAreasFeatureInfoPresenceTracking,
-    MetaAreaIcons,
-    MetaAreaType,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -634,14 +632,6 @@ class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
     @property
     def icon(self):
         """Return the icon to be used for this entity."""
-        if self.area.is_meta():
-            if self.area.id == MetaAreaType.EXTERIOR:
-                return MetaAreaIcons.EXTERIOR
-            if self.area.id == MetaAreaType.INTERIOR:
-                return MetaAreaIcons.INTERIOR
-            if self.area.id == MetaAreaType.GLOBAL:
-                return MetaAreaIcons.GLOBAL
-
         return self.area.icon
 
     # Helpers
