@@ -13,9 +13,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_call_later
 
-from .base.entities import MagicEntity
-from .base.magic import MagicArea
-from .const import (
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
     CONF_FEATURE_CLIMATE_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
@@ -28,7 +28,8 @@ from .const import (
     MagicAreasFeatureInfoMediaPlayerGroups,
     MagicAreasFeatureInfoPresenceHold,
 )
-from .util import cleanup_removed_entries, get_area_from_config_entry
+from custom_components.magic_areas.helpers.area import get_area_from_config_entry
+from custom_components.magic_areas.util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ async def async_setup_entry(
     """Set up the area switch config entry."""
 
     area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    assert area is not None
 
     switch_entities = []
 

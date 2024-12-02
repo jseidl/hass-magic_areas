@@ -11,10 +11,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .base.entities import MagicEntity
-from .base.magic import MagicArea
-from .const import CONF_FEATURE_COVER_GROUPS, MagicAreasFeatureInfoCoverGroups
-from .util import cleanup_removed_entries, get_area_from_config_entry
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
+    CONF_FEATURE_COVER_GROUPS,
+    MagicAreasFeatureInfoCoverGroups,
+)
+from custom_components.magic_areas.helpers.area import get_area_from_config_entry
+from custom_components.magic_areas.util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
 DEPENDENCIES = ["magic_areas"]
@@ -28,6 +32,7 @@ async def async_setup_entry(
     """Set up the area cover config entry."""
 
     area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    assert area is not None
 
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_COVER_GROUPS):

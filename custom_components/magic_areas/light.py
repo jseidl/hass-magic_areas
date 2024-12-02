@@ -24,9 +24,9 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import color as color_util
 
-from .base.entities import MagicEntity
-from .base.magic import MagicArea
-from .const import (
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
     AREA_PRIORITY_STATES,
     AREA_STATE_BRIGHT,
     AREA_STATE_CLEAR,
@@ -45,7 +45,8 @@ from .const import (
     LightGroupCategory,
     MagicAreasFeatureInfoLightGroups,
 )
-from .util import cleanup_removed_entries, get_area_from_config_entry
+from custom_components.magic_areas.helpers.area import get_area_from_config_entry
+from custom_components.magic_areas.util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,6 +55,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the area light config entry."""
 
     area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    assert area is not None
 
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_LIGHT_GROUPS):
@@ -76,9 +78,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
         # Create extended light groups
         for category in LIGHT_GROUP_CATEGORIES:
-            category_lights = area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
-                category
-            )
+            category_lights = [
+                light_entity
+                for light_entity in area.feature_config(CONF_FEATURE_LIGHT_GROUPS).get(
+                    category
+                )
+                if light_entity in light_entities
+            ]
 
             if category_lights:
                 _LOGGER.debug(

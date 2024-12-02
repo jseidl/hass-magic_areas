@@ -13,10 +13,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .base.entities import MagicEntity
-from .base.magic import MagicArea
-from .base.presence import AreaStateBinarySensor
-from .const import (
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.base.presence import AreaStateBinarySensor
+from custom_components.magic_areas.const import (
     AGGREGATE_MODE_ALL,
     CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     CONF_AGGREGATES_MIN_ENTITIES,
@@ -28,8 +28,9 @@ from .const import (
     MagicAreasFeatureInfoAggregates,
     MagicAreasFeatureInfoHealth,
 )
-from .threshold import create_illuminance_threshold
-from .util import cleanup_removed_entries, get_area_from_config_entry
+from custom_components.magic_areas.helpers.area import get_area_from_config_entry
+from custom_components.magic_areas.threshold import create_illuminance_threshold
+from custom_components.magic_areas.util import cleanup_removed_entries
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ async def async_setup_entry(
     """Set up the area binary sensor config entry."""
 
     area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    assert area is not None
 
     entities = []
 

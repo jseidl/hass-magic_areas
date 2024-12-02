@@ -1,16 +1,14 @@
 """Classes for Magic Areas and Meta Areas."""
 
+from collections.abc import Iterable
 from datetime import UTC, datetime
 import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from homeassistant.const import (
-    ATTR_DEVICE_CLASS,
-    ATTR_ENTITY_ID,
-    EVENT_HOMEASSISTANT_STARTED,
-    STATE_ON,
-)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import async_get as devicereg_async_get
 from homeassistant.helpers.entity_registry import (
     RegistryEntry,
@@ -18,7 +16,7 @@ from homeassistant.helpers.entity_registry import (
 )
 from homeassistant.util import slugify
 
-from ..const import (
+from custom_components.magic_areas.const import (
     AREA_STATE_OCCUPIED,
     AREA_TYPE_EXTERIOR,
     AREA_TYPE_INTERIOR,
@@ -33,8 +31,6 @@ from ..const import (
     CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
-    EVENT_MAGICAREAS_AREA_READY,
-    EVENT_MAGICAREAS_READY,
     MAGIC_AREAS_COMPONENTS,
     MAGIC_AREAS_COMPONENTS_GLOBAL,
     MAGIC_AREAS_COMPONENTS_META,
@@ -42,7 +38,36 @@ from ..const import (
     MODULE_DATA,
     MetaAreaType,
 )
-from ..util import areas_loaded, flatten_entity_list, is_entity_list
+
+# Helpers
+
+
+def is_entity_list(item):
+    """Check if item is a list."""
+    basestring = (str, bytes)
+    return isinstance(item, Iterable) and not isinstance(item, basestring)
+
+
+def flatten_entity_list(input_list):
+    """Recursively flatten a nested list into a flat list."""
+    for i in input_list:
+        if is_entity_list(i):
+            yield from flatten_entity_list(i)
+        else:
+            yield i
+
+
+# Classes
+
+
+class BasicArea:
+    """An interchangeable area object for Magic Areas to consume."""
+
+    id: str
+    name: str | None = None
+    icon: str | None = None
+    floor_id: str | None = None
+    is_meta: bool = False
 
 
 class MagicArea:
@@ -53,24 +78,21 @@ class MagicArea:
 
     def __init__(
         self,
-        hass,
-        area,
-        config,
-        listen_event=EVENT_HOMEASSISTANT_STARTED,
-        init_on_hass_running=True,
+        hass: HomeAssistant,
+        area: BasicArea,
+        config: ConfigEntry,
     ) -> None:
-        """Initialize area."""
+        """Initialize the magic area with all the stuff."""
+        self.hass: HomeAssistant = hass
+        self.name: str = area.name
+        # Default to the icon for the area.
+        self.icon: str = area.icon or "mdi:room"
+        self.id: str = area.id
+        self.slug: str = slugify(self.name)
+        self.hass_config: ConfigEntry = config
+        self.initialized: bool = False
+        self.floor_id: str | None = None
         self.logger = logging.getLogger(__name__)
-
-        self.hass = hass
-        self.name = area.name
-        self.id = area.id
-        self.icon = area.icon
-        self.slug = slugify(self.name)
-        self.hass_config = config
-        self.initialized = False
-        self.floor_id = area.floor_id
-        self.is_meta_area = area.is_meta
 
         # Merged options
         area_config = dict(config.data)
@@ -78,35 +100,23 @@ class MagicArea:
             area_config.update(config.options)
         self.config = area_config
 
-        self.entities = {}
-        self.magic_entities = {}
+        self.entities: dict[str, list[dict[str, str]]] = {}
+        self.magic_entities: dict[str, list[dict[str, str]]] = {}
 
-        self.last_changed = datetime.now(UTC)
+        self.last_changed: int = datetime.now(UTC)  # type: ignore  # noqa: PGH003
+
         self.states = []
 
-        self.loaded_platforms = []
-
-        # Add callback for initialization
-        if self.hass.is_running and init_on_hass_running:
-            self.hass.async_create_task(self.initialize())
-        else:
-            self.hass.bus.async_listen_once(listen_event, self.initialize)
+        self.loaded_platforms: list[str] = []
 
         self.logger.debug("%s: Primed for initialization.", self.name)
 
     def finalize_init(self):
         """Finalize initialization of the area."""
         self.initialized = True
-
-        self.hass.bus.async_fire(EVENT_MAGICAREAS_AREA_READY, {"id": self.id})
-
-        if not self.is_meta():
-            # Check if we finished loading all areas
-            if areas_loaded(self.hass):
-                self.hass.bus.async_fire(EVENT_MAGICAREAS_READY)
-
-        area_type = "Meta-Area" if self.is_meta() else "Area"
-        self.logger.debug("%s (%s) initialized.", self.name, area_type)
+        self.logger.debug(
+            "%s (%s) initialized.", self.name, "Meta-Area" if self.is_meta() else "Area"
+        )
 
     def is_occupied(self) -> bool:
         """Return if area is occupied."""
@@ -387,32 +397,6 @@ class MagicArea:
 class MagicMetaArea(MagicArea):
     """Magic Meta Area class."""
 
-    def __init__(self, hass, area, config) -> None:
-        """Initialize Meta Area."""
-        super().__init__(
-            hass,
-            area,
-            config,
-            EVENT_MAGICAREAS_READY,
-            init_on_hass_running=areas_loaded(hass),
-        )
-
-    def areas_loaded(self, hass=None):
-        """Check if all areas have finished loading."""
-        hass_object = hass if hass else self.hass
-
-        if MODULE_DATA not in hass_object.data:
-            return False
-
-        data = hass_object.data[MODULE_DATA]
-        for area_info in data.values():
-            area = area_info[DATA_AREA_OBJECT]
-            if area.config.get(CONF_TYPE) != AREA_TYPE_META:
-                if not area.initialized:
-                    return False
-
-        return True
-
     def get_active_areas(self):
         """Return areas that are occupied."""
         areas = self.get_child_areas()
@@ -443,7 +427,7 @@ class MagicMetaArea(MagicArea):
         for area_info in data.values():
             area = area_info[DATA_AREA_OBJECT]
 
-            if area.is_meta_area:
+            if area.is_meta():
                 continue
 
             if self.floor_id:
@@ -463,13 +447,6 @@ class MagicMetaArea(MagicArea):
         """Initialize Meta area."""
         if self.initialized:
             self.logger.warning("%s: Already initialized, ignoring.", self.name)
-            return False
-
-        # Meta-areas need to wait until other magic areas are loaded.
-        if not self.areas_loaded():
-            self.logger.warning(
-                "%s: Non-meta areas not loaded. This shouldn't happen.", self.name
-            )
             return False
 
         self.logger.debug("%s: Initializing meta area...", self.name)

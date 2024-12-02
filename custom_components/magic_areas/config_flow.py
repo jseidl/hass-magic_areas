@@ -118,7 +118,11 @@ from .const import (
     MagicConfigEntryVersion,
     MetaAreaType,
 )
-from .util import basic_area_from_floor, basic_area_from_meta, basic_area_from_object
+from custom_components.magic_areas.helpers.area import (
+    basic_area_from_floor,
+    basic_area_from_meta,
+    basic_area_from_object,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -167,6 +171,7 @@ class ConfigBase:
     def _build_options_schema(
         self,
         options,
+        *,
         saved_options=None,
         dynamic_validators=None,
         selectors=None,
@@ -1022,7 +1027,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
     async def do_feature_config(
-        self, name, options, dynamic_validators=None, selectors=None, user_input=None
+        self, *, name, options, dynamic_validators=None, selectors=None, user_input=None
     ):
         """Execute step for a generic feature."""
         errors = {}

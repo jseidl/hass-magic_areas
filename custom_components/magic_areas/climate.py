@@ -58,9 +58,9 @@ from homeassistant.core import Event, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
 
-from .base.entities import MagicEntity
-from .base.magic import MagicArea
-from .const import (
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
     AREA_STATE_CLEAR,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_FEATURE_CLIMATE_GROUPS,
@@ -68,7 +68,8 @@ from .const import (
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     MagicAreasFeatureInfoClimateGroups,
 )
-from .util import cleanup_removed_entries, get_area_from_config_entry
+from custom_components.magic_areas.helpers.area import get_area_from_config_entry
+from custom_components.magic_areas.util import cleanup_removed_entries
 
 # Climate Group Constants
 
@@ -91,6 +92,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the area climate config entry."""
 
     area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    assert area is not None
 
     # Check feature availability
     if not area.has_feature(CONF_FEATURE_CLIMATE_GROUPS):

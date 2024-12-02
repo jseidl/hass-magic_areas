@@ -5,13 +5,14 @@ import logging
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ..const import (
+from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.const import (
     DOMAIN,
     MAGIC_DEVICE_ID_PREFIX,
     MAGICAREAS_UNIQUEID_PREFIX,
+    META_AREAS,
     MagicAreasFeatureInfo,
 )
-from .magic import MagicArea
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -124,5 +125,9 @@ class MagicEntity(RestoreEntity):
             name=self.area.name,
             manufacturer="Magic Areas",
             model="Magic Area",
-            translation_key=self.area.slug if self.area.is_meta() else None,
+            translation_key=(
+                self.area.slug
+                if (self.area.is_meta() and self.area.name in META_AREAS)
+                else None
+            ),
         )
