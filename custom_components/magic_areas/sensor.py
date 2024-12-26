@@ -20,8 +20,8 @@ from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
     AGGREGATE_MODE_SUM,
-    AGGREGATE_MODE_TOTAL_SENSOR,
     AGGREGATE_MODE_TOTAL_INCREASING_SENSOR,
+    AGGREGATE_MODE_TOTAL_SENSOR,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_FEATURE_AGGREGATION,
