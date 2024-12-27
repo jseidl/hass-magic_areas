@@ -3,24 +3,18 @@
 from collections import Counter
 import logging
 
-from homeassistant.components.group.sensor import (
-    ATTR_MEAN,
-    ATTR_SUM,
-    SensorGroup,
-)
-
+from homeassistant.components.group.sensor import ATTR_MEAN, ATTR_SUM, SensorGroup
 from homeassistant.components.sensor.const import (
+    DEVICE_CLASSES,
     DOMAIN as SENSOR_DOMAIN,
     SensorDeviceClass,
     SensorStateClass,
-    DEVICE_CLASSES,
 )
 from homeassistant.config_entries import ConfigEntry
-
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
-    ATTR_UNIT_OF_MEASUREMENT,
     ATTR_ENTITY_ID,
+    ATTR_UNIT_OF_MEASUREMENT,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity

@@ -5,13 +5,14 @@ from collections.abc import Sequence
 import functools
 import logging
 import pathlib
-from typing import NoReturn
+from typing import Any, NoReturn
 from unittest.mock import Mock, patch
 
 import voluptuous as vol
 
 from homeassistant import loader
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_NAME
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
@@ -23,7 +24,20 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
+from .const import MOCK_AREAS, MockAreaIds
 from .mocks import MockModule, MockPlatform
+from custom_components.magic_areas.const import (
+    CONF_CLEAR_TIMEOUT,
+    CONF_ENABLED_FEATURES,
+    CONF_EXCLUDE_ENTITIES,
+    CONF_EXTENDED_TIMEOUT,
+    CONF_ID,
+    CONF_INCLUDE_ENTITIES,
+    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_TYPE,
+    CONF_UPDATE_INTERVAL,
+    DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -210,3 +224,26 @@ class VirtualClock:
             ),
         ):
             yield
+
+
+def get_basic_config_entry_data(area_id: MockAreaIds) -> dict[str, Any]:
+    """Return config entry data for given area id."""
+
+    area_data = MOCK_AREAS.get(area_id, None)
+
+    assert area_data is not None
+
+    data = {
+        ATTR_NAME: area_id.title(),
+        CONF_ID: area_id.value,
+        CONF_CLEAR_TIMEOUT: 0,
+        CONF_UPDATE_INTERVAL: 60,
+        CONF_EXTENDED_TIMEOUT: 5,
+        CONF_TYPE: area_data[CONF_TYPE],
+        CONF_EXCLUDE_ENTITIES: [],
+        CONF_INCLUDE_ENTITIES: [],
+        CONF_PRESENCE_SENSOR_DEVICE_CLASS: DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
+        CONF_ENABLED_FEATURES: {},
+    }
+
+    return data

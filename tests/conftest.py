@@ -2,8 +2,6 @@
 
 from collections.abc import AsyncGenerator, Generator
 import logging
-from enum import StrEnum, auto
-from logging import config
 from random import randint
 from typing import Any
 
@@ -29,161 +27,39 @@ from homeassistant.const import (
     STATE_OFF,
     UnitOfElectricCurrent,
     UnitOfTemperature,
-    ATTR_FLOOR_ID,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
 from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.setup import async_setup_component
 
-from .common import setup_test_component_platform
+from .common import get_basic_config_entry_data, setup_test_component_platform
+from .const import DEFAULT_MOCK_AREA, MOCK_AREAS, MockAreaIds
 from .mocks import MockBinarySensor, MockCover, MockLight, MockMediaPlayer, MockSensor
 from custom_components.magic_areas.const import (
     CONF_ACCENT_ENTITY,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
     CONF_AGGREGATES_MIN_ENTITIES,
-    CONF_CLEAR_TIMEOUT,
     CONF_DARK_ENTITY,
     CONF_ENABLED_FEATURES,
-    CONF_EXCLUDE_ENTITIES,
-    CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_COVER_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
-    CONF_ID,
-    CONF_INCLUDE_ENTITIES,
     CONF_KEEP_ONLY_ENTITIES,
-    CONF_NAME,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
     CONF_OVERHEAD_LIGHTS,
-    CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_SECONDARY_STATES,
     CONF_SLEEP_ENTITY,
     CONF_TYPE,
-    CONF_UPDATE_INTERVAL,
-    DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
     DOMAIN,
     AreaStates,
     AreaType,
 )
 
-
-class MockAreaIds(StrEnum):
-    """StrEnum with ids of Mock Areas."""
-
-    KITCHEN = auto()
-    LIVING_ROOM = auto()
-    DINING_ROOM = auto()
-    MASTER_BEDROOM = auto()
-    GUEST_BEDROOM = auto()
-    GARAGE = auto()
-    BACKYARD = auto()
-    FRONT_YARD = auto()
-    INTERIOR = auto()
-    EXTERIOR = auto()
-    GLOBAL = auto()
-    # GROUND_LEVEL = auto()
-    # FIRST_FLOOR = auto()
-    # SECOND_FLOOR = auto()
-
-
-class MockFloorIds(StrEnum):
-    """StrEnum with ids of Mock Floors."""
-
-    GROUND_LEVEL = auto()
-    FIRST_FLOOR = auto()
-    SECOND_FLOOR = auto()
-
-
-MOCK_AREAS: dict[MockAreaIds, dict[str, str | None]] = {
-    MockAreaIds.KITCHEN: {
-        CONF_TYPE: AreaType.INTERIOR,
-        ATTR_FLOOR_ID: MockFloorIds.FIRST_FLOOR,
-    },
-    MockAreaIds.LIVING_ROOM: {
-        CONF_TYPE: AreaType.INTERIOR,
-        ATTR_FLOOR_ID: MockFloorIds.FIRST_FLOOR,
-    },
-    MockAreaIds.DINING_ROOM: {
-        CONF_TYPE: AreaType.INTERIOR,
-        ATTR_FLOOR_ID: MockFloorIds.FIRST_FLOOR,
-    },
-    MockAreaIds.MASTER_BEDROOM: {
-        CONF_TYPE: AreaType.INTERIOR,
-        ATTR_FLOOR_ID: MockFloorIds.SECOND_FLOOR,
-    },
-    MockAreaIds.GUEST_BEDROOM: {
-        CONF_TYPE: AreaType.INTERIOR,
-        ATTR_FLOOR_ID: MockFloorIds.SECOND_FLOOR,
-    },
-    MockAreaIds.GARAGE: {
-        CONF_TYPE: AreaType.INTERIOR,
-        ATTR_FLOOR_ID: MockFloorIds.GROUND_LEVEL,
-    },
-    MockAreaIds.BACKYARD: {
-        CONF_TYPE: AreaType.EXTERIOR,
-        ATTR_FLOOR_ID: MockFloorIds.GROUND_LEVEL,
-    },
-    MockAreaIds.FRONT_YARD: {
-        CONF_TYPE: AreaType.EXTERIOR,
-        ATTR_FLOOR_ID: MockFloorIds.GROUND_LEVEL,
-    },
-    MockAreaIds.INTERIOR: {
-        CONF_TYPE: AreaType.META,
-        ATTR_FLOOR_ID: None,
-    },
-    MockAreaIds.EXTERIOR: {
-        CONF_TYPE: AreaType.META,
-        ATTR_FLOOR_ID: None,
-    },
-    MockAreaIds.GLOBAL: {
-        CONF_TYPE: AreaType.META,
-        ATTR_FLOOR_ID: None,
-    },
-    # MockAreaIds.GROUND_LEVEL: {
-    #     CONF_TYPE: AreaType.META,
-    #     ATTR_FLOOR_ID: MockFloorIds.GROUND_LEVEL,
-    # },
-    # MockAreaIds.FIRST_FLOOR: {
-    #     CONF_TYPE: AreaType.META,
-    #     ATTR_FLOOR_ID: MockFloorIds.FIRST_FLOOR,
-    # },
-    # MockAreaIds.SECOND_FLOOR: {
-    #     CONF_TYPE: AreaType.META,
-    #     ATTR_FLOOR_ID: MockFloorIds.SECOND_FLOOR,
-    # },
-}
-
-DEFAULT_MOCK_AREA: MockAreaIds = MockAreaIds.KITCHEN
-
 _LOGGER = logging.getLogger(__name__)
-
-
-def get_basic_config_entry_data(area_id: MockAreaIds) -> dict[str, Any]:
-    """Return config entry data for given area id."""
-
-    area_data = MOCK_AREAS.get(area_id, None)
-
-    assert area_data is not None
-
-    BASIC_CONFIG_ENTRY_DATA = {
-        CONF_NAME: area_id.title(),
-        CONF_ID: area_id.value,
-        CONF_CLEAR_TIMEOUT: 0,
-        CONF_UPDATE_INTERVAL: 60,
-        CONF_EXTENDED_TIMEOUT: 5,
-        CONF_TYPE: area_data[CONF_TYPE],
-        CONF_EXCLUDE_ENTITIES: [],
-        CONF_INCLUDE_ENTITIES: [],
-        CONF_PRESENCE_SENSOR_DEVICE_CLASS: DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
-        CONF_ENABLED_FEATURES: {},
-    }
-
-    return BASIC_CONFIG_ENTRY_DATA
-
 
 # Helpers
 
@@ -191,9 +67,12 @@ def get_basic_config_entry_data(area_id: MockAreaIds) -> dict[str, Any]:
 async def init_integration(
     hass: HomeAssistant,
     config_entries: list[MockConfigEntry],
-    areas: list[MockAreaIds] = [DEFAULT_MOCK_AREA],
+    areas: list[MockAreaIds] | None = None,
 ) -> None:
     """Set up the integration."""
+
+    if not areas:
+        areas = [DEFAULT_MOCK_AREA]
 
     # Register areas
     registry = async_get_ar(hass)
