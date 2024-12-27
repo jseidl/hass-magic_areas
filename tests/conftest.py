@@ -2,6 +2,8 @@
 
 from collections.abc import AsyncGenerator, Generator
 import logging
+from enum import StrEnum, auto
+from logging import config
 from random import randint
 from typing import Any
 
@@ -12,10 +14,14 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
-from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, CoverDeviceClass
+from homeassistant.components.cover import CoverDeviceClass
+from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
+from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
+from homeassistant.components.sensor.const import (
+    DOMAIN as SENSOR_DOMAIN,
+    SensorDeviceClass,
+)
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import (
     CONF_PLATFORM,
@@ -23,6 +29,7 @@ from homeassistant.const import (
     STATE_OFF,
     UnitOfElectricCurrent,
     UnitOfTemperature,
+    ATTR_FLOOR_ID,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
@@ -63,31 +70,135 @@ from custom_components.magic_areas.const import (
     AreaType,
 )
 
-AREA_NAME = "kitchen"
+
+class MockAreaIds(StrEnum):
+    """StrEnum with ids of Mock Areas."""
+
+    KITCHEN = auto()
+    LIVING_ROOM = auto()
+    DINING_ROOM = auto()
+    MASTER_BEDROOM = auto()
+    GUEST_BEDROOM = auto()
+    GARAGE = auto()
+    BACKYARD = auto()
+    FRONT_YARD = auto()
+    INTERIOR = auto()
+    EXTERIOR = auto()
+    GLOBAL = auto()
+    # GROUND_LEVEL = auto()
+    # FIRST_FLOOR = auto()
+    # SECOND_FLOOR = auto()
+
+
+class MockFloorIds(StrEnum):
+    """StrEnum with ids of Mock Floors."""
+
+    GROUND_LEVEL = auto()
+    FIRST_FLOOR = auto()
+    SECOND_FLOOR = auto()
+
+
+MOCK_AREAS: dict[MockAreaIds, dict[str, str | None]] = {
+    MockAreaIds.KITCHEN: {
+        CONF_TYPE: AreaType.INTERIOR,
+        ATTR_FLOOR_ID: MockFloorIds.FIRST_FLOOR,
+    },
+    MockAreaIds.LIVING_ROOM: {
+        CONF_TYPE: AreaType.INTERIOR,
+        ATTR_FLOOR_ID: MockFloorIds.FIRST_FLOOR,
+    },
+    MockAreaIds.DINING_ROOM: {
+        CONF_TYPE: AreaType.INTERIOR,
+        ATTR_FLOOR_ID: MockFloorIds.FIRST_FLOOR,
+    },
+    MockAreaIds.MASTER_BEDROOM: {
+        CONF_TYPE: AreaType.INTERIOR,
+        ATTR_FLOOR_ID: MockFloorIds.SECOND_FLOOR,
+    },
+    MockAreaIds.GUEST_BEDROOM: {
+        CONF_TYPE: AreaType.INTERIOR,
+        ATTR_FLOOR_ID: MockFloorIds.SECOND_FLOOR,
+    },
+    MockAreaIds.GARAGE: {
+        CONF_TYPE: AreaType.INTERIOR,
+        ATTR_FLOOR_ID: MockFloorIds.GROUND_LEVEL,
+    },
+    MockAreaIds.BACKYARD: {
+        CONF_TYPE: AreaType.EXTERIOR,
+        ATTR_FLOOR_ID: MockFloorIds.GROUND_LEVEL,
+    },
+    MockAreaIds.FRONT_YARD: {
+        CONF_TYPE: AreaType.EXTERIOR,
+        ATTR_FLOOR_ID: MockFloorIds.GROUND_LEVEL,
+    },
+    MockAreaIds.INTERIOR: {
+        CONF_TYPE: AreaType.META,
+        ATTR_FLOOR_ID: None,
+    },
+    MockAreaIds.EXTERIOR: {
+        CONF_TYPE: AreaType.META,
+        ATTR_FLOOR_ID: None,
+    },
+    MockAreaIds.GLOBAL: {
+        CONF_TYPE: AreaType.META,
+        ATTR_FLOOR_ID: None,
+    },
+    # MockAreaIds.GROUND_LEVEL: {
+    #     CONF_TYPE: AreaType.META,
+    #     ATTR_FLOOR_ID: MockFloorIds.GROUND_LEVEL,
+    # },
+    # MockAreaIds.FIRST_FLOOR: {
+    #     CONF_TYPE: AreaType.META,
+    #     ATTR_FLOOR_ID: MockFloorIds.FIRST_FLOOR,
+    # },
+    # MockAreaIds.SECOND_FLOOR: {
+    #     CONF_TYPE: AreaType.META,
+    #     ATTR_FLOOR_ID: MockFloorIds.SECOND_FLOOR,
+    # },
+}
+
+DEFAULT_MOCK_AREA: MockAreaIds = MockAreaIds.KITCHEN
+
 _LOGGER = logging.getLogger(__name__)
 
-BASIC_CONFIG_ENTRY_DATA = {
-    CONF_NAME: AREA_NAME,
-    CONF_ID: AREA_NAME,
-    CONF_CLEAR_TIMEOUT: 0,
-    CONF_UPDATE_INTERVAL: 60,
-    CONF_EXTENDED_TIMEOUT: 5,
-    CONF_TYPE: AreaType.INTERIOR,
-    CONF_EXCLUDE_ENTITIES: [],
-    CONF_INCLUDE_ENTITIES: [],
-    CONF_PRESENCE_SENSOR_DEVICE_CLASS: DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
-    CONF_ENABLED_FEATURES: {},
-}
+
+def get_basic_config_entry_data(area_id: MockAreaIds) -> dict[str, Any]:
+    """Return config entry data for given area id."""
+
+    area_data = MOCK_AREAS.get(area_id, None)
+
+    assert area_data is not None
+
+    BASIC_CONFIG_ENTRY_DATA = {
+        CONF_NAME: area_id.title(),
+        CONF_ID: area_id.value,
+        CONF_CLEAR_TIMEOUT: 0,
+        CONF_UPDATE_INTERVAL: 60,
+        CONF_EXTENDED_TIMEOUT: 5,
+        CONF_TYPE: area_data[CONF_TYPE],
+        CONF_EXCLUDE_ENTITIES: [],
+        CONF_INCLUDE_ENTITIES: [],
+        CONF_PRESENCE_SENSOR_DEVICE_CLASS: DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
+        CONF_ENABLED_FEATURES: {},
+    }
+
+    return BASIC_CONFIG_ENTRY_DATA
+
 
 # Helpers
 
 
 async def init_integration(
-    hass: HomeAssistant, config_entries: list[MockConfigEntry]
+    hass: HomeAssistant,
+    config_entries: list[MockConfigEntry],
+    areas: list[MockAreaIds] = [DEFAULT_MOCK_AREA],
 ) -> None:
     """Set up the integration."""
+
+    # Register areas
     registry = async_get_ar(hass)
-    registry.async_get_or_create(AREA_NAME)
+    for area in areas:
+        registry.async_get_or_create(area.value)
 
     for config_entry in config_entries:
         config_entry.add_to_hass(hass)
@@ -117,18 +228,32 @@ async def shutdown_integration(
 
 
 async def setup_mock_entities(
-    hass: HomeAssistant, domain: str, entities: list[Any]
+    hass: HomeAssistant, domain: str, area_entity_map: dict[MockAreaIds, list[Any]]
 ) -> None:
     """Set up multiple mock entities at once."""
 
-    setup_test_component_platform(hass, domain, entities)
+    all_entities: list[Any] = []
+    entity_area_map: dict[Any, MockAreaIds] = {}
+
+    for area_id, entity_list in area_entity_map.items():
+        for entity in entity_list:
+            all_entities.append(entity)
+            entity_area_map[entity.unique_id] = area_id
+
+    # Setup entities
+    setup_test_component_platform(hass, domain, all_entities)
     assert await async_setup_component(hass, domain, {domain: {CONF_PLATFORM: "test"}})
     await hass.async_block_till_done()
+
+    # Update area IDs
     entity_registry = async_get_er(hass)
-    for mock_sensor in entities:
+    for entity in all_entities:
+        assert entity is not None
+        assert entity.entity_id is not None
+        assert entity.unique_id is not None
         entity_registry.async_update_entity(
-            mock_sensor.entity_id,
-            area_id=AREA_NAME,
+            entity.entity_id,
+            area_id=entity_area_map[entity.unique_id].value,
         )
     await hass.async_block_till_done()
 
@@ -151,14 +276,14 @@ def auto_enable_custom_integrations(
 @pytest.fixture(name="config_entry")
 def mock_config_entry() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
-    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
     return MockConfigEntry(domain=DOMAIN, data=data)
 
 
 @pytest.fixture(name="secondary_states_config_entry")
 def mock_config_entry_secondary_states() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
-    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
     data.update(
         {
             CONF_SECONDARY_STATES: {
@@ -174,7 +299,7 @@ def mock_config_entry_secondary_states() -> MockConfigEntry:
 @pytest.fixture(name="keep_only_sensor_config_entry")
 def mock_config_entry_keep_only_sensor() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
-    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
     data.update({CONF_KEEP_ONLY_ENTITIES: ["binary_sensor.motion_sensor_1"]})
     return MockConfigEntry(domain=DOMAIN, data=data)
 
@@ -182,7 +307,7 @@ def mock_config_entry_keep_only_sensor() -> MockConfigEntry:
 @pytest.fixture(name="aggregates_config_entry")
 def mock_config_entry_aggregates() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
-    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
     data.update(
         {
             CONF_ENABLED_FEATURES: {
@@ -196,7 +321,7 @@ def mock_config_entry_aggregates() -> MockConfigEntry:
 @pytest.fixture(name="threshold_config_entry")
 def mock_config_entry_threshold() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
-    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
     data.update(
         {
             CONF_ENABLED_FEATURES: {
@@ -214,7 +339,7 @@ def mock_config_entry_threshold() -> MockConfigEntry:
 @pytest.fixture(name="cover_groups_config_entry")
 def mock_config_entry_cover_groups() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
-    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
     data.update({CONF_ENABLED_FEATURES: {CONF_FEATURE_COVER_GROUPS: {}}})
     return MockConfigEntry(domain=DOMAIN, data=data)
 
@@ -222,7 +347,7 @@ def mock_config_entry_cover_groups() -> MockConfigEntry:
 @pytest.fixture(name="basic_light_group_config_entry")
 def mock_config_entry_light_group_basic() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
-    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
     data.update(
         {
             CONF_ENABLED_FEATURES: {
@@ -242,22 +367,14 @@ def mock_config_entry_light_group_basic() -> MockConfigEntry:
 @pytest.fixture(name="area_aware_media_player_global_config_entry")
 def mock_config_entry_area_aware_media_player_global() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
-    data = {
-        CONF_NAME: "Global",  # @FIXME use constant
-        CONF_ID: "global",  # @FIXME use constant
-        CONF_TYPE: AreaType.META,
-        CONF_EXCLUDE_ENTITIES: [],
-        CONF_UPDATE_INTERVAL: 60,
-        CONF_CLEAR_TIMEOUT: 0,
-        CONF_ENABLED_FEATURES: {},
-    }
+    data = get_basic_config_entry_data(MockAreaIds.GLOBAL)
     return MockConfigEntry(domain=DOMAIN, data=data)
 
 
 @pytest.fixture(name="area_aware_media_player_area_config_entry")
 def mock_config_entry_area_aware_media_player_area() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
-    data = dict(BASIC_CONFIG_ENTRY_DATA)
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
     data.update(
         {
             CONF_ENABLED_FEATURES: {
@@ -269,6 +386,18 @@ def mock_config_entry_area_aware_media_player_area() -> MockConfigEntry:
         }
     )
     return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="all_areas_with_meta_config_entry")
+def mock_config_entry_all_areas_with_meta_config_entry() -> list[MockConfigEntry]:
+    """Fixture for mock configuration entry."""
+
+    config_entries: list[MockConfigEntry] = []
+    for area_entry in MockAreaIds:
+        data = get_basic_config_entry_data(area_entry)
+        config_entries.append(MockConfigEntry(domain=DOMAIN, data=data))
+
+    return config_entries
 
 
 # Entities
@@ -294,7 +423,9 @@ async def setup_secondary_state_sensors(hass: HomeAssistant) -> list[MockBinaryS
             device_class=None,
         ),
     ]
-    await setup_mock_entities(hass, BINARY_SENSOR_DOMAIN, mock_binary_sensor_entities)
+    await setup_mock_entities(
+        hass, BINARY_SENSOR_DOMAIN, {DEFAULT_MOCK_AREA: mock_binary_sensor_entities}
+    )
     return mock_binary_sensor_entities
 
 
@@ -310,7 +441,9 @@ async def setup_entities_binary_sensor_motion_one(
             device_class=BinarySensorDeviceClass.MOTION,
         )
     ]
-    await setup_mock_entities(hass, BINARY_SENSOR_DOMAIN, mock_binary_sensor_entities)
+    await setup_mock_entities(
+        hass, BINARY_SENSOR_DOMAIN, {DEFAULT_MOCK_AREA: mock_binary_sensor_entities}
+    )
     return mock_binary_sensor_entities
 
 
@@ -329,7 +462,9 @@ async def setup_entities_binary_sensor_motion_multiple(
                 device_class=BinarySensorDeviceClass.MOTION,
             )
         )
-    await setup_mock_entities(hass, BINARY_SENSOR_DOMAIN, mock_binary_sensor_entities)
+    await setup_mock_entities(
+        hass, BINARY_SENSOR_DOMAIN, {DEFAULT_MOCK_AREA: mock_binary_sensor_entities}
+    )
     return mock_binary_sensor_entities
 
 
@@ -348,7 +483,9 @@ async def setup_entities_binary_sensor_connectivity_multiple(
                 device_class=BinarySensorDeviceClass.CONNECTIVITY,
             )
         )
-    await setup_mock_entities(hass, BINARY_SENSOR_DOMAIN, mock_binary_sensor_entities)
+    await setup_mock_entities(
+        hass, BINARY_SENSOR_DOMAIN, {DEFAULT_MOCK_AREA: mock_binary_sensor_entities}
+    )
     return mock_binary_sensor_entities
 
 
@@ -374,7 +511,9 @@ async def setup_entities_sensor_temperature_multiple(
                 },
             )
         )
-    await setup_mock_entities(hass, SENSOR_DOMAIN, mock_sensor_entities)
+    await setup_mock_entities(
+        hass, SENSOR_DOMAIN, {DEFAULT_MOCK_AREA: mock_sensor_entities}
+    )
     return mock_sensor_entities
 
 
@@ -400,7 +539,9 @@ async def setup_entities_sensor_current_multiple(
                 },
             )
         )
-    await setup_mock_entities(hass, SENSOR_DOMAIN, mock_sensor_entities)
+    await setup_mock_entities(
+        hass, SENSOR_DOMAIN, {DEFAULT_MOCK_AREA: mock_sensor_entities}
+    )
     return mock_sensor_entities
 
 
@@ -425,7 +566,9 @@ async def setup_entities_sensor_illuminance_multiple(
                 },
             )
         )
-    await setup_mock_entities(hass, SENSOR_DOMAIN, mock_sensor_entities)
+    await setup_mock_entities(
+        hass, SENSOR_DOMAIN, {DEFAULT_MOCK_AREA: mock_sensor_entities}
+    )
     return mock_sensor_entities
 
 
@@ -447,7 +590,9 @@ async def setup_entities_sensor_cover_all_classes_multiple(
                     device_class=dc.value,
                 )
             )
-    await setup_mock_entities(hass, COVER_DOMAIN, mock_cover_entities)
+    await setup_mock_entities(
+        hass, COVER_DOMAIN, {DEFAULT_MOCK_AREA: mock_cover_entities}
+    )
     return mock_cover_entities
 
 
@@ -464,7 +609,9 @@ async def setup_entities_light_many(
         mock_light_entities.append(
             MockLight(name=f"light_{i}", unique_id=f"light_{i}", state=STATE_OFF)
         )
-    await setup_mock_entities(hass, LIGHT_DOMAIN, mock_light_entities)
+    await setup_mock_entities(
+        hass, LIGHT_DOMAIN, {DEFAULT_MOCK_AREA: mock_light_entities}
+    )
     return mock_light_entities
 
 
@@ -479,8 +626,40 @@ async def setup_entities_media_player_single(
     mock_media_player_entities.append(
         MockMediaPlayer(name="media_player_1", unique_id="media_player_1")
     )
-    await setup_mock_entities(hass, MEDIA_PLAYER_DOMAIN, mock_media_player_entities)
+    await setup_mock_entities(
+        hass, MEDIA_PLAYER_DOMAIN, {DEFAULT_MOCK_AREA: mock_media_player_entities}
+    )
     return mock_media_player_entities
+
+
+@pytest.fixture(name="entities_binary_sensor_motion_all_areas_with_meta")
+async def setup_entities_binary_sensor_motion_all_areas_with_meta(
+    hass: HomeAssistant,
+) -> dict[MockAreaIds, list[MockBinarySensor]]:
+    """Create multiple mock sensor and setup the system with it."""
+
+    mock_binary_sensor_entities: dict[MockAreaIds, list[MockBinarySensor]] = {}
+
+    for area in MockAreaIds:
+        assert area is not None
+        area_object = MOCK_AREAS[area]
+        assert area_object is not None
+        if area_object[CONF_TYPE] == AreaType.META:
+            continue
+
+        mock_sensor = MockBinarySensor(
+            name=f"motion_sensor_{area.value}",
+            unique_id=f"motion_sensor_{area.value}",
+            device_class=BinarySensorDeviceClass.MOTION,
+        )
+
+        mock_binary_sensor_entities[area] = [
+            mock_sensor,
+        ]
+
+    await setup_mock_entities(hass, BINARY_SENSOR_DOMAIN, mock_binary_sensor_entities)
+
+    return mock_binary_sensor_entities
 
 
 # Integration set-ups
@@ -592,4 +771,34 @@ async def setup_integration_area_aware_media_player(
             area_aware_media_player_area_config_entry,
             area_aware_media_player_global_config_entry,
         ],
+    )
+
+
+@pytest.fixture(name="_setup_integration_all_areas_with_meta")
+async def setup_integration_all_areas_with_meta(
+    hass: HomeAssistant,
+    all_areas_with_meta_config_entry: list[MockConfigEntry],
+) -> AsyncGenerator[Any]:
+    """Set up integration with all areas and meta-areas."""
+
+    non_meta_areas: list[MockAreaIds] = []
+
+    for area in MockAreaIds:
+        area_object = MOCK_AREAS[area]
+        assert area_object is not None
+        if area_object[CONF_TYPE] == AreaType.META:
+            continue
+        non_meta_areas.append(area)
+
+    assert len(non_meta_areas) > 0
+
+    await init_integration(
+        hass,
+        all_areas_with_meta_config_entry,
+        areas=non_meta_areas,
+    )
+    yield
+    await shutdown_integration(
+        hass,
+        all_areas_with_meta_config_entry,
     )

@@ -288,14 +288,14 @@ class MagicArea:
 
         # Get latest state and create object
         latest_state = self.hass.states.get(entity_id)
-        entity_dict = {"entity_id": entity_id}
+        entity_dict = {ATTR_ENTITY_ID: entity_id}
 
         if latest_state:
             # Need to exclude entity_id if present but latest_state.attributes
             # is a ReadOnlyDict so we can't remove it, need to iterate and select
             # all keys that are NOT entity_id
             for attr_key, attr_value in latest_state.attributes.items():
-                if attr_key != "entity_id":
+                if attr_key != ATTR_ENTITY_ID:
                     entity_dict[attr_key] = attr_value
 
         return entity_dict
@@ -319,7 +319,7 @@ class MagicArea:
                 updated_entity = self.get_entity_dict(entity_id)
 
                 # Ignore groups
-                if is_entity_list(updated_entity["entity_id"]):
+                if is_entity_list(updated_entity[ATTR_ENTITY_ID]):
                     self.logger.debug(
                         "%s: '%s' is probably a group, skipping...",
                         self.name,
@@ -478,19 +478,19 @@ class MagicMetaArea(MagicArea):
 
             for entities in area.magic_entities.values():
                 for entity in entities:
-                    if not isinstance(entity["entity_id"], str):
+                    if not isinstance(entity[ATTR_ENTITY_ID], str):
                         self.logger.debug(
                             "%s: Entity ID is not a string: '%s' (probably a group, skipping)",
                             self.name,
-                            str(entity["entity_id"]),
+                            str(entity[ATTR_ENTITY_ID]),
                         )
                         continue
 
                     # Skip excluded entities
-                    if entity["entity_id"] in self.config.get(CONF_EXCLUDE_ENTITIES):
+                    if entity[ATTR_ENTITY_ID] in self.config.get(CONF_EXCLUDE_ENTITIES):
                         continue
 
-                    entity_list.append(entity["entity_id"])
+                    entity_list.append(entity[ATTR_ENTITY_ID])
 
         self.load_entity_list(entity_list)
 

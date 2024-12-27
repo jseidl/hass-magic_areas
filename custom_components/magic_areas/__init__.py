@@ -105,6 +105,12 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     """Unload a config entry."""
 
     platforms_unloaded = []
+    if MODULE_DATA not in hass.data:
+        _LOGGER.warning(
+            "Module data object for Magic Areas not found, possibly already removed."
+        )
+        return False
+
     data = hass.data[MODULE_DATA]
 
     if config_entry.entry_id not in data:
