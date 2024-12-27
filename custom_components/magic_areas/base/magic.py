@@ -471,10 +471,13 @@ class MagicMetaArea(MagicArea):
 
         data = self.hass.data[MODULE_DATA]
         for area_info in data.values():
-            area = area_info[DATA_AREA_OBJECT]
+            area: MagicArea = area_info[DATA_AREA_OBJECT]
 
             if area.slug not in child_areas:
                 continue
+
+            # Force loading of magic entities
+            area.load_magic_entities()
 
             for entities in area.magic_entities.values():
                 for entity in entities:

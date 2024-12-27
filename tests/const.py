@@ -1,11 +1,10 @@
 """Constants for Magic Areas tests."""
 
 from enum import StrEnum, auto
+
 from homeassistant.const import ATTR_FLOOR_ID
-from custom_components.magic_areas.const import (
-    CONF_TYPE,
-    AreaType,
-)
+
+from custom_components.magic_areas.const import CONF_TYPE, AreaType
 
 
 class MockAreaIds(StrEnum):
@@ -22,9 +21,9 @@ class MockAreaIds(StrEnum):
     INTERIOR = auto()
     EXTERIOR = auto()
     GLOBAL = auto()
-    # GROUND_LEVEL = auto()
-    # FIRST_FLOOR = auto()
-    # SECOND_FLOOR = auto()
+    GROUND_LEVEL = auto()
+    FIRST_FLOOR = auto()
+    SECOND_FLOOR = auto()
 
 
 class MockFloorIds(StrEnum):
@@ -34,6 +33,12 @@ class MockFloorIds(StrEnum):
     FIRST_FLOOR = auto()
     SECOND_FLOOR = auto()
 
+
+FLOOR_LEVEL_MAP: dict[MockFloorIds, int] = {
+    MockFloorIds.GROUND_LEVEL: 0,
+    MockFloorIds.FIRST_FLOOR: 1,
+    MockFloorIds.SECOND_FLOOR: 2,
+}
 
 MOCK_AREAS: dict[MockAreaIds, dict[str, str | None]] = {
     MockAreaIds.KITCHEN: {
@@ -80,18 +85,18 @@ MOCK_AREAS: dict[MockAreaIds, dict[str, str | None]] = {
         CONF_TYPE: AreaType.META,
         ATTR_FLOOR_ID: None,
     },
-    # MockAreaIds.GROUND_LEVEL: {
-    #     CONF_TYPE: AreaType.META,
-    #     ATTR_FLOOR_ID: MockFloorIds.GROUND_LEVEL,
-    # },
-    # MockAreaIds.FIRST_FLOOR: {
-    #     CONF_TYPE: AreaType.META,
-    #     ATTR_FLOOR_ID: MockFloorIds.FIRST_FLOOR,
-    # },
-    # MockAreaIds.SECOND_FLOOR: {
-    #     CONF_TYPE: AreaType.META,
-    #     ATTR_FLOOR_ID: MockFloorIds.SECOND_FLOOR,
-    # },
+    MockAreaIds.GROUND_LEVEL: {
+        CONF_TYPE: AreaType.META,
+        ATTR_FLOOR_ID: MockFloorIds.GROUND_LEVEL,
+    },
+    MockAreaIds.FIRST_FLOOR: {
+        CONF_TYPE: AreaType.META,
+        ATTR_FLOOR_ID: MockFloorIds.FIRST_FLOOR,
+    },
+    MockAreaIds.SECOND_FLOOR: {
+        CONF_TYPE: AreaType.META,
+        ATTR_FLOOR_ID: MockFloorIds.SECOND_FLOOR,
+    },
 }
 
 DEFAULT_MOCK_AREA: MockAreaIds = MockAreaIds.KITCHEN

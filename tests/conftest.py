@@ -22,6 +22,7 @@ from homeassistant.components.sensor.const import (
 )
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import (
+    ATTR_FLOOR_ID,
     CONF_PLATFORM,
     LIGHT_LUX,
     STATE_OFF,
@@ -31,6 +32,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.area_registry import async_get as async_get_ar
 from homeassistant.helpers.entity_registry import async_get as async_get_er
+from homeassistant.helpers.floor_registry import async_get as async_get_fr
 from homeassistant.setup import async_setup_component
 
 from .common import get_basic_config_entry_data, setup_test_component_platform
@@ -74,10 +76,23 @@ async def init_integration(
     if not areas:
         areas = [DEFAULT_MOCK_AREA]
 
+    area_registry = async_get_ar(hass)
+    floor_registry = async_get_fr(hass)
+
     # Register areas
-    registry = async_get_ar(hass)
     for area in areas:
-        registry.async_get_or_create(area.value)
+        area_object = MOCK_AREAS[area]
+        floor_id: str | None = None
+
+        if area_object[ATTR_FLOOR_ID]:
+            assert area_object[ATTR_FLOOR_ID] is not None
+            floor_name = str(area_object[ATTR_FLOOR_ID])
+            floor_entry = floor_registry.async_get_floor_by_name(floor_name)
+            if not floor_entry:
+                floor_entry = floor_registry.async_create(floor_name)
+            assert floor_entry is not None
+            floor_id = floor_entry.floor_id
+        area_registry.async_create(name=area.value, floor_id=floor_id)
 
     for config_entry in config_entries:
         config_entry.add_to_hass(hass)
@@ -274,6 +289,13 @@ def mock_config_entry_all_areas_with_meta_config_entry() -> list[MockConfigEntry
     config_entries: list[MockConfigEntry] = []
     for area_entry in MockAreaIds:
         data = get_basic_config_entry_data(area_entry)
+        data.update(
+            {
+                CONF_ENABLED_FEATURES: {
+                    CONF_FEATURE_AGGREGATION: {CONF_AGGREGATES_MIN_ENTITIES: 1}
+                }
+            }
+        )
         config_entries.append(MockConfigEntry(domain=DOMAIN, data=data))
 
     return config_entries
