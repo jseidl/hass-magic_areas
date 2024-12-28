@@ -5,24 +5,27 @@ from itertools import chain
 
 import voluptuous as vol
 
+from homeassistant.components.alarm_control_panel.const import AlarmControlPanelState
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
-from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
-from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
+from homeassistant.components.climate.const import DOMAIN as CLIMATE_DOMAIN
+from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.components.device_tracker.const import (
     DOMAIN as DEVICE_TRACKER_DOMAIN,
 )
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
+from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
-from homeassistant.components.sun import DOMAIN as SUN_DOMAIN
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.components.sensor.const import (
+    DOMAIN as SENSOR_DOMAIN,
+    SensorDeviceClass,
+)
+from homeassistant.components.sun.const import DOMAIN as SUN_DOMAIN
+from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
-    STATE_ALARM_TRIGGERED,
     STATE_ON,
     STATE_OPEN,
     STATE_PLAYING,
@@ -33,6 +36,7 @@ from homeassistant.const import (
 from homeassistant.helpers import config_validation as cv
 
 ONE_MINUTE = 60  # seconds, for conversion
+EMPTY_STRING = ""
 
 DOMAIN = "magic_areas"
 MODULE_DATA = f"{DOMAIN}_data"
@@ -127,7 +131,7 @@ DISTRESS_SENSOR_CLASSES = [
     BinarySensorDeviceClass.SAFETY,
     BinarySensorDeviceClass.GAS,
 ]  # @todo make configurable
-DISTRESS_STATES = [STATE_ALARM_TRIGGERED, STATE_ON, STATE_PROBLEM]
+DISTRESS_STATES = [AlarmControlPanelState.TRIGGERED, STATE_ON, STATE_PROBLEM]
 
 # Aggregates
 AGGREGATE_SENSOR_CLASSES = (
@@ -166,7 +170,7 @@ class MagicAreasFeatureInfo:
     """Base class for feature information."""
 
     id: str
-    translation_keys: dict[str, str]
+    translation_keys: dict[str, str | None]
     icons: dict[str, str] = {}
 
 

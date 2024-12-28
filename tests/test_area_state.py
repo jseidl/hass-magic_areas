@@ -17,7 +17,7 @@ async def test_area_primary_state_change(
     entities_binary_sensor_motion_one: list[MockBinarySensor],
     _setup_integration,
 ) -> None:
-    """Test loading the integration."""
+    """Test primary area state change."""
 
     motion_sensor_entity_id = entities_binary_sensor_motion_one[0].entity_id
     area_sensor_entity_id = (
@@ -40,6 +40,8 @@ async def test_area_primary_state_change(
     area_binary_sensor = hass.states.get(area_sensor_entity_id)
     motion_sensor = hass.states.get(motion_sensor_entity_id)
 
+    assert motion_sensor is not None
+    assert area_binary_sensor is not None
     assert motion_sensor.state == STATE_ON
     assert area_binary_sensor.state == STATE_ON
     assert AreaStates.OCCUPIED in area_binary_sensor.attributes["states"]
@@ -56,6 +58,8 @@ async def test_area_primary_state_change(
     area_binary_sensor = hass.states.get(area_sensor_entity_id)
     motion_sensor = hass.states.get(motion_sensor_entity_id)
 
+    assert motion_sensor is not None
+    assert area_binary_sensor is not None
     assert motion_sensor.state == STATE_OFF
     assert area_binary_sensor.state == STATE_OFF
     assert AreaStates.CLEAR in area_binary_sensor.attributes["states"]
@@ -66,7 +70,7 @@ async def test_area_secondary_state_change(
     secondary_states_sensors: list[MockBinarySensor],
     _setup_integration_secondary_states,
 ) -> None:
-    """Test loading the integration."""
+    """Test secondary area state changes."""
 
     area_sensor_entity_id = (
         f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_kitchen_area_state"
@@ -83,6 +87,8 @@ async def test_area_secondary_state_change(
         entity_state = hass.states.get(entity_id)
 
         # Ensure off
+        assert entity_state is not None
+        assert area_binary_sensor is not None
         assert entity_state.state == STATE_OFF
         assert state_tuples[0] not in area_binary_sensor.attributes["states"]
         if state_tuples[1]:
@@ -97,6 +103,8 @@ async def test_area_secondary_state_change(
         entity_state = hass.states.get(entity_id)
 
         # Ensure on
+        assert entity_state is not None
+        assert area_binary_sensor is not None
         assert entity_state.state == STATE_ON
         assert state_tuples[0] in area_binary_sensor.attributes["states"]
         if state_tuples[1]:
@@ -111,6 +119,8 @@ async def test_area_secondary_state_change(
         entity_state = hass.states.get(entity_id)
 
         # Ensure off
+        assert entity_state is not None
+        assert area_binary_sensor is not None
         assert entity_state.state == STATE_OFF
         assert state_tuples[0] not in area_binary_sensor.attributes["states"]
         if state_tuples[1]:
@@ -127,7 +137,7 @@ async def test_keep_only_sensors(
     entities_binary_sensor_motion_multiple: list[MockBinarySensor],
     _setup_integration_keep_only_sensor,
 ) -> None:
-    """Test loading the integration."""
+    """Test keep-only sensors."""
 
     motion_sensor_entity_id = entities_binary_sensor_motion_multiple[0].entity_id
     flappy_sensor_entity_id = entities_binary_sensor_motion_multiple[1].entity_id
@@ -152,6 +162,8 @@ async def test_keep_only_sensors(
     area_binary_sensor = hass.states.get(area_sensor_entity_id)
     flappy_sensor = hass.states.get(flappy_sensor_entity_id)
 
+    assert flappy_sensor is not None
+    assert area_binary_sensor is not None
     assert flappy_sensor.state == STATE_ON
     assert area_binary_sensor.state == STATE_OFF
     assert AreaStates.CLEAR in area_binary_sensor.attributes["states"]
@@ -164,6 +176,8 @@ async def test_keep_only_sensors(
     area_binary_sensor = hass.states.get(area_sensor_entity_id)
     motion_sensor = hass.states.get(motion_sensor_entity_id)
 
+    assert motion_sensor is not None
+    assert area_binary_sensor is not None
     assert motion_sensor.state == STATE_ON
     assert area_binary_sensor.state == STATE_ON
     assert AreaStates.OCCUPIED in area_binary_sensor.attributes["states"]
@@ -176,6 +190,8 @@ async def test_keep_only_sensors(
     area_binary_sensor = hass.states.get(area_sensor_entity_id)
     motion_sensor = hass.states.get(motion_sensor_entity_id)
 
+    assert motion_sensor is not None
+    assert area_binary_sensor is not None
     assert motion_sensor.state == STATE_OFF
     assert area_binary_sensor.state == STATE_ON
     assert AreaStates.OCCUPIED in area_binary_sensor.attributes["states"]
@@ -188,6 +204,9 @@ async def test_keep_only_sensors(
     area_binary_sensor = hass.states.get(area_sensor_entity_id)
     flappy_sensor = hass.states.get(flappy_sensor_entity_id)
 
+    assert motion_sensor is not None
+    assert area_binary_sensor is not None
+    assert flappy_sensor is not None
     assert flappy_sensor.state == STATE_OFF
     assert area_binary_sensor.state == STATE_OFF
     assert AreaStates.CLEAR in area_binary_sensor.attributes["states"]

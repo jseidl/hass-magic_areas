@@ -20,9 +20,9 @@ _LOGGER = logging.getLogger(__name__)
 class MagicEntity(RestoreEntity):
     """MagicEntity is the base entity for use with all the magic classes."""
 
-    area: MagicArea = None
+    area: MagicArea
     feature_info: MagicAreasFeatureInfo | None = None
-    _extra_identifiers: list[str] = None
+    _extra_identifiers: list[str] | None = None
     _attr_has_entity_name = True
 
     def __init__(
@@ -70,7 +70,6 @@ class MagicEntity(RestoreEntity):
         )
 
     def _generate_entity_id(self, domain: str):
-
         entity_id_parts = [
             MAGICAREAS_UNIQUEID_PREFIX,
             self.feature_info.id,
@@ -91,7 +90,6 @@ class MagicEntity(RestoreEntity):
         return f"{domain}.{entity_id}"
 
     def _generaete_unique_id(self, domain: str, extra_parts: list | None = None):
-
         # Format: magicareas_feature_domain_areaname_name
 
         unique_id_parts = [

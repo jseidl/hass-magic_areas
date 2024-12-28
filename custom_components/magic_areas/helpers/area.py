@@ -37,10 +37,11 @@ def basic_area_from_meta(area_id: str, name: str | None = None) -> BasicArea:
     basic_area.id = area_id
     basic_area.is_meta = True
 
+    meta_area_icon_map: dict[str, str] = {}
     meta_area_icon_map = {
-        MetaAreaType.EXTERIOR: MetaAreaIcons.EXTERIOR,
-        MetaAreaType.INTERIOR: MetaAreaIcons.INTERIOR,
-        MetaAreaType.GLOBAL: MetaAreaIcons.GLOBAL,
+        MetaAreaType.EXTERIOR.value: MetaAreaIcons.EXTERIOR.value,
+        MetaAreaType.INTERIOR.value: MetaAreaIcons.INTERIOR.value,
+        MetaAreaType.GLOBAL.value: MetaAreaIcons.GLOBAL.value,
     }
 
     basic_area.icon = meta_area_icon_map.get(area_id, None)
@@ -78,13 +79,15 @@ def basic_area_from_floor(floor: FloorEntry) -> BasicArea:
     return basic_area
 
 
-def get_magic_area_for_config_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+def get_magic_area_for_config_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry
+) -> MagicArea | None:
     """Return magic area object for given config entry."""
 
     area_id = config_entry.data[ATTR_ID]
     area_name = config_entry.data[ATTR_NAME]
 
-    magic_area: MagicArea = None
+    magic_area: MagicArea | None = None
 
     _LOGGER.debug("%s: Setting up entry.", area_name)
 
@@ -105,7 +108,9 @@ def get_magic_area_for_config_entry(hass: HomeAssistant, config_entry: ConfigEnt
         magic_area = MagicMetaArea(hass, meta_area, config_entry)
     elif area_id in floor_ids:
         # Floor Meta-Area
-        meta_area = basic_area_from_floor(floor_registry.async_get_floor(area_id))
+        floor_entry: FloorEntry | None = floor_registry.async_get_floor(area_id)
+        assert floor_entry is not None
+        meta_area = basic_area_from_floor(floor_entry)
         magic_area = MagicMetaArea(hass, meta_area, config_entry)
     else:
         # Regular Area
@@ -114,7 +119,7 @@ def get_magic_area_for_config_entry(hass: HomeAssistant, config_entry: ConfigEnt
 
         if not area:
             _LOGGER.warning("%s: ID '%s' not found on registry", area_name, area_id)
-            return False
+            return None
 
         _LOGGER.debug("%s: Got area from registry: %s", area_name, str(area))
 
@@ -129,7 +134,7 @@ def get_magic_area_for_config_entry(hass: HomeAssistant, config_entry: ConfigEnt
 
 def get_area_from_config_entry(
     hass: HomeAssistant, config_entry: ConfigEntry
-) -> dict | None:
+) -> MagicArea | None:
     """Return area object for given config entry."""
 
     if config_entry.entry_id not in hass.data[MODULE_DATA]:

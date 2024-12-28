@@ -5,7 +5,7 @@ from random import randint
 from statistics import mean
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import (
     STATE_OFF,
     STATE_ON,
@@ -39,22 +39,27 @@ async def test_aggregates_binary_sensor_regular(
         assert mock_entity.entity_id in aggregate_sensor_state.attributes["entity_id"]
 
         mock_state = hass.states.get(mock_entity.entity_id)
+        assert mock_state is not None
         assert mock_state.state == STATE_OFF
 
         # Test state flip ON
         hass.states.async_set(mock_entity.entity_id, STATE_ON)
         await hass.async_block_till_done()
         mock_state = hass.states.get(mock_entity.entity_id)
+        assert mock_state is not None
         assert mock_state.state == STATE_ON
         aggregate_sensor_state = hass.states.get(aggregate_sensor_id)
+        assert aggregate_sensor_state is not None
         assert aggregate_sensor_state.state == STATE_ON
 
         # Test state flip OFF
         hass.states.async_set(mock_entity.entity_id, STATE_OFF)
         await hass.async_block_till_done()
         mock_state = hass.states.get(mock_entity.entity_id)
+        assert mock_state is not None
         assert mock_state.state == STATE_OFF
         aggregate_sensor_state = hass.states.get(aggregate_sensor_id)
+        assert aggregate_sensor_state is not None
         assert aggregate_sensor_state.state == STATE_OFF
 
     # Turn all ON
@@ -64,11 +69,11 @@ async def test_aggregates_binary_sensor_regular(
 
     # Turn all off and ensure only off when last off
     for entity_index, mock_entity in enumerate(entities_binary_sensor_motion_multiple):
-
         last_sensor = entity_index == (len(entities_binary_sensor_motion_multiple) - 1)
         hass.states.async_set(mock_entity.entity_id, STATE_OFF)
         await hass.async_block_till_done()
         aggregate_sensor_state = hass.states.get(aggregate_sensor_id)
+        assert aggregate_sensor_state is not None
 
         if last_sensor:
             assert aggregate_sensor_state.state == STATE_OFF
@@ -96,7 +101,6 @@ async def test_aggregates_binary_sensor_all(
     for entity_index, mock_entity in enumerate(
         entities_binary_sensor_connectivity_multiple
     ):
-
         last_sensor = entity_index == (
             len(entities_binary_sensor_connectivity_multiple) - 1
         )
@@ -104,14 +108,17 @@ async def test_aggregates_binary_sensor_all(
         assert mock_entity.entity_id in aggregate_sensor_state.attributes["entity_id"]
 
         mock_state = hass.states.get(mock_entity.entity_id)
+        assert mock_state is not None
         assert mock_state.state == STATE_OFF
 
         # Test state flip ON
         hass.states.async_set(mock_entity.entity_id, STATE_ON)
         await hass.async_block_till_done()
         mock_state = hass.states.get(mock_entity.entity_id)
+        assert mock_state is not None
         assert mock_state.state == STATE_ON
         aggregate_sensor_state = hass.states.get(aggregate_sensor_id)
+        assert aggregate_sensor_state is not None
 
         if last_sensor:
             assert aggregate_sensor_state.state == STATE_ON
@@ -122,7 +129,6 @@ async def test_aggregates_binary_sensor_all(
     for entity_index, mock_entity in enumerate(
         entities_binary_sensor_connectivity_multiple
     ):
-
         last_sensor = entity_index == (
             len(entities_binary_sensor_connectivity_multiple) - 1
         )
@@ -131,8 +137,10 @@ async def test_aggregates_binary_sensor_all(
         hass.states.async_set(mock_entity.entity_id, STATE_OFF)
         await hass.async_block_till_done()
         mock_state = hass.states.get(mock_entity.entity_id)
+        assert mock_state is not None
         assert mock_state.state == STATE_OFF
         aggregate_sensor_state = hass.states.get(aggregate_sensor_id)
+        assert aggregate_sensor_state is not None
 
         assert aggregate_sensor_state.state == STATE_OFF
 
@@ -172,11 +180,12 @@ async def test_aggregates_sensor_avg(
         changed_values.append(random_value)
         hass.states.async_set(
             mock_entity.entity_id,
-            random_value,
+            str(random_value),
             attributes={"unit_of_measurement": UnitOfTemperature.CELSIUS},
         )
         await hass.async_block_till_done()
         changed_state = hass.states.get(mock_entity.entity_id)
+        assert changed_state is not None
         assert int(changed_state.state) == random_value
 
     # Check changed values
@@ -220,11 +229,12 @@ async def test_aggregates_sensor_sum(
         changed_values.append(random_value)
         hass.states.async_set(
             mock_entity.entity_id,
-            random_value,
+            str(random_value),
             attributes={"unit_of_measurement": UnitOfElectricCurrent.AMPERE},
         )
         await hass.async_block_till_done()
         changed_state = hass.states.get(mock_entity.entity_id)
+        assert changed_state is not None
         assert int(changed_state.state) == random_value
 
     # Check changed values
