@@ -1,5 +1,5 @@
 {
-  "title": "Magische Bereiche",
+  "title": "Magic Areas",
   "config": {
     "step": {
       "user": {
@@ -13,7 +13,7 @@
     "abort": {
       "already_configured": "Dieses Gerät ist bereits konfiguriert",
       "invalid_area": "Der ausgewählte Bereich existiert nicht",
-      "no_more_areas": "Alle Ihre Bereiche sind bereits magisch!"
+      "no_more_areas": "Alle Bereiche sind bereits magisch!"
     }
   },
   "options": {
@@ -23,12 +23,12 @@
         "description": "Wählen Sie die Funktionen aus, die Sie für diesen Bereich aktivieren möchten. Eine neue Menüoption zum Konfigurieren der Funktion wird angezeigt, wenn Konfigurationsoptionen für diese Funktion vorhanden sind.",
         "data": {
           "climate_groups": "Erstellen von Klimagruppen",
-          "media_player_groups": "Erstellen von Media Player-Gruppen",
+          "media_player_groups": "Erstellen von Mediaplayer Gruppen",
           "light_groups": "Erstellen von Lichtgruppen ",
-          "cover_groups": "Erstellen von Deckungsgruppen",
+          "cover_groups": "Erstellen von Abdeckungsgruppen",
           "area_aware_media_player": "Bereichsabhängiger Mediaplayer",
-          "aggregates": "Erstellen Sie aggregierte Sensoren",
-          "health": "Erstellen Sie Integritätssensoren",
+          "aggregates": "Erstellen von aggregierten Sensoren",
+          "health": "Erstellen von Umweltsensoren",
           "presence_hold": "Erstellen von Anwesenheitshalteschalter "
         }
       },
@@ -41,17 +41,17 @@
           "presence_tracking": "Optionen zur Anwesenheitsverfolgung",
           "select_features": "Merkmalsauswahl",
           "finish": "Konfiguration endgültig speichern",
-          "feature_conf_health": "Konfigurieren des Integritätssensors",
+          "feature_conf_health": "Umweltsensoren konfigurieren",
           "feature_conf_climate_groups": "Klimagruppen konfigurieren",
           "feature_conf_light_groups": "Lichtgruppen konfigurieren",
-          "feature_conf_area_aware_media_player": "Konfigurieren Sie einen bereichsabhängigen Media Player",
-          "feature_conf_aggregates": "Konfigurieren von Aggregatsensoren",
+          "feature_conf_area_aware_media_player": "Bereichsabhängigen Mediaplayer konfigurieren",
+          "feature_conf_aggregates": "Aggregierte Sensoren konfigurieren",
           "feature_conf_presence_hold": "Anwesenheitshalteschalter konfigurieren"
         }
       },
       "feature_conf_health": {
-        "title": "Gesundheitssensor",
-        "description": "Sie können einen Satz von Geräteklassen vom Typ „Binärsensor“ auswählen, die von diesem Integritätssensor verfolgt und in Automatisierungen verwendet werden können.",
+        "title": "Umweltsensor",
+        "description": "Sie können mehrere Geräteklassen vom Typ „Binärsensor“ auswählen, die von diesem Umweltsensor verfolgt und in Automatisierungen verwendet werden können.",
         "data": {
           "health_binary_sensor_device_classes": "Zu verfolgende Geräteklassen"
         }
@@ -86,16 +86,16 @@
       },
       "feature_conf_presence_hold": {
         "title": "Anwesenheit halten",
-        "description": "Erstellt einen Schalter, der einen Bereich belegt, während er eingeschaltet ist. Sie können eine Zeitüberschreitung konfigurieren, damit der Schalter nach einer bestimmten Zeit automatisch ausgeschaltet wird, wenn Sie ihn häufig eingeschaltet lassen.",
+        "description": "Erstellt einen Schalter, der einen als Bereich belegt markiert, während er eingeschaltet ist. Sie können eine Zeitüberschreitung konfigurieren, damit der Schalter nach einer bestimmten Zeit automatisch ausgeschaltet wird, wenn Sie ihn häufig eingeschaltet lassen.",
         "data": {
           "presence_hold_timeout": "Zeit, nach der der Schalter automatisch ausgeschaltet wird. (0 = Timeout deaktiviert)."
         }
       },
       "feature_conf_area_aware_media_player": {
         "title": "Funktion: Bereichsabhängiger Mediaplayer",
-        "description": "Erstellt ein Mediaplayer-Gerät, das Wiedergabeaufrufe nur in besetzten Bereichen an andere Mediaplayer weiterleitet. Dies ist nützlich, wenn Sie TTS-Benachrichtigungen verwenden möchten, aber nur besetzte Bereiche benachrichtigen möchten, um zu vermeiden, dass Mediaplayer in freien Bereichen benachrichtigt werden. Diese Funktion verfügt über Konfigurationsoptionen in jedem Bereich, wird jedoch nur erstellt, wenn Sie einen „globalen“ Metallbereich haben.",
+        "description": "Erstellt einen Mediaplayer, der Wiedergabeaufrufe nur in besetzten Bereichen an andere Mediaplayer weiterleitet. Dies ist nützlich, wenn Sie TTS-Benachrichtigungen nur in belegten Bereichen abgespielt werden sollen. Diese Funktion verfügt über Konfigurationsoptionen in jedem Bereich, wird jedoch nur erstellt, wenn Sie einen „globalen“ Metabereich haben.",
         "data": {
-          "notification_devices": "Für die Übertragung verwendete Media Player-Geräte",
+          "notification_devices": "Für die Übertragung verwendete Mediaplayer",
           "notification_states": "Benachrichtigungen nur in diesen Zuständen abspielen"
         },
         "data_description": {
@@ -110,16 +110,17 @@
           "aggregates_binary_sensor_device_classes": "Zu aggregierende binäre Sensorgeräteklassen.",
           "aggregates_sensor_device_classes": "Zu aggregierende Sensorgeräteklassen.",
           "aggregates_illuminance_threshold": "Beleuchtungsstärkeschwelle für diesen Bereich",
-          "aggregates_illuminance_threshold_hysteresis": "Hysterese voor verlichtingsdrempelsensor"
+          "aggregates_illuminance_threshold_hysteresis": "Hysterese für Beleuchtungsstärkeschwellesensor"
         },
         "data_description": {
           "aggregates_illuminance_threshold": "Magic Areas erstellt einen binären „Licht“-Sensor, der erkennt, wenn die Gesamtbeleuchtungsstärke des Bereichs diesen Schwellenwert überschreitet. Erfordert, dass die Geräteklasse „Beleuchtungsstärke“ für die Aggregation ausgewählt ist. Zum Deaktivieren auf 0 setzen.",
-          "aggregates_illuminance_threshold_hysteresis": "[Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) definieert hoe gevoelig de sensor is voor veranderingen in zijn waarde. Een waarde van nul zal de sensorstatus omkeren wanneer de verlichtingssterkte de bovenstaande drempelwaarde overschrijdt. Positieve waarden betekenen dat de sensor alleen van status verandert als de drempelwaarde wordt overschreden met een bepaald bedrag, uitgedrukt in percentage van de hierboven ingestelde drempelwaarde. Het kan handig zijn om deze waarde op te voeren als u deze sensor wilt gebruiken als lichtsensor voor zijn eigen gebied."
+          "aggregates_illuminance_threshold_hysteresis": "[Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) definiert, wie empfindlich der Sensor auf Änderungen seines Werts reagiert. Ein Wert von Null bewirkt, dass der Sensorzustand jedes Mal umschaltet, wenn die Beleuchtungsstärke den festgelegten Schwellenwert überschreitet. Positive Werte bedeuten, dass der Sensor nur dann den Zustand ändert, wenn der Schwellenwert um einen bestimmten Betrag überschritten wird, ausgedrückt als Prozentsatz des oben festgelegten Schwellenwerts. Das Erhöhen dieses Werts kann nützlich sein, wenn Sie versuchen, diesen Sensor als Lichtsensor für seinen eigenen Bereich zu verwenden."
+        }
         }
       },
       "feature_conf_climate_groups": {
         "title": "Feature: Klimagruppen",
-        "description": "Gruppieren und steuern Sie alle Klimaelemente in einem Gebiet. Mit dieser Funktion können Klimaelemente automatisch entsprechend dem Zustand eines Gebiets gesteuert werden.",
+        "description": "Gruppieren und steuern Sie alle Klimaelemente in einem Bereich. Mit dieser Funktion können Klimaelemente automatisch entsprechend eines Bereichszustands gesteuert werden.",
         "data": {
           "turn_on_state": "Staat soll sich gegen die Klimagruppe wenden."
         },
@@ -133,7 +134,7 @@
         "data": {
           "dark_entity": "Lichtsensor des Bereichs",
           "sleep_entity": "Entität zum Verfolgen des Schlafzustands eines Bereichs",
-          "sleep_timeout": "Wie lange wird der Bereich warten, bevor der Status im Ruhezustand gelöscht wird?",
+          "sleep_timeout": "Wie lange wird der Bereich warten, bevor der Status im Schlafzustand gelöscht wird?",
           "accent_entity": "Entität zur Verfolgung des akzentuierten Zustands eines Bereichs",
           "extended_time": "Der Bereich wird nach einer so langen Belegung als „erweitert“ markiert",
           "extended_timeout": "Wie lange wird der Bereich warten, bevor der Status gelöscht wird, wenn er sich im erweiterten Status befindet?"
@@ -148,12 +149,12 @@
         "data": {
           "include_entities": "Objekte in diesen Bereich einschließen",
           "exclude_entities": "Entitäten von der Analyse ausschließen",
-          "type": "Flächentyp (innen/außen)"
+          "type": "Bereichsart (innen/außen)"
         },
         "data_description": {
           "include_entities": "Magische Bereiche können Entitäten aus anderen Bereichen berücksichtigen, einschließlich anderer magischer Entitäten. Sie können dies verwenden, um den binären Anwesenheitssensor eines Raums auch als Anwesenheitssensor eines anderen Raums fungieren zu lassen.",
           "exclude_entities": "Die hier aufgeführten Entitäten werden von Magic Areas vollständig ignoriert. Verwenden Sie diese Option, wenn Sie Entitäten haben, die Ihre Daten verfälschen, wie z. B. Temperatursensoren von Geräten.",
-          "type": "Durch die Definition eines Bereichstyps können Metabereiche für den Innen- und Außenbereich erstellt werden."
+          "type": "Durch die Definition einer Bereichsart können Metabereiche für den Innen- und Außenbereich erstellt werden."
         }
       },
       "presence_tracking": {
@@ -170,7 +171,7 @@
           "presence_device_platforms": "Normalerweise sind binäre Sensoren die Standardquelle für die Anwesenheitserkennung, es können jedoch auch Mediengeräte verwendet werden.",
           "presence_sensor_device_class": "Definieren Sie, welche Geräteklassen von „binären Sensoren“ für die Anwesenheitsverfolgung verwendet werden. Übliche nicht standardmäßige Optionen sind Tür und Feuchtigkeit.",
           "keep_only_entities": "Wählen Sie Präsenzverfolgungselemente aus, die nur berücksichtigt werden, wenn der Raum bereits belegt ist. Dies ist nützlich, um zu verhindern, dass überempfindliche Sensoren wie mmWave-Sensoren und BLE-Tracker die Präsenz eines Bereichs fälschlicherweise auslösen.",
-          "clear_timeout": "Wie lange soll seit dem letzten Anwesenheitsereignis gewartet werden, bevor der Bereich gelöscht wird?"
+          "clear_timeout": "Wie lange soll seit dem letzten Anwesenheitsereignis gewartet werden, bevor der Bereich zurückgesetzt wird?"
         }
       }
     },
@@ -185,7 +186,7 @@
         "name": "Bereich Status"
       },
       "health_problem": {
-        "name": "Bereich Gesundheit"
+        "name": "Bereich Umwelt"
       },
       "threshold_light": {
         "name": "Licht (berechnet)"
@@ -201,16 +202,16 @@
         "name": "Markisen"
       },
       "cover_group_blind": {
-        "name": "Jalousie"
+        "name": "Jalousien"
       },
       "cover_group_curtain": {
         "name": "Vorhänge"
       },
       "cover_group_damper": {
-        "name": "Dämpfer"
+        "name": "Luftdämpfer"
       },
       "cover_group_door": {
-        "name": "Nr. Türen"
+        "name": "Türen"
       },
       "cover_group_garage": {
         "name": "Garagentore"
@@ -225,7 +226,7 @@
         "name": "Fensterläden"
       },
       "cover_group_window": {
-        "name": "Windows"
+        "name": "Fenster"
       },
       "cover_group": {
         "name": "Abdeckungen"
@@ -264,7 +265,7 @@
         "name": "Lichtsteuerung"
       },
       "media_player_control": {
-        "name": "Media Player-Steuerung"
+        "name": "Mediaplayer Steuerung"
       },
       "climate_control": {
         "name": "Klimakontrolle"
