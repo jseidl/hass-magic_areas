@@ -1,6 +1,5 @@
 """Classes for Magic Areas and Meta Areas."""
 
-from collections.abc import Iterable
 from datetime import UTC, datetime
 import logging
 
@@ -38,24 +37,6 @@ from custom_components.magic_areas.const import (
     MODULE_DATA,
     MetaAreaType,
 )
-
-# Helpers
-
-
-def is_entity_list(item):
-    """Check if item is a list."""
-    basestring = (str, bytes)
-    return isinstance(item, Iterable) and not isinstance(item, basestring)
-
-
-def flatten_entity_list(input_list):
-    """Recursively flatten a nested list into a flat list."""
-    for i in input_list:
-        if is_entity_list(i):
-            yield from flatten_entity_list(i)
-        else:
-            yield i
-
 
 # Classes
 
@@ -218,7 +199,7 @@ class MagicArea:
     async def load_entities(self) -> None:
         """Load entities into entity list."""
 
-        entity_list = []
+        entity_list: list[RegistryEntry] = []
         include_entities = self.config.get(CONF_INCLUDE_ENTITIES)
 
         entity_registry = entityreg_async_get(self.hass)
@@ -229,7 +210,7 @@ class MagicArea:
         for device in devices_in_area:
             entity_list.extend(
                 [
-                    entity.entity_id
+                    entity
                     for entity in entity_registry.entities.get_entries_for_device_id(
                         device.id
                     )
@@ -241,7 +222,7 @@ class MagicArea:
         entities_in_area = entity_registry.entities.get_entries_for_area_id(self.id)
         entity_list.extend(
             [
-                entity.entity_id
+                entity
                 for entity in entities_in_area
                 if entity.entity_id not in entity_list
                 and not self._should_exclude_entity(entity)
@@ -249,7 +230,10 @@ class MagicArea:
         )
 
         if include_entities and isinstance(include_entities, list):
-            entity_list.extend(include_entities)
+            for include_entity in include_entities:
+                entity_entry = entity_registry.async_get(include_entity)
+                if entity_entry:
+                    entity_list.append(entity_entry)
 
         self.load_entity_list(entity_list)
 
@@ -300,43 +284,39 @@ class MagicArea:
 
         return entity_dict
 
-    def load_entity_list(self, entity_list):
+    def load_entity_list(self, entity_list: list[RegistryEntry]) -> None:
         """Populate entity list with loaded entities."""
         self.logger.debug("%s: Original entity list: %s", self.name, str(entity_list))
 
-        flattened_entity_list = flatten_entity_list(entity_list)
-        unique_entities = set(flattened_entity_list)
+        seen_entity_ids: list[str] = []
 
-        self.logger.debug("%s: Unique entities: %s", self.name, str(unique_entities))
-
-        for entity_id in unique_entities:
-            self.logger.debug("%s: Loading entity: %s", self.name, entity_id)
+        for entity in entity_list:
+            if entity.entity_id in seen_entity_ids:
+                continue
+            self.logger.debug("%s: Loading entity: %s", self.name, entity.entity_id)
 
             try:
-                # pylint: disable-next=unused-variable
-                entity_component, entity_name = entity_id.split(".")
+                updated_entity = self.get_entity_dict(entity.entity_id)
 
-                updated_entity = self.get_entity_dict(entity_id)
-
-                # Ignore groups
-                if is_entity_list(updated_entity[ATTR_ENTITY_ID]):
-                    self.logger.debug(
-                        "%s: '%s' is probably a group, skipping...",
-                        self.name,
-                        entity_id,
+                if not entity.domain:
+                    self.logger.warning(
+                        "%s: Entity domain not found for %s", self.name, entity
                     )
                     continue
+                if entity.domain not in self.entities:
+                    self.entities[entity.domain] = []
 
-                if entity_component not in self.entities:
-                    self.entities[entity_component] = []
-
-                self.entities[entity_component].append(updated_entity)
+                self.entities[entity.domain].append(updated_entity)
+                seen_entity_ids.append(entity.entity_id)
 
             # Adding pylint exception because this is a last-resort hail-mary catch-all
             # pylint: disable-next=broad-exception-caught
             except Exception as err:
                 self.logger.error(
-                    "%s: Unable to load entity '%s': %s", self.name, entity_id, str(err)
+                    "%s: Unable to load entity '%s': %s",
+                    self.name,
+                    entity,
+                    str(err),
                 )
 
         # Load our own entities
@@ -466,7 +446,9 @@ class MagicMetaArea(MagicArea):
 
     async def load_entities(self) -> None:
         """Load entities into entity list."""
-        entity_list = []
+
+        entity_registry = entityreg_async_get(self.hass)
+        entity_list: list[RegistryEntry] = []
         child_areas = self.get_child_areas()
 
         data = self.hass.data[MODULE_DATA]
@@ -490,10 +472,20 @@ class MagicMetaArea(MagicArea):
                         continue
 
                     # Skip excluded entities
-                    if entity[ATTR_ENTITY_ID] in self.config.get(CONF_EXCLUDE_ENTITIES):
+                    if entity[ATTR_ENTITY_ID] in self.config.get(
+                        CONF_EXCLUDE_ENTITIES, []
+                    ):
                         continue
 
-                    entity_list.append(entity[ATTR_ENTITY_ID])
+                    entity_entry = entity_registry.async_get(entity[ATTR_ENTITY_ID])
+                    if not entity_entry:
+                        self.logger.warning(
+                            "%s: Magic Entity not found on Entity Registry: %s",
+                            self.name,
+                            entity[ATTR_ENTITY_ID],
+                        )
+                        continue
+                    entity_list.append(entity_entry)
 
         self.load_entity_list(entity_list)
 

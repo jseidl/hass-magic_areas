@@ -6,9 +6,8 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
-from .mocks import MockBinarySensor
 from .const import MockAreaIds
-from custom_components.magic_areas.const import AreaStates
+from .mocks import MockBinarySensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,9 +22,6 @@ async def test_meta_aggregates_binary_sensor(
     """Test aggregation of binary sensor states."""
 
     # Entity Ids
-    kitchen_aggregate_sensor_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{MockAreaIds.KITCHEN.value}_aggregate_motion"
-    backyard_aggregate_sensor_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{MockAreaIds.BACKYARD.value}_aggregate_motion"
-    master_bedroom_aggregate_sensor_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{MockAreaIds.MASTER_BEDROOM.value}_aggregate_motion"
     interior_aggregate_sensor_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{MockAreaIds.INTERIOR.value}_aggregate_motion"
     exterior_aggregate_sensor_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{MockAreaIds.EXTERIOR.value}_aggregate_motion"
     global_aggregate_sensor_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{MockAreaIds.GLOBAL.value}_aggregate_motion"
@@ -38,7 +34,7 @@ async def test_meta_aggregates_binary_sensor(
         MockAreaIds.KITCHEN
     ][0].entity_id
 
-    ## On
+    # > On
 
     hass.states.async_set(kitchen_motion_sensor_id, STATE_ON)
     await hass.async_block_till_done()
@@ -61,7 +57,7 @@ async def test_meta_aggregates_binary_sensor(
     assert global_motion_sensor_state is not None
     assert global_motion_sensor_state.state == STATE_ON
 
-    ## Off
+    # > Off
 
     hass.states.async_set(kitchen_motion_sensor_id, STATE_OFF)
     await hass.async_block_till_done()
@@ -89,7 +85,7 @@ async def test_meta_aggregates_binary_sensor(
         MockAreaIds.MASTER_BEDROOM
     ][0].entity_id
 
-    ## On
+    # > On
 
     hass.states.async_set(master_bedroom_motion_sensor_id, STATE_ON)
     await hass.async_block_till_done()
@@ -128,7 +124,7 @@ async def test_meta_aggregates_binary_sensor(
         MockAreaIds.BACKYARD
     ][0].entity_id
 
-    ## On
+    # > On
 
     hass.states.async_set(backyard_motion_sensor_id, STATE_ON)
     await hass.async_block_till_done()
@@ -147,7 +143,7 @@ async def test_meta_aggregates_binary_sensor(
     assert exterior_motion_sensor_state is not None
     assert exterior_motion_sensor_state.state == STATE_ON
 
-    ## Off
+    # > Off
 
     hass.states.async_set(backyard_motion_sensor_id, STATE_OFF)
     await hass.async_block_till_done()

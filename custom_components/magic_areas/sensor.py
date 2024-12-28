@@ -80,22 +80,33 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
         return []
 
     for entity in area.entities[SENSOR_DOMAIN]:
-        if ATTR_DEVICE_CLASS not in entity:
+        entity_state = area.hass.states.get(entity[ATTR_ENTITY_ID])
+        if not entity_state:
+            continue
+
+        if (
+            ATTR_DEVICE_CLASS not in entity_state.attributes
+            or not entity_state.attributes[ATTR_DEVICE_CLASS]
+        ):
             _LOGGER.debug(
                 "Entity %s does not have device_class defined",
                 entity[ATTR_ENTITY_ID],
             )
             continue
 
-        if ATTR_UNIT_OF_MEASUREMENT not in entity:
+        if (
+            ATTR_UNIT_OF_MEASUREMENT not in entity_state.attributes
+            or not entity_state.attributes[ATTR_UNIT_OF_MEASUREMENT]
+        ):
             _LOGGER.debug(
                 "Entity %s does not have unit_of_measurement defined",
                 entity[ATTR_ENTITY_ID],
             )
             continue
 
+        device_class = entity_state.attributes[ATTR_DEVICE_CLASS]
+
         # Dictionary of sensors by device class.
-        device_class = entity[ATTR_DEVICE_CLASS]
         if device_class not in eligible_entities:
             eligible_entities[device_class] = []
 
@@ -103,7 +114,9 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
         if device_class not in unit_of_measurement_map:
             unit_of_measurement_map[device_class] = []
 
-        unit_of_measurement_map[device_class].append(entity[ATTR_UNIT_OF_MEASUREMENT])
+        unit_of_measurement_map[device_class].append(
+            entity_state.attributes[ATTR_UNIT_OF_MEASUREMENT]
+        )
         eligible_entities[device_class].append(entity[ATTR_ENTITY_ID])
 
     # Create aggregates
