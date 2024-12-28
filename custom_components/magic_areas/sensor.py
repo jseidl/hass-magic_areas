@@ -143,6 +143,10 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
         unit_of_measurements = Counter(unit_of_measurement_map[device_class])
         most_common_unit_of_measurement = unit_of_measurements.most_common(1)[0][0]
 
+        _LOGGER.warning(
+            f">>>>> {area.name} --> {device_class} - {most_common_unit_of_measurement}"
+        )
+
         aggregates.append(
             AreaAggregateSensor(
                 area=area,
@@ -181,6 +185,12 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
             final_unit_of_measurement = unit_of_measurement
 
         self._attr_suggested_display_precision = DEFAULT_SENSOR_PRECISION
+        sensor_device_class_object: SensorDeviceClass | None = (
+            SensorDeviceClass[device_class.upper()]
+            if device_class in DEVICE_CLASSES
+            else None
+        )
+        self.device_class = sensor_device_class_object
 
         state_class = SensorStateClass.MEASUREMENT
 
@@ -192,11 +202,7 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
         SensorGroup.__init__(
             self,
             hass=area.hass,
-            device_class=(
-                SensorDeviceClass[device_class.upper()]
-                if device_class in DEVICE_CLASSES
-                else None
-            ),
+            device_class=sensor_device_class_object,
             entity_ids=entity_ids,
             ignore_non_numeric=True,
             sensor_type=ATTR_SUM if device_class in AGGREGATE_MODE_SUM else ATTR_MEAN,
