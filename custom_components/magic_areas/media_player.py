@@ -218,7 +218,10 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
     @property
     def supported_features(self):
         """Flag media player features that are supported."""
-        return MediaPlayerEntityFeature.PLAY_MEDIA
+        return (
+            MediaPlayerEntityFeature.PLAY_MEDIA
+            | MediaPlayerEntityFeature.MEDIA_ANNOUNCE
+        )
 
     def get_active_areas(self):
         """Return areas that are occupied."""
@@ -274,7 +277,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
             self._state = state
         self.update_state()
 
-    def play_media(self, media_type, media_id, **kwargs):
+    async def async_play_media(self, media_type, media_id, **kwargs) -> None:
         """Forward a piece of media to media players in active areas."""
 
         # Read active areas
@@ -283,7 +286,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
         # Fail early
         if not active_areas:
             _LOGGER.info("No areas active. Ignoring.")
-            return False
+            return
 
         # Gather media_player entities
         media_players = []
@@ -294,20 +297,19 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
             _LOGGER.info(
                 "%s: No media_player entities to forward. Ignoring.", self.name
             )
-            return False
+            return
 
-        data = kwargs.copy()
-        data.update(
-            {
-                ATTR_MEDIA_CONTENT_ID: media_id,
-                ATTR_MEDIA_CONTENT_TYPE: media_type,
-                ATTR_ENTITY_ID: media_players,
-            }
+        data = {
+            ATTR_MEDIA_CONTENT_ID: media_id,
+            ATTR_MEDIA_CONTENT_TYPE: media_type,
+            ATTR_ENTITY_ID: media_players,
+        }
+        if kwargs:
+            data.update(kwargs)
+
+        await self.hass.services.async_call(
+            MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA, data
         )
-
-        self.hass.services.call(MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA, data)
-
-        return True
 
 
 class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
