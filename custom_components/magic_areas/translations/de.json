@@ -116,7 +116,6 @@
           "aggregates_illuminance_threshold": "Magic Areas erstellt einen binären „Licht“-Sensor, der erkennt, wenn die Gesamtbeleuchtungsstärke des Bereichs diesen Schwellenwert überschreitet. Erfordert, dass die Geräteklasse „Beleuchtungsstärke“ für die Aggregation ausgewählt ist. Zum Deaktivieren auf 0 setzen.",
           "aggregates_illuminance_threshold_hysteresis": "[Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) definiert, wie empfindlich der Sensor auf Änderungen seines Werts reagiert. Ein Wert von Null bewirkt, dass der Sensorzustand jedes Mal umschaltet, wenn die Beleuchtungsstärke den festgelegten Schwellenwert überschreitet. Positive Werte bedeuten, dass der Sensor nur dann den Zustand ändert, wenn der Schwellenwert um einen bestimmten Betrag überschritten wird, ausgedrückt als Prozentsatz des oben festgelegten Schwellenwerts. Das Erhöhen dieses Werts kann nützlich sein, wenn Sie versuchen, diesen Sensor als Lichtsensor für seinen eigenen Bereich zu verwenden."
         }
-        }
       },
       "feature_conf_climate_groups": {
         "title": "Feature: Klimagruppen",
