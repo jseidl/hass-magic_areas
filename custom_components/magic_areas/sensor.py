@@ -143,10 +143,6 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
         unit_of_measurements = Counter(unit_of_measurement_map[device_class])
         most_common_unit_of_measurement = unit_of_measurements.most_common(1)[0][0]
 
-        _LOGGER.warning(
-            f">>>>> {area.name} --> {device_class} - {most_common_unit_of_measurement}"
-        )
-
         aggregates.append(
             AreaAggregateSensor(
                 area=area,
