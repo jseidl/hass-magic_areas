@@ -3,8 +3,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "Erstellen Sie einen magischen Bereich",
-        "description": "Wählen Sie den Bereich aus, den Sie magisch gestalten möchten!",
+        "title": "Magischen Bereich erstellen",
+        "description": "Wähle den Bereich aus, der magisch werden soll!",
         "data": {
           "name": "Bereich"
         }
@@ -13,170 +13,170 @@
     "abort": {
       "already_configured": "Dieses Gerät ist bereits konfiguriert",
       "invalid_area": "Der ausgewählte Bereich existiert nicht",
-      "no_more_areas": "Alle Bereiche sind bereits magisch!"
+      "no_more_areas": "Es sind bereits alle Bereiche magisch!"
     }
   },
   "options": {
     "step": {
       "select_features": {
-        "title": "Merkmalsauswahl",
-        "description": "Wählen Sie die Funktionen aus, die Sie für diesen Bereich aktivieren möchten. Eine neue Menüoption zum Konfigurieren der Funktion wird angezeigt, wenn Konfigurationsoptionen für diese Funktion vorhanden sind.",
+        "title": "Funktionen auswählen",
+        "description": "Funktionen auswählen, die für diesen Bereich aktiviert werden sollen. sofern Konfigurationsoptionen für diese Funktion vorhanden sind, wird ein weiterer Menüeintrag zum Konfigurieren der Funktion angezeigt.",
         "data": {
           "climate_groups": "Erstellen von Klimagruppen",
-          "media_player_groups": "Erstellen von Mediaplayer Gruppen",
+          "media_player_groups": "Erstellen von Media Player Gruppen",
           "light_groups": "Erstellen von Lichtgruppen ",
           "cover_groups": "Erstellen von Abdeckungsgruppen",
-          "area_aware_media_player": "Bereichsabhängiger Mediaplayer",
+          "area_aware_media_player": "Erstellen eines bereichsabhängigen Media Players",
           "aggregates": "Erstellen von aggregierten Sensoren",
           "health": "Erstellen von Umweltsensoren",
-          "presence_hold": "Erstellen von Anwesenheitshalteschalter "
+          "presence_hold": "Erstellen eines Anwesenheitshalteschalters"
         }
       },
       "show_menu": {
         "title": "Optionen für magische Bereiche",
-        "description": "Magic Areas führt standardmäßig eine grundlegende Anwesenheitserkennung durch, Sie können jedoch seine volle Leistungsfähigkeit nutzen, indem Sie die erweiterte Statusverfolgung konfigurieren, Ihre Anwesenheitsverfolgungsparameter anpassen und unsere magischen Funktionen aktivieren! Optionen werden nicht gespeichert, es sei denn, Sie wählen „Speichern und beenden“.",
+        "description": "Magic Areas führt standardmäßig eine einfache Anwesenheitserkennung durch. Erst durch Verwendung der erweiterten Statusverfolgung und Anpassung der Anwesenheitsverfolgung wird das volle Potential von Magic Areas freigeschaltet! Die Einstellungen werden erst durch „Speichern und beenden“ gespeichert.",
         "menu_options": {
           "area_config": "Grundlegende Bereichsoptionen",
-          "secondary_states": "Erweiterte Bereichsstatusverfolgung",
+          "secondary_states": "Erweiterte Statusverfolgung",
           "presence_tracking": "Optionen zur Anwesenheitsverfolgung",
-          "select_features": "Merkmalsauswahl",
-          "finish": "Konfiguration endgültig speichern",
+          "select_features": "Funktionsauswahl",
+          "finish": "Speichern und beenden",
           "feature_conf_health": "Umweltsensoren konfigurieren",
           "feature_conf_climate_groups": "Klimagruppen konfigurieren",
           "feature_conf_light_groups": "Lichtgruppen konfigurieren",
-          "feature_conf_area_aware_media_player": "Bereichsabhängigen Mediaplayer konfigurieren",
+          "feature_conf_area_aware_media_player": "Bereichsabhängigen Media Player konfigurieren",
           "feature_conf_aggregates": "Aggregierte Sensoren konfigurieren",
           "feature_conf_presence_hold": "Anwesenheitshalteschalter konfigurieren"
         }
       },
       "feature_conf_health": {
         "title": "Umweltsensor",
-        "description": "Sie können mehrere Geräteklassen vom Typ „Binärsensor“ auswählen, die von diesem Umweltsensor verfolgt und in Automatisierungen verwendet werden können.",
+        "description": "Mehrere Geräteklassen vom Typ „Binärsensor“ auswählen, die von diesem Umweltsensor verfolgt werden und in Automatisierungen verwendet werden können.",
         "data": {
           "health_binary_sensor_device_classes": "Zu verfolgende Geräteklassen"
         }
       },
       "feature_conf_light_groups": {
         "title": "Lichtgruppen",
-        "description": "Magic Areas erstellt diese vier (plus eine globale) [Lichtgruppen](https://github.com/jseidl/hass-magic_areas/wiki/Light-Groups) (wenn Sie ihnen Lichter zuweisen), die Sie verwenden können. Dies sind standardmäßig einfache Lichtgruppen, können aber automatisch gesteuert werden, wenn Sie sie Bereichszuständen zuweisen und den Lichtsteuerungsschalter aktivieren (der erstellt wird, wenn Sie diese Funktion aktivieren). Alle Lichter werden ausgeschaltet, wenn ein Bereich gelöscht wird. Zusätzliche Zustände können durch Konfigurieren von „Erweiterte Bereichszustandsverfolgung“ freigeschaltet werden.",
+        "description": "Magic Areas erstellt diese vier (plus eine globale) [Lichtgruppen](https://github.com/jseidl/hass-magic_areas/wiki/Light-Groups) (wenn ihnen Lichter zugewiesen werden). Dies sind standardmäßig einfache Lichtgruppen, die jedoch automatisch gesteuert werden können, wenn sie Bereichszuständen zugewiesen sind und der Lichtsteuerungsschalter eingeschaltet wird (wird mit Aktivieren dieser Funktion erstellt). Alle Lichter werden ausgeschaltet, wenn ein Bereich freigegeben wird. Zusätzliche Zustände können durch Konfigurieren von „Erweiterte Statusverfolgung“ freigeschaltet werden.",
         "data": {
           "overhead_lights": "Deckenleuchten",
-          "overhead_lights_states": "Gibt an, welche Lichter eingeschaltet sind",
-          "overhead_lights_act_on": "Wann sollten die Lichter gesteuert werden?",
+          "overhead_lights_states": "Welche Deckenleuchten sollen eingeschaltet werden",
+          "overhead_lights_act_on": "Wann sollen die Deckenleuchten gesteuert werden?",
           "sleep_lights": "Schlaflichter",
-          "sleep_lights_states": "Gibt an, welche Schlaflichter eingeschaltet sind",
+          "sleep_lights_states": "Welche Schlaflichter sollen eingeschaltet werden",
           "sleep_lights_act_on": "Wann sollen Schlaflichter gesteuert werden?",
           "accent_lights": "Akzentlichter",
-          "accent_lights_states": "Gibt an, welche Akzentlichter eingeschaltet sind",
-          "accent_lights_act_on": "Wann sollte Akzentlicht gesteuert werden?",
-          "task_lights": "Arbeitsplatzleuchten",
-          "task_lights_states": "Gibt an, welche Arbeitsplatzleuchten eingeschaltet sind",
-          "task_lights_act_on": "Wann sollten Arbeitsleuchten gesteuert werden?"
+          "accent_lights_states": "Welche Akzentlichter sollen eingeschaltet werden",
+          "accent_lights_act_on": "Wann sollen die Akzentlichter gesteuert werden?",
+          "task_lights": "Arbeitslichter",
+          "task_lights_states": "Welche Arbeitslichter sollen eingeschaltet werden",
+          "task_lights_act_on": "Wann sollen die Arbeitslichter gesteuert werden?"
         },
         "data_description": {
-          "overhead_lights_states": "Konfigurieren Sie, welche Bereichszustände diese Lichtgruppe auslösen. Lichtgruppen werden eingeschaltet, während sich der Bereich in diesem Zustand befindet, und ausgeschaltet, wenn der Bereich diese Zustände verliert. Wenn Sie beispielsweise möchten, dass das Licht nach einer längeren Zeitspanne eingeschaltet bleibt, müssen Sie auch den Zustand „erweitert“ auswählen.",
-          "overhead_lights_act_on": "Wählen Sie, ob diese Lichtgruppe nur beim ersten Betreten eines Bereichs, nur bei Zustandsänderungen des Bereichs oder beides gesteuert werden soll.",
-          "sleep_lights_states": "Konfigurieren Sie, welche Bereichszustände diese Lichtgruppe auslösen. Lichtgruppen werden eingeschaltet, während sich der Bereich in diesem Zustand befindet, und ausgeschaltet, wenn der Bereich diese Zustände verliert. Wenn Sie beispielsweise möchten, dass das Licht nach einer längeren Zeitspanne eingeschaltet bleibt, müssen Sie auch den Zustand „erweitert“ auswählen.",
-          "sleep_lights_act_on": "Wählen Sie, ob diese Lichtgruppe nur beim ersten Betreten eines Bereichs, nur bei Zustandsänderungen des Bereichs oder beides gesteuert werden soll.",
-          "accent_lights_states": "Konfigurieren Sie, welche Bereichszustände diese Lichtgruppe auslösen. Lichtgruppen werden eingeschaltet, während sich der Bereich in diesem Zustand befindet, und ausgeschaltet, wenn der Bereich diese Zustände verliert. Wenn Sie beispielsweise möchten, dass das Licht nach einer längeren Zeitspanne eingeschaltet bleibt, müssen Sie auch den Zustand „erweitert“ auswählen.",
-          "accent_lights_act_on": "Wählen Sie, ob diese Lichtgruppe nur beim ersten Betreten eines Bereichs, nur bei Zustandsänderungen des Bereichs oder beides gesteuert werden soll.",
-          "task_lights_states": "Konfigurieren Sie, welche Bereichszustände diese Lichtgruppe auslösen. Lichtgruppen werden eingeschaltet, während sich der Bereich in diesem Zustand befindet, und ausgeschaltet, wenn der Bereich diese Zustände verliert. Wenn Sie beispielsweise möchten, dass das Licht nach einer längeren Zeitspanne eingeschaltet bleibt, müssen Sie auch den Zustand „erweitert“ auswählen.",
-          "task_lights_act_on": "Wählen Sie, ob diese Lichtgruppe nur beim ersten Betreten eines Bereichs, nur bei Zustandsänderungen des Bereichs oder beides gesteuert werden soll."
+          "overhead_lights_states": "Konfigurieren Sie, welche Bereichszustände diese Lichtgruppe auslösen. Lichtgruppen werden eingeschaltet, während sich der Bereich in diesem Zustand befindet, und ausgeschaltet, wenn der Bereich diese Zustände verliert. Wenn das Licht nach einer längeren Zeitspanne eingeschaltet bleiben soll, muss auch der Zustand „erweitert“ ausgewählt werden.",
+          "overhead_lights_act_on": "Soll diese Lichtgruppe nur beim ersten Betreten eines Bereichs, nur bei Zustandsänderungen des Bereichs oder bei beidem gesteuert werden.",
+          "sleep_lights_states": "Konfigurieren Sie, welche Bereichszustände diese Lichtgruppe auslösen. Lichtgruppen werden eingeschaltet, während sich der Bereich in diesem Zustand befindet, und ausgeschaltet, wenn der Bereich diese Zustände verliert. Wenn das Licht nach einer längeren Zeitspanne eingeschaltet bleiben soll, muss auch der Zustand „erweitert“ ausgewählt werden.",
+          "sleep_lights_act_on": "Soll diese Lichtgruppe nur beim ersten Betreten eines Bereichs, nur bei Zustandsänderungen des Bereichs oder bei beidem gesteuert werden.",
+          "accent_lights_states": "Konfigurieren Sie, welche Bereichszustände diese Lichtgruppe auslösen. Lichtgruppen werden eingeschaltet, während sich der Bereich in diesem Zustand befindet, und ausgeschaltet, wenn der Bereich diese Zustände verliert. Wenn das Licht nach einer längeren Zeitspanne eingeschaltet bleiben soll, muss auch der Zustand „erweitert“ ausgewählt werden.",
+          "accent_lights_act_on": "Soll diese Lichtgruppe nur beim ersten Betreten eines Bereichs, nur bei Zustandsänderungen des Bereichs oder bei beidem gesteuert werden.",
+          "task_lights_states": "Konfigurieren Sie, welche Bereichszustände diese Lichtgruppe auslösen. Lichtgruppen werden eingeschaltet, während sich der Bereich in diesem Zustand befindet, und ausgeschaltet, wenn der Bereich diese Zustände verliert. Wenn das Licht nach einer längeren Zeitspanne eingeschaltet bleiben soll, muss auch der Zustand „erweitert“ ausgewählt werden.",
+          "task_lights_act_on": "Soll diese Lichtgruppe nur beim ersten Betreten eines Bereichs, nur bei Zustandsänderungen des Bereichs oder bei beidem gesteuert werden."
         }
       },
       "feature_conf_presence_hold": {
-        "title": "Anwesenheit halten",
-        "description": "Erstellt einen Schalter, der einen als Bereich belegt markiert, während er eingeschaltet ist. Sie können eine Zeitüberschreitung konfigurieren, damit der Schalter nach einer bestimmten Zeit automatisch ausgeschaltet wird, wenn Sie ihn häufig eingeschaltet lassen.",
+        "title": "Funktion: Anwesenheitshalteschalter",
+        "description": "Erstellt einen Schalter, der einen Bereich als belegt markiert hält (während der Schalter eingeschaltet ist). Wenn der Schalter häufig eingeschaltet bleibt, kann ein Timeout definiert werden, nach dessen Ablauf der Schalter automatisch ausgeschaltet wird.",
         "data": {
           "presence_hold_timeout": "Zeit, nach der der Schalter automatisch ausgeschaltet wird. (0 = Timeout deaktiviert)."
         }
       },
       "feature_conf_area_aware_media_player": {
-        "title": "Funktion: Bereichsabhängiger Mediaplayer",
-        "description": "Erstellt einen Mediaplayer, der Wiedergabeaufrufe nur in besetzten Bereichen an andere Mediaplayer weiterleitet. Dies ist nützlich, wenn Sie TTS-Benachrichtigungen nur in belegten Bereichen abgespielt werden sollen. Diese Funktion verfügt über Konfigurationsoptionen in jedem Bereich, wird jedoch nur erstellt, wenn Sie einen „globalen“ Metabereich haben.",
+        "title": "Funktion: Bereichsabhängiger Media Player",
+        "description": "Erstellt einen Media Player, der Wiedergabeaufrufe nur an Media Player in besetzten Bereichen weiterleitet. Dies ist nützlich, wenn TTS-Benachrichtigungen nur in belegten Bereichen abgespielt werden sollen. Diese Funktion verfügt über Konfigurationsoptionen in jedem Bereich. Der Media Player wird jedoch nur erstellt, wenn ein „globaler“ Metabereich eingerichtet wurde.",
         "data": {
-          "notification_devices": "Für die Übertragung verwendete Mediaplayer",
+          "notification_devices": "Für die Übertragung verwendete Media Player",
           "notification_states": "Benachrichtigungen nur in diesen Zuständen abspielen"
         },
         "data_description": {
-          "notification_states": "Benachrichtigungen werden nur abgespielt, wenn sich ein Bereich in diesem Zustand befindet. Die Verwendung von „Erweitert“ stellt sicher, dass Sie in Räumen, die Sie gerade passiert haben, nicht benachrichtigt werden. Wenn Sie „Ruhen“ nicht auswählen, werden in diesem Modus keine Benachrichtigungen ausgegeben."
+          "notification_states": "Benachrichtigungen werden nur abgespielt, wenn sich ein Bereich in diesem Zustand befindet. Die Verwendung von „Erweitert“ stellt sicher, dass Bereiche, die gerade passiert wurden, keine Benachrichtungen abgespielt werden. Ist „Ruhen“ nicht ausgewählt, werden keine Benachrichtigungen ausgegeben."
         }
       },
       "feature_conf_aggregates": {
-        "title": "Feature: Sensoraggregate",
-        "description": "Wenn Sie mehrere „Sensoren“ (oder „binäre Sensoren“) desselben Typs haben, können Magic Areas diese zu einer einzigen Einheit zusammenfassen, sodass Sie Durchschnittswerte (oder Summen) von Sensoren oder den kombinierten Zustand von binären Sensoren erhalten. Dies ist sogar nützlich, wenn Sie derzeit nur einen Sensor jeder Art haben, da Sie das Aggregat in Automatisierungen verwenden und in Zukunft erweitern können, ohne Ihre Automatisierungen neu schreiben zu müssen.",
+        "title": "Funktion: Aggregierte Sensoren",
+        "description": "Wenn mehrere „Sensoren“ (oder „binäre Sensoren“) desselben Typs existieren, können Magic Areas diese zu einer einzigen Einheit zusammenfassen, so dass Durchschnittswerte (oder Summen) von Sensoren oder der kombinierte Zustand von binären Sensoren berechnet wird. Dies ist auch dann nützlich, wenn derzeit nur ein Sensor jeder Art existiert, da der Aggregatssensor in Automatisierungen verwendet und in Zukunft erweitert werden kann, ohne Automatisierungen neu erstellen/anpassen zu müssen.",
         "data": {
-          "aggregates_min_entities": "Mindestanzahl von Entitäten derselben Geräteklasse, die zum Erstellen von Aggregaten erforderlich ist.",
-          "aggregates_binary_sensor_device_classes": "Zu aggregierende binäre Sensorgeräteklassen.",
-          "aggregates_sensor_device_classes": "Zu aggregierende Sensorgeräteklassen.",
+          "aggregates_min_entities": "Mindestanzahl von Entitäten derselben Geräteklasse, die zum Erstellen von Aggregatsensoren erforderlich ist.",
+          "aggregates_binary_sensor_device_classes": "Zu aggregierende Geräteklassen für binäre Sensoren.",
+          "aggregates_sensor_device_classes": "Zu aggregierende Geräteklassen für Sensoren.",
           "aggregates_illuminance_threshold": "Beleuchtungsstärkeschwelle für diesen Bereich",
-          "aggregates_illuminance_threshold_hysteresis": "Hysterese für Beleuchtungsstärkeschwellesensor"
+          "aggregates_illuminance_threshold_hysteresis": "Hysterese für Beleuchtungsstärkeschwellensensor"
         },
         "data_description": {
-          "aggregates_illuminance_threshold": "Magic Areas erstellt einen binären „Licht“-Sensor, der erkennt, wenn die Gesamtbeleuchtungsstärke des Bereichs diesen Schwellenwert überschreitet. Erfordert, dass die Geräteklasse „Beleuchtungsstärke“ für die Aggregation ausgewählt ist. Zum Deaktivieren auf 0 setzen.",
-          "aggregates_illuminance_threshold_hysteresis": "[Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) definiert, wie empfindlich der Sensor auf Änderungen seines Werts reagiert. Ein Wert von Null bewirkt, dass der Sensorzustand jedes Mal umschaltet, wenn die Beleuchtungsstärke den festgelegten Schwellenwert überschreitet. Positive Werte bedeuten, dass der Sensor nur dann den Zustand ändert, wenn der Schwellenwert um einen bestimmten Betrag überschritten wird, ausgedrückt als Prozentsatz des oben festgelegten Schwellenwerts. Das Erhöhen dieses Werts kann nützlich sein, wenn Sie versuchen, diesen Sensor als Lichtsensor für seinen eigenen Bereich zu verwenden."
+          "aggregates_illuminance_threshold": "Magic Areas erstellt einen binären „Licht“-Sensor, der erkennt, wenn die Gesamtbeleuchtungsstärke des Bereichs diesen Schwellenwert überschreitet. Erfordert, dass die Geräteklasse „Beleuchtungsstärke“ für den aggregierten Sensor ausgewählt ist. Zum Deaktivieren auf 0 setzen.",
+          "aggregates_illuminance_threshold_hysteresis": "[Hysterese](https://www.home-assistant.io/integrations/threshold/#hysteresis) definiert, wie empfindlich der Sensor auf Änderungen seines Werts reagiert. Ein Wert von 0 bewirkt, dass der Sensorzustand jedes Mal umschaltet, wenn die Beleuchtungsstärke den festgelegten Schwellenwert überschreitet. Positive Werte bedeuten, dass der Sensor nur dann den Zustand ändert, wenn der Schwellenwert um einen bestimmten Betrag überschritten wird (ausgedrückt als Prozentsatz des zuvor festgelegten Schwellenwertes). Das Erhöhen dieses Werts kann nützlich sein, wenn der Sensor als Lichtsensor für seinen eigenen Bereich verwenden werden soll."
         }
       },
       "feature_conf_climate_groups": {
         "title": "Feature: Klimagruppen",
-        "description": "Gruppieren und steuern Sie alle Klimaelemente in einem Bereich. Mit dieser Funktion können Klimaelemente automatisch entsprechend eines Bereichszustands gesteuert werden.",
+        "description": "Alle Klimaentitäten in einem Bereich gruppieren. Mit dieser Funktion können Klimaentitäten automatisch entsprechend eines Bereichszustands gesteuert werden.",
         "data": {
-          "turn_on_state": "Staat soll sich gegen die Klimagruppe wenden."
+          "turn_on_state": "Status, der die Klimagruppe einschalten soll."
         },
         "data_description": {
-          "turn_on_state": "In diesem Zustand werden die Klimaanlagen eingeschaltet und ausgeschaltet, wenn der Bereich geräumt wird."
+          "turn_on_state": "In diesem Zustand werden die Klimaentitäten ein- und ausgeschaltet, wenn der Bereich freigegeben wird."
         }
       },
       "secondary_states": {
-        "title": "Erweiterte Bereichsstatusverfolgung",
-        "description": "Sie können [sekundäre Zustände](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) für einen magischen Bereich aktivieren, indem Sie ihm eine Entität zuweisen. Sekundäre Zustände werden von Funktionen verwendet, um Lichter nur einzuschalten, wenn es dunkel ist, oder um Klimageräte erst nach einer „längeren“ Zeitspanne einzuschalten oder um keine Benachrichtigungen an einen Bereich zu senden, wenn dieser im „Ruhezustand“ ist.",
+        "title": "Erweiterte Statusverfolgung",
+        "description": "[Sekundäre Zustände](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) für einen magischen Bereich aktivieren. Sekundäre Zustände werden von Funktionen verwendet, um Lichter nur dann einzuschalten, wenn es dunkel ist, oder um Klimaentitäten erst nach einer „längeren“ Zeitspanne einzuschalten oder um keine Benachrichtigungen an einen Bereich zu senden, wenn dieser im „Ruhezustand“ ist.",
         "data": {
           "dark_entity": "Lichtsensor des Bereichs",
           "sleep_entity": "Entität zum Verfolgen des Schlafzustands eines Bereichs",
-          "sleep_timeout": "Wie lange wird der Bereich warten, bevor der Status im Schlafzustand gelöscht wird?",
+          "sleep_timeout": "Wie lange soll der Bereich warten, bevor sein Status im Schlafzustand freigegeben wird?",
           "accent_entity": "Entität zur Verfolgung des akzentuierten Zustands eines Bereichs",
           "extended_time": "Der Bereich wird nach einer so langen Belegung als „erweitert“ markiert",
-          "extended_timeout": "Wie lange wird der Bereich warten, bevor der Status gelöscht wird, wenn er sich im erweiterten Status befindet?"
+          "extended_timeout": "Wie lange soll der Bereich warten, bevor sein Status freigegeben wird, wenn er sich im erweiterten Zustand befindet?"
         },
         "data_description": {
-          "dark_entity": "Der Lichtsensor des Bereichs wird verwendet, um den Status „hell“/„dunkel“ eines Bereichs zu verfolgen, der von Funktionen wie Lichtgruppen verwendet wird, um Ihre Lichter je nach Helligkeitszustand des Raums ein-/auszuschalten.\n\n**Vermeiden Sie die Verwendung eines „Licht“-Sensors im selben Bereich, da dies zu einer Rückkopplungsschleife führen kann.** Es wird empfohlen, entweder „sun.sun“ oder einen externen „Licht“-Sensor zu verwenden, der von den gesteuerten Lichtern nicht beeinflusst wird."
+          "dark_entity": "Der Lichtsensor des Bereichs wird verwendet, um den Status „hell“/„dunkel“ eines Bereichs zu verfolgen, der von Funktionen wie Lichtgruppen verwendet wird, um Lichter je nach Helligkeitszustand ein-/auszuschalten.\n\n**Die Verwendung von „Licht“-Sensoren im selben Bereich sollte vermieden werden, da dies zu einer Rückkopplung führen kann.** Es wird empfohlen, entweder „sun.sun“ oder einen externen „Licht“-Sensor zu verwenden, der von den gesteuerten Lichtern nicht beeinflusst wird."
         }
       },
       "area_config": {
         "title": "Grundlegende Bereichsoptionen",
-        "description": "Konfigurieren Sie grundlegende Optionen für den Bereich. Der Bereichstyp wird für die [Metabereiche](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas) Innen/Außen/Global verwendet und Sie können mithilfe der Optionen zum Einschließen/Ausschließen von Entitäten genau festlegen, welche Entitäten von Magic Areas analysiert werden.",
+        "description": "Grundlegende Optionen des Bereichs konfigurieren. Der Bereichstyp wird für die [Metabereiche](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas) Innen/Außen/Global verwendet. Mithilfe der Optionen zum Einschließen/Ausschließen von Entitäten kann genau festlegt werden, welche Entitäten von Magic Areas analysiert werden.",
         "data": {
-          "include_entities": "Objekte in diesen Bereich einschließen",
+          "include_entities": "Entitäten in die Analyse einschließen",
           "exclude_entities": "Entitäten von der Analyse ausschließen",
           "type": "Bereichsart (innen/außen)"
         },
         "data_description": {
-          "include_entities": "Magische Bereiche können Entitäten aus anderen Bereichen berücksichtigen, einschließlich anderer magischer Entitäten. Sie können dies verwenden, um den binären Anwesenheitssensor eines Raums auch als Anwesenheitssensor eines anderen Raums fungieren zu lassen.",
-          "exclude_entities": "Die hier aufgeführten Entitäten werden von Magic Areas vollständig ignoriert. Verwenden Sie diese Option, wenn Sie Entitäten haben, die Ihre Daten verfälschen, wie z. B. Temperatursensoren von Geräten.",
+          "include_entities": "Magic Areas kann Entitäten aus anderen Bereichen berücksichtigen, einschließlich anderer magischer Entitäten. Dies kann verwendet werden, um den binären Anwesenheitssensor eines Bereichs auch als Anwesenheitssensor eines anderen Bereichs fungieren zu lassen.",
+          "exclude_entities": "Die hier aufgeführten Entitäten werden von Magic Areas vollständig ignoriert. Diese Option verwenden, wenn Entitäten die Daten verfälschen würden, wie z.B. Temperatursensoren von Geräten.",
           "type": "Durch die Definition einer Bereichsart können Metabereiche für den Innen- und Außenbereich erstellt werden."
         }
       },
       "presence_tracking": {
         "title": "Anwesenheitsverfolgung",
-        "description": "Konfigurieren Sie, welche Plattformen und binären Sensorgeräteklassen für die [Anwesenheitsverfolgung](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Sensing) verwendet werden. In diesem Abschnitt können Sie auch konfigurieren, wie lange Magic Area nach dem letzten Anwesenheitsereignis wartet, bis der Bereich gelöscht wird.",
+        "description": "Konfigurieren, welche Domänen und binären Sensorgeräteklassen für die [Anwesenheitsverfolgung](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Sensing) verwendet werden. In diesem Abschnitt kann ebenfalls konfiguriert werden, wie lange Magic Areas nach dem letzten Anwesenheitsereignis wartet, bis der Bereich freigegeben wird.",
         "data": {
           "presence_sensor_device_class": "Geräteklassen für Anwesenheitssensoren",
-          "presence_device_platforms": "Plattformen zur Anwesenheitserkennung",
+          "presence_device_platforms": "Domänen zur Anwesenheitsverfolgung",
           "keep_only_entities": "Nur behaltende Entitäten",
           "update_interval": "Intervall zur Überprüfung verpasster Ereignisse",
           "clear_timeout": "Zeitüberschreitung löschen"
         },
         "data_description": {
-          "presence_device_platforms": "Normalerweise sind binäre Sensoren die Standardquelle für die Anwesenheitserkennung, es können jedoch auch Mediengeräte verwendet werden.",
-          "presence_sensor_device_class": "Definieren Sie, welche Geräteklassen von „binären Sensoren“ für die Anwesenheitsverfolgung verwendet werden. Übliche nicht standardmäßige Optionen sind Tür und Feuchtigkeit.",
-          "keep_only_entities": "Wählen Sie Präsenzverfolgungselemente aus, die nur berücksichtigt werden, wenn der Raum bereits belegt ist. Dies ist nützlich, um zu verhindern, dass überempfindliche Sensoren wie mmWave-Sensoren und BLE-Tracker die Präsenz eines Bereichs fälschlicherweise auslösen.",
-          "clear_timeout": "Wie lange soll seit dem letzten Anwesenheitsereignis gewartet werden, bevor der Bereich zurückgesetzt wird?"
+          "presence_device_platforms": "Binäre Sensoren sind die Standardquelle für die Anwesenheitsverfolgung. Es können aber bspw. auch Media Player verwendet werden.",
+          "presence_sensor_device_class": "Welche Geräteklassen von „binären Sensoren“ sollen für die Anwesenheitsverfolgung verwendet werden. Übliche aber nicht standardmäßige Optionen sind Tür- und Feuchtigkeitssensoren.",
+          "keep_only_entities": "Entitäten auswählen, die nur dann berücksichtigt werden, wenn der Bereich bereits belegt ist. Dies ist nützlich, um zu verhindern, dass überempfindliche Sensoren wie mmWave-Sensoren und BLE-Tracker die Anwesenheit eines Bereichs fälschlicherweise auslösen.",
+          "clear_timeout": "Wie lange soll seit dem letzten Anwesenheitsereignis gewartet werden, bevor der Bereich freigegeben wird?"
         }
       }
     },
     "error": {
       "option_error": "Ungültige Option",
-      "malformed_input": "Dieses Feld ist ungültig:"
+      "malformed_input": "Diese Eingabe ist ungültig:"
     }
   },
   "entity": {
@@ -207,7 +207,7 @@
         "name": "Vorhänge"
       },
       "cover_group_damper": {
-        "name": "Luftdämpfer"
+        "name": "Klappen"
       },
       "cover_group_door": {
         "name": "Türen"
@@ -219,10 +219,10 @@
         "name": "Tore"
       },
       "cover_group_shade": {
-        "name": "Farbtöne"
+        "name": "Rollos"
       },
       "cover_group_shutter": {
-        "name": "Fensterläden"
+        "name": "Rollladen"
       },
       "cover_group_window": {
         "name": "Fenster"
@@ -239,7 +239,7 @@
         "name": "Deckenleuchten"
       },
       "task_lights": {
-        "name": "Arbeitsleuchten"
+        "name": "Arbeitslichter"
       },
       "accent_lights": {
         "name": "Akzentlichter"
@@ -250,10 +250,10 @@
     },
     "media_player": {
       "media_player_group": {
-        "name": "Mediaplayer"
+        "name": "Media Player"
       },
       "area_aware_media_player": {
-        "name": "Bereichsabhängiger Mediaplayer"
+        "name": "Bereichsabhängiger Media Player"
       }
     },
     "switch": {
@@ -264,10 +264,10 @@
         "name": "Lichtsteuerung"
       },
       "media_player_control": {
-        "name": "Mediaplayer Steuerung"
+        "name": "Media Player Steuerung"
       },
       "climate_control": {
-        "name": "Klimakontrolle"
+        "name": "Klimasteuerung"
       }
     }
   },
