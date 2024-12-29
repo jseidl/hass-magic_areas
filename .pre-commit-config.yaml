@@ -60,7 +60,15 @@ repos:
             "-sn", # Don't display the score
             "--rcfile=pylintrc", # Link to your config file
           ]
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: 'v1.9.0'
-  #   hooks:
-  #   -   id: mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.9.0'
+    hooks:
+    - id: mypy
+      args:
+        - --explicit-package-bases
+        - --strict
+      types: [python]
+      additional_dependencies:
+        - typed
+        - pydantic
+        - returns
