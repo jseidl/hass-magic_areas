@@ -51,7 +51,7 @@
       },
       "feature_conf_health": {
         "title": "Health sensor",
-        "description": "You can choose a set of `binary sensor` device clasess that will be tracked by this health sensor that can be used in automations.",
+        "description": "You can choose a set of `binary sensor` device classes that will be tracked by this health sensor that can be used in automations.",
         "data": {
           "health_binary_sensor_device_classes": "Device classes to track"
         }
