@@ -3,6 +3,7 @@
 from collections.abc import Callable
 from datetime import UTC, datetime
 import logging
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_NAME, EVENT_HOMEASSISTANT_STARTED
@@ -18,8 +19,10 @@ from homeassistant.helpers.entity_registry import (
 
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
+    CONF_RELOAD_ON_REGISTRY_CHANGE,
     DATA_AREA_OBJECT,
     DATA_TRACKED_LISTENERS,
+    DEFAULT_RELOAD_ON_REGISTRY_CHANGE,
     MODULE_DATA,
     MagicConfigEntryVersion,
 )
@@ -39,6 +42,20 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         ),
     ) -> None:
         """Reload integration when entity registry is updated."""
+
+        area_data: dict[str, Any] = dict(config_entry.data)
+        if config_entry.options:
+            area_data.update(config_entry.options)
+
+        # Check if disabled
+        if not area_data.get(
+            CONF_RELOAD_ON_REGISTRY_CHANGE, DEFAULT_RELOAD_ON_REGISTRY_CHANGE
+        ):
+            _LOGGER.debug(
+                "%s: Auto-Reloading disabled for this area skipping...",
+                config_entry.data[ATTR_NAME],
+            )
+            return
 
         _LOGGER.debug(
             "%s: Reloading entry due entity registry change",

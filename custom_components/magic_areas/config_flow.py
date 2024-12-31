@@ -1,6 +1,7 @@
 """Config Flow for Magic Area."""
 
 import logging
+from typing import Any
 
 import voluptuous as vol
 
@@ -10,7 +11,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
 )
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
-from homeassistant.components.media_player import DOMAIN as MEDIA_PLAYER_DOMAIN
+from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.const import ATTR_DEVICE_CLASS, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
@@ -74,6 +75,7 @@ from .const import (
     CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_HOLD_TIMEOUT,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
+    CONF_RELOAD_ON_REGISTRY_CHANGE,
     CONF_SECONDARY_STATES,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
@@ -118,6 +120,7 @@ from .const import (
     MagicConfigEntryVersion,
     MetaAreaType,
 )
+from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.helpers.area import (
     basic_area_from_floor,
     basic_area_from_meta,
@@ -135,6 +138,10 @@ class ConfigBase:
     config_entry = None
 
     # Selector builder
+    def _build_selector_boolean(self):
+        """Build a boolean toggle selector."""
+        return selector({"boolean": {}})
+
     def _build_selector_select(self, options=None, multiple=False):
         """Build a <select> selector."""
         if not options:
@@ -382,11 +389,11 @@ class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
 class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
     """Handle a option flow for Adaptive Lighting."""
 
+    area: MagicArea
+
     def __init__(self, config_entry: config_entries.ConfigEntry):
         """Initialize options flow."""
-        self.config_entry = config_entry
-        self.data = None
-        self.area = None
+        self.data: dict[str, Any] = {}
         self.all_entities = []
         self.area_entities = []
         self.all_area_entities = []
@@ -395,6 +402,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         self.all_binary_entities = []
         self.all_light_tracking_entities = []
         self.area_options = {}
+        super().__init__()
 
     def _get_feature_list(self) -> list[str]:
         """Return list of available features for area type."""
@@ -496,6 +504,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
             if e_component == BINARY_SENSOR_DOMAIN:
                 entity_object = self.hass.states.get(entity)
+                if not entity_object:
+                    continue
                 entity_object_attributes = entity_object.attributes
                 if (
                     ATTR_DEVICE_CLASS in entity_object_attributes
@@ -608,6 +618,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             CONF_EXCLUDE_ENTITIES: self._build_selector_entity_simple(
                 self.all_area_entities, multiple=True
             ),
+            CONF_RELOAD_ON_REGISTRY_CHANGE: self._build_selector_boolean(),
         }
 
         options = OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA

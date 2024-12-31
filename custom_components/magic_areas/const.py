@@ -479,6 +479,11 @@ CONF_HEALTH_SENSOR_DEVICE_CLASSES, DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES = (
     DISTRESS_SENSOR_CLASSES,
 )
 
+CONF_RELOAD_ON_REGISTRY_CHANGE, DEFAULT_RELOAD_ON_REGISTRY_CHANGE = (
+    "reload_on_registry_change",
+    True,
+)
+
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT_META = (
     "clear_timeout",
     1,
@@ -701,6 +706,9 @@ REGULAR_AREA_BASIC_OPTIONS_SCHEMA = vol.Schema(
         ),
         vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+        vol.Optional(
+            CONF_RELOAD_ON_REGISTRY_CHANGE, default=DEFAULT_RELOAD_ON_REGISTRY_CHANGE
+        ): cv.boolean,
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -709,6 +717,9 @@ META_AREA_BASIC_OPTIONS_SCHEMA = vol.Schema(
         vol.Optional(CONF_TYPE, default=AREA_TYPE_META): AREA_TYPE_META,
         vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+        vol.Optional(
+            CONF_RELOAD_ON_REGISTRY_CHANGE, default=DEFAULT_RELOAD_ON_REGISTRY_CHANGE
+        ): cv.boolean,
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -755,6 +766,9 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         ),
         vol.Optional(CONF_INCLUDE_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
+        vol.Optional(
+            CONF_RELOAD_ON_REGISTRY_CHANGE, default=DEFAULT_RELOAD_ON_REGISTRY_CHANGE
+        ): cv.boolean,
         vol.Optional(CONF_KEEP_ONLY_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(
             CONF_PRESENCE_DEVICE_PLATFORMS,
@@ -782,6 +796,9 @@ META_AREA_SCHEMA = vol.Schema(
         vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
         vol.Optional(CONF_EXCLUDE_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(
+            CONF_RELOAD_ON_REGISTRY_CHANGE, default=DEFAULT_RELOAD_ON_REGISTRY_CHANGE
+        ): cv.boolean,
+        vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT_META
         ): cv.positive_int,
         vol.Optional(
@@ -804,6 +821,7 @@ OPTIONS_AREA = [
     (CONF_TYPE, DEFAULT_TYPE, vol.In([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])),
     (CONF_INCLUDE_ENTITIES, [], cv.entity_ids),
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
+    (CONF_RELOAD_ON_REGISTRY_CHANGE, DEFAULT_RELOAD_ON_REGISTRY_CHANGE, cv.boolean),
 ]
 OPTIONS_PRESENCE_TRACKING = [
     (
@@ -823,6 +841,7 @@ OPTIONS_PRESENCE_TRACKING = [
 
 OPTIONS_AREA_META = [
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
+    (CONF_RELOAD_ON_REGISTRY_CHANGE, DEFAULT_RELOAD_ON_REGISTRY_CHANGE, cv.boolean),
 ]
 OPTIONS_PRESENCE_TRACKING_META = [
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
