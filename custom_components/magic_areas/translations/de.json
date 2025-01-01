@@ -148,12 +148,14 @@
         "data": {
           "include_entities": "Entitäten in die Analyse einschließen",
           "exclude_entities": "Entitäten von der Analyse ausschließen",
-          "type": "Bereichsart (innen/außen)"
+          "type": "Bereichsart (innen/außen)",
+          "reload_on_registry_change": "Magischen Bereich neu laden, wenn die Home Assistant Registry aktualisiert wurde"
         },
         "data_description": {
           "include_entities": "Magic Areas kann Entitäten aus anderen Bereichen berücksichtigen, einschließlich anderer magischer Entitäten. Dies kann verwendet werden, um den binären Anwesenheitssensor eines Bereichs auch als Anwesenheitssensor eines anderen Bereichs fungieren zu lassen.",
           "exclude_entities": "Die hier aufgeführten Entitäten werden von Magic Areas vollständig ignoriert. Diese Option verwenden, wenn Entitäten die Daten verfälschen würden, wie z.B. Temperatursensoren von Geräten.",
-          "type": "Durch die Definition einer Bereichsart können Metabereiche für den Innen- und Außenbereich erstellt werden."
+          "type": "Durch die Definition einer Bereichsart können Metabereiche für den Innen- und Außenbereich erstellt werden.",
+          "reload_on_registry_change": "Magischen Bereich automatisch neu laden, wenn ein Gerät oder eine Entität einem Bereich zugeordnet wird."
         }
       },
       "presence_tracking": {
