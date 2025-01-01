@@ -148,12 +148,14 @@
         "data": {
           "include_entities": "Inclure les entités dans cette pièce",
           "exclude_entities": "Exclure les entités de l'analyse",
-          "type": "Type de pièce (intérieur/extérieur)"
+          "type": "Type de pièce (intérieur/extérieur)",
+          "reload_on_registry_change": "Recharger automatiquement cette Zone Magique lors des mises à jour du registre"
         },
         "data_description": {
           "include_entities": "Zones Magiques peut prendre en compte les entités d'autres pièces, y compris d'autres entités Magique. Vous pouvez utiliser cela pour faire en sorte que le capteur de présence d'une pièce agisse également comme capteur de présence d'une autre pièce.",
           "exclude_entities": "Les entités répertoriées ici seront complètement ignorées par Zones Magiques. Utilisez cela si vous avez des entités qui faussent vos données, comme des capteurs de température des appareils.",
-          "type": "La définition d'un type de pièce permet de créer des méta-pièces intérieures/extérieures."
+          "type": "La définition d'un type de pièce permet de créer des méta-pièces intérieures/extérieures.",
+          "reload_on_registry_change": "Recharger automatiquement cette Zone Magique lorsque toute entité ou appareil est assigné ou déplacé dans une zone."
         }
       },
       "presence_tracking": {
