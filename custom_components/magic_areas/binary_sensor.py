@@ -11,8 +11,8 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.components.group.binary_sensor import BinarySensorGroup
 from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID
-from homeassistant.core import Event, EventStateChangedData, HomeAssistant
+from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
+from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
@@ -110,12 +110,33 @@ class AreaBLETrackerBinarySensor(MagicEntity, BinarySensorEntity):
         }
         self._attr_is_on: bool = False
 
+    async def _restore_state(self) -> None:
+        """Restore the state of the BLE Tracker monitor sensor entity on initialize."""
+        last_state = await self.async_get_last_state()
+
+        if last_state is None:
+            _LOGGER.debug("%s: New BLE Tracker monitor sensor created", self.area.name)
+            self._attr_is_on = False
+        else:
+            _LOGGER.debug(
+                "%s: BLE Tracker monitor sensor restored [state=%s]",
+                self.area.name,
+                last_state.state,
+            )
+            self._attr_is_on = last_state.state == STATE_ON
+            self._attr_extra_state_attributes = dict(last_state.attributes)
+
+        self.schedule_update_ha_state()
+
     async def async_added_to_hass(self) -> None:
         """Call to add the system to hass."""
         await super().async_added_to_hass()
+        await self._restore_state()
 
         # Setup the listeners
         await self._setup_listeners()
+
+        self.hass.loop.call_soon_threadsafe(self._update_state, datetime.now(UTC))
 
         _LOGGER.debug("%s: area presence binary sensor initialized", self.area.name)
 
@@ -128,6 +149,12 @@ class AreaBLETrackerBinarySensor(MagicEntity, BinarySensorEntity):
         )
 
     def _sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
+        """Call update state from track state change event."""
+
+        self._update_state()
+
+    @callback
+    def _update_state(self) -> None:
         """Calculate state based off BLE tracker sensors."""
 
         calculated_state: bool = False

@@ -540,7 +540,6 @@ class AreaStateTrackerEntity(MagicEntity):
         )
 
         # pylint: disable-next=not-callable
-        # asyncio.run_coroutine_threadsafe(self._clear_timeout_callback()).result()
         self._clear_timeout_callback()
         self._clear_timeout_callback = None
 
@@ -592,7 +591,6 @@ class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
         # Setup the listeners
         await self._setup_listeners()
 
-        # self.force_update()
         self.hass.loop.call_soon_threadsafe(self._update_state, datetime.now(UTC))
 
         _LOGGER.debug("%s: area presence binary sensor initialized", self.area.name)
