@@ -12,6 +12,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
+from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import ATTR_DEVICE_CLASS, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
@@ -47,6 +48,7 @@ from .const import (
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
+    CONF_BLE_TRACKER_ENTITIES,
     CONF_CLEAR_TIMEOUT,
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_DARK_ENTITY,
@@ -56,6 +58,7 @@ from .const import (
     CONF_EXTENDED_TIMEOUT,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
+    CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_CLIMATE_GROUPS,
     CONF_FEATURE_HEALTH,
     CONF_FEATURE_LIGHT_GROUPS,
@@ -95,6 +98,7 @@ from .const import (
     DISTRESS_SENSOR_CLASSES,
     DOMAIN,
     LIGHT_GROUP_ACT_ON_OPTIONS,
+    MAGICAREAS_UNIQUEID_PREFIX,
     META_AREA_BASIC_OPTIONS_SCHEMA,
     META_AREA_GLOBAL,
     META_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
@@ -105,6 +109,7 @@ from .const import (
     OPTIONS_AREA,
     OPTIONS_AREA_AWARE_MEDIA_PLAYER,
     OPTIONS_AREA_META,
+    OPTIONS_BLE_TRACKERS,
     OPTIONS_CLIMATE_GROUP,
     OPTIONS_CLIMATE_GROUP_META,
     OPTIONS_HEALTH_SENSOR,
@@ -1033,6 +1038,32 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         return await self.do_feature_config(
             name=CONF_FEATURE_PRESENCE_HOLD,
             options=OPTIONS_PRESENCE_HOLD,
+            selectors=selectors,
+            user_input=user_input,
+        )
+
+    async def async_step_feature_conf_ble_trackers(self, user_input=None):
+        """Configure the sensor BLE trackers feature."""
+
+        selectors = {
+            CONF_BLE_TRACKER_ENTITIES: self._build_selector_entity_simple(
+                [
+                    entity_id
+                    for entity_id in self.all_entities
+                    if (
+                        entity_id.split(".")[0] == SENSOR_DOMAIN
+                        and not entity_id.split(".")[1].startswith(
+                            MAGICAREAS_UNIQUEID_PREFIX
+                        )
+                    )
+                ],
+                multiple=True,
+            ),
+        }
+
+        return await self.do_feature_config(
+            name=CONF_FEATURE_BLE_TRACKERS,
+            options=OPTIONS_BLE_TRACKERS,
             selectors=selectors,
             user_input=user_input,
         )

@@ -2,11 +2,8 @@
 
 import logging
 
-from homeassistant.components.switch import (
-    DOMAIN as SWITCH_DOMAIN,
-    SwitchDeviceClass,
-    SwitchEntity,
-)
+from homeassistant.components.switch import SwitchDeviceClass, SwitchEntity
+from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_ON, EntityCategory
 from homeassistant.core import HomeAssistant
@@ -41,7 +38,7 @@ async def async_setup_entry(
 ):
     """Set up the area switch config entry."""
 
-    area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    area: MagicArea | None = get_area_from_config_entry(hass, config_entry)
     assert area is not None
 
     switch_entities = []
