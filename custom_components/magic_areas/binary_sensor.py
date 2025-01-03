@@ -139,7 +139,7 @@ class AreaBLETrackerBinarySensor(MagicEntity, BinarySensorEntity):
 
         self.hass.loop.call_soon_threadsafe(self._update_state, datetime.now(UTC))
 
-        _LOGGER.debug("%s: area presence binary sensor initialized", self.area.name)
+        _LOGGER.debug("%s: BLE Tracker monitor sensor initialized", self.area.name)
 
     async def _setup_listeners(self) -> None:
         """Attach state chagne listeners."""
