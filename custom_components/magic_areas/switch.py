@@ -1,11 +1,9 @@
 """Platform file for Magic Area's switch entities."""
 
 import logging
+
+from homeassistant.components.switch import SwitchDeviceClass, SwitchEntity
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
-from homeassistant.components.switch import (
-    SwitchDeviceClass,
-    SwitchEntity,
-)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_ON, EntityCategory
 from homeassistant.core import HomeAssistant

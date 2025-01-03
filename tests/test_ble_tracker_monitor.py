@@ -1,16 +1,13 @@
 """Tests for the BLE Tracker feature."""
 
-import logging
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON, STATE_UNKNOWN
+from homeassistant.core import HomeAssistant
 
 from custom_components.magic_areas.const import ATTR_PRESENCE_SENSORS
-from tests.mocks import MockSensor
-from homeassistant.core import HomeAssistant
-from homeassistant.const import STATE_OFF, STATE_ON, ATTR_ENTITY_ID, STATE_UNKNOWN
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from tests.const import DEFAULT_MOCK_AREA
 
-ble_tracker_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_ble_trackers_{DEFAULT_MOCK_AREA.value}_ble_tracker_monitor"
-area_sensor_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{DEFAULT_MOCK_AREA.value}_area_state"
+from tests.const import DEFAULT_MOCK_AREA
+from tests.mocks import MockSensor
 
 
 async def test_ble_tracker_presence_sensor(
@@ -21,6 +18,8 @@ async def test_ble_tracker_presence_sensor(
     """Test BLE tracker monitor functionality."""
 
     ble_sensor_entity_id = "sensor.ble_tracker_1"
+    ble_tracker_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_ble_trackers_{DEFAULT_MOCK_AREA.value}_ble_tracker_monitor"
+    area_sensor_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{DEFAULT_MOCK_AREA.value}_area_state"
 
     hass.states.async_set(ble_sensor_entity_id, STATE_UNKNOWN)
     await hass.async_block_till_done()
