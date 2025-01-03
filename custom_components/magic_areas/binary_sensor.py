@@ -1,5 +1,6 @@
 """Binary sensor control for magic areas."""
 
+from datetime import UTC, datetime
 import logging
 
 from homeassistant.components.binary_sensor import (
