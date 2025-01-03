@@ -1,9 +1,8 @@
 """Platform file for Magic Area's switch entities."""
 
 import logging
-
+from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch import (
-    DOMAIN as SWITCH_DOMAIN,
     SwitchDeviceClass,
     SwitchEntity,
 )
@@ -41,7 +40,7 @@ async def async_setup_entry(
 ):
     """Set up the area switch config entry."""
 
-    area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    area: MagicArea | None = get_area_from_config_entry(hass, config_entry)
     assert area is not None
 
     switch_entities = []
