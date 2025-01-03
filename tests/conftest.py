@@ -43,10 +43,12 @@ from custom_components.magic_areas.const import (
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
     CONF_AGGREGATES_MIN_ENTITIES,
+    CONF_BLE_TRACKER_ENTITIES,
     CONF_DARK_ENTITY,
     CONF_ENABLED_FEATURES,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
+    CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_COVER_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_KEEP_ONLY_ENTITIES,
@@ -275,6 +277,22 @@ def mock_config_entry_area_aware_media_player_area() -> MockConfigEntry:
                 CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: {
                     CONF_NOTIFICATION_DEVICES: ["media_player.media_player_1"],
                     CONF_NOTIFY_STATES: [AreaStates.OCCUPIED],
+                }
+            }
+        }
+    )
+    return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="ble_tracker_config_entry")
+def mock_config_entry_ble_tracker() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
+    data.update(
+        {
+            CONF_ENABLED_FEATURES: {
+                CONF_FEATURE_BLE_TRACKERS: {
+                    CONF_BLE_TRACKER_ENTITIES: ["sensor.ble_tracker_1"],
                 }
             }
         }
@@ -563,6 +581,24 @@ async def setup_entities_binary_sensor_motion_all_areas_with_meta(
     return mock_binary_sensor_entities
 
 
+@pytest.fixture(name="entities_ble_sensor_one")
+async def setup_entities_ble_sensor_one(
+    hass: HomeAssistant,
+) -> list[MockSensor]:
+    """Create one mock sensor and setup the system with it."""
+    mock_ble_sensor_entities = [
+        MockSensor(
+            name="ble_sensor_1",
+            unique_id="unique_ble_sensor",
+            device_class=None,
+        )
+    ]
+    await setup_mock_entities(
+        hass, SENSOR_DOMAIN, {DEFAULT_MOCK_AREA: mock_ble_sensor_entities}
+    )
+    return mock_ble_sensor_entities
+
+
 # Integration set-ups
 
 
@@ -673,6 +709,18 @@ async def setup_integration_area_aware_media_player(
             area_aware_media_player_global_config_entry,
         ],
     )
+
+
+@pytest.fixture(name="_setup_integration_ble_tracker")
+async def setup_integration_ble_tracker(
+    hass: HomeAssistant,
+    ble_tracker_config_entry: MockConfigEntry,
+) -> AsyncGenerator[Any]:
+    """Set up integration with BLE tracker config."""
+
+    await init_integration(hass, [ble_tracker_config_entry])
+    yield
+    await shutdown_integration(hass, [ble_tracker_config_entry])
 
 
 @pytest.fixture(name="_setup_integration_all_areas_with_meta")

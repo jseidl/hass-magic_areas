@@ -6,28 +6,35 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASSES,
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
+    BinarySensorEntity,
 )
 from homeassistant.components.group.binary_sensor import BinarySensorGroup
+from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Event, EventStateChangedData, HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_state_change_event
 
 from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.base.presence import AreaStateBinarySensor
 from custom_components.magic_areas.const import (
     AGGREGATE_MODE_ALL,
+    ATTR_ACTIVE_SENSORS,
     CONF_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     CONF_AGGREGATES_MIN_ENTITIES,
+    CONF_BLE_TRACKER_ENTITIES,
     CONF_FEATURE_AGGREGATION,
+    CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_HEALTH,
     CONF_HEALTH_SENSOR_DEVICE_CLASSES,
     DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES,
     EMPTY_STRING,
     MagicAreasFeatureInfoAggregates,
+    MagicAreasFeatureInfoBLETrackers,
     MagicAreasFeatureInfoHealth,
 )
 from custom_components.magic_areas.helpers.area import get_area_from_config_entry
@@ -80,6 +87,80 @@ class AreaHealthBinarySensor(AreaSensorGroupBinarySensor):
     feature_info = MagicAreasFeatureInfoHealth()
 
 
+class AreaBLETrackerBinarySensor(MagicEntity, BinarySensorEntity):
+    """BLE Tracker monitoring sensor for the area."""
+
+    feature_info = MagicAreasFeatureInfoBLETrackers()
+    _sensors: list[str]
+
+    def __init__(self, area: MagicArea) -> None:
+        """Initialize the area presence binary sensor."""
+
+        MagicEntity.__init__(self, area, domain=BINARY_SENSOR_DOMAIN)
+        BinarySensorEntity.__init__(self)
+
+        self._sensors = self.area.feature_config(CONF_FEATURE_BLE_TRACKERS).get(
+            CONF_BLE_TRACKER_ENTITIES, []
+        )
+
+        self._attr_device_class = BinarySensorDeviceClass.OCCUPANCY
+        self._attr_extra_state_attributes = {
+            ATTR_ENTITY_ID: self._sensors,
+            ATTR_ACTIVE_SENSORS: [],
+        }
+        self._attr_is_on: bool = False
+
+    async def async_added_to_hass(self) -> None:
+        """Call to add the system to hass."""
+        await super().async_added_to_hass()
+
+        # Setup the listeners
+        await self._setup_listeners()
+
+        _LOGGER.debug("%s: area presence binary sensor initialized", self.area.name)
+
+    async def _setup_listeners(self) -> None:
+        """Attach state chagne listeners."""
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass, self._sensors, self._sensor_state_change
+            )
+        )
+
+    def _sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
+        """Calculate state based off BLE tracker sensors."""
+
+        calculated_state: bool = False
+        active_sensors: list[str] = []
+
+        for sensor in self._sensors:
+            sensor_state = self.hass.states.get(sensor)
+
+            if not sensor_state:
+                continue
+
+            normalized_state = sensor_state.state.lower()
+
+            if (
+                normalized_state == self.area.slug
+                or normalized_state == self.area.id
+                or normalized_state == self.area.name.lower()
+            ):
+                calculated_state = True
+                active_sensors.append(sensor)
+
+        _LOGGER.debug(
+            "%s: BLE Tracker monitor sensor state change: %s -> %s",
+            self.area.name,
+            self._attr_is_on,
+            calculated_state,
+        )
+
+        self._attr_is_on = calculated_state
+        self._attr_extra_state_attributes[ATTR_ACTIVE_SENSORS] = active_sensors
+        self.schedule_update_ha_state()
+
+
 # Setup
 
 
@@ -108,6 +189,9 @@ async def async_setup_entry(
     if area.has_feature(CONF_FEATURE_HEALTH):
         entities.extend(create_health_sensors(area))
 
+    if area.has_feature(CONF_FEATURE_BLE_TRACKERS):
+        entities.extend(create_ble_tracker_sensor(area))
+
     # Add all entities
     async_add_entities(entities)
 
@@ -116,6 +200,21 @@ async def async_setup_entry(
         cleanup_removed_entries(
             area.hass, entities, area.magic_entities[BINARY_SENSOR_DOMAIN]
         )
+
+
+def create_ble_tracker_sensor(area: MagicArea) -> list[AreaBLETrackerBinarySensor]:
+    """Add the BLE tracker sensor for the area."""
+    if not area.has_feature(CONF_FEATURE_BLE_TRACKERS):
+        return []
+
+    if SENSOR_DOMAIN not in area.entities:
+        return []
+
+    return [
+        AreaBLETrackerBinarySensor(
+            area,
+        )
+    ]
 
 
 def create_health_sensors(area: MagicArea) -> list[AreaHealthBinarySensor]:
