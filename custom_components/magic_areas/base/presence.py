@@ -79,7 +79,6 @@ class AreaStateTrackerEntity(MagicEntity):
         _LOGGER.debug("%s: presence tracker initialized", self.area.name)
 
     def _setup_tracking_listeners(self) -> None:
-
         # Track presence sensor
         self.async_on_remove(
             async_track_state_change_event(
@@ -92,7 +91,6 @@ class AreaStateTrackerEntity(MagicEntity):
         configurable_states = self._get_configured_secondary_states()
 
         for configurable_state in configurable_states:
-
             configurable_state_entity = CONFIGURABLE_AREA_STATE_MAP[configurable_state]
             tracked_entity = self.area.config.get(CONF_SECONDARY_STATES, {}).get(
                 configurable_state_entity, None
@@ -163,7 +161,6 @@ class AreaStateTrackerEntity(MagicEntity):
             configurable_state,
             configurable_state_entity,
         ) in CONFIGURABLE_AREA_STATE_MAP.items():
-
             secondary_state_entity = self.area.config.get(
                 CONF_SECONDARY_STATES, {}
             ).get(configurable_state_entity, None)
@@ -601,7 +598,6 @@ class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
         _LOGGER.debug("%s: area presence binary sensor initialized", self.area.name)
 
     async def _setup_listeners(self) -> None:
-
         # Setup state chagne listener
         async_dispatcher_connect(
             self.hass, MagicAreasEvents.AREA_STATE_CHANGED, self._area_state_changed
@@ -632,7 +628,10 @@ class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
     @property
     def icon(self):
         """Return the icon to be used for this entity."""
-        return self.area.icon
+        default_icon = None
+        if self.feature_info:
+            self.feature_info.icons.get(BINARY_SENSOR_DOMAIN, None)
+        return self.area.icon or default_icon
 
     # Helpers
 

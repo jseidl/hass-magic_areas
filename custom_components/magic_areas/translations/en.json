@@ -198,6 +198,9 @@
       "area_state": {
         "name": "Area State"
       },
+      "ble_tracker_monitor": {
+        "name": "BLE Tracker Occupancy"
+      },
       "health_problem": {
         "name": "Area Health"
       },

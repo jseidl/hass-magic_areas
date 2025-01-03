@@ -22,6 +22,7 @@ from custom_components.magic_areas.const import (
     AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
+    CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_INCLUDE_ENTITIES,
     CONF_PRESENCE_DEVICE_PLATFORMS,
@@ -364,6 +365,11 @@ class MagicArea:
                 f"{SWITCH_DOMAIN}.magic_areas_presence_hold_{self.slug}"
             )
             sensors.append(presence_hold_switch_id)
+
+        # Append BLE Tracker monitor as a presence_sensor
+        if self.has_feature(CONF_FEATURE_BLE_TRACKERS):
+            ble_tracker_sensor_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_ble_trackers_{self.slug}_ble_tracker_monitor"
+            sensors.append(ble_tracker_sensor_id)
 
         return sensors
 

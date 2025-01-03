@@ -179,6 +179,7 @@ class MagicAreasFeatureInfoPresenceTracking(MagicAreasFeatureInfo):
 
     id = "presence_tracking"
     translation_keys = {BINARY_SENSOR_DOMAIN: "area_state"}
+    icons = {BINARY_SENSOR_DOMAIN: "mdi:texture-box"}
 
 
 class MagicAreasFeatureInfoPresenceHold(MagicAreasFeatureInfo):
@@ -187,6 +188,14 @@ class MagicAreasFeatureInfoPresenceHold(MagicAreasFeatureInfo):
     id = "presence_hold"
     translation_keys = {SWITCH_DOMAIN: "presence_hold"}
     icons = {SWITCH_DOMAIN: "mdi:car-brake-hold"}
+
+
+class MagicAreasFeatureInfoBLETrackers(MagicAreasFeatureInfo):
+    """Feature information for feature: BLE Trackers."""
+
+    id = "ble_trackers"
+    translation_keys = {BINARY_SENSOR_DOMAIN: "ble_tracker_monitor"}
+    icons = {BINARY_SENSOR_DOMAIN: "mdi:bluetooth"}
 
 
 class MagicAreasFeatureInfoAggregates(MagicAreasFeatureInfo):
