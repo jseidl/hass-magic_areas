@@ -155,7 +155,7 @@ class AreaBLETrackerBinarySensor(MagicEntity, BinarySensorEntity):
         self._update_state()
 
     @callback
-    def _update_state(self) -> None:
+    def _update_state(self, extra: datetime | None = None) -> None:
         """Calculate state based off BLE tracker sensors."""
 
         calculated_state: bool = False
