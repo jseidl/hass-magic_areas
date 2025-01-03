@@ -20,7 +20,7 @@
     "step": {
       "select_features": {
         "title": "Funktionen auswählen",
-        "description": "Funktionen auswählen, die für diesen Bereich aktiviert werden sollen. sofern Konfigurationsoptionen für diese Funktion vorhanden sind, wird ein weiterer Menüeintrag zum Konfigurieren der Funktion angezeigt.",
+        "description": "Funktionen auswählen, die für diesen Bereich aktiviert werden sollen. Sofern Konfigurationsoptionen für diese Funktion vorhanden sind, wird ein weiterer Menüeintrag zum Konfigurieren der Funktion angezeigt.",
         "data": {
           "climate_groups": "Erstellen von Klimagruppen",
           "media_player_groups": "Erstellen von Media Player Gruppen",
@@ -61,16 +61,16 @@
         "description": "Magic Areas erstellt diese vier (plus eine globale) [Lichtgruppen](https://github.com/jseidl/hass-magic_areas/wiki/Light-Groups) (wenn ihnen Lichter zugewiesen werden). Dies sind standardmäßig einfache Lichtgruppen, die jedoch automatisch gesteuert werden können, wenn sie Bereichszuständen zugewiesen sind und der Lichtsteuerungsschalter eingeschaltet wird (wird mit Aktivieren dieser Funktion erstellt). Alle Lichter werden ausgeschaltet, wenn ein Bereich freigegeben wird. Zusätzliche Zustände können durch Konfigurieren von „Erweiterte Statusverfolgung“ freigeschaltet werden.",
         "data": {
           "overhead_lights": "Deckenleuchten",
-          "overhead_lights_states": "Welche Deckenleuchten sollen eingeschaltet werden",
+          "overhead_lights_states": "In welchen Zuständen sollen Deckenleuchten eingeschaltet werden",
           "overhead_lights_act_on": "Wann sollen die Deckenleuchten gesteuert werden?",
           "sleep_lights": "Schlaflichter",
-          "sleep_lights_states": "Welche Schlaflichter sollen eingeschaltet werden",
+          "sleep_lights_states": "In welchen Zuständen sollen Schlaflichter eingeschaltet werden",
           "sleep_lights_act_on": "Wann sollen Schlaflichter gesteuert werden?",
           "accent_lights": "Akzentlichter",
-          "accent_lights_states": "Welche Akzentlichter sollen eingeschaltet werden",
+          "accent_lights_states": "In welchen Zuständen sollen Akzentlichter eingeschaltet werden",
           "accent_lights_act_on": "Wann sollen die Akzentlichter gesteuert werden?",
           "task_lights": "Arbeitslichter",
-          "task_lights_states": "Welche Arbeitslichter sollen eingeschaltet werden",
+          "task_lights_states": "In welchen Zuständen sollen Arbeitslichter eingeschaltet werden",
           "task_lights_act_on": "Wann sollen die Arbeitslichter gesteuert werden?"
         },
         "data_description": {
@@ -93,13 +93,13 @@
       },
       "feature_conf_area_aware_media_player": {
         "title": "Funktion: Bereichsabhängiger Media Player",
-        "description": "Erstellt einen Media Player, der Wiedergabeaufrufe nur an Media Player in besetzten Bereichen weiterleitet. Dies ist nützlich, wenn TTS-Benachrichtigungen nur in belegten Bereichen abgespielt werden sollen. Diese Funktion verfügt über Konfigurationsoptionen in jedem Bereich. Der Media Player wird jedoch nur erstellt, wenn ein „globaler“ Metabereich eingerichtet wurde.",
+        "description": "Erstellt einen Media Player, der Wiedergabeaufrufe nur an Media Player in besetzten Bereichen weiterleitet. Dies ist nützlich, wenn TTS-Benachrichtigungen nur in belegten Bereichen abgespielt werden sollen. Diese Funktion verfügt über Konfigurationsoptionen in jedem Bereich. Achtung: der Media Player wird nur erstellt, wenn ein „globaler“ Metabereich eingerichtet wurde.",
         "data": {
           "notification_devices": "Für die Übertragung verwendete Media Player",
           "notification_states": "Benachrichtigungen nur in diesen Zuständen abspielen"
         },
         "data_description": {
-          "notification_states": "Benachrichtigungen werden nur abgespielt, wenn sich ein Bereich in diesem Zustand befindet. Die Verwendung von „Erweitert“ stellt sicher, dass Bereiche, die gerade passiert wurden, keine Benachrichtungen abgespielt werden. Ist „Ruhen“ nicht ausgewählt, werden keine Benachrichtigungen ausgegeben."
+          "notification_states": "Benachrichtigungen werden nur abgespielt, wenn sich ein Bereich in einem dieser Zustände befindet. Die Verwendung von „Erweitert“ stellt sicher, dass Bereiche, die gerade erst passiert wurden, keine Benachrichtungen abgespielt werden."
         }
       },
       "feature_conf_aggregates": {
@@ -139,17 +139,17 @@
           "extended_timeout": "Wie lange soll der Bereich warten, bevor sein Status freigegeben wird, wenn er sich im erweiterten Zustand befindet?"
         },
         "data_description": {
-          "dark_entity": "Der Lichtsensor des Bereichs wird verwendet, um den Status „hell“/„dunkel“ eines Bereichs zu verfolgen, der von Funktionen wie Lichtgruppen verwendet wird, um Lichter je nach Helligkeitszustand ein-/auszuschalten.\n\n**Die Verwendung von „Licht“-Sensoren im selben Bereich sollte vermieden werden, da dies zu einer Rückkopplung führen kann.** Es wird empfohlen, entweder „sun.sun“ oder einen externen „Licht“-Sensor zu verwenden, der von den gesteuerten Lichtern nicht beeinflusst wird."
+          "dark_entity": "Der Lichtsensor des Bereichs wird verwendet, um den Helligkeitsstatus eines Bereichs (hell/dunkel) zu verfolgen. Dieser wird von Funktionen wie Lichtgruppen verwendet, um Lichter je nach helligkeitsabhängig ein-/auszuschalten.\n\n**Die Verwendung von „Licht“-Sensoren im selben Bereich sollte vermieden werden, da dies zu einer Rückkopplung führen kann.** Es wird empfohlen, entweder „sun.sun“ oder einen externen „Licht“-Sensor zu verwenden, der von den gesteuerten Lichtern nicht beeinflusst wird."
         }
       },
       "area_config": {
         "title": "Grundlegende Bereichsoptionen",
-        "description": "Grundlegende Optionen des Bereichs konfigurieren. Der Bereichstyp wird für die [Metabereiche](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas) Innen/Außen/Global verwendet. Mithilfe der Optionen zum Einschließen/Ausschließen von Entitäten kann genau festlegt werden, welche Entitäten von Magic Areas analysiert werden.",
+        "description": "Grundlegende Optionen des Bereichs konfigurieren. Die Bereichsart wird zur Zuweisung in die [Metabereiche](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas) Innenbereich/Außenbereich/Global verwendet. Mithilfe der Optionen zum Ein-/Ausschließen von Entitäten kann genau festgelegt werden, welche Entitäten von Magic Areas analysiert werden.",
         "data": {
           "include_entities": "Entitäten in die Analyse einschließen",
           "exclude_entities": "Entitäten von der Analyse ausschließen",
           "type": "Bereichsart (innen/außen)",
-          "reload_on_registry_change": "Magischen Bereich neu laden, wenn die Home Assistant Registry aktualisiert wurde"
+          "reload_on_registry_change": "Bereich bei Registry-Update neu laden"
         },
         "data_description": {
           "include_entities": "Magic Areas kann Entitäten aus anderen Bereichen berücksichtigen, einschließlich anderer magischer Entitäten. Dies kann verwendet werden, um den binären Anwesenheitssensor eines Bereichs auch als Anwesenheitssensor eines anderen Bereichs fungieren zu lassen.",
@@ -164,14 +164,14 @@
         "data": {
           "presence_sensor_device_class": "Geräteklassen für Anwesenheitssensoren",
           "presence_device_platforms": "Domänen zur Anwesenheitsverfolgung",
-          "keep_only_entities": "Nur behaltende Entitäten",
+          "keep_only_entities": "Bestätigende Entitäten",
           "update_interval": "Intervall zur Überprüfung verpasster Ereignisse",
           "clear_timeout": "Zeitüberschreitung löschen"
         },
         "data_description": {
           "presence_device_platforms": "Binäre Sensoren sind die Standardquelle für die Anwesenheitsverfolgung. Es können aber bspw. auch Media Player verwendet werden.",
           "presence_sensor_device_class": "Welche Geräteklassen von „binären Sensoren“ sollen für die Anwesenheitsverfolgung verwendet werden. Übliche aber nicht standardmäßige Optionen sind Tür- und Feuchtigkeitssensoren.",
-          "keep_only_entities": "Entitäten auswählen, die nur dann berücksichtigt werden, wenn der Bereich bereits belegt ist. Dies ist nützlich, um zu verhindern, dass überempfindliche Sensoren wie mmWave-Sensoren und BLE-Tracker die Anwesenheit eines Bereichs fälschlicherweise auslösen.",
+          "keep_only_entities": "Entitäten auswählen, die lediglich als Bestätigung dienen und nur dann berücksichtigt werden, wenn der Bereich bereits belegt ist. Dies ist nützlich, um zu verhindern, dass überempfindliche Sensoren wie mmWave-Sensoren und BLE-Tracker die Anwesenheit eines Bereichs fälschlicherweise auslösen.",
           "clear_timeout": "Wie lange soll seit dem letzten Anwesenheitsereignis gewartet werden, bevor der Bereich freigegeben wird?"
         }
       }
@@ -184,10 +184,10 @@
   "entity": {
     "binary_sensor": {
       "area_state": {
-        "name": "Bereich Status"
+        "name": "Status"
       },
       "health_problem": {
-        "name": "Bereich Umwelt"
+        "name": "Umwelt"
       },
       "threshold_light": {
         "name": "Licht (berechnet)"
