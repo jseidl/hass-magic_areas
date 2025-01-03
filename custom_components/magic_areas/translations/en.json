@@ -29,7 +29,8 @@
           "area_aware_media_player": "Area-aware media player",
           "aggregates": "Create aggregate sensors",
           "health": "Create health sensors",
-          "presence_hold": "Create presence hold switch"
+          "presence_hold": "Create presence hold switch",
+          "ble_trackers": "Monitor Bluetooth tracker sensors"
         }
       },
       "show_menu": {
@@ -46,7 +47,8 @@
           "feature_conf_light_groups": "Configure light groups",
           "feature_conf_area_aware_media_player": "Configure area-aware media player",
           "feature_conf_aggregates": "Configure aggregate sensors",
-          "feature_conf_presence_hold": "Configure presence hold switch"
+          "feature_conf_presence_hold": "Configure presence hold switch",
+          "feature_conf_ble_trackers": "Configure BLE Tracker monitoring"
         }
       },
       "feature_conf_health": {
@@ -125,6 +127,16 @@
         },
         "data_description": {
           "turn_on_state": "Climate devices will be turned `on` on this state and turned off when the area is cleared."
+        }
+      },
+      "feature_conf_ble_trackers": {
+        "title": "BLE Tracker Integration",
+        "description": "Tracks sensors from BLE Trackers and creates a corresponding `occupancy` binary sensor for the area that is turned on when the BLE tracker sensor has a state equals to the area's name or ID. **This feature does _NOT_ perform BLE Tracking itself.**",
+        "data": {
+          "ble_tracker_entities": "Entities from BLE Trackers to track."
+        },
+        "data_description": {
+          "ble_tracker_entities": "BLE Trackers such as [room-assistant](https://github.com/mKeRix/room-assistant), [Bermuda](https://github.com/agittins/bermuda) and [ESPresence](https://github.com/ESPresense/ESPresense) creates sensors which changes state to whatever area the device was closer to."
         }
       },
       "secondary_states": {
