@@ -235,7 +235,9 @@ def create_ble_tracker_sensor(area: MagicArea) -> list[AreaBLETrackerBinarySenso
     if not area.has_feature(CONF_FEATURE_BLE_TRACKERS):
         return []
 
-    if SENSOR_DOMAIN not in area.entities:
+    if not area.feature_config(CONF_FEATURE_BLE_TRACKERS).get(
+        CONF_BLE_TRACKER_ENTITIES, []
+    ):
         return []
 
     return [
