@@ -14,6 +14,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.components.cover import CoverDeviceClass
 from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
+from homeassistant.components.climate.const import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor.const import (
@@ -37,24 +38,35 @@ from homeassistant.setup import async_setup_component
 
 from .common import get_basic_config_entry_data, setup_test_component_platform
 from .const import DEFAULT_MOCK_AREA, MOCK_AREAS, MockAreaIds
-from .mocks import MockBinarySensor, MockCover, MockLight, MockMediaPlayer, MockSensor
+from .mocks import (
+    MockBinarySensor,
+    MockClimate,
+    MockCover,
+    MockLight,
+    MockMediaPlayer,
+    MockSensor,
+)
 from custom_components.magic_areas.const import (
     CONF_ACCENT_ENTITY,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD,
     CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_BLE_TRACKER_ENTITIES,
+    CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_DARK_ENTITY,
     CONF_ENABLED_FEATURES,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_BLE_TRACKERS,
+    CONF_FEATURE_CLIMATE_GROUPS,
     CONF_FEATURE_COVER_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
+    CONF_FEATURE_PRESENCE_HOLD,
     CONF_KEEP_ONLY_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
     CONF_OVERHEAD_LIGHTS,
+    CONF_PRESENCE_HOLD_TIMEOUT,
     CONF_SECONDARY_STATES,
     CONF_SLEEP_ENTITY,
     CONF_TYPE,
@@ -317,6 +329,23 @@ def mock_config_entry_all_areas_with_meta_config_entry() -> list[MockConfigEntry
         config_entries.append(MockConfigEntry(domain=DOMAIN, data=data))
 
     return config_entries
+
+
+@pytest.fixture(name="climate_groups_config_entry")
+def mock_config_entry_climate_groups() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
+    data.update(
+        {
+            CONF_ENABLED_FEATURES: {
+                CONF_FEATURE_PRESENCE_HOLD: {CONF_PRESENCE_HOLD_TIMEOUT: 0},
+                CONF_FEATURE_CLIMATE_GROUPS: {
+                    CONF_CLIMATE_GROUPS_TURN_ON_STATE: AreaStates.OCCUPIED.value,
+                },
+            }
+        }
+    )
+    return MockConfigEntry(domain=DOMAIN, data=data)
 
 
 # Entities
@@ -599,6 +628,23 @@ async def setup_entities_ble_sensor_one(
     return mock_ble_sensor_entities
 
 
+@pytest.fixture(name="entities_climate_group_one")
+async def setup_entities_climate_group_one(
+    hass: HomeAssistant,
+) -> list[MockClimate]:
+    """Create one mock climate and setup the system with it."""
+    mock_climate_entities = [
+        MockClimate(
+            name="climate_1",
+            unique_id="unique_climate",
+        )
+    ]
+    await setup_mock_entities(
+        hass, CLIMATE_DOMAIN, {DEFAULT_MOCK_AREA: mock_climate_entities}
+    )
+    return mock_climate_entities
+
+
 # Integration set-ups
 
 
@@ -751,3 +797,15 @@ async def setup_integration_all_areas_with_meta(
         hass,
         all_areas_with_meta_config_entry,
     )
+
+
+@pytest.fixture(name="_setup_integration_climate_groups")
+async def setup_integration_climate_groups(
+    hass: HomeAssistant,
+    climate_groups_config_entry: MockConfigEntry,
+) -> AsyncGenerator[Any]:
+    """Set up integration with BLE tracker config."""
+
+    await init_integration(hass, [climate_groups_config_entry])
+    yield
+    await shutdown_integration(hass, [climate_groups_config_entry])

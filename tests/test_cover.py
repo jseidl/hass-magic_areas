@@ -2,8 +2,10 @@
 
 from collections import defaultdict
 import logging
-
-from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, CoverDeviceClass
+from homeassistant.components.cover import CoverDeviceClass
+from homeassistant.components.cover.const import (
+    DOMAIN as COVER_DOMAIN,
+)
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_OPEN
 from homeassistant.core import HomeAssistant
 
@@ -17,7 +19,7 @@ async def test_cover_group_basic(
     entities_sensor_cover_all_classes_multiple: list[MockCover],
     _setup_integration_cover_group,
 ) -> None:
-    """Test the light from illuminance threshold sensor."""
+    """Test cover group."""
 
     cover_group_entity_id_base = (
         f"{COVER_DOMAIN}.magic_areas_cover_groups_kitchen_cover_group_"
