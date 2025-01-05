@@ -264,11 +264,10 @@ class ClimateGroup(GroupEntity, ClimateEntity):
             most_common_hvac_mode = max(
                 set(current_hvac_modes), key=current_hvac_modes.count
             )
-            self._attr_hvac_mode = (
-                HVACMode[most_common_hvac_mode]
-                if most_common_hvac_mode in HVACMode
-                else None
-            )
+            selected_hvac_mode = None
+            if most_common_hvac_mode in HVACMode:
+                selected_hvac_mode = HVACMode[most_common_hvac_mode.upper()]
+            self._attr_hvac_mode = selected_hvac_mode
             if self._attr_hvac_mode != self._most_common_hvac_mode:
                 self._most_common_hvac_mode = self._attr_hvac_mode
                 _LOGGER.debug(
