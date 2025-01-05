@@ -493,6 +493,12 @@ CONF_RELOAD_ON_REGISTRY_CHANGE, DEFAULT_RELOAD_ON_REGISTRY_CHANGE = (
     True,
 )
 
+CONF_IGNORE_DIAGNOSTIC_ENTITIES, DEFAULT_IGNORE_DIAGNOSTIC_ENTITIES = (
+    "ignore_diagnostic_entities",
+    True,
+)
+
+
 CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT_META = (
     "clear_timeout",
     1,
@@ -735,6 +741,9 @@ REGULAR_AREA_BASIC_OPTIONS_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_RELOAD_ON_REGISTRY_CHANGE, default=DEFAULT_RELOAD_ON_REGISTRY_CHANGE
         ): cv.boolean,
+        vol.Optional(
+            CONF_IGNORE_DIAGNOSTIC_ENTITIES, default=DEFAULT_IGNORE_DIAGNOSTIC_ENTITIES
+        ): cv.boolean,
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -795,6 +804,9 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_RELOAD_ON_REGISTRY_CHANGE, default=DEFAULT_RELOAD_ON_REGISTRY_CHANGE
         ): cv.boolean,
+        vol.Optional(
+            CONF_IGNORE_DIAGNOSTIC_ENTITIES, default=DEFAULT_IGNORE_DIAGNOSTIC_ENTITIES
+        ): cv.boolean,
         vol.Optional(CONF_KEEP_ONLY_ENTITIES, default=[]): cv.entity_ids,
         vol.Optional(
             CONF_PRESENCE_DEVICE_PLATFORMS,
@@ -848,6 +860,7 @@ OPTIONS_AREA = [
     (CONF_INCLUDE_ENTITIES, [], cv.entity_ids),
     (CONF_EXCLUDE_ENTITIES, [], cv.entity_ids),
     (CONF_RELOAD_ON_REGISTRY_CHANGE, DEFAULT_RELOAD_ON_REGISTRY_CHANGE, cv.boolean),
+    (CONF_IGNORE_DIAGNOSTIC_ENTITIES, DEFAULT_IGNORE_DIAGNOSTIC_ENTITIES, cv.boolean),
 ]
 OPTIONS_PRESENCE_TRACKING = [
     (

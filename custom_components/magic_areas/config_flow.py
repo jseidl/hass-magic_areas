@@ -68,6 +68,7 @@ from .const import (
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_HEALTH_SENSOR_DEVICE_CLASSES,
     CONF_ID,
+    CONF_IGNORE_DIAGNOSTIC_ENTITIES,
     CONF_INCLUDE_ENTITIES,
     CONF_KEEP_ONLY_ENTITIES,
     CONF_NOTIFICATION_DEVICES,
@@ -624,6 +625,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 self.all_area_entities, multiple=True
             ),
             CONF_RELOAD_ON_REGISTRY_CHANGE: self._build_selector_boolean(),
+            CONF_IGNORE_DIAGNOSTIC_ENTITIES: self._build_selector_boolean(),
         }
 
         options = OPTIONS_AREA_META if self.area.is_meta() else OPTIONS_AREA
