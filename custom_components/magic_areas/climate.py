@@ -1,6 +1,6 @@
 """Platform file for Magic Area's climate entities.
 
-This file is mostly https://github.com/daenny/climate_group,
+This file is mostly https://github.com/bjrnptrsn/climate_group/,
 adapted to work with Magic Areas.
 
 Once this goes into the main Home Assistant code it will be phased out.
@@ -12,7 +12,8 @@ import logging
 from statistics import mean
 from typing import Any
 
-from homeassistant.components.climate import (
+from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.climate.const import (
     ATTR_CURRENT_TEMPERATURE,
     ATTR_FAN_MODE,
     ATTR_FAN_MODES,
@@ -34,7 +35,6 @@ from homeassistant.components.climate import (
     SERVICE_SET_PRESET_MODE,
     SERVICE_SET_SWING_MODE,
     SERVICE_SET_TEMPERATURE,
-    ClimateEntity,
     ClimateEntityFeature,
     HVACAction,
     HVACMode,
@@ -46,13 +46,14 @@ from homeassistant.components.group.util import (
     reduce_attribute,
     states_equal,
 )
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
     STATE_ON,
     STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
 )
 from homeassistant.core import Event, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -65,6 +66,7 @@ from custom_components.magic_areas.const import (
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_FEATURE_CLIMATE_GROUPS,
     DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
+    EMPTY_STRING,
     EVENT_MAGICAREAS_AREA_STATE_CHANGED,
     MagicAreasFeatureInfoClimateGroups,
 )
@@ -79,7 +81,22 @@ SUPPORT_FLAGS = (
     | ClimateEntityFeature.PRESET_MODE
     | ClimateEntityFeature.SWING_MODE
     | ClimateEntityFeature.FAN_MODE
+    | ClimateEntityFeature.TURN_ON
+    | ClimateEntityFeature.TURN_OFF
 )
+
+
+def round_decimal_accuracy(
+    value: float,
+    fraction: int = 10,
+    precision: int = 1,
+) -> float:
+    """Round the decimal part of a float to an fractional value with a certain precision."""
+    fraction = max(min(fraction, 10), 1)
+    precision = max(min(precision, 3), 1)
+
+    return round(round(value * fraction) / fraction, precision)
+
 
 # Magic Areas Constants
 
@@ -91,7 +108,7 @@ DEFAULT_NAME = "Climate Group"
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the area climate config entry."""
 
-    area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    area: MagicArea | None = get_area_from_config_entry(hass, config_entry)
     assert area is not None
 
     # Check feature availability
@@ -116,18 +133,24 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         )
 
 
+# Climate Group class
+
+
 class ClimateGroup(GroupEntity, ClimateEntity):
     """Representation of a climate group."""
 
     _attr_available: bool = False
     _attr_assumed_state: bool = True
+    _enable_turn_on_off_backwards_compatibility: bool = False
 
     def __init__(
         self,
+        *,
         unique_id: str | None,
         name: str,
         entity_ids: list[str],
         temperature_unit: str,
+        decimal_accuracy_to_half: bool,
     ) -> None:
         """Initialize a climate group."""
         self._entity_ids = entity_ids
@@ -138,11 +161,18 @@ class ClimateGroup(GroupEntity, ClimateEntity):
 
         self._attr_temperature_unit = temperature_unit
 
+        self._decimal_accuracy_to_half = decimal_accuracy_to_half
+
+        self._logger_data = {ATTR_ENTITY_ID: entity_ids}
+
         # Set some defaults (will be overwritten on update)
-        self._attr_supported_features = 0
+        self._attr_supported_features = (
+            ClimateEntityFeature.TURN_OFF | ClimateEntityFeature.TURN_ON
+        )
         self._attr_hvac_modes = [HVACMode.OFF]
         self._attr_hvac_mode = None
         self._attr_hvac_action = None
+        self._most_common_hvac_mode = None
 
         self._attr_swing_modes = None
         self._attr_swing_mode = None
@@ -159,7 +189,6 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         @callback
         def async_state_changed_listener(event: Event) -> None:
             """Handle child updates."""
-
             self.async_set_context(event.context)
             self.async_defer_or_update_ha_state()
 
@@ -183,13 +212,24 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         ]
         self._attr_assumed_state |= not states_equal(states)
 
+        invalid_states = [STATE_UNAVAILABLE, STATE_UNKNOWN]
+        filtered_states = list(
+            filter(lambda state: state.state not in invalid_states, states)
+        )
+
         # Set group as unavailable if all members are unavailable or missing
-        self._attr_available = any(state.state != STATE_UNAVAILABLE for state in states)
+        self._attr_available = any(
+            state.state not in invalid_states for state in states
+        )
 
         # Temperature settings
         self._attr_target_temperature = reduce_attribute(
             states, ATTR_TEMPERATURE, reduce=lambda *data: mean(data)
         )
+        if self._decimal_accuracy_to_half and self._attr_target_temperature is not None:
+            self._attr_target_temperature = round_decimal_accuracy(
+                value=self._attr_target_temperature, fraction=2, precision=1
+            )
 
         self._attr_target_temperature_step = reduce_attribute(
             states, ATTR_TARGET_TEMP_STEP, reduce=max
@@ -216,31 +256,47 @@ class ClimateGroup(GroupEntity, ClimateEntity):
             # Merge all effects from all effect_lists with a union merge.
             self._attr_hvac_modes = list(set().union(*all_hvac_modes))
 
-        current_hvac_modes = [x.state for x in states if x.state != HVACMode.OFF]
-        # return the most common hvac mode (what the thermostat is set to do) except OFF
+        # return the most common HVAC mode (what the thermostat is set to do) if state not invalid
+        current_hvac_modes = [
+            x.state for x in filtered_states if (x.state != HVACMode.OFF)
+        ]
         if current_hvac_modes:
-            self._attr_hvac_mode = max(
+            most_common_hvac_mode = max(
                 set(current_hvac_modes), key=current_hvac_modes.count
             )
-        # return off if all are off
-        elif all(x.state == HVACMode.OFF for x in states):
+            selected_hvac_mode = None
+            if most_common_hvac_mode in HVACMode:
+                selected_hvac_mode = HVACMode[most_common_hvac_mode.upper()]
+            self._attr_hvac_mode = selected_hvac_mode
+            if self._attr_hvac_mode != self._most_common_hvac_mode:
+                self._most_common_hvac_mode = self._attr_hvac_mode
+                _LOGGER.debug(
+                    "Updated most common hvac mode: '%s', %s",
+                    self._most_common_hvac_mode,
+                    self._logger_data,
+                )
+
+        # return HVACMode.OFF if all modes are set to off
+        elif all(x.state == HVACMode.OFF for x in filtered_states):
             self._attr_hvac_mode = HVACMode.OFF
-        # else it's none
+
+        # else it's invalid
         else:
             self._attr_hvac_mode = None
 
-        # return the most common action if it is not off
+        # return the most common action if it is not None
         hvac_actions = list(find_state_attributes(states, ATTR_HVAC_ACTION))
-        current_hvac_actions = [a for a in hvac_actions if a != HVACAction.OFF]
-        # return the most common action if it is not off
-        if current_hvac_actions:
-            self._attr_hvac_action = max(
-                set(current_hvac_actions), key=current_hvac_actions.count
-            )
-        # return action off if all are off
-        elif all(a == HVACAction.OFF for a in hvac_actions):
-            self._attr_hvac_action = HVACAction.OFF
-        # else it's none
+        if hvac_actions:
+            current_hvac_actions = [a for a in hvac_actions if a != HVACAction.OFF]
+            # return the most common action if it is not off
+            if current_hvac_actions:
+                self._attr_hvac_action = max(
+                    set(current_hvac_actions), key=current_hvac_actions.count
+                )
+            # return HVACAction.OFF if all actions are set to off
+            elif all(a == HVACAction.OFF for a in hvac_actions):
+                self._attr_hvac_action = HVACAction.OFF
+        # else it's None
         else:
             self._attr_hvac_action = None
 
@@ -280,14 +336,49 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         # so that we don't break in the future when a new feature is added.
         self._attr_supported_features &= SUPPORT_FLAGS
 
-        _LOGGER.debug("State update complete")
+    async def async_turn_on(self) -> None:
+        """Forward the turn_on command to all climate in the climate group."""
+        if self._most_common_hvac_mode is not None:
+            _LOGGER.info(
+                "Turn on with most common hvac mode: '%s', %s",
+                self._most_common_hvac_mode,
+                self._logger_data,
+            )
+            await self.async_set_hvac_mode(self._most_common_hvac_mode)
+
+        # Try to set the first available HVAC mode
+        elif self._attr_hvac_modes:
+            for mode in self._attr_hvac_modes:
+                if mode != HVACMode.OFF:
+                    _LOGGER.info(
+                        "Turn on with first available hvac mode: '%s', %s",
+                        mode,
+                        self._logger_data,
+                    )
+                    await self.async_set_hvac_mode(mode)
+                    break
+
+        else:
+            _LOGGER.warning(
+                "Can't turn on: No hvac modes available, %s", self._logger_data
+            )
+
+    async def async_turn_off(self) -> None:
+        """Forward the turn_off command to all climate in the climate group."""
+        if HVACMode.OFF in self._attr_hvac_modes:
+            _LOGGER.info("Turn off with hvac mode 'off' %s", self._logger_data)
+            await self.async_set_hvac_mode(HVACMode.OFF)
+
+        else:
+            _LOGGER.warning(
+                "Can't turn off: hvac mode 'off' not available, %s", self._logger_data
+            )
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
-        """Forward the turn_on command to all climate in the climate group."""
+        """Forward the set_temperature command to all climate in the climate group."""
         data = {ATTR_ENTITY_ID: self._entity_ids}
 
         if ATTR_HVAC_MODE in kwargs:
-            _LOGGER.debug("Set temperature with HVAC MODE")
             await self.async_set_hvac_mode(kwargs[ATTR_HVAC_MODE])
 
         if ATTR_TEMPERATURE in kwargs:
@@ -297,7 +388,7 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         if ATTR_TARGET_TEMP_HIGH in kwargs:
             data[ATTR_TARGET_TEMP_HIGH] = kwargs[ATTR_TARGET_TEMP_HIGH]
 
-        _LOGGER.debug("Setting temperature: %s", data)
+        _LOGGER.info("Setting temperature: %s", data)
 
         await self.hass.services.async_call(
             CLIMATE_DOMAIN,
@@ -308,9 +399,9 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         )
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
-        """Forward the turn_on command to all climate in the climate group."""
+        """Forward the set_hvac_mode command to all climate in the climate group."""
         data = {ATTR_ENTITY_ID: self._entity_ids, ATTR_HVAC_MODE: hvac_mode}
-        _LOGGER.debug("Setting hvac mode: %s", data)
+        _LOGGER.info("Setting hvac mode: %s", data)
         await self.hass.services.async_call(
             CLIMATE_DOMAIN,
             SERVICE_SET_HVAC_MODE,
@@ -320,9 +411,9 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         )
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
-        """Forward the fan_mode to all climate in the climate group."""
+        """Forward the set_fan_mode to all climate in the climate group."""
         data = {ATTR_ENTITY_ID: self._entity_ids, ATTR_FAN_MODE: fan_mode}
-        _LOGGER.debug("Setting fan mode: %s", data)
+        _LOGGER.info("Setting fan mode: %s", data)
         await self.hass.services.async_call(
             CLIMATE_DOMAIN,
             SERVICE_SET_FAN_MODE,
@@ -332,9 +423,9 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         )
 
     async def async_set_swing_mode(self, swing_mode: str) -> None:
-        """Forward the swing_mode to all climate in the climate group."""
+        """Forward the set_swing_mode to all climate in the climate group."""
         data = {ATTR_ENTITY_ID: self._entity_ids, ATTR_SWING_MODE: swing_mode}
-        _LOGGER.debug("Setting swing mode: %s", data)
+        _LOGGER.info("Setting swing mode: %s", data)
         await self.hass.services.async_call(
             CLIMATE_DOMAIN,
             SERVICE_SET_SWING_MODE,
@@ -344,9 +435,9 @@ class ClimateGroup(GroupEntity, ClimateEntity):
         )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
-        """Forward the preset_mode to all climate in the climate group."""
+        """Forward the set_preset_mode to all climate in the climate group."""
         data = {ATTR_ENTITY_ID: self._entity_ids, ATTR_PRESET_MODE: preset_mode}
-        _LOGGER.debug("Setting preset mode: %s", data)
+        _LOGGER.info("Setting preset mode: %s", data)
         await self.hass.services.async_call(
             CLIMATE_DOMAIN,
             SERVICE_SET_PRESET_MODE,
@@ -354,6 +445,9 @@ class ClimateGroup(GroupEntity, ClimateEntity):
             blocking=True,
             context=self._context,
         )
+
+
+# Magic Areas-specific code
 
 
 class AreaClimateGroup(MagicEntity, ClimateGroup):
@@ -370,10 +464,11 @@ class AreaClimateGroup(MagicEntity, ClimateGroup):
 
         ClimateGroup.__init__(
             self,
-            name=None,
+            name=EMPTY_STRING,
             unique_id=self.unique_id,
             entity_ids=self._entities,
             temperature_unit=unit,
+            decimal_accuracy_to_half=True,
         )
         delattr(self, "_attr_name")
 

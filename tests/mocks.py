@@ -14,14 +14,15 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
+from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.climate.const import ClimateEntityFeature, HVACMode
 from homeassistant.components.cover import CoverEntity, CoverEntityFeature
 from homeassistant.components.fan import FanEntity
 from homeassistant.components.light import ColorMode, LightEntity
-from homeassistant.components.media_player import (
-    MediaPlayerEntity,
-    MediaPlayerEntityFeature,
-)
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.media_player import MediaPlayerEntity
+from homeassistant.components.media_player.const import MediaPlayerEntityFeature
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor.const import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     STATE_CLOSED,
@@ -607,3 +608,35 @@ class MockMediaPlayer(MockEntity, MediaPlayerEntity):
         self._attr_state = STATE_IDLE
         self.schedule_update_ha_state()
         return True
+
+
+class MockClimate(MockEntity, ClimateEntity):
+    """Mock Climate class."""
+
+    _attr_state = STATE_OFF
+    _attr_hvac_mode = HVACMode.OFF
+    _attr_hvac_modes = [HVACMode.AUTO, HVACMode.HEAT_COOL, HVACMode.OFF]
+    _attr_temperature_unit = "°C"
+    _attr_target_temperature = 70
+    _attr_current_temperature = 70
+    _attr_supported_features = (
+        ClimateEntityFeature.TURN_OFF | ClimateEntityFeature.TURN_ON
+    )
+
+    def turn_on(self, **kwargs: Any) -> None:
+        """Turn the entity on."""
+        self.set_hvac_mode(HVACMode.AUTO)
+
+    def turn_off(self, **kwargs: Any) -> None:
+        """Turn the entity off."""
+        self.set_hvac_mode(HVACMode.OFF)
+
+    def set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        """Set HVAC mode."""
+
+        self._attr_hvac_mode = hvac_mode
+        if hvac_mode == HVACMode.OFF:
+            self._attr_state = STATE_OFF
+        else:
+            self._attr_state = STATE_ON
+        self.schedule_update_ha_state()
