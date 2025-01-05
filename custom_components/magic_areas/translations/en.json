@@ -161,13 +161,15 @@
           "include_entities": "Include entities to this area",
           "exclude_entities": "Exclude entities from being analyzed",
           "type": "Area type (interior/exterior)",
-          "reload_on_registry_change": "Automatically reload this Magic Area on registry updates"
+          "reload_on_registry_change": "Automatically reload this Magic Area on registry updates",
+          "ignore_diagnostic_entities": "Ignore diagnostic and configuration entities"
         },
         "data_description": {
           "include_entities": "Magic Areas can consider entities from other areas including other Magic entities. You can use this to make a room's presence binary sensor to act as another room's presence sensor as well.",
           "exclude_entities": "Entities listed here will be completely ignored by Magic Areas. Use this if you have entities throwing your data off like device temperature sensors.",
           "type": "Defining an area type allows Meta areas for Interior/Exterior to be created.",
-          "reload_on_registry_change": "Automatically reload this Magic Area when any entity or device is assigned or moved to an area."
+          "reload_on_registry_change": "Automatically reload this Magic Area when any entity or device is assigned or moved to an area.",
+          "ignore_diagnostic_entities": "Magic Areas can ignore diagnostic and configuration entities which are usually not relevant."
         }
       },
       "presence_tracking": {

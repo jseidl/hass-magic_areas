@@ -6,7 +6,12 @@ import logging
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
+from homeassistant.const import (
+    ATTR_DEVICE_CLASS,
+    ATTR_ENTITY_ID,
+    STATE_ON,
+    EntityCategory,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import async_get as devicereg_async_get
 from homeassistant.helpers.entity_registry import (
@@ -24,12 +29,14 @@ from custom_components.magic_areas.const import (
     CONF_EXCLUDE_ENTITIES,
     CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_PRESENCE_HOLD,
+    CONF_IGNORE_DIAGNOSTIC_ENTITIES,
     CONF_INCLUDE_ENTITIES,
     CONF_PRESENCE_DEVICE_PLATFORMS,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_TYPE,
     CONFIGURABLE_AREA_STATE_MAP,
     DATA_AREA_OBJECT,
+    DEFAULT_IGNORE_DIAGNOSTIC_ENTITIES,
     DEFAULT_PRESENCE_DEVICE_PLATFORMS,
     MAGIC_AREAS_COMPONENTS,
     MAGIC_AREAS_COMPONENTS_GLOBAL,
@@ -190,12 +197,30 @@ class MagicArea:
 
     def _should_exclude_entity(self, entity: RegistryEntry) -> bool:
         """Exclude entity."""
-        return (
-            entity.config_entry_id == self.hass_config.entry_id  # Is magic_area entity
-            or entity.disabled  # Is disabled
-            or entity.entity_id  # In excluded list
-            in self.config.get(CONF_EXCLUDE_ENTITIES, [])
-        )
+
+        # Is magic_area entity?
+        if entity.config_entry_id == self.hass_config.entry_id:
+            return True
+
+        # Is disabled?
+        if entity.disabled:
+            return True
+
+        # Is in the exclusion list?
+        if entity.entity_id in self.config.get(CONF_EXCLUDE_ENTITIES, []):
+            return True
+
+        # Are we excluding DIAGNOSTIC and CONFIG?
+        if self.config.get(
+            CONF_IGNORE_DIAGNOSTIC_ENTITIES, DEFAULT_IGNORE_DIAGNOSTIC_ENTITIES
+        ):
+            if entity.entity_category in [
+                EntityCategory.CONFIG,
+                EntityCategory.DIAGNOSTIC,
+            ]:
+                return True
+
+        return False
 
     async def load_entities(self) -> None:
         """Load entities into entity list."""
