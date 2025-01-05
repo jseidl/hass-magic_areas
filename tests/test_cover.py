@@ -2,10 +2,9 @@
 
 from collections import defaultdict
 import logging
+
 from homeassistant.components.cover import CoverDeviceClass
-from homeassistant.components.cover.const import (
-    DOMAIN as COVER_DOMAIN,
-)
+from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_OPEN
 from homeassistant.core import HomeAssistant
 

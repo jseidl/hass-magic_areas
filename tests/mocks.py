@@ -7,7 +7,6 @@ import logging
 from typing import Any, Final, Literal
 from unittest.mock import AsyncMock
 
-from homeassistant.components.climate.const import HVACMode, ClimateEntityFeature
 import voluptuous as vol
 
 from homeassistant import data_entry_flow, loader
@@ -16,6 +15,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.climate.const import ClimateEntityFeature, HVACMode
 from homeassistant.components.cover import CoverEntity, CoverEntityFeature
 from homeassistant.components.fan import FanEntity
 from homeassistant.components.light import ColorMode, LightEntity
@@ -513,7 +513,9 @@ class MockCover(MockEntity, CoverEntity):
         """Return the supported features of the cover."""
         if "supported_feautes" in self._values:
             return self._values["supported_features"]
-        return CoverEntity.supported_features.fget(self)  # pylint: disable=overridden-final-method
+        return CoverEntity.supported_features.fget(
+            self
+        )  # pylint: disable=overridden-final-method
 
     @cached_property
     def is_closed(self) -> bool:

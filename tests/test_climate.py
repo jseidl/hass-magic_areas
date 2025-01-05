@@ -1,17 +1,16 @@
 """Test for climate groups."""
 
 import logging
-import asyncio
 
-from homeassistant.core import HomeAssistant
-from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.climate.const import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-
-from tests.const import DEFAULT_MOCK_AREA
+from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.core import HomeAssistant
 
 from .mocks import MockClimate
+
+from tests.const import DEFAULT_MOCK_AREA
 
 _LOGGER = logging.getLogger(__name__)
 
