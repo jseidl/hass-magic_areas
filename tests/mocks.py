@@ -513,9 +513,7 @@ class MockCover(MockEntity, CoverEntity):
         """Return the supported features of the cover."""
         if "supported_feautes" in self._values:
             return self._values["supported_features"]
-        return CoverEntity.supported_features.fget(
-            self
-        )  # pylint: disable=overridden-final-method
+        return CoverEntity.supported_features.fget(self)  # pylint: disable=overridden-final-method
 
     @cached_property
     def is_closed(self) -> bool:
@@ -617,25 +615,28 @@ class MockClimate(MockEntity, ClimateEntity):
     _attr_hvac_mode = HVACMode.OFF
     _attr_hvac_modes = [HVACMode.AUTO, HVACMode.HEAT_COOL, HVACMode.OFF]
     _attr_temperature_unit = "°C"
+    _attr_target_temperature = 70
+    _attr_current_temperature = 70
     _attr_supported_features = (
         ClimateEntityFeature.TURN_OFF | ClimateEntityFeature.TURN_ON
     )
 
     def turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        self._attr_state = STATE_ON
-        self.schedule_update_ha_state()
+        self.set_hvac_mode(HVACMode.AUTO)
 
     def turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        self._attr_state = STATE_OFF
-        self.schedule_update_ha_state()
+        self.set_hvac_mode(HVACMode.OFF)
 
     def set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set HVAC mode."""
+
         self._attr_hvac_mode = hvac_mode
         if hvac_mode == HVACMode.OFF:
             self._attr_state = STATE_OFF
         else:
             self._attr_state = STATE_ON
         self.schedule_update_ha_state()
+
+        _LOGGER.warning(f"{hvac_mode}")

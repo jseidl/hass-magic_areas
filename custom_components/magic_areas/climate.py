@@ -261,9 +261,14 @@ class ClimateGroup(GroupEntity, ClimateEntity):
             x.state for x in filtered_states if (x.state != HVACMode.OFF)
         ]
         if current_hvac_modes:
-            self._attr_hvac_mode = HVACMode[
-                max(set(current_hvac_modes), key=current_hvac_modes.count).upper()
-            ]
+            most_common_hvac_mode = max(
+                set(current_hvac_modes), key=current_hvac_modes.count
+            )
+            self._attr_hvac_mode = (
+                HVACMode[most_common_hvac_mode]
+                if most_common_hvac_mode in HVACMode
+                else None
+            )
             if self._attr_hvac_mode != self._most_common_hvac_mode:
                 self._most_common_hvac_mode = self._attr_hvac_mode
                 _LOGGER.debug(

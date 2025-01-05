@@ -3,9 +3,11 @@
 import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.climate.const import DOMAIN as CLIMATE_DOMAIN
+from homeassistant.components.climate.const import (
+    DOMAIN as CLIMATE_DOMAIN,
+)
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
-from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.const import STATE_OFF, STATE_ON, ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant
 
 from .mocks import MockClimate
@@ -41,6 +43,7 @@ async def test_climate_group_basic(
     climate_group_state = hass.states.get(climate_group_entity_id)
     assert climate_group_state is not None
     assert climate_group_state.state == STATE_OFF
+    assert mock_climate_entity_id in climate_group_state.attributes[ATTR_ENTITY_ID]
 
     # Test climate control switch created
     climate_control_state = hass.states.get(climate_control_entity_id)
@@ -75,13 +78,10 @@ async def test_climate_group_basic(
     assert area_state is not None
     assert area_state.state == STATE_ON
 
-    # # Sleep so climate group has a chance to react
-    # await asyncio.sleep(1)
-    # await hass.async_block_till_done()
+    # Sleep so climate group has a chance to react
+    await hass.async_block_till_done()
 
-    # hass.states.async_set(climate_group_entity_id, STATE_ON)
-    # await hass.async_block_till_done()
-
+    # @FIXME IDK why this doesn't work. Probably my MockClimate is missing something.
     # # Test climate group is STATE_ON
     # climate_group_state = hass.states.get(climate_group_entity_id)
     # assert climate_group_state is not None
