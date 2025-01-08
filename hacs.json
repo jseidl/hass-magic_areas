@@ -2,7 +2,7 @@
     "name": "Magic Areas",
     "filename": "magic_areas.zip",
     "hide_default_branch": true,
-    "homeassistant": "2024.12.0",
+    "homeassistant": "2025.1.0",
     "render_readme": true,
     "zip_release": true
 }
