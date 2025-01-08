@@ -1,287 +1,304 @@
 {
-  "title": "Pièces magiques",
-  "config": {
-    "step": {
-      "user": {
-        "title": "Créer une Pièce Magique",
-        "description": "Choisissez la pièce que vous souhaitez rendre magique !",
-        "data": {
-          "name": "Pièce"
+    "title": "Pièces magiques",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Créer une Pièce Magique",
+                "description": "Choisissez la pièce que vous souhaitez rendre magique !",
+                "data": {
+                    "name": "Pièce"
+                }
+            }
+        },
+        "abort": {
+            "already_configured": "Cet appareil est déjà configuré",
+            "invalid_area": "La pièce sélectionnée n'existe pas",
+            "no_more_areas": "Toutes vos pièces sont déjà magiques !"
         }
-      }
     },
-    "abort": {
-      "already_configured": "Cet appareil est déjà configuré",
-      "invalid_area": "La pièce sélectionnée n'existe pas",
-      "no_more_areas": "Toutes vos pièces sont déjà magiques !"
+    "options": {
+        "step": {
+            "select_features": {
+                "title": "Sélection des fonctionnalités",
+                "description": "Sélectionnez les fonctionnalités que vous souhaitez activer pour cette pièce. Une nouvelle option de menu apparaîtra pour configurer la fonctionnalité s'il y a des options de configuration pour cette fonctionnalité.",
+                "data": {
+                    "climate_groups": "Créer des groupes de climatisation",
+                    "media_player_groups": "Créer des groupes de lecteurs multimédias",
+                    "light_groups": "Créer des groupes de lumières",
+                    "cover_groups": "Créer des groupes de couvertures",
+                    "area_aware_media_player": "Lecteur multimédia intelligent de la pièce",
+                    "aggregates": "Créer des capteurs agrégés",
+                    "health": "Créer des capteurs de santé",
+                    "presence_hold": "Créer un interrupteur de maintien de présence",
+                    "ble_trackers": "Surveiller les capteurs de suivi Bluetooth"
+                }
+            },
+            "show_menu": {
+                "title": "Options des Zones Magiques",
+                "description": "Les Zones Magiques effectuent une détection de présence de base par défaut, mais vous pouvez libérer toute sa puissance en configurant un suivi d'état avancé, en ajustant les paramètres de suivi de présence et en activant nos fonctionnalités magiques ! Les options ne sont pas enregistrées sauf si vous sélectionnez `Enregistrer et quitter`.",
+                "menu_options": {
+                    "area_config": "Options de base de la pièce",
+                    "secondary_states": "Suivi avancé de l'état de la pièce",
+                    "presence_tracking": "Options de suivi de présence",
+                    "select_features": "Sélection des fonctionnalités",
+                    "finish": "Enregistrer et quitter",
+                    "feature_conf_health": "Configurer le capteur de santé",
+                    "feature_conf_climate_groups": "Configurer les groupes de climatisation",
+                    "feature_conf_light_groups": "Configurer les groupes de lumières",
+                    "feature_conf_area_aware_media_player": "Configurer le lecteur multimédia intelligent de la pièce",
+                    "feature_conf_aggregates": "Configurer les capteurs agrégés",
+                    "feature_conf_presence_hold": "Configurer l'interrupteur de maintien de présence",
+                    "feature_conf_ble_trackers": "Configurer la surveillance du tracker BLE"
+                }
+            },
+            "feature_conf_health": {
+                "title": "Capteur de santé",
+                "description": "Vous pouvez choisir un ensemble de classes d'appareils `binary sensor` qui seront suivies par ce capteur de santé et qui pourront être utilisées dans des automatisations.",
+                "data": {
+                    "health_binary_sensor_device_classes": "Classes d'appareils à suivre"
+                }
+            },
+            "feature_conf_light_groups": {
+                "title": "Groupes de lumières",
+                "description": "Les Zones Magiques créent ces quatre groupes de lumières (plus un groupe global) [light groups](https://github.com/jseidl/hass-magic_areas/wiki/Light-Groups) (si vous leur assignez des lumières) pour que vous puissiez les utiliser. Par défaut, ce sont des groupes de lumières simples, mais ils peuvent être contrôlés automatiquement si vous les assignez à des états de pièce et activez l'interrupteur de contrôle des lumières (qui sera créé lorsque vous activerez cette fonctionnalité). Toutes les lumières seront éteintes lorsque la pièce sera vidée. Des états supplémentaires peuvent être débloqués en configurant le `Suivi avancé de l'état de la pièce`.",
+                "data": {
+                    "overhead_lights": "Lumières du plafond",
+                    "overhead_lights_states": "États pour lesquels les lumières du plafond sont allumées",
+                    "overhead_lights_act_on": "Quand les lumières du plafond doivent-elles être contrôlées ?",
+                    "sleep_lights": "Lumières de sommeil",
+                    "sleep_lights_states": "États pour lesquels les lumières de sommeil sont allumées",
+                    "sleep_lights_act_on": "Quand les lumières de sommeil doivent-elles être contrôlées ?",
+                    "accent_lights": "Lumières d'accentuation",
+                    "accent_lights_states": "États pour lesquels les lumières d'accentuation sont allumées",
+                    "accent_lights_act_on": "Quand les lumières d'accentuation doivent-elles être contrôlées ?",
+                    "task_lights": "Lumières de tâche",
+                    "task_lights_states": "États pour lesquels les lumières de tâche sont allumées",
+                    "task_lights_act_on": "Quand les lumières de tâche doivent-elles être contrôlées ?"
+                },
+                "data_description": {
+                    "overhead_lights_states": "Configurez les états de pièce qui déclencheront ce groupe de lumières. Les groupes de lumières seront allumés lorsque la pièce est dans cet état et éteints si la pièce perd ces états. Par exemple, si vous souhaitez que la lumière reste allumée après une période prolongée, vous devez également sélectionner l'état `extended`.",
+                    "overhead_lights_act_on": "Sélectionnez si ce groupe de lumières doit être contrôlé uniquement lorsque la pièce est occupée pour la première fois, uniquement lors des changements d'état de la pièce ou les deux.",
+                    "sleep_lights_states": "Configurez les états de pièce qui déclencheront ce groupe de lumières. Les groupes de lumières seront allumés lorsque la pièce est dans cet état et éteints si la pièce perd ces états. Par exemple, si vous souhaitez que la lumière reste allumée après une période prolongée, vous devez également sélectionner l'état `extended`.",
+                    "sleep_lights_act_on": "Sélectionnez si ce groupe de lumières doit être contrôlé uniquement lorsque la pièce est occupée pour la première fois, uniquement lors des changements d'état de la pièce ou les deux.",
+                    "accent_lights_states": "Configurez les états de pièce qui déclencheront ce groupe de lumières. Les groupes de lumières seront allumés lorsque la pièce est dans cet état et éteints si la pièce perd ces états. Par exemple, si vous souhaitez que la lumière reste allumée après une période prolongée, vous devez également sélectionner l'état `extended`.",
+                    "accent_lights_act_on": "Sélectionnez si ce groupe de lumières doit être contrôlé uniquement lorsque la pièce est occupée pour la première fois, uniquement lors des changements d'état de la pièce ou les deux.",
+                    "task_lights_states": "Configurez les états de pièce qui déclencheront ce groupe de lumières. Les groupes de lumières seront allumés lorsque la pièce est dans cet état et éteints si la pièce perd ces états. Par exemple, si vous souhaitez que la lumière reste allumée après une période prolongée, vous devez également sélectionner l'état `extended`.",
+                    "task_lights_act_on": "Sélectionnez si ce groupe de lumières doit être contrôlé uniquement lorsque la pièce est occupée pour la première fois, uniquement lors des changements d'état de la pièce ou les deux."
+                }
+            },
+            "feature_conf_presence_hold": {
+                "title": "Maintien de présence",
+                "description": "Crée un interrupteur qui maintiendra une pièce occupée tant qu'il est activé. Vous pouvez configurer une temporisation pour que l'interrupteur s'éteigne automatiquement après une certaine période de temps, si vous avez souvent tendance à le laisser activé.",
+                "data": {
+                    "presence_hold_timeout": "Durée après laquelle l'interrupteur sera automatiquement éteint. (0 = temporisation désactivée)."
+                }
+            },
+            "feature_conf_area_aware_media_player": {
+                "title": "Fonctionnalité : Lecteur multimédia intelligent de la pièce",
+                "description": "Crée un lecteur multimédia qui transmettra les appels de lecture à d'autres lecteurs multimédias uniquement dans les pièces occupées. Cela est utile si vous souhaitez utiliser des notifications TTS mais ne souhaitez notifier que les pièces occupées pour éviter de notifier les lecteurs multimédias dans les pièces vacantes. Cette fonctionnalité dispose d'options de configuration dans chaque pièce, mais elle n'est créée que si vous avez une méta-pièce `Global`.",
+                "data": {
+                    "notification_devices": "Appareils de lecteur multimédia utilisés pour la diffusion",
+                    "notification_states": "Lire les notifications uniquement lorsque ces états sont actifs"
+                },
+                "data_description": {
+                    "notification_states": "Les notifications ne seront jouées que lorsque la pièce est dans cet état. L'utilisation de `extended` garantira que vous ne recevez pas de notifications dans les pièces que vous venez de traverser, et ne pas sélectionner `sleep` empêchera les notifications lorsque vous êtes en mode sommeil."
+                }
+            },
+            "feature_conf_aggregates": {
+                "title": "Fonctionnalité : Agrégats de capteurs",
+                "description": "Si vous avez plusieurs `capteurs` (ou `capteurs binaires`) du même type, Zones Magiques peut les regrouper en une seule entité, vous permettant d'obtenir des moyennes (ou des sommes) de capteurs ou un état combiné de capteurs binaires. C'est même utile si vous n'avez actuellement qu'un seul capteur de chaque type, car cela vous permet d'utiliser l'agrégat dans les automatisations et de l'étendre à l'avenir sans avoir à réécrire vos automatisations.",
+                "data": {
+                    "aggregates_min_entities": "Nombre minimum d'entités du même type de périphérique requis pour créer des agrégats.",
+                    "aggregates_binary_sensor_device_classes": "Classes d'appareils de capteurs binaires à agréger.",
+                    "aggregates_sensor_device_classes": "Classes d'appareils de capteurs à agréger.",
+                    "aggregates_illuminance_threshold": "Seuil d'éclairement pour cette pièce",
+                    "aggregates_illuminance_threshold_hysteresis": "Hystérésis pour le capteur de seuil d'éclairement"
+                },
+                "data_description": {
+                    "aggregates_illuminance_threshold": "Zones Magiques créera un capteur binaire `light` qui suivra lorsque l'éclairement agrégé de la pièce dépasse ce seuil. La classe de périphérique `illuminance` doit être sélectionnée pour l'agrégation. Réglez sur 0 pour désactiver.",
+                    "aggregates_illuminance_threshold_hysteresis": "[Hystérésis](https://www.home-assistant.io/integrations/threshold/#hysteresis) définit la sensibilité du capteur aux changements de sa valeur. Une valeur de zéro inversera l'état du capteur chaque fois que l'éclairement franchira le seuil ci-dessus. Les valeurs positives signifient que le capteur ne changera d'état que si le seuil est dépassé d'une certaine quantité, exprimée en pourcentage du seuil défini ci-dessus. L'augmentation de cette valeur peut être utile si vous essayez d'utiliser ce capteur comme capteur de lumière de sa propre pièce."
+                }
+            },
+            "feature_conf_climate_groups": {
+                "title": "Fonctionnalité : Groupes de climatisation",
+                "description": "Regroupez et contrôlez toutes les entités de climatisation dans une pièce. Cette fonctionnalité permet de contrôler automatiquement les entités de climatisation en fonction de l'état d'une pièce.",
+                "data": {
+                    "turn_on_state": "État pour activer le groupe de climatisation."
+                },
+                "data_description": {
+                    "turn_on_state": "Les appareils de climatisation seront activés dans cet état et désactivés lorsque la pièce sera vidée."
+                }
+            },
+            "secondary_states": {
+                "title": "Suivi avancé de l'état de la pièce",
+                "description": "Vous pouvez activer les [états secondaires](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) pour une Pièce Magique en lui assignant une entité. Les états secondaires sont utilisés par les fonctionnalités pour allumer les lumières uniquement lorsqu'il fait sombre ou pour allumer uniquement les appareils de climatisation après une période `extended` ou pour ne pas envoyer de notifications à une pièce si elle est en mode `sleep`.",
+                "data": {
+                    "dark_entity": "Capteur de luminosité de la pièce",
+                    "sleep_entity": "Entité utilisée pour suivre l'état de sommeil de la pièce",
+                    "sleep_timeout": "Durée pendant laquelle la pièce attendra avant de vider l'état lorsqu'elle est en mode sommeil",
+                    "accent_entity": "Entité utilisée pour suivre l'état accentué de la pièce",
+                    "extended_time": "La pièce sera marquée comme 'extended' après avoir été occupée pendant cette durée",
+                    "extended_timeout": "Durée pendant laquelle la pièce attendra avant de vider l'état lorsqu'elle est en mode étendu"
+                },
+                "data_description": {
+                    "dark_entity": "Le capteur de luminosité de la pièce sera utilisé pour suivre l'état `clair`/`sombre` de la pièce, qui est utilisé par des fonctionnalités telles que les groupes de lumières pour allumer/éteindre vos lumières en fonction de la luminosité de la pièce.\n\n**Évitez d'utiliser un capteur `light` dans la même pièce, car cela peut entraîner une boucle de rétroaction.** Il est recommandé d'utiliser soit `sun.sun` soit un capteur de lumière extérieur qui ne sera pas affecté par les lumières contrôlées."
+                }
+            },
+            "area_config": {
+                "title": "Options de base de la pièce",
+                "description": "Configurez les options de base pour la pièce. Le type de pièce est utilisé pour les [méta-pièces](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas) intérieures/extérieures/globales, et vous pouvez affiner les entités analysées par Zones Magiques en utilisant les options d'inclusion/exclusion des entités.",
+                "data": {
+                    "include_entities": "Inclure les entités dans cette pièce",
+                    "exclude_entities": "Exclure les entités de l'analyse",
+                    "type": "Type de pièce (intérieur/extérieur)",
+                    "reload_on_registry_change": "Recharger automatiquement cette Zone Magique lors des mises à jour du registre",
+                    "ignore_diagnostic_entities": "Ignorer les entités de diagnostic et de configuration"
+                },
+                "data_description": {
+                    "include_entities": "Zones Magiques peut prendre en compte les entités d'autres pièces, y compris d'autres entités Magique. Vous pouvez utiliser cela pour faire en sorte que le capteur de présence d'une pièce agisse également comme capteur de présence d'une autre pièce.",
+                    "exclude_entities": "Les entités répertoriées ici seront complètement ignorées par Zones Magiques. Utilisez cela si vous avez des entités qui faussent vos données, comme des capteurs de température des appareils.",
+                    "type": "La définition d'un type de pièce permet de créer des méta-pièces intérieures/extérieures.",
+                    "reload_on_registry_change": "Recharger automatiquement cette Zone Magique lorsque toute entité ou appareil est assigné ou déplacé dans une zone.",
+                    "ignore_diagnostic_entities": "Les zones magiques peuvent ignorer les entités de diagnostic et de configuration qui ne sont généralement pas pertinentes."
+                }
+            },
+            "presence_tracking": {
+                "title": "Suivi de présence",
+                "description": "Configurez les plateformes et les classes d'appareils de capteurs binaires utilisés pour le [suivi de présence](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Sensing). Cette section vous permet également de configurer la durée pendant laquelle Pièce Magique attendra avant de vider la pièce après le dernier événement de présence.",
+                "data": {
+                    "presence_sensor_device_class": "Classes d'appareils de capteurs de présence",
+                    "presence_device_platforms": "Plateformes à utiliser pour la détection de présence",
+                    "keep_only_entities": "Entités à conserver uniquement",
+                    "update_interval": "Intervalle de vérification des événements manqués",
+                    "clear_timeout": "Délai de vidage"
+                },
+                "data_description": {
+                    "presence_device_platforms": "Les capteurs binaires sont généralement la source standard de présence, mais les appareils multimédias peuvent également être utilisés.",
+                    "presence_sensor_device_class": "Définissez les classes d'appareils `binary sensors` qui seront utilisées pour le suivi de présence. Les options courantes non standard sont porte et humidité.",
+                    "keep_only_entities": "Sélectionnez les entités de suivi de présence qui seront prises en compte uniquement lorsque la pièce est déjà occupée. Cela est utile pour éviter que des capteurs trop sensibles tels que les capteurs mmWave et les trackers BLE ne déclenchent de manière incorrecte la présence d'une pièce.",
+                    "clear_timeout": "Combien de temps après le dernier événement de présence doit-il attendre avant de vider la pièce"
+                }
+            },
+            "feature_conf_ble_trackers": {
+                "title": "Intégration du tracker BLE",
+                "data": {
+                    "ble_tracker_entities": "Entités des trackers BLE à suivre."
+                },
+                "description": "Effectue le suivi des capteurs des trackers BLE et crée un capteur binaire d'occupation correspondant pour la zone qui est activé lorsque le capteur du tracker BLE a un état égal au nom ou à l'ID de la zone. **Cette fonctionnalité n'effectue _PAS_ le suivi BLE elle-même.**",
+                "data_description": {
+                    "ble_tracker_entities": "Les trackers BLE tels que [room-assistant](https://github.com/mKeRix/room-assistant), [Bermuda](https://github.com/agittins/bermuda) et [ESPresence](https://github.com/ESPresense/ESPresense) créent des capteurs qui changent d'état en fonction de la zone à laquelle l'appareil est le plus proche."
+                }
+            }
+        },
+        "error": {
+            "option_error": "Option invalide",
+            "malformed_input": "Ce champ est invalide :"
+        }
+    },
+    "entity": {
+        "binary_sensor": {
+            "area_state": {
+                "name": "État de la pièce"
+            },
+            "health_problem": {
+                "name": "Santé de la pièce"
+            },
+            "threshold_light": {
+                "name": "Lumière (Calculée)"
+            },
+            "ble_tracker_monitor": {
+                "name": "Suivi BLE Occupation"
+            }
+        },
+        "climate": {
+            "climate_group": {
+                "name": "Thermostats"
+            }
+        },
+        "cover": {
+            "cover_group_awning": {
+                "name": "Auvents"
+            },
+            "cover_group_blind": {
+                "name": "Stores"
+            },
+            "cover_group_curtain": {
+                "name": "Rideaux"
+            },
+            "cover_group_damper": {
+                "name": "Amortisseurs"
+            },
+            "cover_group_door": {
+                "name": "Portes"
+            },
+            "cover_group_garage": {
+                "name": "Portes de garage"
+            },
+            "cover_group_gate": {
+                "name": "Portails"
+            },
+            "cover_group_shade": {
+                "name": "Stores"
+            },
+            "cover_group_shutter": {
+                "name": "Volets"
+            },
+            "cover_group_window": {
+                "name": "Fenêtres"
+            },
+            "cover_group": {
+                "name": "Couvertures"
+            }
+        },
+        "light": {
+            "all_lights": {
+                "name": "Toutes les lumières"
+            },
+            "overhead_lights": {
+                "name": "Lumières du plafond"
+            },
+            "task_lights": {
+                "name": "Lumières de tâche"
+            },
+            "accent_lights": {
+                "name": "Lumières d'accentuation"
+            },
+            "sleep_lights": {
+                "name": "Lumières de sommeil"
+            }
+        },
+        "media_player": {
+            "media_player_group": {
+                "name": "Lecteurs multimédias"
+            },
+            "area_aware_media_player": {
+                "name": "Lecteur multimédia intelligent de la pièce"
+            }
+        },
+        "switch": {
+            "presence_hold": {
+                "name": "Maintien de présence"
+            },
+            "light_control": {
+                "name": "Contrôle des lumières"
+            },
+            "media_player_control": {
+                "name": "Contrôle du lecteur multimédia"
+            },
+            "climate_control": {
+                "name": "Contrôle de la climatisation"
+            }
+        }
+    },
+    "device": {
+        "global": {
+            "name": "Global"
+        },
+        "interior": {
+            "name": "Intérieur"
+        },
+        "exterior": {
+            "name": "Extérieur"
+        }
     }
-  },
-  "options": {
-    "step": {
-      "select_features": {
-        "title": "Sélection des fonctionnalités",
-        "description": "Sélectionnez les fonctionnalités que vous souhaitez activer pour cette pièce. Une nouvelle option de menu apparaîtra pour configurer la fonctionnalité s'il y a des options de configuration pour cette fonctionnalité.",
-        "data": {
-          "climate_groups": "Créer des groupes de climatisation",
-          "media_player_groups": "Créer des groupes de lecteurs multimédias",
-          "light_groups": "Créer des groupes de lumières",
-          "cover_groups": "Créer des groupes de couvertures",
-          "area_aware_media_player": "Lecteur multimédia intelligent de la pièce",
-          "aggregates": "Créer des capteurs agrégés",
-          "health": "Créer des capteurs de santé",
-          "presence_hold": "Créer un interrupteur de maintien de présence"
-        }
-      },
-      "show_menu": {
-        "title": "Options des Zones Magiques",
-        "description": "Les Zones Magiques effectuent une détection de présence de base par défaut, mais vous pouvez libérer toute sa puissance en configurant un suivi d'état avancé, en ajustant les paramètres de suivi de présence et en activant nos fonctionnalités magiques ! Les options ne sont pas enregistrées sauf si vous sélectionnez `Enregistrer et quitter`.",
-        "menu_options": {
-          "area_config": "Options de base de la pièce",
-          "secondary_states": "Suivi avancé de l'état de la pièce",
-          "presence_tracking": "Options de suivi de présence",
-          "select_features": "Sélection des fonctionnalités",
-          "finish": "Enregistrer et quitter",
-          "feature_conf_health": "Configurer le capteur de santé",
-          "feature_conf_climate_groups": "Configurer les groupes de climatisation",
-          "feature_conf_light_groups": "Configurer les groupes de lumières",
-          "feature_conf_area_aware_media_player": "Configurer le lecteur multimédia intelligent de la pièce",
-          "feature_conf_aggregates": "Configurer les capteurs agrégés",
-          "feature_conf_presence_hold": "Configurer l'interrupteur de maintien de présence"
-        }
-      },
-      "feature_conf_health": {
-        "title": "Capteur de santé",
-        "description": "Vous pouvez choisir un ensemble de classes d'appareils `binary sensor` qui seront suivies par ce capteur de santé et qui pourront être utilisées dans des automatisations.",
-        "data": {
-          "health_binary_sensor_device_classes": "Classes d'appareils à suivre"
-        }
-      },
-      "feature_conf_light_groups": {
-        "title": "Groupes de lumières",
-        "description": "Les Zones Magiques créent ces quatre groupes de lumières (plus un groupe global) [light groups](https://github.com/jseidl/hass-magic_areas/wiki/Light-Groups) (si vous leur assignez des lumières) pour que vous puissiez les utiliser. Par défaut, ce sont des groupes de lumières simples, mais ils peuvent être contrôlés automatiquement si vous les assignez à des états de pièce et activez l'interrupteur de contrôle des lumières (qui sera créé lorsque vous activerez cette fonctionnalité). Toutes les lumières seront éteintes lorsque la pièce sera vidée. Des états supplémentaires peuvent être débloqués en configurant le `Suivi avancé de l'état de la pièce`.",
-        "data": {
-          "overhead_lights": "Lumières du plafond",
-          "overhead_lights_states": "États pour lesquels les lumières du plafond sont allumées",
-          "overhead_lights_act_on": "Quand les lumières du plafond doivent-elles être contrôlées ?",
-          "sleep_lights": "Lumières de sommeil",
-          "sleep_lights_states": "États pour lesquels les lumières de sommeil sont allumées",
-          "sleep_lights_act_on": "Quand les lumières de sommeil doivent-elles être contrôlées ?",
-          "accent_lights": "Lumières d'accentuation",
-          "accent_lights_states": "États pour lesquels les lumières d'accentuation sont allumées",
-          "accent_lights_act_on": "Quand les lumières d'accentuation doivent-elles être contrôlées ?",
-          "task_lights": "Lumières de tâche",
-          "task_lights_states": "États pour lesquels les lumières de tâche sont allumées",
-          "task_lights_act_on": "Quand les lumières de tâche doivent-elles être contrôlées ?"
-        },
-        "data_description": {
-          "overhead_lights_states": "Configurez les états de pièce qui déclencheront ce groupe de lumières. Les groupes de lumières seront allumés lorsque la pièce est dans cet état et éteints si la pièce perd ces états. Par exemple, si vous souhaitez que la lumière reste allumée après une période prolongée, vous devez également sélectionner l'état `extended`.",
-          "overhead_lights_act_on": "Sélectionnez si ce groupe de lumières doit être contrôlé uniquement lorsque la pièce est occupée pour la première fois, uniquement lors des changements d'état de la pièce ou les deux.",
-          "sleep_lights_states": "Configurez les états de pièce qui déclencheront ce groupe de lumières. Les groupes de lumières seront allumés lorsque la pièce est dans cet état et éteints si la pièce perd ces états. Par exemple, si vous souhaitez que la lumière reste allumée après une période prolongée, vous devez également sélectionner l'état `extended`.",
-          "sleep_lights_act_on": "Sélectionnez si ce groupe de lumières doit être contrôlé uniquement lorsque la pièce est occupée pour la première fois, uniquement lors des changements d'état de la pièce ou les deux.",
-          "accent_lights_states": "Configurez les états de pièce qui déclencheront ce groupe de lumières. Les groupes de lumières seront allumés lorsque la pièce est dans cet état et éteints si la pièce perd ces états. Par exemple, si vous souhaitez que la lumière reste allumée après une période prolongée, vous devez également sélectionner l'état `extended`.",
-          "accent_lights_act_on": "Sélectionnez si ce groupe de lumières doit être contrôlé uniquement lorsque la pièce est occupée pour la première fois, uniquement lors des changements d'état de la pièce ou les deux.",
-          "task_lights_states": "Configurez les états de pièce qui déclencheront ce groupe de lumières. Les groupes de lumières seront allumés lorsque la pièce est dans cet état et éteints si la pièce perd ces états. Par exemple, si vous souhaitez que la lumière reste allumée après une période prolongée, vous devez également sélectionner l'état `extended`.",
-          "task_lights_act_on": "Sélectionnez si ce groupe de lumières doit être contrôlé uniquement lorsque la pièce est occupée pour la première fois, uniquement lors des changements d'état de la pièce ou les deux."
-        }
-      },
-      "feature_conf_presence_hold": {
-        "title": "Maintien de présence",
-        "description": "Crée un interrupteur qui maintiendra une pièce occupée tant qu'il est activé. Vous pouvez configurer une temporisation pour que l'interrupteur s'éteigne automatiquement après une certaine période de temps, si vous avez souvent tendance à le laisser activé.",
-        "data": {
-          "presence_hold_timeout": "Durée après laquelle l'interrupteur sera automatiquement éteint. (0 = temporisation désactivée)."
-        }
-      },
-      "feature_conf_area_aware_media_player": {
-        "title": "Fonctionnalité : Lecteur multimédia intelligent de la pièce",
-        "description": "Crée un lecteur multimédia qui transmettra les appels de lecture à d'autres lecteurs multimédias uniquement dans les pièces occupées. Cela est utile si vous souhaitez utiliser des notifications TTS mais ne souhaitez notifier que les pièces occupées pour éviter de notifier les lecteurs multimédias dans les pièces vacantes. Cette fonctionnalité dispose d'options de configuration dans chaque pièce, mais elle n'est créée que si vous avez une méta-pièce `Global`.",
-        "data": {
-          "notification_devices": "Appareils de lecteur multimédia utilisés pour la diffusion",
-          "notification_states": "Lire les notifications uniquement lorsque ces états sont actifs"
-        },
-        "data_description": {
-          "notification_states": "Les notifications ne seront jouées que lorsque la pièce est dans cet état. L'utilisation de `extended` garantira que vous ne recevez pas de notifications dans les pièces que vous venez de traverser, et ne pas sélectionner `sleep` empêchera les notifications lorsque vous êtes en mode sommeil."
-        }
-      },
-      "feature_conf_aggregates": {
-        "title": "Fonctionnalité : Agrégats de capteurs",
-        "description": "Si vous avez plusieurs `capteurs` (ou `capteurs binaires`) du même type, Zones Magiques peut les regrouper en une seule entité, vous permettant d'obtenir des moyennes (ou des sommes) de capteurs ou un état combiné de capteurs binaires. C'est même utile si vous n'avez actuellement qu'un seul capteur de chaque type, car cela vous permet d'utiliser l'agrégat dans les automatisations et de l'étendre à l'avenir sans avoir à réécrire vos automatisations.",
-        "data": {
-          "aggregates_min_entities": "Nombre minimum d'entités du même type de périphérique requis pour créer des agrégats.",
-          "aggregates_binary_sensor_device_classes": "Classes d'appareils de capteurs binaires à agréger.",
-          "aggregates_sensor_device_classes": "Classes d'appareils de capteurs à agréger.",
-          "aggregates_illuminance_threshold": "Seuil d'éclairement pour cette pièce",
-          "aggregates_illuminance_threshold_hysteresis": "Hystérésis pour le capteur de seuil d'éclairement"
-        },
-        "data_description": {
-          "aggregates_illuminance_threshold": "Zones Magiques créera un capteur binaire `light` qui suivra lorsque l'éclairement agrégé de la pièce dépasse ce seuil. La classe de périphérique `illuminance` doit être sélectionnée pour l'agrégation. Réglez sur 0 pour désactiver.",
-          "aggregates_illuminance_threshold_hysteresis": "[Hystérésis](https://www.home-assistant.io/integrations/threshold/#hysteresis) définit la sensibilité du capteur aux changements de sa valeur. Une valeur de zéro inversera l'état du capteur chaque fois que l'éclairement franchira le seuil ci-dessus. Les valeurs positives signifient que le capteur ne changera d'état que si le seuil est dépassé d'une certaine quantité, exprimée en pourcentage du seuil défini ci-dessus. L'augmentation de cette valeur peut être utile si vous essayez d'utiliser ce capteur comme capteur de lumière de sa propre pièce."
-        }
-      },
-      "feature_conf_climate_groups": {
-        "title": "Fonctionnalité : Groupes de climatisation",
-        "description": "Regroupez et contrôlez toutes les entités de climatisation dans une pièce. Cette fonctionnalité permet de contrôler automatiquement les entités de climatisation en fonction de l'état d'une pièce.",
-        "data": {
-          "turn_on_state": "État pour activer le groupe de climatisation."
-        },
-        "data_description": {
-          "turn_on_state": "Les appareils de climatisation seront activés dans cet état et désactivés lorsque la pièce sera vidée."
-        }
-      },
-      "secondary_states": {
-        "title": "Suivi avancé de l'état de la pièce",
-        "description": "Vous pouvez activer les [états secondaires](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) pour une Pièce Magique en lui assignant une entité. Les états secondaires sont utilisés par les fonctionnalités pour allumer les lumières uniquement lorsqu'il fait sombre ou pour allumer uniquement les appareils de climatisation après une période `extended` ou pour ne pas envoyer de notifications à une pièce si elle est en mode `sleep`.",
-        "data": {
-          "dark_entity": "Capteur de luminosité de la pièce",
-          "sleep_entity": "Entité utilisée pour suivre l'état de sommeil de la pièce",
-          "sleep_timeout": "Durée pendant laquelle la pièce attendra avant de vider l'état lorsqu'elle est en mode sommeil",
-          "accent_entity": "Entité utilisée pour suivre l'état accentué de la pièce",
-          "extended_time": "La pièce sera marquée comme 'extended' après avoir été occupée pendant cette durée",
-          "extended_timeout": "Durée pendant laquelle la pièce attendra avant de vider l'état lorsqu'elle est en mode étendu"
-        },
-        "data_description": {
-          "dark_entity": "Le capteur de luminosité de la pièce sera utilisé pour suivre l'état `clair`/`sombre` de la pièce, qui est utilisé par des fonctionnalités telles que les groupes de lumières pour allumer/éteindre vos lumières en fonction de la luminosité de la pièce.\n\n**Évitez d'utiliser un capteur `light` dans la même pièce, car cela peut entraîner une boucle de rétroaction.** Il est recommandé d'utiliser soit `sun.sun` soit un capteur de lumière extérieur qui ne sera pas affecté par les lumières contrôlées."
-        }
-      },
-      "area_config": {
-        "title": "Options de base de la pièce",
-        "description": "Configurez les options de base pour la pièce. Le type de pièce est utilisé pour les [méta-pièces](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas) intérieures/extérieures/globales, et vous pouvez affiner les entités analysées par Zones Magiques en utilisant les options d'inclusion/exclusion des entités.",
-        "data": {
-          "include_entities": "Inclure les entités dans cette pièce",
-          "exclude_entities": "Exclure les entités de l'analyse",
-          "type": "Type de pièce (intérieur/extérieur)",
-          "reload_on_registry_change": "Recharger automatiquement cette Zone Magique lors des mises à jour du registre"
-        },
-        "data_description": {
-          "include_entities": "Zones Magiques peut prendre en compte les entités d'autres pièces, y compris d'autres entités Magique. Vous pouvez utiliser cela pour faire en sorte que le capteur de présence d'une pièce agisse également comme capteur de présence d'une autre pièce.",
-          "exclude_entities": "Les entités répertoriées ici seront complètement ignorées par Zones Magiques. Utilisez cela si vous avez des entités qui faussent vos données, comme des capteurs de température des appareils.",
-          "type": "La définition d'un type de pièce permet de créer des méta-pièces intérieures/extérieures.",
-          "reload_on_registry_change": "Recharger automatiquement cette Zone Magique lorsque toute entité ou appareil est assigné ou déplacé dans une zone."
-        }
-      },
-      "presence_tracking": {
-        "title": "Suivi de présence",
-        "description": "Configurez les plateformes et les classes d'appareils de capteurs binaires utilisés pour le [suivi de présence](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Sensing). Cette section vous permet également de configurer la durée pendant laquelle Pièce Magique attendra avant de vider la pièce après le dernier événement de présence.",
-        "data": {
-          "presence_sensor_device_class": "Classes d'appareils de capteurs de présence",
-          "presence_device_platforms": "Plateformes à utiliser pour la détection de présence",
-          "keep_only_entities": "Entités à conserver uniquement",
-          "update_interval": "Intervalle de vérification des événements manqués",
-          "clear_timeout": "Délai de vidage"
-        },
-        "data_description": {
-          "presence_device_platforms": "Les capteurs binaires sont généralement la source standard de présence, mais les appareils multimédias peuvent également être utilisés.",
-          "presence_sensor_device_class": "Définissez les classes d'appareils `binary sensors` qui seront utilisées pour le suivi de présence. Les options courantes non standard sont porte et humidité.",
-          "keep_only_entities": "Sélectionnez les entités de suivi de présence qui seront prises en compte uniquement lorsque la pièce est déjà occupée. Cela est utile pour éviter que des capteurs trop sensibles tels que les capteurs mmWave et les trackers BLE ne déclenchent de manière incorrecte la présence d'une pièce.",
-          "clear_timeout": "Combien de temps après le dernier événement de présence doit-il attendre avant de vider la pièce"
-        }
-      }
-    },
-    "error": {
-      "option_error": "Option invalide",
-      "malformed_input": "Ce champ est invalide :"
-    }
-  },
-  "entity": {
-    "binary_sensor": {
-      "area_state": {
-        "name": "État de la pièce"
-      },
-      "health_problem": {
-        "name": "Santé de la pièce"
-      },
-      "threshold_light": {
-        "name": "Lumière (Calculée)"
-      }
-    },
-    "climate": {
-      "climate_group": {
-        "name": "Thermostats"
-      }
-    },
-    "cover": {
-      "cover_group_awning": {
-        "name": "Auvents"
-      },
-      "cover_group_blind": {
-        "name": "Stores"
-      },
-      "cover_group_curtain": {
-        "name": "Rideaux"
-      },
-      "cover_group_damper": {
-        "name": "Amortisseurs"
-      },
-      "cover_group_door": {
-        "name": "Portes"
-      },
-      "cover_group_garage": {
-        "name": "Portes de garage"
-      },
-      "cover_group_gate": {
-        "name": "Portails"
-      },
-      "cover_group_shade": {
-        "name": "Stores"
-      },
-      "cover_group_shutter": {
-        "name": "Volets"
-      },
-      "cover_group_window": {
-        "name": "Fenêtres"
-      },
-      "cover_group": {
-        "name": "Couvertures"
-      }
-    },
-    "light": {
-      "all_lights": {
-        "name": "Toutes les lumières"
-      },
-      "overhead_lights": {
-        "name": "Lumières du plafond"
-      },
-      "task_lights": {
-        "name": "Lumières de tâche"
-      },
-      "accent_lights": {
-        "name": "Lumières d'accentuation"
-      },
-      "sleep_lights": {
-        "name": "Lumières de sommeil"
-      }
-    },
-    "media_player": {
-      "media_player_group": {
-        "name": "Lecteurs multimédias"
-      },
-      "area_aware_media_player": {
-        "name": "Lecteur multimédia intelligent de la pièce"
-      }
-    },
-    "switch": {
-      "presence_hold": {
-        "name": "Maintien de présence"
-      },
-      "light_control": {
-        "name": "Contrôle des lumières"
-      },
-      "media_player_control": {
-        "name": "Contrôle du lecteur multimédia"
-      },
-      "climate_control": {
-        "name": "Contrôle de la climatisation"
-      }
-    }
-  },
-  "device": {
-    "global": {
-      "name": "Global"
-    },
-    "interior": {
-      "name": "Intérieur"
-    },
-    "exterior": {
-      "name": "Extérieur"
-    }
-  }
 }
