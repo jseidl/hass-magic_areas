@@ -1,7 +1,7 @@
 ![Build Status][ci-status] [![GitHub Release][releases-shield]][releases] [![License][license-shield]](LICENSE) [![GitHub Last Commit][last-commit-shield]][commits]
 ![Project Maintenance][maintenance-shield] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-![integration-usage-badge] [![Discord][discord-shield]][discord]
+[![HACS][hacs-shield]][hacs] ![integration-usage-shield] [![Discord][discord-shield]][discord]
 
 ![ma-logo]
 
@@ -86,13 +86,12 @@ See all configuration options in the [wiki](https://github.com/jseidl/hass-magic
 ## Magic Areas in your language!
 
 Magic Areas has full translation support, meaning even your entities will be translated and is available in the following languages:
-* English
-* Spanish
-* German
-* Dutch
-* Brazilian Portuguese
 
-If your language isn't available and you would like to contribute, please check out the [language files](https://github.com/jseidl/hass-magic_areas/tree/main/custom_components/magic_areas/translations) and submit your language file on a pull request!
+<a href="https://hosted.weblate.org/engage/magic-areas/">
+<img src="https://hosted.weblate.org/widget/magic-areas/multi-auto.svg" alt="Translation status" />
+</a>
+
+Help to translate Magic Areas into your language from your web browser! We use [Hosted Weblate](https://hosted.weblate.org/engage/magic-areas/) so you don't need to fool around with pull requests nor JSON files!
 
 ## Problems/bugs, questions, feature requests?
 
@@ -119,7 +118,7 @@ Please do not open issues for feature requests. Use the [Feature Request discuss
 
 ## Contributions are welcome!
 
-If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
+If you would like to contribute to Magic Areas please read the [Contribution guidelines](CONTRIBUTING.md).
 
 
 ***
@@ -130,8 +129,8 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [commits-shield]: https://img.shields.io/github/commit-activity/y/jseidl/hass-magic_areas.svg?style=for-the-badge
 [commits]: https://github.com/jseidl/hass-magic_areas/commits/main
 [discord]: https://discord.gg/tvaS4BG5
+[hacs]: https://github.com/hacs/integration
 [discord-shield]: https://img.shields.io/discord/928386239789400065?style=for-the-badge&label=Discord
-[exampleimg]: example.png
 [license-shield]: https://img.shields.io/github/license/jseidl/hass-magic_areas.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-Jan%20Seidl%20%40jseidl-blue.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/jseidl/hass-magic_areas.svg?style=for-the-badge
@@ -140,4 +139,5 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [last-commit-shield]: https://img.shields.io/github/last-commit/jseidl/hass-magic_areas?style=for-the-badge
 [ma-logo]: https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/magic_areas/logo.png
 [contributors-badge]: https://flat.badgen.net/github/contributors/jseidl/hass-magic_areas
-[integration-usage-badge]: https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.magic_areas.total&style=for-the-badge
+[integration-usage-shield]: https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.magic_areas.total&style=for-the-badge
+[hacs-shield]: https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge
