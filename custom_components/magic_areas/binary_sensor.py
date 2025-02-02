@@ -4,7 +4,6 @@ from datetime import UTC, datetime
 import logging
 
 from homeassistant.components.binary_sensor import (
-    DEVICE_CLASSES,
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -63,9 +62,7 @@ class AreaSensorGroupBinarySensor(MagicEntity, BinarySensorGroup):
         BinarySensorGroup.__init__(
             self,
             device_class=(
-                BinarySensorDeviceClass[device_class.upper()]
-                if device_class in DEVICE_CLASSES
-                else None
+                BinarySensorDeviceClass(device_class) if device_class else None
             ),
             name=EMPTY_STRING,
             unique_id=self._attr_unique_id,
