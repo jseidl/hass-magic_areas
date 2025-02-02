@@ -132,24 +132,32 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
             continue
 
         _LOGGER.debug(
-            "Creating aggregate sensor for device_class '%s' with %d entities (%s)",
+            "%s: Creating aggregate sensor for device_class '%s' with %d entities",
+            area.slug,
             device_class,
             len(entities),
-            area.slug,
         )
 
-        # Infer most-popular unit of measurement
-        unit_of_measurements = Counter(unit_of_measurement_map[device_class])
-        most_common_unit_of_measurement = unit_of_measurements.most_common(1)[0][0]
+        try:
+            # Infer most-popular unit of measurement
+            unit_of_measurements = Counter(unit_of_measurement_map[device_class])
+            most_common_unit_of_measurement = unit_of_measurements.most_common(1)[0][0]
 
-        aggregates.append(
-            AreaAggregateSensor(
-                area=area,
-                device_class=device_class,
-                entity_ids=entities,
-                unit_of_measurement=most_common_unit_of_measurement,
+            aggregates.append(
+                AreaAggregateSensor(
+                    area=area,
+                    device_class=device_class,
+                    entity_ids=entities,
+                    unit_of_measurement=most_common_unit_of_measurement,
+                )
             )
-        )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.error(
+                "%s: Error creating '%s' aggregate sensor: %s",
+                area.slug,
+                device_class,
+                str(e),
+            )
 
     return aggregates
 

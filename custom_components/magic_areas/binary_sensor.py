@@ -331,6 +331,16 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
             len(entity_list),
             area.slug,
         )
-        aggregates.append(AreaAggregateBinarySensor(area, device_class, entity_list))
+        try:
+            aggregates.append(
+                AreaAggregateBinarySensor(area, device_class, entity_list)
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.error(
+                "%s: Error creating '%s' aggregate sensor: %s",
+                area.slug,
+                device_class,
+                str(e),
+            )
 
     return aggregates
