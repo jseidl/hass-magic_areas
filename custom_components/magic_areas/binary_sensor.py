@@ -358,7 +358,21 @@ def create_wasp_in_a_box_sensor(
     area: MagicArea,
 ) -> list[AreaWaspInABoxBinarySensor]:
     """Add the Wasp in a box sensor for the area."""
-    return [AreaWaspInABoxBinarySensor(area)]
+
+    if not area.has_feature(CONF_FEATURE_WASP_IN_A_BOX) or not area.has_feature(
+        CONF_FEATURE_AGGREGATION
+    ):
+        return []
+
+    try:
+        return [AreaWaspInABoxBinarySensor(area)]
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        _LOGGER.error(
+            "%s: Error creating wasp in a box sensor: %s",
+            area.slug,
+            str(e),
+        )
+        return []
 
 
 def create_ble_tracker_sensor(area: MagicArea) -> list[AreaBLETrackerBinarySensor]:
@@ -371,11 +385,19 @@ def create_ble_tracker_sensor(area: MagicArea) -> list[AreaBLETrackerBinarySenso
     ):
         return []
 
-    return [
-        AreaBLETrackerBinarySensor(
-            area,
+    try:
+        return [
+            AreaBLETrackerBinarySensor(
+                area,
+            )
+        ]
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        _LOGGER.error(
+            "%s: Error creating BLE tracker sensor: %s",
+            area.slug,
+            str(e),
         )
-    ]
+        return []
 
 
 def create_health_sensors(area: MagicArea) -> list[AreaHealthBinarySensor]:
@@ -414,15 +436,22 @@ def create_health_sensors(area: MagicArea) -> list[AreaHealthBinarySensor]:
         area.slug,
         str(distress_entities),
     )
-    entities = [
-        AreaHealthBinarySensor(
-            area,
-            device_class=BinarySensorDeviceClass.PROBLEM,
-            entity_ids=distress_entities,
-        )
-    ]
 
-    return entities
+    try:
+        return [
+            AreaHealthBinarySensor(
+                area,
+                device_class=BinarySensorDeviceClass.PROBLEM,
+                entity_ids=distress_entities,
+            )
+        ]
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        _LOGGER.error(
+            "%s: Error creating area health sensor: %s",
+            area.slug,
+            str(e),
+        )
+        return []
 
 
 def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
