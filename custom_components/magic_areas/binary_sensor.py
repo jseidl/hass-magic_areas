@@ -4,7 +4,6 @@ from datetime import UTC, datetime
 import logging
 
 from homeassistant.components.binary_sensor import (
-    DEVICE_CLASSES,
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -63,9 +62,7 @@ class AreaSensorGroupBinarySensor(MagicEntity, BinarySensorGroup):
         BinarySensorGroup.__init__(
             self,
             device_class=(
-                BinarySensorDeviceClass[device_class.upper()]
-                if device_class in DEVICE_CLASSES
-                else None
+                BinarySensorDeviceClass(device_class) if device_class else None
             ),
             name=EMPTY_STRING,
             unique_id=self._attr_unique_id,
@@ -334,6 +331,16 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
             len(entity_list),
             area.slug,
         )
-        aggregates.append(AreaAggregateBinarySensor(area, device_class, entity_list))
+        try:
+            aggregates.append(
+                AreaAggregateBinarySensor(area, device_class, entity_list)
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.error(
+                "%s: Error creating '%s' aggregate sensor: %s",
+                area.slug,
+                device_class,
+                str(e),
+            )
 
     return aggregates

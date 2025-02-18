@@ -5,7 +5,6 @@ import logging
 
 from homeassistant.components.group.sensor import ATTR_MEAN, ATTR_SUM, SensorGroup
 from homeassistant.components.sensor.const import (
-    DEVICE_CLASSES,
     DOMAIN as SENSOR_DOMAIN,
     SensorDeviceClass,
     SensorStateClass,
@@ -133,24 +132,32 @@ def create_aggregate_sensors(area: MagicArea) -> list[Entity]:
             continue
 
         _LOGGER.debug(
-            "Creating aggregate sensor for device_class '%s' with %d entities (%s)",
+            "%s: Creating aggregate sensor for device_class '%s' with %d entities",
+            area.slug,
             device_class,
             len(entities),
-            area.slug,
         )
 
-        # Infer most-popular unit of measurement
-        unit_of_measurements = Counter(unit_of_measurement_map[device_class])
-        most_common_unit_of_measurement = unit_of_measurements.most_common(1)[0][0]
+        try:
+            # Infer most-popular unit of measurement
+            unit_of_measurements = Counter(unit_of_measurement_map[device_class])
+            most_common_unit_of_measurement = unit_of_measurements.most_common(1)[0][0]
 
-        aggregates.append(
-            AreaAggregateSensor(
-                area=area,
-                device_class=device_class,
-                entity_ids=entities,
-                unit_of_measurement=most_common_unit_of_measurement,
+            aggregates.append(
+                AreaAggregateSensor(
+                    area=area,
+                    device_class=device_class,
+                    entity_ids=entities,
+                    unit_of_measurement=most_common_unit_of_measurement,
+                )
             )
-        )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.error(
+                "%s: Error creating '%s' aggregate sensor: %s",
+                area.slug,
+                device_class,
+                str(e),
+            )
 
     return aggregates
 
@@ -181,12 +188,11 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
             final_unit_of_measurement = unit_of_measurement
 
         self._attr_suggested_display_precision = DEFAULT_SENSOR_PRECISION
-        sensor_device_class_object: SensorDeviceClass | None = (
-            SensorDeviceClass[device_class.upper()]
-            if device_class in DEVICE_CLASSES
-            else None
+
+        sensor_device_class: SensorDeviceClass | None = (
+            SensorDeviceClass(device_class) if device_class else None
         )
-        self.device_class = sensor_device_class_object
+        self.device_class = sensor_device_class
 
         state_class = SensorStateClass.MEASUREMENT
 
@@ -198,7 +204,7 @@ class AreaSensorGroupSensor(MagicEntity, SensorGroup):
         SensorGroup.__init__(
             self,
             hass=area.hass,
-            device_class=sensor_device_class_object,
+            device_class=sensor_device_class,
             entity_ids=entity_ids,
             ignore_non_numeric=True,
             sensor_type=ATTR_SUM if device_class in AGGREGATE_MODE_SUM else ATTR_MEAN,
