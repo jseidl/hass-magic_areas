@@ -192,6 +192,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
     feature_info = MagicAreasFeatureInfoWaspInABox()
     _wasp_sensors: list[str] = []
     _box_sensor: str
+    delay: int = 0
     wasp: bool = False
 
     def __init__(self, area: MagicArea) -> None:
@@ -206,6 +207,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
         self._box_sensor = (
             f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_door"
         )
+        self.delay = 10  # @FIXME get from config when implemented
 
         self._attr_device_class = BinarySensorDeviceClass.PRESENCE
         self._attr_extra_state_attributes = {}
@@ -239,10 +241,22 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
 
     def _box_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
         """Register box sensor state change event."""
-        self.wasp = False
-        self.wasp_in_a_box()
+        if self.delay:
+            self.wasp = False
+            self._attr_is_on = self.wasp
+            self.schedule_update_ha_state()
+            self.hass.loop.call_soon_threadsafe(
+                self.wasp_in_a_box_delayed, datetime.now(UTC)
+            )
+        else:
+            self.wasp_in_a_box()
 
-    def wasp_in_a_box(self):
+    @callback
+    def wasp_in_a_box_delayed(self, extra: datetime | None = None) -> None:
+        """Call Wasp In A Box Logic function after a delay."""
+        self.hass.loop.call_later(self.delay, self.wasp_in_a_box, extra)
+
+    def wasp_in_a_box(self, extra: datetime | None = None) -> None:
         """Perform Wasp In A Box Logic."""
         wasp_state = False
         box_state = False

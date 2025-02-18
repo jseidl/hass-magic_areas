@@ -400,7 +400,7 @@ class MagicArea:
         # Append Wasp In The Box sensor as presence monitor
         if self.has_feature(CONF_FEATURE_AGGREGATION):
             wasp_in_the_box_sensor_id = (
-                f"{BINARY_SENSOR_DOMAIN}.magic_areas_wasp_in_the_box_{self.slug}"
+                f"{BINARY_SENSOR_DOMAIN}.magic_areas_wasp_in_a_box_{self.slug}"
             )
             sensors.append(wasp_in_the_box_sensor_id)
 
