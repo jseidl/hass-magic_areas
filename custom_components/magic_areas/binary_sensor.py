@@ -28,9 +28,14 @@ from custom_components.magic_areas.const import (
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_HEALTH,
+    CONF_FEATURE_WASP_IN_A_BOX,
     CONF_HEALTH_SENSOR_DEVICE_CLASSES,
+    CONF_WASP_IN_A_BOX_DELAY,
+    CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
     DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES,
+    DEFAULT_WASP_IN_A_BOX_DELAY,
+    DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES,
     EMPTY_STRING,
     MagicAreasFeatureInfoAggregates,
     MagicAreasFeatureInfoBLETrackers,
@@ -201,13 +206,24 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
         MagicEntity.__init__(self, area, domain=BINARY_SENSOR_DOMAIN)
         BinarySensorEntity.__init__(self)
 
-        self._wasp_sensors.append(
-            f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_motion"
+        device_classes = self.area.feature_config(CONF_FEATURE_WASP_IN_A_BOX).get(
+            CONF_WASP_IN_A_BOX_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES
         )
+
+        for device_class in device_classes:
+            dc_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_{device_class}"
+            self._wasp_sensors.append(dc_entity_id)
+
+        if not self._wasp_sensors:
+            raise RuntimeError(f"{self.area.name}: No valid wasp sensors defined.")
+
         self._box_sensor = (
             f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_door"
         )
-        self.delay = 10  # @FIXME get from config when implemented
+
+        self.delay = self.area.feature_config(CONF_FEATURE_WASP_IN_A_BOX).get(
+            CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY
+        )
 
         self._attr_device_class = BinarySensorDeviceClass.PRESENCE
         self._attr_extra_state_attributes = {}
@@ -319,7 +335,7 @@ async def async_setup_entry(
             entities.append(illuminance_threshold_sensor)
 
         # Wasp in a box
-        if not area.is_meta():
+        if area.has_feature(CONF_FEATURE_WASP_IN_A_BOX) and not area.is_meta():
             entities.extend(create_wasp_in_a_box_sensor(area))
 
     if area.has_feature(CONF_FEATURE_HEALTH):
