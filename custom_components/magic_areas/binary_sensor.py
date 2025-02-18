@@ -35,6 +35,7 @@ from custom_components.magic_areas.const import (
     MagicAreasFeatureInfoAggregates,
     MagicAreasFeatureInfoBLETrackers,
     MagicAreasFeatureInfoHealth,
+    MagicAreasFeatureInfoWaspInABox,
 )
 from custom_components.magic_areas.helpers.area import get_area_from_config_entry
 from custom_components.magic_areas.threshold import create_illuminance_threshold
@@ -185,6 +186,99 @@ class AreaBLETrackerBinarySensor(MagicEntity, BinarySensorEntity):
         self.schedule_update_ha_state()
 
 
+class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
+    """Wasp In The Box logic tracking sensor for the area."""
+
+    feature_info = MagicAreasFeatureInfoWaspInABox()
+    _wasp_sensors: list[str] = []
+    _box_sensor: str
+    wasp: bool = False
+
+    def __init__(self, area: MagicArea) -> None:
+        """Initialize the area presence binary sensor."""
+
+        MagicEntity.__init__(self, area, domain=BINARY_SENSOR_DOMAIN)
+        BinarySensorEntity.__init__(self)
+
+        self._wasp_sensors.append(
+            f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_motion"
+        )
+        self._box_sensor = (
+            f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_door"
+        )
+
+        self._attr_device_class = BinarySensorDeviceClass.PRESENCE
+        self._attr_extra_state_attributes = {}
+        self._attr_is_on: bool = False
+
+    async def async_added_to_hass(self) -> None:
+        """Call to add the system to hass."""
+        await super().async_added_to_hass()
+
+        # Setup the listeners
+        await self._setup_listeners()
+
+        _LOGGER.debug("%s: Wasp In A Box sensor initialized", self.area.name)
+
+    async def _setup_listeners(self) -> None:
+        """Attach state chagne listeners."""
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass, self._wasp_sensors, self._wasp_sensor_state_change
+            )
+        )
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass, [self._box_sensor], self._box_sensor_state_change
+            )
+        )
+
+    def _wasp_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
+        """Register wasp sensor state change event."""
+        self.wasp_in_a_box()
+
+    def _box_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
+        """Register box sensor state change event."""
+        self.wasp = False
+        self.wasp_in_a_box()
+
+    def wasp_in_a_box(self):
+        """Perform Wasp In A Box Logic."""
+        wasp_state = False
+        box_state = False
+
+        # Get Wasp State
+        for wasp_sensor in self._wasp_sensors:
+            wasp_sensor_state = self.hass.states.get(wasp_sensor)
+            if not wasp_sensor_state:
+                continue
+            if wasp_sensor_state.state == STATE_ON:
+                wasp_state = True
+                break
+
+        # Get Box State
+        box_sensor_state = self.hass.states.get(self._box_sensor)
+        if not box_sensor_state:
+            _LOGGER.warning(
+                "%s: Could not get state for box sensor %s.",
+                self.area.name,
+                self._box_sensor,
+            )
+            return
+
+        if box_sensor_state.state == STATE_ON:
+            box_state = True
+
+        # Main Logic
+        if wasp_state:
+            self.wasp = True
+        elif box_state:
+            self.wasp = False
+
+        self._attr_is_on = self.wasp
+        self.schedule_update_ha_state()
+
+
 # Setup
 
 
@@ -210,6 +304,10 @@ async def async_setup_entry(
         if illuminance_threshold_sensor:
             entities.append(illuminance_threshold_sensor)
 
+        # Wasp in a box
+        if not area.is_meta():
+            entities.extend(create_wasp_in_a_box_sensor(area))
+
     if area.has_feature(CONF_FEATURE_HEALTH):
         entities.extend(create_health_sensors(area))
 
@@ -224,6 +322,13 @@ async def async_setup_entry(
         cleanup_removed_entries(
             area.hass, entities, area.magic_entities[BINARY_SENSOR_DOMAIN]
         )
+
+
+def create_wasp_in_a_box_sensor(
+    area: MagicArea,
+) -> list[AreaWaspInABoxBinarySensor]:
+    """Add the Wasp in a box sensor for the area."""
+    return [AreaWaspInABoxBinarySensor(area)]
 
 
 def create_ble_tracker_sensor(area: MagicArea) -> list[AreaBLETrackerBinarySensor]:

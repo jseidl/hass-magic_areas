@@ -198,6 +198,14 @@ class MagicAreasFeatureInfoBLETrackers(MagicAreasFeatureInfo):
     icons = {BINARY_SENSOR_DOMAIN: "mdi:bluetooth"}
 
 
+class MagicAreasFeatureInfoWaspInABox(MagicAreasFeatureInfo):
+    """Feature information for feature: Wasp in a box."""
+
+    id = "wasp_in_a_box"
+    translation_keys = {BINARY_SENSOR_DOMAIN: "wasp_in_a_box"}
+    icons = {BINARY_SENSOR_DOMAIN: "mdi:bee"}
+
+
 class MagicAreasFeatureInfoAggregates(MagicAreasFeatureInfo):
     """Feature information for feature: Aggregates."""
 

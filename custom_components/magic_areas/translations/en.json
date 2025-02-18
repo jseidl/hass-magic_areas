@@ -208,6 +208,9 @@
       },
       "threshold_light": {
         "name": "Light (Calculated)"
+      },
+      "wasp_in_a_box": {
+        "name": "Wasp in a Box"
       }
     },
     "climate": {

@@ -27,6 +27,7 @@ from custom_components.magic_areas.const import (
     AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
+    CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_IGNORE_DIAGNOSTIC_ENTITIES,
@@ -395,6 +396,13 @@ class MagicArea:
         if self.has_feature(CONF_FEATURE_BLE_TRACKERS):
             ble_tracker_sensor_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_ble_trackers_{self.slug}_ble_tracker_monitor"
             sensors.append(ble_tracker_sensor_id)
+
+        # Append Wasp In The Box sensor as presence monitor
+        if self.has_feature(CONF_FEATURE_AGGREGATION):
+            wasp_in_the_box_sensor_id = (
+                f"{BINARY_SENSOR_DOMAIN}.magic_areas_wasp_in_the_box_{self.slug}"
+            )
+            sensors.append(wasp_in_the_box_sensor_id)
 
         return sensors
 
