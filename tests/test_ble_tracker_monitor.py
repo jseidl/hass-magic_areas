@@ -4,7 +4,10 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 
-from custom_components.magic_areas.const import ATTR_PRESENCE_SENSORS
+from custom_components.magic_areas.const import (
+    ATTR_PRESENCE_SENSORS,
+    ATTR_ACTIVE_SENSORS,
+)
 
 from tests.const import DEFAULT_MOCK_AREA
 from tests.mocks import MockSensor
@@ -59,6 +62,7 @@ async def test_ble_tracker_presence_sensor(
 
     assert area_sensor_state is not None
     assert area_sensor_state.state == STATE_ON
+    assert ble_tracker_entity_id in area_sensor_state.attributes[ATTR_ACTIVE_SENSORS]
 
     # Set BLE sensor to something else
     hass.states.async_set(ble_sensor_entity_id, STATE_UNKNOWN)
