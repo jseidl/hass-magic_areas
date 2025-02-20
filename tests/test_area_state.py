@@ -14,14 +14,6 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
-from .common import get_basic_config_entry_data
-from .conftest import (
-    DEFAULT_MOCK_AREA,
-    init_integration,
-    setup_mock_entities,
-    shutdown_integration,
-)
-from .mocks import MockBinarySensor
 from custom_components.magic_areas.const import (
     CONF_ACCENT_ENTITY,
     CONF_DARK_ENTITY,
@@ -32,7 +24,17 @@ from custom_components.magic_areas.const import (
     AreaStates,
 )
 
+from tests.common import (
+    get_basic_config_entry_data,
+    init_integration,
+    setup_mock_entities,
+    shutdown_integration,
+)
+from tests.const import DEFAULT_MOCK_AREA
+from tests.mocks import MockBinarySensor
+
 _LOGGER = logging.getLogger(__name__)
+
 
 # Fixtures
 

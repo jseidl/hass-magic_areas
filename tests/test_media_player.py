@@ -25,14 +25,6 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 
-from .common import get_basic_config_entry_data
-from .conftest import (
-    DEFAULT_MOCK_AREA,
-    init_integration,
-    setup_mock_entities,
-    shutdown_integration,
-)
-from .mocks import MockBinarySensor, MockMediaPlayer
 from custom_components.magic_areas.const import (
     CONF_ENABLED_FEATURES,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
@@ -42,9 +34,17 @@ from custom_components.magic_areas.const import (
     AreaStates,
 )
 
-from tests.const import MockAreaIds
+from tests.common import (
+    get_basic_config_entry_data,
+    init_integration,
+    setup_mock_entities,
+    shutdown_integration,
+)
+from tests.const import DEFAULT_MOCK_AREA, MockAreaIds
+from tests.mocks import MockBinarySensor, MockMediaPlayer
 
 _LOGGER = logging.getLogger(__name__)
+
 
 # Fixtures
 

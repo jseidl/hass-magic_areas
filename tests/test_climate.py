@@ -13,14 +13,6 @@ from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
-from .common import get_basic_config_entry_data
-from .conftest import (
-    DEFAULT_MOCK_AREA,
-    init_integration,
-    setup_mock_entities,
-    shutdown_integration,
-)
-from .mocks import MockClimate
 from custom_components.magic_areas.const import (
     CONF_CLIMATE_GROUPS_TURN_ON_STATE,
     CONF_ENABLED_FEATURES,
@@ -31,7 +23,17 @@ from custom_components.magic_areas.const import (
     AreaStates,
 )
 
+from tests.common import (
+    get_basic_config_entry_data,
+    init_integration,
+    setup_mock_entities,
+    shutdown_integration,
+)
+from tests.const import DEFAULT_MOCK_AREA
+from tests.mocks import MockClimate
+
 _LOGGER = logging.getLogger(__name__)
+
 
 # Fixtures
 

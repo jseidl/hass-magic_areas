@@ -19,8 +19,13 @@ from custom_components.magic_areas.const import (
     DOMAIN,
 )
 
-from tests.common import get_basic_config_entry_data
-from tests.conftest import init_integration, setup_mock_entities, shutdown_integration
+from tests.common import (
+    assert_state,
+    get_basic_config_entry_data,
+    init_integration,
+    setup_mock_entities,
+    shutdown_integration,
+)
 from tests.const import DEFAULT_MOCK_AREA
 from tests.mocks import MockSensor
 
@@ -99,13 +104,11 @@ async def test_ble_tracker_presence_sensor(
     assert ble_sensor_state.state is not None
 
     ble_tracker_state = hass.states.get(ble_tracker_entity_id)
-
     assert ble_tracker_state is not None
     assert ble_tracker_state.state == STATE_OFF
     assert ble_sensor_entity_id in ble_tracker_state.attributes[ATTR_ENTITY_ID]
 
     area_sensor_state = hass.states.get(area_sensor_entity_id)
-
     assert area_sensor_state is not None
     assert area_sensor_state.state == STATE_OFF
     assert ble_tracker_entity_id in area_sensor_state.attributes[ATTR_PRESENCE_SENSORS]
@@ -115,35 +118,23 @@ async def test_ble_tracker_presence_sensor(
     await hass.async_block_till_done()
 
     ble_sensor_state = hass.states.get(ble_sensor_entity_id)
-
-    assert ble_sensor_state is not None
-    assert ble_sensor_state.state == DEFAULT_MOCK_AREA.value
+    assert_state(ble_sensor_state, DEFAULT_MOCK_AREA.value)
 
     ble_tracker_state = hass.states.get(ble_tracker_entity_id)
-
-    assert ble_tracker_state is not None
-    assert ble_tracker_state.state == STATE_ON
+    assert_state(ble_tracker_state, STATE_ON)
 
     area_sensor_state = hass.states.get(area_sensor_entity_id)
-
-    assert area_sensor_state is not None
-    assert area_sensor_state.state == STATE_ON
+    assert_state(area_sensor_state, STATE_ON)
 
     # Set BLE sensor to something else
     hass.states.async_set(ble_sensor_entity_id, STATE_UNKNOWN)
     await hass.async_block_till_done()
 
     ble_sensor_state = hass.states.get(ble_sensor_entity_id)
-
-    assert ble_sensor_state is not None
-    assert ble_sensor_state.state == STATE_UNKNOWN
+    assert_state(ble_sensor_state, STATE_UNKNOWN)
 
     ble_tracker_state = hass.states.get(ble_tracker_entity_id)
-
-    assert ble_tracker_state is not None
-    assert ble_tracker_state.state == STATE_OFF
+    assert_state(ble_tracker_state, STATE_OFF)
 
     area_sensor_state = hass.states.get(area_sensor_entity_id)
-
-    assert area_sensor_state is not None
-    assert area_sensor_state.state == STATE_OFF
+    assert_state(area_sensor_state, STATE_OFF)

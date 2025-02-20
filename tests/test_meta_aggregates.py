@@ -6,16 +6,10 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
-from .const import MockAreaIds
-from .mocks import MockBinarySensor
+from tests.const import MockAreaIds
+from tests.mocks import MockBinarySensor
 
 _LOGGER = logging.getLogger(__name__)
-
-
-# Fixtures
-
-
-# Entities
 
 
 # Tests

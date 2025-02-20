@@ -25,14 +25,6 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 
-from .common import get_basic_config_entry_data
-from .conftest import (
-    DEFAULT_MOCK_AREA,
-    init_integration,
-    setup_mock_entities,
-    shutdown_integration,
-)
-from .mocks import MockBinarySensor, MockSensor
 from custom_components.magic_areas.const import (
     CONF_AGGREGATES_MIN_ENTITIES,
     CONF_ENABLED_FEATURES,
@@ -40,7 +32,17 @@ from custom_components.magic_areas.const import (
     DOMAIN,
 )
 
+from tests.common import (
+    get_basic_config_entry_data,
+    init_integration,
+    setup_mock_entities,
+    shutdown_integration,
+)
+from tests.const import DEFAULT_MOCK_AREA
+from tests.mocks import MockBinarySensor, MockSensor
+
 _LOGGER = logging.getLogger(__name__)
+
 
 # Fixtures
 
