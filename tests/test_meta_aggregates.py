@@ -12,6 +12,13 @@ from .mocks import MockBinarySensor
 _LOGGER = logging.getLogger(__name__)
 
 
+# Fixtures
+
+
+# Entities
+
+
+# Tests
 async def test_meta_aggregates_binary_sensor(
     hass: HomeAssistant,
     entities_binary_sensor_motion_all_areas_with_meta: dict[

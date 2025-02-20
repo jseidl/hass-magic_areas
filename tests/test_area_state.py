@@ -1,21 +1,126 @@
 """Test for area changes and how the system handles it."""
 
+from collections.abc import AsyncGenerator
 import logging
+from typing import Any
 
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
+)
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
+from .common import get_basic_config_entry_data
+from .conftest import (
+    DEFAULT_MOCK_AREA,
+    init_integration,
+    setup_mock_entities,
+    shutdown_integration,
+)
 from .mocks import MockBinarySensor
-from custom_components.magic_areas.const import AreaStates
+from custom_components.magic_areas.const import (
+    CONF_ACCENT_ENTITY,
+    CONF_DARK_ENTITY,
+    CONF_KEEP_ONLY_ENTITIES,
+    CONF_SECONDARY_STATES,
+    CONF_SLEEP_ENTITY,
+    DOMAIN,
+    AreaStates,
+)
 
 _LOGGER = logging.getLogger(__name__)
+
+# Fixtures
+
+
+@pytest.fixture(name="secondary_states_config_entry")
+def mock_config_entry_secondary_states() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
+    data.update(
+        {
+            CONF_SECONDARY_STATES: {
+                CONF_ACCENT_ENTITY: "binary_sensor.accent_sensor",
+                CONF_DARK_ENTITY: "binary_sensor.area_light_sensor",
+                CONF_SLEEP_ENTITY: "binary_sensor.sleep_sensor",
+            }
+        }
+    )
+    return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="keep_only_sensor_config_entry")
+def mock_config_entry_keep_only_sensor() -> MockConfigEntry:
+    """Fixture for mock configuration entry."""
+    data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
+    data.update({CONF_KEEP_ONLY_ENTITIES: ["binary_sensor.motion_sensor_1"]})
+    return MockConfigEntry(domain=DOMAIN, data=data)
+
+
+@pytest.fixture(name="_setup_integration_secondary_states")
+async def setup_integration_secondary_states(
+    hass: HomeAssistant,
+    secondary_states_config_entry: MockConfigEntry,
+) -> AsyncGenerator[Any]:
+    """Set up integration with secondary states config."""
+
+    await init_integration(hass, [secondary_states_config_entry])
+    yield
+    await shutdown_integration(hass, [secondary_states_config_entry])
+
+
+@pytest.fixture(name="_setup_integration_keep_only_sensor")
+async def setup_integration_keep_only_sensor(
+    hass: HomeAssistant,
+    keep_only_sensor_config_entry: MockConfigEntry,
+) -> AsyncGenerator[Any]:
+    """Set up integration with secondary states config."""
+
+    await init_integration(hass, [keep_only_sensor_config_entry])
+    yield
+    await shutdown_integration(hass, [keep_only_sensor_config_entry])
+
+
+# Entities
+
+
+@pytest.fixture(name="secondary_states_sensors")
+async def setup_secondary_state_sensors(hass: HomeAssistant) -> list[MockBinarySensor]:
+    """Create binary sensors for the secondary states."""
+    mock_binary_sensor_entities = [
+        MockBinarySensor(
+            name="sleep_sensor",
+            unique_id="sleep_sensor",
+            device_class=None,
+        ),
+        MockBinarySensor(
+            name="area_light_sensor",
+            unique_id="area_light_sensor",
+            device_class=BinarySensorDeviceClass.LIGHT,
+        ),
+        MockBinarySensor(
+            name="accent_sensor",
+            unique_id="accent_sensor",
+            device_class=None,
+        ),
+    ]
+    await setup_mock_entities(
+        hass, BINARY_SENSOR_DOMAIN, {DEFAULT_MOCK_AREA: mock_binary_sensor_entities}
+    )
+    return mock_binary_sensor_entities
+
+
+# Tests
 
 
 async def test_area_primary_state_change(
     hass: HomeAssistant,
     entities_binary_sensor_motion_one: list[MockBinarySensor],
-    _setup_integration,
+    _setup_integration_basic,
 ) -> None:
     """Test primary area state change."""
 

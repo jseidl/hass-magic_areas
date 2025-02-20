@@ -13,6 +13,11 @@ from custom_components.magic_areas.const import AreaStates
 _LOGGER = logging.getLogger(__name__)
 
 
+# Fixtures
+# Entities
+# Tests
+
+
 async def test_meta_area_primary_state_change(
     hass: HomeAssistant,
     entities_binary_sensor_motion_all_areas_with_meta: dict[

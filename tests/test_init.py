@@ -12,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def test_init_default_config(
-    hass: HomeAssistant, config_entry: MockConfigEntry, _setup_integration
+    hass: HomeAssistant, basic_config_entry: MockConfigEntry, _setup_integration_basic
 ) -> None:
     """Test loading the integration."""
 
