@@ -359,3 +359,32 @@ def assert_state(entity_state: State | None, expected_value: str) -> None:
 
     assert entity_state is not None
     assert entity_state.state == expected_value
+
+
+def assert_attribute(
+    entity_state: State | None, attribute_key: str, expected_value: str
+) -> None:
+    """Assert that an entity attribute is a given value."""
+
+    assert entity_state is not None
+    assert hasattr(entity_state, "attributes")
+    assert attribute_key in entity_state.attributes
+    assert entity_state.attributes[attribute_key] == expected_value
+
+
+def assert_in_attribute(
+    entity_state: State | None,
+    attribute_key: str,
+    expected_value: str,
+    negate: bool = False,
+) -> None:
+    """Assert that an entity attribute is a given value."""
+
+    assert entity_state is not None
+    assert hasattr(entity_state, "attributes")
+    assert attribute_key in entity_state.attributes
+
+    if negate:
+        assert expected_value not in entity_state.attributes[attribute_key]
+    else:
+        assert expected_value in entity_state.attributes[attribute_key]

@@ -27,6 +27,7 @@ from custom_components.magic_areas.const import (
 )
 
 from tests.common import (
+    assert_state,
     get_basic_config_entry_data,
     init_integration,
     setup_mock_entities,
@@ -128,6 +129,9 @@ async def test_threshold_sensor_light(
     threshold_sensor_state = hass.states.get(threshold_sensor_id)
     assert threshold_sensor_state is not None
     assert threshold_sensor_state.state == STATE_OFF
+    assert hasattr(threshold_sensor_state, "attributes")
+    assert ATTR_UPPER in threshold_sensor_state.attributes
+    assert ATTR_HYSTERESIS in threshold_sensor_state.attributes
 
     sensor_threhsold_upper = int(threshold_sensor_state.attributes[ATTR_UPPER])
     sensor_hysteresis = int(threshold_sensor_state.attributes[ATTR_HYSTERESIS])
@@ -150,8 +154,7 @@ async def test_threshold_sensor_light(
 
     # Ensure threhsold sensor is triggered
     threshold_sensor_state = hass.states.get(threshold_sensor_id)
-    assert threshold_sensor_state is not None
-    assert threshold_sensor_state.state == STATE_ON
+    assert_state(threshold_sensor_state, STATE_ON)
 
     # Reset illuminance sensor values to 0
     for mock_entity in entities_sensor_illuminance_multiple:
@@ -168,5 +171,4 @@ async def test_threshold_sensor_light(
 
     # Ensure threhsold sensor is cleared
     threshold_sensor_state = hass.states.get(threshold_sensor_id)
-    assert threshold_sensor_state is not None
-    assert threshold_sensor_state.state == STATE_OFF
+    assert_state(threshold_sensor_state, STATE_OFF)

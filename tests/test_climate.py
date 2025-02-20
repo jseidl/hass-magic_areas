@@ -24,6 +24,8 @@ from custom_components.magic_areas.const import (
 )
 
 from tests.common import (
+    assert_in_attribute,
+    assert_state,
     get_basic_config_entry_data,
     init_integration,
     setup_mock_entities,
@@ -109,29 +111,24 @@ async def test_climate_group_basic(
 
     # Test mock entity created
     mock_climate_state = hass.states.get(mock_climate_entity_id)
-    assert mock_climate_state is not None
-    assert mock_climate_state.state == STATE_OFF
+    assert_state(mock_climate_state, STATE_OFF)
 
     # Test climate group created
     climate_group_state = hass.states.get(climate_group_entity_id)
-    assert climate_group_state is not None
-    assert climate_group_state.state == STATE_OFF
-    assert mock_climate_entity_id in climate_group_state.attributes[ATTR_ENTITY_ID]
+    assert_state(climate_group_state, STATE_OFF)
+    assert_in_attribute(climate_group_state, ATTR_ENTITY_ID, mock_climate_entity_id)
 
     # Test climate control switch created
     climate_control_state = hass.states.get(climate_control_entity_id)
-    assert climate_control_state is not None
-    assert climate_control_state.state == STATE_OFF
+    assert_state(climate_control_state, STATE_OFF)
 
     # Test presence hold switch created
     presence_hold_state = hass.states.get(presence_hold_entity_id)
-    assert presence_hold_state is not None
-    assert presence_hold_state.state == STATE_OFF
+    assert_state(presence_hold_state, STATE_OFF)
 
     # Test area state
     area_state = hass.states.get(area_sensor_entity_id)
-    assert area_state is not None
-    assert area_state.state == STATE_OFF
+    assert_state(area_state, STATE_OFF)
 
     # Turn on climate control
     hass.states.async_set(climate_control_entity_id, STATE_ON)
@@ -139,8 +136,7 @@ async def test_climate_group_basic(
 
     # Test climate control switch state turned on
     climate_control_state = hass.states.get(climate_control_entity_id)
-    assert climate_control_state is not None
-    assert climate_control_state.state == STATE_ON
+    assert_state(climate_control_state, STATE_ON)
 
     # Turn area occupied through presence hold
     hass.states.async_set(presence_hold_entity_id, STATE_ON)
@@ -148,8 +144,7 @@ async def test_climate_group_basic(
 
     # Test area state is STATE_ON
     area_state = hass.states.get(area_sensor_entity_id)
-    assert area_state is not None
-    assert area_state.state == STATE_ON
+    assert_state(area_state, STATE_ON)
 
     # Sleep so climate group has a chance to react
     await hass.async_block_till_done()

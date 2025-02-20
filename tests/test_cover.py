@@ -101,6 +101,8 @@ async def test_cover_group_basic(
         cover_state = hass.states.get(cover.entity_id)
         assert cover_state is not None
         assert cover_state.state == STATE_OPEN
+        assert hasattr(cover_state, "attributes")
+        assert ATTR_DEVICE_CLASS in cover_state.attributes
         entity_map[cover_state.attributes[ATTR_DEVICE_CLASS]].append(cover)
 
     for dc in CoverDeviceClass:
@@ -110,6 +112,8 @@ async def test_cover_group_basic(
         group_entity_state = hass.states.get(group_entity_id)
         assert group_entity_state is not None
         assert group_entity_state.state == STATE_OPEN
+        assert hasattr(group_entity_state, "attributes")
+        assert ATTR_ENTITY_ID in group_entity_state.attributes
         for child_cover in entity_map[dc.value]:
             assert (
                 child_cover.entity_id in group_entity_state.attributes[ATTR_ENTITY_ID]

@@ -26,6 +26,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 
 from custom_components.magic_areas.const import (
+    ATTR_STATES,
     CONF_ENABLED_FEATURES,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_NOTIFICATION_DEVICES,
@@ -35,6 +36,8 @@ from custom_components.magic_areas.const import (
 )
 
 from tests.common import (
+    assert_in_attribute,
+    assert_state,
     get_basic_config_entry_data,
     init_integration,
     setup_mock_entities,
@@ -142,20 +145,17 @@ async def test_area_aware_media_player(
 
     # Mock media player
     media_player_state = hass.states.get(entities_media_player_single[0].entity_id)
-    assert media_player_state is not None
-    assert media_player_state.state == STATE_OFF
+    assert_state(media_player_state, STATE_OFF)
 
     # Area-Aware media player
     area_aware_media_player_state = hass.states.get(area_aware_media_player_id)
-    assert area_aware_media_player_state is not None
-    assert area_aware_media_player_state.state == STATE_IDLE
+    assert_state(area_aware_media_player_state, STATE_IDLE)
 
     # Test area clear
 
     # Ensure area is clear
     area_state = hass.states.get(area_sensor_entity_id)
-    assert area_state is not None
-    assert area_state.state == STATE_OFF
+    assert_state(area_state, STATE_OFF)
 
     # Send play to AAMP
     service_data = {
@@ -170,12 +170,10 @@ async def test_area_aware_media_player(
 
     # Ensure area MP & AAMP is NOT playing
     media_player_state = hass.states.get(entities_media_player_single[0].entity_id)
-    assert media_player_state is not None
-    assert media_player_state.state == STATE_OFF
+    assert_state(media_player_state, STATE_OFF)
 
     area_aware_media_player_state = hass.states.get(area_aware_media_player_id)
-    assert area_aware_media_player_state is not None
-    assert area_aware_media_player_state.state == STATE_IDLE
+    assert_state(area_aware_media_player_state, STATE_IDLE)
 
     # Test area occupied
 
@@ -187,11 +185,9 @@ async def test_area_aware_media_player(
     area_binary_sensor = hass.states.get(area_sensor_entity_id)
     motion_sensor = hass.states.get(motion_sensor_entity_id)
 
-    assert motion_sensor is not None
-    assert motion_sensor.state == STATE_ON
-    assert area_binary_sensor is not None
-    assert area_binary_sensor.state == STATE_ON
-    assert AreaStates.OCCUPIED in area_binary_sensor.attributes["states"]
+    assert_state(motion_sensor, STATE_ON)
+    assert_state(area_binary_sensor, STATE_ON)
+    assert_in_attribute(area_binary_sensor, ATTR_STATES, AreaStates.OCCUPIED)
 
     # Send play to AAMP
     service_data = {
@@ -206,12 +202,10 @@ async def test_area_aware_media_player(
 
     # Ensure area MP is playing
     media_player_state = hass.states.get(entities_media_player_single[0].entity_id)
-    assert media_player_state is not None
-    assert media_player_state.state == STATE_PLAYING
+    assert_state(media_player_state, STATE_PLAYING)
 
     area_aware_media_player_state = hass.states.get(area_aware_media_player_id)
-    assert area_aware_media_player_state is not None
-    assert area_aware_media_player_state.state == STATE_IDLE
+    assert_state(area_aware_media_player_state, STATE_IDLE)
 
     # Turn off area MP
     await hass.services.async_call(
@@ -223,8 +217,7 @@ async def test_area_aware_media_player(
 
     # Ensure area MP is stopped
     media_player_state = hass.states.get(entities_media_player_single[0].entity_id)
-    assert media_player_state is not None
-    assert media_player_state.state == STATE_IDLE
+    assert_state(media_player_state, STATE_IDLE)
 
     # Test area occupied + sleep
 
