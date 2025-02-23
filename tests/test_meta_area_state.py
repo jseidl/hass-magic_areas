@@ -6,11 +6,16 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
-from .const import MockAreaIds
-from .mocks import MockBinarySensor
 from custom_components.magic_areas.const import AreaStates
 
+from tests.common import assert_state
+from tests.const import MockAreaIds
+from tests.mocks import MockBinarySensor
+
 _LOGGER = logging.getLogger(__name__)
+
+
+# Tests
 
 
 async def test_meta_area_primary_state_change(
@@ -61,47 +66,37 @@ async def test_meta_area_primary_state_change(
     await hass.async_block_till_done()
 
     kitchen_motion_sensor_state = hass.states.get(kitchen_motion_sensor_id)
-    assert kitchen_motion_sensor_state is not None
-    assert kitchen_motion_sensor_state.state == STATE_ON
+    assert_state(kitchen_motion_sensor_state, STATE_ON)
 
     kitchen_area_sensor_state = hass.states.get(kitchen_area_sensor_entity_id)
-    assert kitchen_area_sensor_state is not None
-    assert kitchen_area_sensor_state.state == STATE_ON
+    assert_state(kitchen_area_sensor_state, STATE_ON)
 
     interior_area_sensor_state = hass.states.get(interior_area_sensor_entity_id)
-    assert interior_area_sensor_state is not None
-    assert interior_area_sensor_state.state == STATE_ON
+    assert_state(interior_area_sensor_state, STATE_ON)
 
     exterior_area_sensor_state = hass.states.get(exterior_area_sensor_entity_id)
-    assert exterior_area_sensor_state is not None
-    assert exterior_area_sensor_state.state == STATE_OFF
+    assert_state(exterior_area_sensor_state, STATE_OFF)
 
     global_area_sensor_state = hass.states.get(global_area_sensor_entity_id)
-    assert global_area_sensor_state is not None
-    assert global_area_sensor_state.state == STATE_ON
+    assert_state(global_area_sensor_state, STATE_ON)
 
     hass.states.async_set(kitchen_motion_sensor_id, STATE_OFF)
     await hass.async_block_till_done()
 
     kitchen_motion_sensor_state = hass.states.get(kitchen_motion_sensor_id)
-    assert kitchen_motion_sensor_state is not None
-    assert kitchen_motion_sensor_state.state == STATE_OFF
+    assert_state(kitchen_motion_sensor_state, STATE_OFF)
 
     kitchen_area_sensor_state = hass.states.get(kitchen_area_sensor_entity_id)
-    assert kitchen_area_sensor_state is not None
-    assert kitchen_area_sensor_state.state == STATE_OFF
+    assert_state(kitchen_area_sensor_state, STATE_OFF)
 
     interior_area_sensor_state = hass.states.get(interior_area_sensor_entity_id)
-    assert interior_area_sensor_state is not None
-    assert interior_area_sensor_state.state == STATE_OFF
+    assert_state(interior_area_sensor_state, STATE_OFF)
 
     exterior_area_sensor_state = hass.states.get(exterior_area_sensor_entity_id)
-    assert exterior_area_sensor_state is not None
-    assert exterior_area_sensor_state.state == STATE_OFF
+    assert_state(exterior_area_sensor_state, STATE_OFF)
 
     global_area_sensor_state = hass.states.get(global_area_sensor_entity_id)
-    assert global_area_sensor_state is not None
-    assert global_area_sensor_state.state == STATE_OFF
+    assert_state(global_area_sensor_state, STATE_OFF)
 
     # Toggle exterior area
     backyard_motion_sensor_id = entities_binary_sensor_motion_all_areas_with_meta[
@@ -111,99 +106,80 @@ async def test_meta_area_primary_state_change(
     await hass.async_block_till_done()
 
     backyard_motion_sensor_state = hass.states.get(backyard_motion_sensor_id)
-    assert backyard_motion_sensor_state is not None
-    assert backyard_motion_sensor_state.state == STATE_ON
+    assert_state(backyard_motion_sensor_state, STATE_ON)
 
     backyard_area_sensor_state = hass.states.get(backyard_area_sensor_entity_id)
-    assert backyard_area_sensor_state is not None
-    assert backyard_area_sensor_state.state == STATE_ON
+    assert_state(backyard_area_sensor_state, STATE_ON)
 
     interior_area_sensor_state = hass.states.get(interior_area_sensor_entity_id)
-    assert interior_area_sensor_state is not None
-    assert interior_area_sensor_state.state == STATE_OFF
+    assert_state(interior_area_sensor_state, STATE_OFF)
 
     exterior_area_sensor_state = hass.states.get(exterior_area_sensor_entity_id)
-    assert exterior_area_sensor_state is not None
-    assert exterior_area_sensor_state.state == STATE_ON
+    assert_state(exterior_area_sensor_state, STATE_ON)
 
     global_area_sensor_state = hass.states.get(global_area_sensor_entity_id)
-    assert global_area_sensor_state is not None
-    assert global_area_sensor_state.state == STATE_ON
+    assert_state(global_area_sensor_state, STATE_ON)
 
     hass.states.async_set(backyard_motion_sensor_id, STATE_OFF)
     await hass.async_block_till_done()
 
     backyard_motion_sensor_state = hass.states.get(kitchen_motion_sensor_id)
-    assert backyard_motion_sensor_state is not None
-    assert backyard_motion_sensor_state.state == STATE_OFF
+    assert_state(backyard_motion_sensor_state, STATE_OFF)
 
     backyard_area_sensor_state = hass.states.get(backyard_area_sensor_entity_id)
-    assert backyard_area_sensor_state is not None
-    assert backyard_area_sensor_state.state == STATE_OFF
+    assert_state(backyard_area_sensor_state, STATE_OFF)
 
     interior_area_sensor_state = hass.states.get(interior_area_sensor_entity_id)
-    assert interior_area_sensor_state is not None
-    assert interior_area_sensor_state.state == STATE_OFF
+    assert_state(interior_area_sensor_state, STATE_OFF)
 
     exterior_area_sensor_state = hass.states.get(exterior_area_sensor_entity_id)
-    assert exterior_area_sensor_state is not None
-    assert exterior_area_sensor_state.state == STATE_OFF
+    assert_state(exterior_area_sensor_state, STATE_OFF)
 
     global_area_sensor_state = hass.states.get(global_area_sensor_entity_id)
-    assert global_area_sensor_state is not None
-    assert global_area_sensor_state.state == STATE_OFF
+    assert_state(global_area_sensor_state, STATE_OFF)
 
     # Floors
     ground_level_area_sensor_state = hass.states.get(ground_level_area_sensor_entity_id)
-    assert ground_level_area_sensor_state is not None
-    assert ground_level_area_sensor_state.state == STATE_OFF
+    assert_state(ground_level_area_sensor_state, STATE_OFF)
 
     hass.states.async_set(backyard_motion_sensor_id, STATE_ON)
     await hass.async_block_till_done()
 
     ground_level_area_sensor_state = hass.states.get(ground_level_area_sensor_entity_id)
-    assert ground_level_area_sensor_state is not None
-    assert ground_level_area_sensor_state.state == STATE_ON
+    assert_state(ground_level_area_sensor_state, STATE_ON)
 
     hass.states.async_set(backyard_motion_sensor_id, STATE_OFF)
     await hass.async_block_till_done()
 
     ground_level_area_sensor_state = hass.states.get(ground_level_area_sensor_entity_id)
-    assert ground_level_area_sensor_state is not None
-    assert ground_level_area_sensor_state.state == STATE_OFF
+    assert_state(ground_level_area_sensor_state, STATE_OFF)
 
     first_floor_area_sensor_state = hass.states.get(first_floor_area_sensor_entity_id)
-    assert first_floor_area_sensor_state is not None
-    assert first_floor_area_sensor_state.state == STATE_OFF
+    assert_state(first_floor_area_sensor_state, STATE_OFF)
 
     hass.states.async_set(kitchen_motion_sensor_id, STATE_ON)
     await hass.async_block_till_done()
 
     first_floor_area_sensor_state = hass.states.get(first_floor_area_sensor_entity_id)
-    assert first_floor_area_sensor_state is not None
-    assert first_floor_area_sensor_state.state == STATE_ON
+    assert_state(first_floor_area_sensor_state, STATE_ON)
 
     hass.states.async_set(kitchen_motion_sensor_id, STATE_OFF)
     await hass.async_block_till_done()
 
     first_floor_area_sensor_state = hass.states.get(first_floor_area_sensor_entity_id)
-    assert first_floor_area_sensor_state is not None
-    assert first_floor_area_sensor_state.state == STATE_OFF
+    assert_state(first_floor_area_sensor_state, STATE_OFF)
 
     second_floor_area_sensor_state = hass.states.get(second_floor_area_sensor_entity_id)
-    assert second_floor_area_sensor_state is not None
-    assert second_floor_area_sensor_state.state == STATE_OFF
+    assert_state(second_floor_area_sensor_state, STATE_OFF)
 
     hass.states.async_set(master_bedroom_area_sensor_entity_id, STATE_ON)
     await hass.async_block_till_done()
 
     second_floor_area_sensor_state = hass.states.get(second_floor_area_sensor_entity_id)
-    assert second_floor_area_sensor_state is not None
-    assert second_floor_area_sensor_state.state == STATE_ON
+    assert_state(second_floor_area_sensor_state, STATE_ON)
 
     hass.states.async_set(master_bedroom_area_sensor_entity_id, STATE_OFF)
     await hass.async_block_till_done()
 
     second_floor_area_sensor_state = hass.states.get(second_floor_area_sensor_entity_id)
-    assert second_floor_area_sensor_state is not None
-    assert second_floor_area_sensor_state.state == STATE_OFF
+    assert_state(second_floor_area_sensor_state, STATE_OFF)
