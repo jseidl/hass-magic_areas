@@ -169,7 +169,6 @@
                     "presence_sensor_device_class": "Classes de dispositivos sensores de presença",
                     "presence_device_platforms": "Plataformas a serem usadas para detecção de presença",
                     "keep_only_entities": "Entidades de retenção de estado.",
-                    "update_interval": "Intervalo para verificação de eventos perdidos",
                     "clear_timeout": "Limpar tempo limite"
                 },
                 "data_description": {

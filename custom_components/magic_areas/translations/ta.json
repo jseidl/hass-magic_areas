@@ -178,7 +178,6 @@
                     "presence_sensor_device_class": "இருப்பு சென்சார்கள் சாதன வகுப்புகள்",
                     "presence_device_platforms": "இருப்பு உணர்தலுக்கு பயன்படுத்த வேண்டிய தளங்கள்",
                     "keep_only_entities": "மட்டும் மட்டுமே நிறுவனங்கள்",
-                    "update_interval": "தவறவிட்ட நிகழ்வுகளை சரிபார்க்க இடைவெளி",
                     "clear_timeout": "தெளிவான நேரம் முடிந்தது"
                 },
                 "data_description": {
