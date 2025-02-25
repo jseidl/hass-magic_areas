@@ -551,7 +551,7 @@ CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES = (
 CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = ("delay", 30)  # cv.positive_int
 CONF_WASP_IN_A_BOX_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES = (
     "device_classes",
-    [BinarySensorDeviceClass.MOTION],
+    [BinarySensorDeviceClass.MOTION, BinarySensorDeviceClass.OCCUPANCY],
 )  # cv.ensure_list
 
 CONFIGURABLE_AREA_STATE_MAP = {
