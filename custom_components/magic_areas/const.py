@@ -43,6 +43,7 @@ MODULE_DATA = f"{DOMAIN}_data"
 
 ADDITIONAL_LIGHT_TRACKING_ENTITIES = ["sun.sun"]
 DEFAULT_SENSOR_PRECISION = 2
+UPDATE_INTERVAL = ONE_MINUTE
 
 # Light group options
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
@@ -306,7 +307,6 @@ ATTR_STATES = "states"
 ATTR_AREAS = "areas"
 ATTR_ACTIVE_AREAS = "active_areas"
 ATTR_TYPE = "type"
-ATTR_UPDATE_INTERVAL = "update_interval"
 ATTR_CLEAR_TIMEOUT = "clear_timeout"
 ATTR_ACTIVE_SENSORS = "active_sensors"
 ATTR_LAST_ACTIVE_SENSORS = "last_active_sensors"
@@ -504,7 +504,6 @@ CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT_META = (
     1,
     0,
 )  # cv.positive_int
-CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
 CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (
     "notification_devices",
     [],
@@ -774,9 +773,6 @@ REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
         ): cv.positive_int,
-        vol.Optional(
-            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
-        ): cv.positive_int,
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -785,9 +781,6 @@ META_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT_META
-        ): cv.positive_int,
-        vol.Optional(
-            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
     },
     extra=vol.REMOVE_EXTRA,
@@ -819,9 +812,6 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
         ): cv.positive_int,
-        vol.Optional(
-            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
-        ): cv.positive_int,
         vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
         vol.Optional(CONF_SECONDARY_STATES, default={}): SECONDARY_STATES_SCHEMA,
     },
@@ -838,9 +828,6 @@ META_AREA_SCHEMA = vol.Schema(
         ): cv.boolean,
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT_META
-        ): cv.positive_int,
-        vol.Optional(
-            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
     },
     extra=vol.REMOVE_EXTRA,
@@ -875,7 +862,6 @@ OPTIONS_PRESENCE_TRACKING = [
     ),
     (CONF_KEEP_ONLY_ENTITIES, [], cv.entity_ids),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
-    (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
 ]
 
 OPTIONS_AREA_META = [
@@ -884,7 +870,6 @@ OPTIONS_AREA_META = [
 ]
 OPTIONS_PRESENCE_TRACKING_META = [
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
-    (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
 ]
 
 OPTIONS_SECONDARY_STATES = [

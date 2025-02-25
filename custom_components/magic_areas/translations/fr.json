@@ -169,7 +169,6 @@
                     "presence_sensor_device_class": "Classes d'appareils de capteurs de présence",
                     "presence_device_platforms": "Plateformes à utiliser pour la détection de présence",
                     "keep_only_entities": "Entités à conserver uniquement",
-                    "update_interval": "Intervalle de vérification des événements manqués",
                     "clear_timeout": "Délai de vidage"
                 },
                 "data_description": {

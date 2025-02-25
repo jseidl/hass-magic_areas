@@ -168,7 +168,6 @@
                 "data": {
                     "presence_sensor_device_class": "Clases de dispositivos de sensores de presencia",
                     "presence_device_platforms": "Plataformas que se utilizarán para la detección de presencia.",
-                    "update_interval": "Intervalo para comprobar eventos perdidos",
                     "keep_only_entities": "Entidades de conservación de estado",
                     "clear_timeout": "Borrar tiempo de espera"
                 },

@@ -37,14 +37,15 @@ from custom_components.magic_areas.const import (
     CONF_SECONDARY_STATES,
     CONF_SLEEP_TIMEOUT,
     CONF_TYPE,
-    CONF_UPDATE_INTERVAL,
     CONFIGURABLE_AREA_STATE_MAP,
+    DEFAULT_CLEAR_TIMEOUT,
     DEFAULT_EXTENDED_TIME,
     DEFAULT_EXTENDED_TIMEOUT,
     DEFAULT_SLEEP_TIMEOUT,
     INVALID_STATES,
     ONE_MINUTE,
     PRESENCE_SENSOR_VALID_ON_STATES,
+    UPDATE_INTERVAL,
     AreaStates,
     MagicAreasEvents,
     MagicAreasFeatureInfoPresenceTracking,
@@ -113,7 +114,7 @@ class AreaStateTrackerEntity(MagicEntity):
             )
 
         # Timed self update
-        delta = timedelta(seconds=self.area.config.get(CONF_UPDATE_INTERVAL))
+        delta = timedelta(seconds=UPDATE_INTERVAL)
         self.async_on_remove(
             async_track_time_interval(self.hass, self._update_state, delta)
         )
@@ -292,18 +293,18 @@ class AreaStateTrackerEntity(MagicEntity):
 
     # Area state calculations
 
-    def _update_area_states(self) -> tuple[list[str], list[str]]:
+    def _update_area_states(self) -> tuple[set[str], set[str]]:
         """Return new and lost states for this area."""
 
-        last_state = set(self.area.states.copy())
-        current_state = set(self._get_area_states())
+        last_state: set[str] = set(self.area.states.copy())
+        current_state: set[str] = set(self._get_area_states())
 
         if last_state == current_state:
-            return ([], [])
+            return (set(), set())
 
         # Calculate what's new
-        new_states = current_state - last_state
-        lost_states = last_state - current_state
+        new_states: set[str] = current_state - last_state
+        lost_states: set[str] = last_state - current_state
         _LOGGER.debug(
             "%s: Current state: %s, last state: %s -> new states %s / lost states %s",
             self.area.name,
@@ -528,7 +529,9 @@ class AreaStateTrackerEntity(MagicEntity):
                 * ONE_MINUTE
             )
 
-        return self.area.config.get(CONF_CLEAR_TIMEOUT) * ONE_MINUTE
+        return (
+            self.area.config.get(CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT) * ONE_MINUTE
+        )
 
     def _remove_clear_timeout(self) -> None:
         if not self._clear_timeout_callback:
