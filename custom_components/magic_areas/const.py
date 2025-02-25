@@ -15,6 +15,7 @@ from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.components.device_tracker.const import (
     DOMAIN as DEVICE_TRACKER_DOMAIN,
 )
+from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
@@ -245,6 +246,17 @@ class MagicAreasFeatureInfoClimateGroups(MagicAreasFeatureInfo):
     icons = {SWITCH_DOMAIN: "mdi:thermostat-auto"}
 
 
+class MagicAreasFeatureInfoFanGroups(MagicAreasFeatureInfo):
+    """Feature information for feature: Fan groups."""
+
+    id = "fan_groups"
+    translation_keys = {
+        FAN_DOMAIN: "fan_group",
+        SWITCH_DOMAIN: "climate_control",
+    }
+    icons = {SWITCH_DOMAIN: "mdi:fan-auto"}
+
+
 class MagicAreasFeatureInfoMediaPlayerGroups(MagicAreasFeatureInfo):
     """Feature information for feature: Media player groups."""
 
@@ -372,6 +384,7 @@ MAGIC_AREAS_COMPONENTS = [
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
     CLIMATE_DOMAIN,
+    FAN_DOMAIN,
 ]
 
 MAGIC_AREAS_COMPONENTS_META = [
@@ -539,7 +552,7 @@ CONFIGURABLE_AREA_STATE_MAP = {
 
 # features
 CONF_FEATURE_CLIMATE_GROUPS = "climate_groups"
-
+CONF_FEATURE_FAN_GROUPS = "fan_groups"
 CONF_FEATURE_MEDIA_PLAYER_GROUPS = "media_player_groups"
 CONF_FEATURE_LIGHT_GROUPS = "light_groups"
 CONF_FEATURE_COVER_GROUPS = "cover_groups"
