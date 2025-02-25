@@ -12,6 +12,7 @@ from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON, STATE_UNKNO
 from homeassistant.core import HomeAssistant
 
 from custom_components.magic_areas.const import (
+    ATTR_ACTIVE_SENSORS,
     ATTR_PRESENCE_SENSORS,
     CONF_BLE_TRACKER_ENTITIES,
     CONF_ENABLED_FEATURES,
@@ -20,6 +21,7 @@ from custom_components.magic_areas.const import (
 )
 
 from tests.common import (
+    assert_in_attribute,
     assert_state,
     get_basic_config_entry_data,
     init_integration,
@@ -125,6 +127,7 @@ async def test_ble_tracker_presence_sensor(
 
     area_sensor_state = hass.states.get(area_sensor_entity_id)
     assert_state(area_sensor_state, STATE_ON)
+    assert_in_attribute(area_sensor_state, ATTR_ACTIVE_SENSORS, ble_tracker_entity_id)
 
     # Set BLE sensor to something else
     hass.states.async_set(ble_sensor_entity_id, STATE_UNKNOWN)

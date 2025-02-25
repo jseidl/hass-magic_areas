@@ -27,7 +27,7 @@ from custom_components.magic_areas.const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def create_illuminance_threshold(area: MagicArea) -> Entity:
+def create_illuminance_threshold(area: MagicArea) -> Entity | None:
     """Create threhsold light binary sensor based off illuminance aggregate."""
 
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
@@ -78,22 +78,28 @@ def create_illuminance_threshold(area: MagicArea) -> Entity:
     )
 
     _LOGGER.debug(
-        "Creating illuminance threhsold sensor for area '%s': Threhsold: %d, HYSTERESIS: %d (%d%%)",
+        "Creating illuminance threhsold sensor for area '%s': Threhsold: %d, Hysteresis: %d (%d%%)",
         area.slug,
         illuminance_threshold,
         illuminance_threshold_hysteresis,
         illuminance_threshold_hysteresis_percentage,
     )
 
-    threshold_sensor = AreaThresholdSensor(
-        area=area,
-        device_class=BinarySensorDeviceClass.LIGHT,
-        entity_id=illuminance_aggregate_entity_id,
-        upper=illuminance_threshold,
-        hysteresis=illuminance_threshold_hysteresis,
-    )
-
-    return threshold_sensor
+    try:
+        return AreaThresholdSensor(
+            area=area,
+            device_class=BinarySensorDeviceClass.LIGHT,
+            entity_id=illuminance_aggregate_entity_id,
+            upper=illuminance_threshold,
+            hysteresis=illuminance_threshold_hysteresis,
+        )
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        _LOGGER.error(
+            "%s: Error creating calculated light sensor: %s",
+            area.slug,
+            str(e),
+        )
+        return None
 
 
 class AreaThresholdSensor(MagicEntity, ThresholdSensor):

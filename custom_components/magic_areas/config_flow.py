@@ -66,6 +66,7 @@ from .const import (
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
     CONF_FEATURE_PRESENCE_HOLD,
+    CONF_FEATURE_WASP_IN_A_BOX,
     CONF_HEALTH_SENSOR_DEVICE_CLASSES,
     CONF_ID,
     CONF_IGNORE_DIAGNOSTIC_ENTITIES,
@@ -91,6 +92,8 @@ from .const import (
     CONF_TASK_LIGHTS_STATES,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
+    CONF_WASP_IN_A_BOX_DELAY,
+    CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
     CONFIG_FLOW_ENTITY_FILTER_BOOL,
     CONFIG_FLOW_ENTITY_FILTER_EXT,
     CONFIGURABLE_AREA_STATE_MAP,
@@ -119,10 +122,12 @@ from .const import (
     OPTIONS_PRESENCE_TRACKING,
     OPTIONS_PRESENCE_TRACKING_META,
     OPTIONS_SECONDARY_STATES,
+    OPTIONS_WASP_IN_A_BOX,
     REGULAR_AREA_BASIC_OPTIONS_SCHEMA,
     REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
+    WASP_IN_A_BOX_DEVICE_CLASSES,
     MagicConfigEntryVersion,
     MetaAreaType,
 )
@@ -1066,6 +1071,25 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         return await self.do_feature_config(
             name=CONF_FEATURE_BLE_TRACKERS,
             options=OPTIONS_BLE_TRACKERS,
+            selectors=selectors,
+            user_input=user_input,
+        )
+
+    async def async_step_feature_conf_wasp_in_a_box(self, user_input=None):
+        """Configure the sensor Wasp in a Box feature."""
+
+        selectors = {
+            CONF_WASP_IN_A_BOX_DELAY: self._build_selector_number(
+                min_value=0, unit_of_measurement="seconds"
+            ),
+            CONF_WASP_IN_A_BOX_DEVICE_CLASSES: self._build_selector_select(
+                sorted(WASP_IN_A_BOX_DEVICE_CLASSES), multiple=True
+            ),
+        }
+
+        return await self.do_feature_config(
+            name=CONF_FEATURE_WASP_IN_A_BOX,
+            options=OPTIONS_WASP_IN_A_BOX,
             selectors=selectors,
             user_input=user_input,
         )
