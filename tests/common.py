@@ -8,24 +8,28 @@ import pathlib
 from typing import Any, NoReturn
 from unittest.mock import Mock, patch
 
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 import voluptuous as vol
 
 from homeassistant import loader
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_NAME
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
+from homeassistant.const import ATTR_FLOOR_ID, ATTR_NAME, CONF_PLATFORM
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
     ServiceResponse,
+    State,
     SupportsResponse,
     callback,
 )
+from homeassistant.helpers.area_registry import async_get as async_get_ar
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_registry import async_get as async_get_er
+from homeassistant.helpers.floor_registry import async_get as async_get_fr
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.setup import async_setup_component
 
-from .const import MOCK_AREAS, MockAreaIds
-from .mocks import MockModule, MockPlatform
 from custom_components.magic_areas.const import (
     CONF_CLEAR_TIMEOUT,
     CONF_ENABLED_FEATURES,
@@ -37,9 +41,15 @@ from custom_components.magic_areas.const import (
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
     DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
+    DOMAIN,
 )
 
+from tests.const import DEFAULT_MOCK_AREA, MOCK_AREAS, MockAreaIds
+from tests.mocks import MockModule, MockPlatform
+
 _LOGGER = logging.getLogger(__name__)
+
+# Integration Setup Helpers
 
 
 def setup_test_component_platform(
@@ -178,6 +188,98 @@ def async_mock_service(
     return calls
 
 
+# Test Setup Helpers
+
+
+async def init_integration(
+    hass: HomeAssistant,
+    config_entries: list[MockConfigEntry],
+    areas: list[MockAreaIds] | None = None,
+) -> None:
+    """Set up the integration."""
+
+    if not areas:
+        areas = [DEFAULT_MOCK_AREA]
+
+    area_registry = async_get_ar(hass)
+    floor_registry = async_get_fr(hass)
+
+    # Register areas
+    for area in areas:
+        area_object = MOCK_AREAS[area]
+        floor_id: str | None = None
+
+        if area_object[ATTR_FLOOR_ID]:
+            assert area_object[ATTR_FLOOR_ID] is not None
+            floor_name = str(area_object[ATTR_FLOOR_ID])
+            floor_entry = floor_registry.async_get_floor_by_name(floor_name)
+            if not floor_entry:
+                floor_entry = floor_registry.async_create(floor_name)
+            assert floor_entry is not None
+            floor_id = floor_entry.floor_id
+        area_registry.async_create(name=area.value, floor_id=floor_id)
+
+    for config_entry in config_entries:
+        config_entry.add_to_hass(hass)
+
+    assert await async_setup_component(hass, DOMAIN, {})
+    await hass.async_block_till_done()
+
+    for config_entry in config_entries:
+        assert config_entry.state is ConfigEntryState.LOADED
+
+
+async def shutdown_integration(
+    hass: HomeAssistant, config_entries: list[MockConfigEntry]
+) -> None:
+    """Teardown the integration."""
+
+    _LOGGER.info("Unloading integration.")
+    for config_entry in config_entries:
+        await hass.config_entries.async_unload(config_entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert not hass.data.get(DOMAIN)
+
+    for config_entry in config_entries:
+        assert config_entry.state is ConfigEntryState.NOT_LOADED
+    _LOGGER.info("Integration unloaded.")
+
+
+async def setup_mock_entities(
+    hass: HomeAssistant, domain: str, area_entity_map: dict[MockAreaIds, list[Any]]
+) -> None:
+    """Set up multiple mock entities at once."""
+
+    all_entities: list[Any] = []
+    entity_area_map: dict[Any, MockAreaIds] = {}
+
+    for area_id, entity_list in area_entity_map.items():
+        for entity in entity_list:
+            all_entities.append(entity)
+            entity_area_map[entity.unique_id] = area_id
+
+    # Setup entities
+    setup_test_component_platform(hass, domain, all_entities)
+    assert await async_setup_component(hass, domain, {domain: {CONF_PLATFORM: "test"}})
+    await hass.async_block_till_done()
+
+    # Update area IDs
+    entity_registry = async_get_er(hass)
+    for entity in all_entities:
+        assert entity is not None
+        assert entity.entity_id is not None
+        assert entity.unique_id is not None
+        entity_registry.async_update_entity(
+            entity.entity_id,
+            area_id=entity_area_map[entity.unique_id].value,
+        )
+    await hass.async_block_till_done()
+
+
+# Asyncio Virtual Clock
+
+
 class VirtualClock:
     """Provide a virtual clock for an asyncio event loop.
 
@@ -226,6 +328,9 @@ class VirtualClock:
             yield
 
 
+# Helpers
+
+
 def get_basic_config_entry_data(area_id: MockAreaIds) -> dict[str, Any]:
     """Return config entry data for given area id."""
 
@@ -247,3 +352,39 @@ def get_basic_config_entry_data(area_id: MockAreaIds) -> dict[str, Any]:
     }
 
     return data
+
+
+def assert_state(entity_state: State | None, expected_value: str) -> None:
+    """Assert that an entity state is a given value."""
+
+    assert entity_state is not None
+    assert entity_state.state == expected_value
+
+
+def assert_attribute(
+    entity_state: State | None, attribute_key: str, expected_value: str
+) -> None:
+    """Assert that an entity attribute is a given value."""
+
+    assert entity_state is not None
+    assert hasattr(entity_state, "attributes")
+    assert attribute_key in entity_state.attributes
+    assert entity_state.attributes[attribute_key] == expected_value
+
+
+def assert_in_attribute(
+    entity_state: State | None,
+    attribute_key: str,
+    expected_value: str,
+    negate: bool = False,
+) -> None:
+    """Assert that an entity attribute is a given value."""
+
+    assert entity_state is not None
+    assert hasattr(entity_state, "attributes")
+    assert attribute_key in entity_state.attributes
+
+    if negate:
+        assert expected_value not in entity_state.attributes[attribute_key]
+    else:
+        assert expected_value in entity_state.attributes[attribute_key]

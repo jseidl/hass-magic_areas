@@ -1,12 +1,12 @@
 """Test for Wasp in a box sensor behavior."""
 
-import logging
 import asyncio
+from collections.abc import AsyncGenerator
+import logging
+from typing import Any
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
-from collections.abc import AsyncGenerator
-from typing import Any
 
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
@@ -15,24 +15,25 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
+from tests.common import assert_in_attribute, assert_state
+
+from .conftest import (
+    DEFAULT_MOCK_AREA,
+    get_basic_config_entry_data,
+    init_integration,
+    setup_mock_entities,
+    shutdown_integration,
+)
+from .mocks import MockBinarySensor
 from custom_components.magic_areas.const import (
-    ATTR_PRESENCE_SENSORS,
     ATTR_ACTIVE_SENSORS,
+    ATTR_PRESENCE_SENSORS,
+    CONF_AGGREGATES_MIN_ENTITIES,
     CONF_ENABLED_FEATURES,
     CONF_FEATURE_AGGREGATION,
-    CONF_AGGREGATES_MIN_ENTITIES,
     CONF_FEATURE_WASP_IN_A_BOX,
     CONF_WASP_IN_A_BOX_DELAY,
     DOMAIN,
-)
-
-from .mocks import MockBinarySensor
-from .conftest import (
-    init_integration,
-    shutdown_integration,
-    get_basic_config_entry_data,
-    setup_mock_entities,
-    DEFAULT_MOCK_AREA,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -114,70 +115,59 @@ async def test_wasp_in_a_box_logic(
 
     # Ensure source entities are loaded
     motion_sensor_state = hass.states.get(motion_sensor_entity_id)
-    assert motion_sensor_state is not None
-    assert motion_sensor_state.state == STATE_OFF
+    assert_state(motion_sensor_state, STATE_OFF)
 
     door_sensor_state = hass.states.get(door_sensor_entity_id)
-    assert door_sensor_state is not None
-    assert door_sensor_state.state == STATE_OFF
+    assert_state(door_sensor_state, STATE_OFF)
 
     # Ensure aggregates are loaded
     motion_aggregate_state = hass.states.get(motion_aggregate_entity_id)
-    assert motion_aggregate_state is not None
-    assert motion_aggregate_state.state == STATE_OFF
+    assert_state(motion_aggregate_state, STATE_OFF)
 
     door_aggregate_state = hass.states.get(door_aggregate_entity_id)
-    assert door_aggregate_state is not None
-    assert door_aggregate_state.state == STATE_OFF
+    assert_state(door_aggregate_state, STATE_OFF)
 
     # Ensure Wasp in a box sensor is loaded
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_OFF
+    assert_state(wasp_in_a_box_state, STATE_OFF)
 
     # Test motion door open behavior
     hass.states.async_set(door_sensor_entity_id, STATE_ON)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_OFF
+    assert_state(wasp_in_a_box_state, STATE_OFF)
 
     hass.states.async_set(motion_sensor_entity_id, STATE_ON)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_ON
+    assert_state(wasp_in_a_box_state, STATE_ON)
 
     hass.states.async_set(motion_sensor_entity_id, STATE_OFF)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_OFF
+    assert_state(wasp_in_a_box_state, STATE_OFF)
 
     # Test motion on door closed behavior
     hass.states.async_set(door_sensor_entity_id, STATE_OFF)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_OFF
+    assert_state(wasp_in_a_box_state, STATE_OFF)
 
     hass.states.async_set(motion_sensor_entity_id, STATE_ON)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_ON
+    assert_state(wasp_in_a_box_state, STATE_ON)
 
     hass.states.async_set(motion_sensor_entity_id, STATE_OFF)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_ON
+    assert_state(wasp_in_a_box_state, STATE_ON)
 
     # Test door open releases wasp
     hass.states.async_set(door_sensor_entity_id, STATE_ON)
@@ -188,8 +178,7 @@ async def test_wasp_in_a_box_logic(
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_OFF
+    assert_state(wasp_in_a_box_state, STATE_OFF)
 
 
 async def test_wasp_in_a_box_as_presence(
@@ -213,22 +202,18 @@ async def test_wasp_in_a_box_as_presence(
 
     # Ensure initial values are set
     door_sensor_state = hass.states.get(door_sensor_entity_id)
-    assert door_sensor_state is not None
-    assert door_sensor_state.state == STATE_ON
+    assert_state(door_sensor_state, STATE_ON)
 
     motion_sensor_state = hass.states.get(motion_sensor_entity_id)
-    assert motion_sensor_state is not None
-    assert motion_sensor_state.state == STATE_OFF
+    assert_state(motion_sensor_state, STATE_OFF)
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_OFF
+    assert_state(wasp_in_a_box_state, STATE_OFF)
 
     area_sensor_state = hass.states.get(area_state_entity_id)
-    assert area_sensor_state is not None
-    assert area_sensor_state.state == STATE_OFF
-    assert (
-        wasp_in_a_box_entity_id in area_sensor_state.attributes[ATTR_PRESENCE_SENSORS]
+    assert_state(area_sensor_state, STATE_OFF)
+    assert_in_attribute(
+        area_sensor_state, ATTR_PRESENCE_SENSORS, wasp_in_a_box_entity_id
     )
 
     # Test presence tracking
@@ -236,21 +221,17 @@ async def test_wasp_in_a_box_as_presence(
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_ON
+    assert_state(wasp_in_a_box_state, STATE_ON)
 
     area_sensor_state = hass.states.get(area_state_entity_id)
-    assert area_sensor_state is not None
-    assert area_sensor_state.state == STATE_ON
-    assert wasp_in_a_box_entity_id in area_sensor_state.attributes[ATTR_ACTIVE_SENSORS]
+    assert_state(area_sensor_state, STATE_ON)
+    assert_in_attribute(area_sensor_state, ATTR_ACTIVE_SENSORS, wasp_in_a_box_entity_id)
 
     hass.states.async_set(motion_sensor_entity_id, STATE_OFF)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
-    assert wasp_in_a_box_state is not None
-    assert wasp_in_a_box_state.state == STATE_OFF
+    assert_state(wasp_in_a_box_state, STATE_OFF)
 
     area_sensor_state = hass.states.get(area_state_entity_id)
-    assert area_sensor_state is not None
-    assert area_sensor_state.state == STATE_OFF
+    assert_state(area_sensor_state, STATE_OFF)
