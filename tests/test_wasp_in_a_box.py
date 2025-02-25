@@ -15,8 +15,6 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
-from tests.common import assert_in_attribute, assert_state
-
 from .conftest import (
     DEFAULT_MOCK_AREA,
     get_basic_config_entry_data,
@@ -35,6 +33,8 @@ from custom_components.magic_areas.const import (
     CONF_WASP_IN_A_BOX_DELAY,
     DOMAIN,
 )
+
+from tests.common import assert_in_attribute, assert_state
 
 _LOGGER = logging.getLogger(__name__)
 
