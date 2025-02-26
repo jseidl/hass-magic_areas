@@ -56,10 +56,14 @@ from .const import (
     CONF_EXCLUDE_ENTITIES,
     CONF_EXTENDED_TIME,
     CONF_EXTENDED_TIMEOUT,
+    CONF_FAN_GROUPS_REQUIRED_STATE,
+    CONF_FAN_GROUPS_SETPOINT,
+    CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_CLIMATE_GROUPS,
+    CONF_FEATURE_FAN_GROUPS,
     CONF_FEATURE_HEALTH,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_LIST,
@@ -97,6 +101,8 @@ from .const import (
     DATA_AREA_OBJECT,
     DISTRESS_SENSOR_CLASSES,
     DOMAIN,
+    EMPTY_STRING,
+    FAN_GROUPS_ALLOWED_TRACKED_DEVICE_CLASS,
     LIGHT_GROUP_ACT_ON_OPTIONS,
     MAGICAREAS_UNIQUEID_PREFIX,
     META_AREA_BASIC_OPTIONS_SCHEMA,
@@ -112,6 +118,7 @@ from .const import (
     OPTIONS_BLE_TRACKERS,
     OPTIONS_CLIMATE_GROUP,
     OPTIONS_CLIMATE_GROUP_META,
+    OPTIONS_FAN_GROUP,
     OPTIONS_HEALTH_SENSOR,
     OPTIONS_LIGHT_GROUP,
     OPTIONS_PRESENCE_HOLD,
@@ -924,6 +931,31 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 ),
                 CONF_TASK_LIGHTS_ACT_ON: self._build_selector_select(
                     LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                ),
+            },
+            user_input=user_input,
+        )
+
+    async def async_step_feature_conf_fan_groups(self, user_input=None):
+        """Configure the fan groups feature."""
+
+        available_states = [AREA_STATE_OCCUPIED, AREA_STATE_EXTENDED]
+
+        return await self.do_feature_config(
+            name=CONF_FEATURE_FAN_GROUPS,
+            options=(OPTIONS_FAN_GROUP),
+            dynamic_validators={
+                CONF_FAN_GROUPS_REQUIRED_STATE: vol.In(EMPTY_ENTRY + available_states),
+            },
+            selectors={
+                CONF_FAN_GROUPS_REQUIRED_STATE: self._build_selector_select(
+                    EMPTY_ENTRY + available_states
+                ),
+                CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS: self._build_selector_select(
+                    EMPTY_ENTRY + FAN_GROUPS_ALLOWED_TRACKED_DEVICE_CLASS
+                ),
+                CONF_FAN_GROUPS_SETPOINT: self._build_selector_number(
+                    unit_of_measurement=EMPTY_STRING
                 ),
             },
             user_input=user_input,

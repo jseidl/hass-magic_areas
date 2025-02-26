@@ -4,6 +4,8 @@
   "after_dependencies": [
     "template",
     "group",
+    "fan",
+    "climate",
     "binary_sensor",
     "sensor",
     "light",
