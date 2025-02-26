@@ -191,6 +191,10 @@ class AreaBLETrackerBinarySensor(MagicEntity, BinarySensorEntity):
         self.schedule_update_ha_state()
 
 
+ATTR_BOX = "box"
+ATTR_WASP = "wasp"
+
+
 class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
     """Wasp In The Box logic tracking sensor for the area."""
 
@@ -226,7 +230,10 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
         )
 
         self._attr_device_class = BinarySensorDeviceClass.PRESENCE
-        self._attr_extra_state_attributes = {}
+        self._attr_extra_state_attributes = {
+            ATTR_BOX: False,
+            ATTR_WASP: False,
+        }
         self._attr_is_on: bool = False
 
     async def async_added_to_hass(self) -> None:
@@ -304,6 +311,9 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
             self.wasp = True
         elif box_state:
             self.wasp = False
+
+        self._attr_extra_state_attributes[ATTR_BOX] = box_state
+        self._attr_extra_state_attributes[ATTR_WASP] = wasp_state
 
         self._attr_is_on = self.wasp
         self.schedule_update_ha_state()
