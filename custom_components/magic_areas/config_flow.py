@@ -173,7 +173,12 @@ class ConfigBase:
         )
 
     def _build_selector_number(
-        self, min_value=0, max_value=9999, mode="box", unit_of_measurement="seconds"
+        self,
+        min_value: int | float = 0,
+        max_value: int | float = 9999,
+        mode="box",
+        step: int | float = 1,
+        unit_of_measurement="seconds",
     ):
         """Build a number selector."""
         return selector(
@@ -181,6 +186,7 @@ class ConfigBase:
                 "number": {
                     "min": min_value,
                     "max": max_value,
+                    "step": step,
                     "mode": mode,
                     "unit_of_measurement": unit_of_measurement,
                 }
@@ -955,7 +961,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     EMPTY_ENTRY + FAN_GROUPS_ALLOWED_TRACKED_DEVICE_CLASS
                 ),
                 CONF_FAN_GROUPS_SETPOINT: self._build_selector_number(
-                    unit_of_measurement=EMPTY_STRING
+                    unit_of_measurement=EMPTY_STRING, step=0.5
                 ),
             },
             user_input=user_input,
