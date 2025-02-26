@@ -191,6 +191,26 @@ class FanControlSwitch(SwitchBase):
     feature_info = MagicAreasFeatureInfoFanGroups()
     _attr_entity_category = EntityCategory.CONFIG
 
+    setpoint: float = 0.0
+    tracked_entity_id: str
+
+    def __init__(self, area: MagicArea) -> None:
+        """Initialize the Fan control switch."""
+
+        SwitchBase.__init__(self, area)
+
+        tracked_device_class = self.area.feature_config(CONF_FEATURE_FAN_GROUPS).get(
+            CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+            DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        )
+        self.tracked_entity_id = f"{SENSOR_DOMAIN}.magic_areas_aggregates_{self.area.slug}_aggregate_{tracked_device_class}"
+
+        self.setpoint = float(
+            self.area.feature_config(CONF_FEATURE_FAN_GROUPS).get(
+                CONF_FAN_GROUPS_SETPOINT, DEFAULT_FAN_GROUPS_SETPOINT
+            )
+        )
+
     async def _setup_listeners(self) -> None:
         """Attach state change listeners."""
 
@@ -202,18 +222,10 @@ class FanControlSwitch(SwitchBase):
         self.async_on_remove(
             async_track_state_change_event(
                 self.hass,
-                [self.get_tracked_entity_id()],
+                [self.tracked_entity_id],
                 self.aggregate_sensor_state_changed,
             )
         )
-
-    def get_tracked_entity_id(self) -> str:
-        """Return the entity_id for the tracked aggregate."""
-        tracked_device_class = self.area.feature_config(CONF_FEATURE_FAN_GROUPS).get(
-            CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
-            DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS,
-        )
-        return f"{SENSOR_DOMAIN}.magic_areas_aggregates_{self.area.slug}_aggregate_{tracked_device_class}"
 
     async def aggregate_sensor_state_changed(
         self, event: Event[EventStateChangedData]
@@ -282,31 +294,24 @@ class FanControlSwitch(SwitchBase):
     def is_setpoint_reached(self) -> bool:
         """Check wether the setpoint is reached."""
 
-        tracked_entity_id = self.get_tracked_entity_id()
-        tracked_sensor_state = self.hass.states.get(tracked_entity_id)
+        tracked_sensor_state = self.hass.states.get(self.tracked_entity_id)
 
         if not tracked_sensor_state:
             _LOGGER.warning(
                 "%s: Tracked sensor entity '%s' is not found. Please ensure aggregates are enabled and the selected device class is configured.",
                 self.name,
-                tracked_entity_id,
+                self.tracked_entity_id,
             )
             return False
-
-        setpoint = float(
-            self.area.feature_config(CONF_FEATURE_FAN_GROUPS).get(
-                CONF_FAN_GROUPS_SETPOINT, DEFAULT_FAN_GROUPS_SETPOINT
-            )
-        )
 
         tracked_sensor_value = float(tracked_sensor_state.state)
         _LOGGER.debug(
             "%s: Setpoint value: %.2f, Sensor value: %.2f",
             self.name,
-            setpoint,
+            self.setpoint,
             tracked_sensor_value,
         )
-        return tracked_sensor_value >= setpoint
+        return tracked_sensor_value >= self.setpoint
 
 
 class LightControlSwitch(SwitchBase):
