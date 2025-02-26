@@ -1,5 +1,6 @@
 """Tests for the Fan groups feature."""
 
+import asyncio
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -307,6 +308,69 @@ async def test_fan_group_logic(
 
     area_sensor_state = hass.states.get(area_sensor_entity_id)
     assert_state(area_sensor_state, STATE_OFF)
+
+    fan_group_state = hass.states.get(fan_group_entity_id)
+    assert_state(fan_group_state, STATE_OFF)
+
+    # Fan control on, initially under setpoint but then over
+    # > Set temperature back to initial value
+    hass.states.async_set(
+        temperature_sensor_entity_id,
+        str(SENSOR_INITIAL_VALUE),
+        attributes={"unit_of_measurement": UnitOfTemperature.CELSIUS},
+    )
+    await hass.async_block_till_done()
+    temperature_sensor_state = hass.states.get(temperature_sensor_entity_id)
+    assert_state(temperature_sensor_state, str(SENSOR_INITIAL_VALUE))
+
+    tracked_sensor_state = hass.states.get(tracked_entity_id)
+    assert_state(tracked_sensor_state, str(float(SENSOR_INITIAL_VALUE)))
+
+    area_sensor_state = hass.states.get(area_sensor_entity_id)
+    assert_state(area_sensor_state, STATE_OFF)
+
+    hass.states.async_set(motion_sensor_entity_id, STATE_ON)
+    await hass.async_block_till_done()
+
+    area_sensor_state = hass.states.get(area_sensor_entity_id)
+    assert_state(area_sensor_state, STATE_ON)
+
+    fan_group_state = hass.states.get(fan_group_entity_id)
+    assert_state(fan_group_state, STATE_OFF)
+
+    # > Set temperature back up
+    hass.states.async_set(
+        temperature_sensor_entity_id,
+        str(int(SETPOINT_VALUE * 2)),
+        attributes={"unit_of_measurement": UnitOfTemperature.CELSIUS},
+    )
+    await hass.async_block_till_done()
+
+    temperature_sensor_state = hass.states.get(temperature_sensor_entity_id)
+    assert_state(temperature_sensor_state, str(int(SETPOINT_VALUE * 2)))
+
+    tracked_sensor_state = hass.states.get(tracked_entity_id)
+    assert_state(tracked_sensor_state, str(SETPOINT_VALUE * 2))
+
+    await asyncio.sleep(1)
+
+    fan_group_state = hass.states.get(fan_group_entity_id)
+    assert_state(fan_group_state, STATE_ON)
+
+    # > Set temperature back down
+    hass.states.async_set(
+        temperature_sensor_entity_id,
+        str(SENSOR_INITIAL_VALUE),
+        attributes={"unit_of_measurement": UnitOfTemperature.CELSIUS},
+    )
+    await hass.async_block_till_done()
+    temperature_sensor_state = hass.states.get(temperature_sensor_entity_id)
+    assert_state(temperature_sensor_state, str(SENSOR_INITIAL_VALUE))
+
+    tracked_sensor_state = hass.states.get(tracked_entity_id)
+    assert_state(tracked_sensor_state, str(float(SENSOR_INITIAL_VALUE)))
+
+    await asyncio.sleep(1)
 
     fan_group_state = hass.states.get(fan_group_entity_id)
     assert_state(fan_group_state, STATE_OFF)
