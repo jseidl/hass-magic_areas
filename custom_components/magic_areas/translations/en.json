@@ -133,7 +133,7 @@
       },
       "feature_conf_fan_groups": {
         "title": "Feature: Fan Groups",
-        "description": "Group and control all fan entities in an area. This feature allows fan entities to be controlled automatically according to an area's state and wether the aggregate sensor value crosses a setpoint.",
+        "description": "Group and control all fan entities in an area. This feature allows fan entities to be controlled automatically according to an area's state and wether the aggregate sensor value crosses a setpoint. Fan control requires the aggregates feature to be enable and corresponding device classses selected.",
         "data": {
           "required_state": "Required state.",
           "tracked_device_class": "Tracked device class.",
