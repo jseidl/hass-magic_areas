@@ -183,7 +183,7 @@ async def test_wasp_in_a_box_logic(
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
     assert_state(wasp_in_a_box_state, STATE_ON)
-    assert_attribute(wasp_in_a_box_state, ATTR_WASP, str(True))
+    assert_attribute(wasp_in_a_box_state, ATTR_WASP, str(False))
     assert_attribute(wasp_in_a_box_state, ATTR_BOX, str(False))
 
     # Test door open releases wasp

@@ -15,8 +15,8 @@ from homeassistant.core import (
     Event,
     EventStateChangedData,
     HomeAssistant,
-    callback,
     State,
+    callback,
 )
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -329,7 +329,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
             self.wasp = False
 
         self._attr_extra_state_attributes[ATTR_BOX] = box_state
-        self._attr_extra_state_attributes[ATTR_WASP] = self.wasp
+        self._attr_extra_state_attributes[ATTR_WASP] = wasp_state
 
         self._attr_is_on = self.wasp
         self.schedule_update_ha_state()
