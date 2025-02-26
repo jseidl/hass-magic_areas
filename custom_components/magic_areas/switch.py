@@ -15,10 +15,10 @@ from homeassistant.const import (
     STATE_ON,
     EntityCategory,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Event, EventStateChangedData, HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 
 from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.base.magic import MagicArea
@@ -199,12 +199,38 @@ class FanControlSwitch(SwitchBase):
                 self.hass, EVENT_MAGICAREAS_AREA_STATE_CHANGED, self.area_state_changed
             )
         )
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass,
+                [self.get_tracked_entity_id()],
+                self.aggregate_sensor_state_changed,
+            )
+        )
+
+    def get_tracked_entity_id(self) -> str:
+        """Return the entity_id for the tracked aggregate."""
+        tracked_device_class = self.area.feature_config(CONF_FEATURE_FAN_GROUPS).get(
+            CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+            DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        )
+        return f"{SENSOR_DOMAIN}.magic_areas_aggregates_{self.area.slug}_aggregate_{tracked_device_class}"
+
+    async def aggregate_sensor_state_changed(
+        self, event: Event[EventStateChangedData]
+    ) -> None:
+        """Call update state from track state change event."""
+
+        await self.run_logic(self.area.states)
 
     async def area_state_changed(self, area_id, states_tuple):
         """Handle area state change event."""
 
         # pylint: disable-next=unused-variable
         new_states, lost_states = states_tuple
+        await self.run_logic(states=new_states)
+
+    async def run_logic(self, states: list[str]) -> None:
+        """Run fan control logic."""
 
         if not self.is_on:
             _LOGGER.debug("%s: Control disabled, skipping.", self.name)
@@ -214,7 +240,7 @@ class FanControlSwitch(SwitchBase):
             f"{FAN_DOMAIN}.magic_areas_fan_groups_{self.area.slug}_fan_group"
         )
 
-        if AreaStates.CLEAR in new_states:
+        if AreaStates.CLEAR in states:
             _LOGGER.debug("%s: Area clear, turning off fans", self.name)
             await self.hass.services.async_call(
                 FAN_DOMAIN, SERVICE_TURN_OFF, {ATTR_ENTITY_ID: fan_group_entity_id}
@@ -225,36 +251,38 @@ class FanControlSwitch(SwitchBase):
             CONF_FAN_GROUPS_REQUIRED_STATE, DEFAULT_FAN_GROUPS_REQUIRED_STATE
         )
 
-        if required_state in new_states:
+        if required_state not in states:
             _LOGGER.debug(
-                "%s: Area in required state '%s', checking tracked aggregate and setpoint.",
+                "%s: Area not in required state '%s' (states: %s)",
                 self.name,
                 required_state,
+                str(states),
             )
-            if self.is_setpoint_reached():
-                _LOGGER.debug("%s: Setpoint reached, turning on fans", self.name)
-                await self.hass.services.async_call(
-                    FAN_DOMAIN, SERVICE_TURN_ON, {ATTR_ENTITY_ID: fan_group_entity_id}
-                )
-                return
+            return
 
         _LOGGER.debug(
-            "%s: Area not in required state '%s' (states: %s)",
+            "%s: Area in required state '%s', checking tracked aggregate and setpoint.",
             self.name,
             required_state,
-            str(new_states),
         )
+        if self.is_setpoint_reached():
+            _LOGGER.debug("%s: Setpoint reached, turning on fans", self.name)
+            await self.hass.services.async_call(
+                FAN_DOMAIN, SERVICE_TURN_ON, {ATTR_ENTITY_ID: fan_group_entity_id}
+            )
+        else:
+            fan_group_state = self.hass.states.get(fan_group_entity_id)
+            if fan_group_state and fan_group_state.state == STATE_ON:
+                _LOGGER.debug("%s: Setpoint not reached, turning off fans", self.name)
+                await self.hass.services.async_call(
+                    FAN_DOMAIN, SERVICE_TURN_OFF, {ATTR_ENTITY_ID: fan_group_entity_id}
+                )
         return
 
     def is_setpoint_reached(self) -> bool:
         """Check wether the setpoint is reached."""
 
-        tracked_device_class = self.area.feature_config(CONF_FEATURE_FAN_GROUPS).get(
-            CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
-            DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS,
-        )
-
-        tracked_entity_id = f"{SENSOR_DOMAIN}.magic_areas_aggregates_{self.area.slug}_aggregate_{tracked_device_class}"
+        tracked_entity_id = self.get_tracked_entity_id()
         tracked_sensor_state = self.hass.states.get(tracked_entity_id)
 
         if not tracked_sensor_state:
