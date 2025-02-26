@@ -57,7 +57,7 @@ class AreaFanGroup(MagicEntity, FanGroup):
 
     def __init__(self, area: MagicArea, entities: list[str]) -> None:
         """Init the fan group for the area."""
-        MagicEntity.__init__(self, area=area, domain=FAN_DOMAIN, translation_key="fan")
+        MagicEntity.__init__(self, area=area, domain=FAN_DOMAIN)
         FanGroup.__init__(
             self,
             entities=entities,
