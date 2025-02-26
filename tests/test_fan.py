@@ -1,6 +1,5 @@
 """Tests for the Fan groups feature."""
 
-import asyncio
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -153,8 +152,6 @@ async def test_fan_group_basic(
     )
     await hass.async_block_till_done()
 
-    await asyncio.sleep(1)
-
     fan_group_state = hass.states.get(fan_group_entity_id)
     assert_state(fan_group_state, STATE_ON)
 
@@ -300,8 +297,6 @@ async def test_fan_group_logic(
 
     area_sensor_state = hass.states.get(area_sensor_entity_id)
     assert_state(area_sensor_state, STATE_ON)
-
-    await asyncio.sleep(1)  # Wait a bit so it passses on GitHub
 
     fan_group_state = hass.states.get(fan_group_entity_id)
     assert_state(fan_group_state, STATE_ON)
