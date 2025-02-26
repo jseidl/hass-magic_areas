@@ -153,6 +153,8 @@ async def test_fan_group_basic(
     )
     await hass.async_block_till_done()
 
+    await asyncio.sleep(1)
+
     fan_group_state = hass.states.get(fan_group_entity_id)
     assert_state(fan_group_state, STATE_ON)
 
