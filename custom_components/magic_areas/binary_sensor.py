@@ -11,7 +11,13 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.components.group.binary_sensor import BinarySensorGroup
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
-from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
+from homeassistant.core import (
+    Event,
+    EventStateChangedData,
+    HomeAssistant,
+    callback,
+    State,
+)
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
@@ -264,9 +270,19 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
 
     def _box_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
         """Register box sensor state change event."""
+
+        new_state: State | None = None
+        if (new_state := event.data["new_state"]) is None:
+            _LOGGER.warning("%s: No new state info for box sensor.", self.name)
+            return
+
+        box_state: bool = new_state.state == STATE_ON
+
         if self.delay:
             self.wasp = False
             self._attr_is_on = self.wasp
+            self._attr_extra_state_attributes[ATTR_BOX] = box_state
+            self._attr_extra_state_attributes[ATTR_WASP] = self.wasp
             self.schedule_update_ha_state()
             self.hass.loop.call_soon_threadsafe(
                 self.wasp_in_a_box_delayed, datetime.now(UTC)
@@ -313,7 +329,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
             self.wasp = False
 
         self._attr_extra_state_attributes[ATTR_BOX] = box_state
-        self._attr_extra_state_attributes[ATTR_WASP] = wasp_state
+        self._attr_extra_state_attributes[ATTR_WASP] = self.wasp
 
         self._attr_is_on = self.wasp
         self.schedule_update_ha_state()

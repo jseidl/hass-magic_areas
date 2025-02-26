@@ -23,6 +23,7 @@ from .conftest import (
     shutdown_integration,
 )
 from .mocks import MockBinarySensor
+from custom_components.magic_areas.binary_sensor import ATTR_BOX, ATTR_WASP
 from custom_components.magic_areas.const import (
     ATTR_ACTIVE_SENSORS,
     ATTR_PRESENCE_SENSORS,
@@ -34,7 +35,7 @@ from custom_components.magic_areas.const import (
     DOMAIN,
 )
 
-from tests.common import assert_in_attribute, assert_state
+from tests.common import assert_attribute, assert_in_attribute, assert_state
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -130,44 +131,60 @@ async def test_wasp_in_a_box_logic(
     # Ensure Wasp in a box sensor is loaded
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
     assert_state(wasp_in_a_box_state, STATE_OFF)
+    assert_attribute(wasp_in_a_box_state, ATTR_WASP, str(False))
+    assert_attribute(wasp_in_a_box_state, ATTR_BOX, str(False))
 
     # Test motion door open behavior
     hass.states.async_set(door_sensor_entity_id, STATE_ON)
+    await asyncio.sleep(1)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
     assert_state(wasp_in_a_box_state, STATE_OFF)
+    assert_attribute(wasp_in_a_box_state, ATTR_WASP, str(False))
+    assert_attribute(wasp_in_a_box_state, ATTR_BOX, str(True))
 
     hass.states.async_set(motion_sensor_entity_id, STATE_ON)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
     assert_state(wasp_in_a_box_state, STATE_ON)
+    assert_attribute(wasp_in_a_box_state, ATTR_WASP, str(True))
+    assert_attribute(wasp_in_a_box_state, ATTR_BOX, str(True))
 
     hass.states.async_set(motion_sensor_entity_id, STATE_OFF)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
     assert_state(wasp_in_a_box_state, STATE_OFF)
+    assert_attribute(wasp_in_a_box_state, ATTR_WASP, str(False))
+    assert_attribute(wasp_in_a_box_state, ATTR_BOX, str(True))
 
     # Test motion on door closed behavior
     hass.states.async_set(door_sensor_entity_id, STATE_OFF)
+    await asyncio.sleep(1)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
     assert_state(wasp_in_a_box_state, STATE_OFF)
+    assert_attribute(wasp_in_a_box_state, ATTR_WASP, str(False))
+    assert_attribute(wasp_in_a_box_state, ATTR_BOX, str(False))
 
     hass.states.async_set(motion_sensor_entity_id, STATE_ON)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
     assert_state(wasp_in_a_box_state, STATE_ON)
+    assert_attribute(wasp_in_a_box_state, ATTR_WASP, str(True))
+    assert_attribute(wasp_in_a_box_state, ATTR_BOX, str(False))
 
     hass.states.async_set(motion_sensor_entity_id, STATE_OFF)
     await hass.async_block_till_done()
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
     assert_state(wasp_in_a_box_state, STATE_ON)
+    assert_attribute(wasp_in_a_box_state, ATTR_WASP, str(True))
+    assert_attribute(wasp_in_a_box_state, ATTR_BOX, str(False))
 
     # Test door open releases wasp
     hass.states.async_set(door_sensor_entity_id, STATE_ON)
@@ -179,6 +196,8 @@ async def test_wasp_in_a_box_logic(
 
     wasp_in_a_box_state = hass.states.get(wasp_in_a_box_entity_id)
     assert_state(wasp_in_a_box_state, STATE_OFF)
+    assert_attribute(wasp_in_a_box_state, ATTR_WASP, str(False))
+    assert_attribute(wasp_in_a_box_state, ATTR_BOX, str(True))
 
 
 async def test_wasp_in_a_box_as_presence(
