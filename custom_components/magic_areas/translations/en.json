@@ -224,7 +224,11 @@
         "name": "Light (Calculated)"
       },
       "wasp_in_a_box": {
-        "name": "Wasp in a Box"
+        "name": "Wasp in a Box",
+        "state": {
+          "off": "No Wasp",
+          "on": "Wasp"
+        }
       }
     },
     "climate": {
