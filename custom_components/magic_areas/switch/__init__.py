@@ -36,16 +36,36 @@ async def async_setup_entry(
     switch_entities = []
 
     if area.has_feature(MagicAreasFeatures.PRESENCE_HOLD):
-        switch_entities.append(PresenceHoldSwitch(area))
+        try:
+            switch_entities.append(PresenceHoldSwitch(area))
+        except Exception as e:
+            _LOGGER.error(
+                "%s: Error loading presence hold switch: %s", area.name, str(e)
+            )
 
     if area.has_feature(MagicAreasFeatures.LIGHT_GROUPS):
-        switch_entities.append(LightControlSwitch(area))
+        try:
+            switch_entities.append(LightControlSwitch(area))
+        except Exception as e:
+            _LOGGER.error(
+                "%s: Error loading light control switch: %s", area.name, str(e)
+            )
 
     if area.has_feature(MagicAreasFeatures.MEDIA_PLAYER_GROUPS):
-        switch_entities.append(MediaPlayerControlSwitch(area))
+        try:
+            switch_entities.append(MediaPlayerControlSwitch(area))
+        except Exception as e:
+            _LOGGER.error(
+                "%s: Error loading media player control switch: %s", area.name, str(e)
+            )
 
     if area.has_feature(MagicAreasFeatures.CLIMATE_CONTROL):
-        switch_entities.append(ClimateControlSwitch(area))
+        try:
+            switch_entities.append(ClimateControlSwitch(area))
+        except Exception as e:
+            _LOGGER.error(
+                "%s: Error loading climate control switch: %s", area.name, str(e)
+            )
 
     if switch_entities:
         async_add_entities(switch_entities)
