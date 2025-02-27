@@ -94,11 +94,13 @@ class ClimateControlSwitch(SwitchBase):
 
         # Handle area clear because the other states doesn't matter
         if self.area.has_state(AreaStates.CLEAR):
-            return await self.apply_preset(AreaStates.CLEAR)
+            if self.preset_map[AreaStates.CLEAR]:
+                await self.apply_preset(AreaStates.CLEAR)
+            return
 
         # Handle each state top priority to last, returning early
         for p_state in priority_states:
-            if self.area.has_state(p_state):
+            if self.area.has_state(p_state) and self.preset_map[p_state]:
                 return await self.apply_preset(p_state)
 
     async def apply_preset(self, state_name: str):
@@ -106,8 +108,14 @@ class ClimateControlSwitch(SwitchBase):
 
         selected_preset: str = self.preset_map[state_name]
 
-        await self.hass.services.async_call(
-            CLIMATE_DOMAIN,
-            SERVICE_SET_PRESET_MODE,
-            {ATTR_ENTITY_ID: self.climate_entity_id, ATTR_PRESET_MODE: selected_preset},
-        )
+        try:
+            await self.hass.services.async_call(
+                CLIMATE_DOMAIN,
+                SERVICE_SET_PRESET_MODE,
+                {
+                    ATTR_ENTITY_ID: self.climate_entity_id,
+                    ATTR_PRESET_MODE: selected_preset,
+                },
+            )
+        except Exception as e:
+            self.logger.error("%s: Error applying preset: %s", self.name, str(e))
