@@ -41,10 +41,17 @@ async def async_setup_entry(
         return
 
     fan_entities: list[str] = [e["entity_id"] for e in area.entities[FAN_DOMAIN]]
-    fan_groups: list[AreaFanGroup] = [AreaFanGroup(area, fan_entities)]
 
-    if fan_groups:
-        async_add_entities(fan_groups)
+    try:
+        fan_groups: list[AreaFanGroup] = [AreaFanGroup(area, fan_entities)]
+        if fan_groups:
+            async_add_entities(fan_groups)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        _LOGGER.error(
+            "%s: Error creating fan group: %s",
+            area.slug,
+            str(e),
+        )
 
     if FAN_DOMAIN in area.magic_entities:
         cleanup_removed_entries(area.hass, fan_groups, area.magic_entities[FAN_DOMAIN])
