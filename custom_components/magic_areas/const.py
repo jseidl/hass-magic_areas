@@ -10,7 +10,17 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
-from homeassistant.components.climate.const import DOMAIN as CLIMATE_DOMAIN
+from homeassistant.components.climate.const import (
+    DOMAIN as CLIMATE_DOMAIN,
+    PRESET_ACTIVITY,
+    PRESET_AWAY,
+    PRESET_BOOST,
+    PRESET_COMFORT,
+    PRESET_ECO,
+    PRESET_HOME,
+    PRESET_NONE,
+    PRESET_SLEEP,
+)
 from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.components.device_tracker.const import (
     DOMAIN as DEVICE_TRACKER_DOMAIN,
@@ -234,12 +244,11 @@ class MagicAreasFeatureInfoLightGroups(MagicAreasFeatureInfo):
     icons = {SWITCH_DOMAIN: "mdi:lightbulb-auto-outline"}
 
 
-class MagicAreasFeatureInfoClimateGroups(MagicAreasFeatureInfo):
-    """Feature information for feature: Climate groups."""
+class MagicAreasFeatureInfoClimateControl(MagicAreasFeatureInfo):
+    """Feature information for feature: Climate control."""
 
-    id = "climate_groups"
+    id = "climate_control"
     translation_keys = {
-        CLIMATE_DOMAIN: "climate_group",
         SWITCH_DOMAIN: "climate_control",
     }
     icons = {SWITCH_DOMAIN: "mdi:thermostat-auto"}
@@ -276,7 +285,7 @@ class MagicAreasFeatures(StrEnum):
     AREA = "area"  # Default feature
     PRESENCE_HOLD = "presence_hold"
     LIGHT_GROUPS = "light_groups"
-    CLIMATE_GROUPS = "climate_groups"
+    CLIMATE_CONTROL = "climate_control"
     COVER_GROUPS = "cover_groups"
     MEDIA_PLAYER_GROUPS = "media_player_groups"
     AREA_AWARE_MEDIA_PLAYER = "area_aware_media_player"
@@ -371,7 +380,6 @@ MAGIC_AREAS_COMPONENTS = [
     SWITCH_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
-    CLIMATE_DOMAIN,
 ]
 
 MAGIC_AREAS_COMPONENTS_META = [
@@ -380,7 +388,7 @@ MAGIC_AREAS_COMPONENTS_META = [
     COVER_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
-    CLIMATE_DOMAIN,
+    SWITCH_DOMAIN,
 ]
 
 MAGIC_AREAS_COMPONENTS_GLOBAL = MAGIC_AREAS_COMPONENTS_META
@@ -538,8 +546,7 @@ CONFIGURABLE_AREA_STATE_MAP = {
 }
 
 # features
-CONF_FEATURE_CLIMATE_GROUPS = "climate_groups"
-
+CONF_FEATURE_CLIMATE_CONTROL = "climate_control"
 CONF_FEATURE_MEDIA_PLAYER_GROUPS = "media_player_groups"
 CONF_FEATURE_LIGHT_GROUPS = "light_groups"
 CONF_FEATURE_COVER_GROUPS = "cover_groups"
@@ -553,7 +560,7 @@ CONF_FEATURE_LIST_META = [
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_COVER_GROUPS,
-    CONF_FEATURE_CLIMATE_GROUPS,
+    CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
 ]
@@ -572,12 +579,34 @@ CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT = (
     0,
 )  # cv.int
 
-# Climate Group Options
-CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = (
-    "turn_on_state",
-    AREA_STATE_EXTENDED,
+# Climate control options
+CLIMATE_CONTROL_AVAILABLE_PRESETS = [
+    PRESET_NONE,
+    PRESET_HOME,
+    PRESET_AWAY,
+    PRESET_ECO,
+    PRESET_COMFORT,
+    PRESET_ACTIVITY,
+    PRESET_BOOST,
+    PRESET_SLEEP,
+]
+CONF_CLIMATE_CONTROL_ENTITY_ID, DEFAULT_CLIMATE_CONTROL_ENTITY_ID = ("entity_id", None)
+CONF_CLIMATE_CONTROL_PRESET_CLEAR, DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR = (
+    "preset_clear",
+    PRESET_AWAY,
 )
-
+CONF_CLIMATE_CONTROL_PRESET_OCCUPIED, DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED = (
+    "preset_occupied",
+    PRESET_NONE,
+)
+CONF_CLIMATE_CONTROL_PRESET_EXTENDED, DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED = (
+    "preset_extended",
+    PRESET_HOME,
+)
+CONF_CLIMATE_CONTROL_PRESET_SLEEP, DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP = (
+    "preset_sleep",
+    PRESET_SLEEP,
+)
 
 # Config Schema
 
@@ -634,15 +663,29 @@ BLE_TRACKER_FEATURE_SCHEMA = vol.Schema(
     extra=vol.REMOVE_EXTRA,
 )
 
-CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
+CLIMATE_CONTROL_FEATURE_SCHEMA = vol.Schema(
     {
+        vol.Required(CONF_CLIMATE_CONTROL_ENTITY_ID): cv.entity_id,
         vol.Optional(
-            CONF_CLIMATE_GROUPS_TURN_ON_STATE,
-            default=DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
+            CONF_CLIMATE_CONTROL_PRESET_CLEAR,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_SLEEP,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
         ): str,
     },
     extra=vol.REMOVE_EXTRA,
 )
+
 
 LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
     {
@@ -684,17 +727,16 @@ ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
 
 CONFIGURABLE_FEATURES = {
     CONF_FEATURE_LIGHT_GROUPS: LIGHT_GROUP_FEATURE_SCHEMA,
-    CONF_FEATURE_CLIMATE_GROUPS: CLIMATE_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_AGGREGATION: AGGREGATE_FEATURE_SCHEMA,
     CONF_FEATURE_HEALTH: HEALTH_FEATURE_SCHEMA,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA,
     CONF_FEATURE_PRESENCE_HOLD: PRESENCE_HOLD_FEATURE_SCHEMA,
     CONF_FEATURE_BLE_TRACKERS: BLE_TRACKER_FEATURE_SCHEMA,
+    CONF_FEATURE_CLIMATE_CONTROL: CLIMATE_CONTROL_FEATURE_SCHEMA,
 }
 
 NON_CONFIGURABLE_FEATURES_META = [
     CONF_FEATURE_LIGHT_GROUPS,
-    CONF_FEATURE_CLIMATE_GROUPS,
 ]
 
 NON_CONFIGURABLE_FEATURES = {
@@ -936,12 +978,20 @@ OPTIONS_BLE_TRACKERS = [
     (CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES, cv.entity_ids),
 ]
 
-OPTIONS_CLIMATE_GROUP = [
-    (CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE, str),
-]
-
-OPTIONS_CLIMATE_GROUP_META = [
-    (CONF_CLIMATE_GROUPS_TURN_ON_STATE, None, str),
+OPTIONS_CLIMATE_CONTROL = [
+    (CONF_CLIMATE_CONTROL_ENTITY_ID, None, cv.entity_id),
+    (CONF_CLIMATE_CONTROL_PRESET_CLEAR, DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR, str),
+    (
+        CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        str,
+    ),
+    (CONF_CLIMATE_CONTROL_PRESET_SLEEP, DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP, str),
+    (
+        CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+        DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
+        str,
+    ),
 ]
 
 OPTIONS_AREA_AWARE_MEDIA_PLAYER = [

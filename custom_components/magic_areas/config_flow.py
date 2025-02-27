@@ -10,6 +10,7 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
+from homeassistant.components.climate.const import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN
@@ -39,6 +40,7 @@ from .const import (
     AREA_TYPE_INTERIOR,
     AREA_TYPE_META,
     BUILTIN_AREA_STATES,
+    CLIMATE_CONTROL_AVAILABLE_PRESETS,
     CONF_ACCENT_ENTITY,
     CONF_ACCENT_LIGHTS,
     CONF_ACCENT_LIGHTS_ACT_ON,
@@ -50,7 +52,11 @@ from .const import (
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_BLE_TRACKER_ENTITIES,
     CONF_CLEAR_TIMEOUT,
-    CONF_CLIMATE_GROUPS_TURN_ON_STATE,
+    CONF_CLIMATE_CONTROL_ENTITY_ID,
+    CONF_CLIMATE_CONTROL_PRESET_CLEAR,
+    CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+    CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+    CONF_CLIMATE_CONTROL_PRESET_SLEEP,
     CONF_DARK_ENTITY,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
@@ -59,7 +65,7 @@ from .const import (
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_BLE_TRACKERS,
-    CONF_FEATURE_CLIMATE_GROUPS,
+    CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_HEALTH,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_LIST,
@@ -110,8 +116,7 @@ from .const import (
     OPTIONS_AREA_AWARE_MEDIA_PLAYER,
     OPTIONS_AREA_META,
     OPTIONS_BLE_TRACKERS,
-    OPTIONS_CLIMATE_GROUP,
-    OPTIONS_CLIMATE_GROUP_META,
+    OPTIONS_CLIMATE_CONTROL,
     OPTIONS_HEALTH_SENSOR,
     OPTIONS_LIGHT_GROUP,
     OPTIONS_PRESENCE_HOLD,
@@ -929,28 +934,55 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             user_input=user_input,
         )
 
-    async def async_step_feature_conf_climate_groups(self, user_input=None):
-        """Configure the climate groups feature."""
+    async def async_step_feature_conf_climate_control(self, user_input=None):
+        """Configure the climate control feature."""
 
-        available_states = [AREA_STATE_OCCUPIED, AREA_STATE_EXTENDED]
+        all_climate_entities = [
+            entity_id
+            for entity_id in self.all_entities
+            if (
+                entity_id.split(".")[0] == CLIMATE_DOMAIN
+                and not entity_id.split(".")[1].startswith(MAGICAREAS_UNIQUEID_PREFIX)
+            )
+        ]
+
+        selectors = {
+            CONF_CLIMATE_CONTROL_ENTITY_ID: self._build_selector_entity_simple(
+                all_climate_entities
+            ),
+            CONF_CLIMATE_CONTROL_PRESET_CLEAR: self._build_selector_select(
+                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+            ),
+            CONF_CLIMATE_CONTROL_PRESET_OCCUPIED: self._build_selector_select(
+                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+            ),
+            CONF_CLIMATE_CONTROL_PRESET_SLEEP: self._build_selector_select(
+                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+            ),
+            CONF_CLIMATE_CONTROL_PRESET_EXTENDED: self._build_selector_select(
+                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+            ),
+        }
 
         return await self.do_feature_config(
-            name=CONF_FEATURE_CLIMATE_GROUPS,
-            options=(
-                OPTIONS_CLIMATE_GROUP
-                if not self.area.is_meta()
-                else OPTIONS_CLIMATE_GROUP_META
-            ),
+            name=CONF_FEATURE_CLIMATE_CONTROL,
+            options=OPTIONS_CLIMATE_CONTROL,
             dynamic_validators={
-                CONF_CLIMATE_GROUPS_TURN_ON_STATE: vol.In(
-                    EMPTY_ENTRY + available_states
+                CONF_CLIMATE_CONTROL_ENTITY_ID: vol.In(all_climate_entities),
+                CONF_CLIMATE_CONTROL_PRESET_CLEAR: vol.In(
+                    EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                ),
+                CONF_CLIMATE_CONTROL_PRESET_OCCUPIED: vol.In(
+                    EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                ),
+                CONF_CLIMATE_CONTROL_PRESET_SLEEP: vol.In(
+                    EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                ),
+                CONF_CLIMATE_CONTROL_PRESET_EXTENDED: vol.In(
+                    EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
                 ),
             },
-            selectors={
-                CONF_CLIMATE_GROUPS_TURN_ON_STATE: self._build_selector_select(
-                    EMPTY_ENTRY + available_states
-                )
-            },
+            selectors=selectors,
             user_input=user_input,
         )
 
