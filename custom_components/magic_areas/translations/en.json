@@ -133,7 +133,7 @@
       },
       "feature_conf_climate_control": {
         "title": "Feature: Climate Control",
-        "description": "Control a climate entity by mapping presets to the area state. `extended` state takes priority over `occupied` and `sleep` state takes priority over `extended` and `occupied`.",
+        "description": "Control a climate entity by mapping presets to the area state. `extended` state takes priority over `occupied` and `sleep` state takes priority over `extended` and `occupied`. Map a state to an empty preset to disable changing presets for that state.",
         "data": {
           "entity_id": "Climate entity.",
           "preset_clear": "Clear",
@@ -310,13 +310,6 @@
       },
       "climate_control": {
         "name": "Climate Control"
-      }
-    }
-  },
-  "selector": {
-    "climate_preset_list": {
-      "options": {
-        "": "Disabled"
       }
     }
   },

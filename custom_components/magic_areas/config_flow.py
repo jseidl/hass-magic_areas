@@ -125,6 +125,7 @@ from .const import (
     OPTIONS_AREA_META,
     OPTIONS_BLE_TRACKERS,
     OPTIONS_CLIMATE_CONTROL,
+    OPTIONS_CLIMATE_CONTROL_META,
     OPTIONS_HEALTH_SENSOR,
     OPTIONS_LIGHT_GROUP,
     OPTIONS_PRESENCE_HOLD,
@@ -989,7 +990,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         return await self.do_feature_config(
             name=CONF_FEATURE_CLIMATE_CONTROL,
-            options=OPTIONS_CLIMATE_CONTROL,
+            options=(
+                OPTIONS_CLIMATE_CONTROL_META
+                if self.area.is_meta()
+                else OPTIONS_CLIMATE_CONTROL
+            ),
             dynamic_validators={
                 CONF_CLIMATE_CONTROL_ENTITY_ID: vol.In(all_climate_entities),
                 CONF_CLIMATE_CONTROL_PRESET_CLEAR: vol.In(
