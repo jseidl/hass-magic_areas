@@ -179,6 +179,7 @@ class ConfigBase:
 
     def _build_selector_number(
         self,
+        *,
         min_value: int | float = 0,
         max_value: int | float = 9999,
         mode="box",
