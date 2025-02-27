@@ -44,7 +44,9 @@ async def test_meta_area_primary_state_change(
         area_binary_sensor = hass.states.get(area_sensor_entity_id)
         assert area_binary_sensor is not None
         assert area_binary_sensor.state == STATE_OFF
-        assert set(entity_ids) == set(area_binary_sensor.attributes["presence_sensors"])
+        assert set(entity_ids).issubset(
+            set(area_binary_sensor.attributes["presence_sensors"])
+        )
         assert AreaStates.CLEAR in area_binary_sensor.attributes["states"]
 
     # Entity Ids

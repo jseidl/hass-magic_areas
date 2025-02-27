@@ -30,7 +30,8 @@
           "aggregates": "Create aggregate sensors",
           "health": "Create health sensors",
           "presence_hold": "Create presence hold switch",
-          "ble_trackers": "Monitor Bluetooth tracker sensors"
+          "ble_trackers": "Monitor Bluetooth tracker sensors",
+          "wasp_in_a_box": "Create a Wasp in a Box sensor"
         }
       },
       "show_menu": {
@@ -48,7 +49,8 @@
           "feature_conf_area_aware_media_player": "Configure area-aware media player",
           "feature_conf_aggregates": "Configure aggregate sensors",
           "feature_conf_presence_hold": "Configure presence hold switch",
-          "feature_conf_ble_trackers": "Configure BLE Tracker monitoring"
+          "feature_conf_ble_trackers": "Configure BLE Tracker monitoring",
+          "feature_conf_wasp_in_a_box": "Configure Wasp in a Box"
         }
       },
       "feature_conf_health": {
@@ -139,6 +141,18 @@
           "ble_tracker_entities": "BLE Trackers such as [room-assistant](https://github.com/mKeRix/room-assistant), [Bermuda](https://github.com/agittins/bermuda) and [ESPresence](https://github.com/ESPresense/ESPresense) creates sensors which changes state to whatever area the device was closer to."
         }
       },
+      "feature_conf_wasp_in_a_box": {
+        "title": "Wasp in a Box",
+        "description": "If we see a wasp, then there is a wasp in the box. If we close the box while there is a wasp in the box, then the wasp remains in the box. If the box remains closed when there is a wasp in the box, and the wasp stops moving, we assume it's still in the box. If the box is opened, and the wasp is not moving, we assume that the wasp has escaped (there is no wasp in the box). This feature monitors your `door` aggregates as the box and your `motion` (default) aggregates as your wasp. A new `binary_sensor` will be created and automatically tracked for presence.",
+        "data": {
+          "delay": "Delay",
+          "device_classes": "Wasp sensor device classes"
+        },
+        "data_description": {
+          "delay": "Time to wait before checking for wasps after a box changing state.",
+          "device_classes": "If you wish other aggregates to be considered as wasps, please select from the list."
+        }
+      },
       "secondary_states": {
         "title": "Advanced area state tracking",
         "description": "You can enable [secondary states](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) for a Magic Area by assigning an entity to it. Secondary states are used by features for turning lights on only when it's dark or only turning on climate devices after an `extended` period of time or not sending notifications to an area if it's on `sleep`.",
@@ -207,6 +221,13 @@
       },
       "threshold_light": {
         "name": "Light (Calculated)"
+      },
+      "wasp_in_a_box": {
+        "name": "Wasp in a Box",
+        "state": {
+          "off": "No Wasp",
+          "on": "Wasp"
+        }
       }
     },
     "climate": {
