@@ -10,14 +10,18 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
-from homeassistant.components.climate.const import DOMAIN as CLIMATE_DOMAIN
+from homeassistant.components.climate.const import (
+    ATTR_PRESET_MODES,
+    DOMAIN as CLIMATE_DOMAIN,
+)
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN
-from homeassistant.const import ATTR_DEVICE_CLASS, CONF_NAME
+from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.entity_registry import async_get as entityreg_async_get
 from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 from homeassistant.helpers.selector import (
     BooleanSelector,
@@ -47,7 +51,8 @@ from .const import (
     AREA_TYPE_INTERIOR,
     AREA_TYPE_META,
     BUILTIN_AREA_STATES,
-    CLIMATE_CONTROL_AVAILABLE_PRESETS,
+    CLIMATE_CONTROL_FEATURE_SCHEMA_ENTITY_SELECT,
+    CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT,
     CONF_ACCENT_ENTITY,
     CONF_ACCENT_LIGHTS,
     CONF_ACCENT_LIGHTS_ACT_ON,
@@ -133,6 +138,7 @@ from .const import (
     OPTIONS_AREA_META,
     OPTIONS_BLE_TRACKERS,
     OPTIONS_CLIMATE_CONTROL,
+    OPTIONS_CLIMATE_CONTROL_ENTITY_SELECT,
     OPTIONS_CLIMATE_CONTROL_META,
     OPTIONS_FAN_GROUP,
     OPTIONS_HEALTH_SENSOR,
@@ -147,6 +153,7 @@ from .const import (
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
     WASP_IN_A_BOX_DEVICE_CLASSES,
+    MagicAreasFeatures,
     MagicConfigEntryVersion,
     MetaAreaType,
     SelectorTranslationKeys,
@@ -1005,48 +1012,104 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             )
         ]
 
+        return await self.do_feature_config(
+            name=MagicAreasFeatures.CLIMATE_CONTROL,
+            options=OPTIONS_CLIMATE_CONTROL_ENTITY_SELECT,
+            custom_schema=CLIMATE_CONTROL_FEATURE_SCHEMA_ENTITY_SELECT,
+            dynamic_validators={
+                CONF_CLIMATE_CONTROL_ENTITY_ID: vol.In(all_climate_entities),
+            },
+            selectors={
+                CONF_CLIMATE_CONTROL_ENTITY_ID: self._build_selector_entity_simple(
+                    all_climate_entities
+                )
+            },
+            user_input=user_input,
+            return_to=self.async_step_feature_conf_climate_control_select_presets,
+        )
+
+    async def async_step_feature_conf_climate_control_select_presets(
+        self, user_input=None
+    ):
+        """Configure the climate control feature."""
+
+        climate_entity_id: str | None = None
+
+        if (
+            ATTR_ENTITY_ID
+            in self.area_options[CONF_ENABLED_FEATURES][
+                MagicAreasFeatures.CLIMATE_CONTROL
+            ]
+        ):
+            climate_entity_id = self.area_options[CONF_ENABLED_FEATURES][
+                MagicAreasFeatures.CLIMATE_CONTROL
+            ][ATTR_ENTITY_ID]
+
+        if not climate_entity_id:
+            return self.async_abort(reason="no_entity_selected")
+
+        entity_registry = entityreg_async_get(self.hass)
+        entity_object = entity_registry.async_get(climate_entity_id)
+
+        if not entity_object:
+            return self.async_abort(reason="invalid_entity")
+
+        if (
+            not entity_object.capabilities
+            or ATTR_PRESET_MODES not in entity_object.capabilities
+        ):
+            return self.async_abort(reason="climate_no_preset_support")
+
+        available_preset_modes = entity_object.capabilities[ATTR_PRESET_MODES]
+        _LOGGER.warning(
+            "OptionsFlow (%s): Available preset modes for %s: %s",
+            self.area.name,
+            climate_entity_id,
+            str(available_preset_modes),
+        )
+
         selectors = {
-            CONF_CLIMATE_CONTROL_ENTITY_ID: self._build_selector_entity_simple(
-                all_climate_entities
-            ),
             CONF_CLIMATE_CONTROL_PRESET_CLEAR: self._build_selector_select(
-                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS,
+                EMPTY_ENTRY + available_preset_modes,
                 translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
             ),
             CONF_CLIMATE_CONTROL_PRESET_OCCUPIED: self._build_selector_select(
-                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS,
+                EMPTY_ENTRY + available_preset_modes,
                 translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
             ),
             CONF_CLIMATE_CONTROL_PRESET_SLEEP: self._build_selector_select(
-                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS,
+                EMPTY_ENTRY + available_preset_modes,
                 translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
             ),
             CONF_CLIMATE_CONTROL_PRESET_EXTENDED: self._build_selector_select(
-                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS,
+                EMPTY_ENTRY + available_preset_modes,
                 translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
             ),
         }
 
+        selected_options_schema = (
+            OPTIONS_CLIMATE_CONTROL_META
+            if self.area.is_meta()
+            else OPTIONS_CLIMATE_CONTROL
+        )
+
         return await self.do_feature_config(
             name=CONF_FEATURE_CLIMATE_CONTROL,
-            options=(
-                OPTIONS_CLIMATE_CONTROL_META
-                if self.area.is_meta()
-                else OPTIONS_CLIMATE_CONTROL
-            ),
+            step_name="feature_conf_climate_control_select_presets",
+            options=selected_options_schema,
+            custom_schema=CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT,
             dynamic_validators={
-                CONF_CLIMATE_CONTROL_ENTITY_ID: vol.In(all_climate_entities),
                 CONF_CLIMATE_CONTROL_PRESET_CLEAR: vol.In(
-                    EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                    EMPTY_ENTRY + available_preset_modes
                 ),
                 CONF_CLIMATE_CONTROL_PRESET_OCCUPIED: vol.In(
-                    EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                    EMPTY_ENTRY + available_preset_modes
                 ),
                 CONF_CLIMATE_CONTROL_PRESET_SLEEP: vol.In(
-                    EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                    EMPTY_ENTRY + available_preset_modes
                 ),
                 CONF_CLIMATE_CONTROL_PRESET_EXTENDED: vol.In(
-                    EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                    EMPTY_ENTRY + available_preset_modes
                 ),
             },
             selectors=selectors,
@@ -1185,7 +1248,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
     async def do_feature_config(
-        self, *, name, options, dynamic_validators=None, selectors=None, user_input=None
+        self,
+        *,
+        name,
+        options,
+        dynamic_validators=None,
+        selectors=None,
+        user_input=None,
+        custom_schema=None,
+        return_to=None,
+        merge=True,
+        step_name=None,
     ):
         """Execute step for a generic feature."""
         errors = {}
@@ -1204,7 +1277,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 str(user_input),
             )
             try:
-                validated_input = CONFIGURABLE_FEATURES[name](user_input)
+                if custom_schema:
+                    validated_input = custom_schema(user_input)
+                else:
+                    if not CONFIGURABLE_FEATURES[name]:
+                        # raise ValueError(f"No schema found for {name}")
+                        _LOGGER.error("NO THING FOR %s", name)
+                    validated_input = CONFIGURABLE_FEATURES[name](user_input)
             except vol.MultipleInvalid as validation:
                 errors = {
                     error.path[0]: "malformed_input" for error in validation.errors
@@ -1223,7 +1302,28 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     self.area.name,
                     str(validated_input),
                 )
-                self.area_options[CONF_ENABLED_FEATURES][name] = validated_input
+                if merge:
+                    _LOGGER.warning("MERGE")
+                    if name not in self.area_options[CONF_ENABLED_FEATURES]:
+                        self.area_options[CONF_ENABLED_FEATURES][name] = {}
+
+                    self.area_options[CONF_ENABLED_FEATURES][name].update(
+                        validated_input
+                    )
+                else:
+                    self.area_options[CONF_ENABLED_FEATURES][name] = validated_input
+                    _LOGGER.warning("NO MERGE")
+
+                _LOGGER.warning(
+                    "%s: Area options for %s: %s",
+                    self.area.name,
+                    name,
+                    self.area_options[CONF_ENABLED_FEATURES][name],
+                )
+
+                if return_to:
+                    return await return_to()
+
                 return await self.async_step_show_menu()
 
         _LOGGER.debug(
@@ -1234,8 +1334,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         saved_options = self.area_options.get(CONF_ENABLED_FEATURES, {})
 
+        if not step_name:
+            step_name = f"feature_conf_{name}"
+
         return self.async_show_form(
-            step_id=f"feature_conf_{name}",
+            step_id=step_name,
             data_schema=self._build_options_schema(
                 options=options,
                 saved_options=saved_options.get(name, {}),

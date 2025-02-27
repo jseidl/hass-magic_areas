@@ -22,7 +22,6 @@
         "title": "Feature selection",
         "description": "Select the features you want to enable for this area. A new menu option will show up for configuring the feature if there are configurations options for that feature.",
         "data": {
-          "climate_groups": "Create climate groups",
           "fan_groups": "Create fan groups",
           "climate_control": "Create climate controller",
           "media_player_groups": "Create media player groups",
@@ -46,7 +45,6 @@
           "select_features": "Feature selection",
           "finish": "Save & Exit",
           "feature_conf_health": "Configure health sensor",
-          "feature_conf_climate_groups": "Configure climate groups",
           "feature_conf_fan_groups": "Configure fan groups",
           "feature_conf_climate_control": "Configure climate control",
           "feature_conf_light_groups": "Configure light groups",
@@ -125,16 +123,6 @@
           "aggregates_illuminance_threshold_hysteresis": "[Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) defines how sensitive the sensor is to changes on its value. A value of zero will flip the sensor state whenever the illuminance crosses the threshold above. Positive values means that the sensor will only change state if the threshold is surpassed by a given amount, expressed in percentage of the threshold set above. Ramping up this value might be useful if you're trying to use this sensor as its own area's light sensor."
         }
       },
-      "feature_conf_climate_groups": {
-        "title": "Feature: Climate Groups",
-        "description": "Group and control all climate entities in an area. This feature allows climate entities to be controlled automatically according to an area's state.",
-        "data": {
-          "turn_on_state": "State to turn on the climate group."
-        },
-        "data_description": {
-          "turn_on_state": "Climate devices will be turned `on` on this state and turned off when the area is cleared."
-        }
-      },
       "feature_conf_fan_groups": {
         "title": "Feature: Fan Groups",
         "description": "Group and control all fan entities in an area. This feature allows fan entities to be controlled automatically according to an area's state and wether the aggregate sensor value crosses a setpoint. Fan control requires the aggregates feature to be enable and corresponding device classses selected.",
@@ -150,17 +138,25 @@
         }
       },
       "feature_conf_climate_control": {
-        "title": "Feature: Climate Control",
+        "title": "Feature: Climate Control > Entity Selection",
+        "description": "Select the climate entity that you would like to be controlled through area states.",
+        "data": {
+          "entity_id": "Climate entity"
+        },
+        "data_description": {
+          "entity_id": "Climate entity to be controlled."
+        }
+      },
+      "feature_conf_climate_control_select_presets": {
+        "title": "Feature: Climate Control > Preset Mapping",
         "description": "Control a climate entity by mapping presets to the area state. `extended` state takes priority over `occupied` and `sleep` state takes priority over `extended` and `occupied`. Map a state to an empty preset to disable changing presets for that state.",
         "data": {
-          "entity_id": "Climate entity.",
           "preset_clear": "Clear",
           "preset_occupied": "Occupied",
           "preset_sleep": "Sleep",
           "preset_extended": "Extended"
         },
         "data_description": {
-          "entity_id": "Climate entity to be controlled.",
           "preset_clear": "Preset to be changed when on `clear` state.",
           "preset_occupied": "Preset to be changed when on `occupied` state.",
           "preset_sleep": "Preset to be changed when on `sleep` state.",
