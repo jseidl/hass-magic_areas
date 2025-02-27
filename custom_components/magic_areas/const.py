@@ -15,6 +15,7 @@ from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.components.device_tracker.const import (
     DOMAIN as DEVICE_TRACKER_DOMAIN,
 )
+from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
@@ -260,6 +261,17 @@ class MagicAreasFeatureInfoClimateGroups(MagicAreasFeatureInfo):
     icons = {SWITCH_DOMAIN: "mdi:thermostat-auto"}
 
 
+class MagicAreasFeatureInfoFanGroups(MagicAreasFeatureInfo):
+    """Feature information for feature: Fan groups."""
+
+    id = "fan_groups"
+    translation_keys = {
+        FAN_DOMAIN: "fan_group",
+        SWITCH_DOMAIN: "fan_control",
+    }
+    icons = {SWITCH_DOMAIN: "mdi:fan-auto"}
+
+
 class MagicAreasFeatureInfoMediaPlayerGroups(MagicAreasFeatureInfo):
     """Feature information for feature: Media player groups."""
 
@@ -387,6 +399,7 @@ MAGIC_AREAS_COMPONENTS = [
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
     CLIMATE_DOMAIN,
+    FAN_DOMAIN,
 ]
 
 MAGIC_AREAS_COMPONENTS_META = [
@@ -561,7 +574,7 @@ CONFIGURABLE_AREA_STATE_MAP = {
 
 # features
 CONF_FEATURE_CLIMATE_GROUPS = "climate_groups"
-
+CONF_FEATURE_FAN_GROUPS = "fan_groups"
 CONF_FEATURE_MEDIA_PLAYER_GROUPS = "media_player_groups"
 CONF_FEATURE_LIGHT_GROUPS = "light_groups"
 CONF_FEATURE_COVER_GROUPS = "cover_groups"
@@ -585,6 +598,7 @@ CONF_FEATURE_LIST = CONF_FEATURE_LIST_META + [
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_FEATURE_BLE_TRACKERS,
+    CONF_FEATURE_FAN_GROUPS,
     CONF_FEATURE_WASP_IN_A_BOX,
 ]
 
@@ -602,6 +616,33 @@ CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = (
     AREA_STATE_EXTENDED,
 )
 
+# Fan Group options
+CONF_FAN_GROUPS_REQUIRED_STATE, DEFAULT_FAN_GROUPS_REQUIRED_STATE = (
+    "required_state",
+    AREA_STATE_EXTENDED,
+)
+CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS, DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS = (
+    "tracked_device_class",
+    SensorDeviceClass.TEMPERATURE,
+)
+CONF_FAN_GROUPS_SETPOINT, DEFAULT_FAN_GROUPS_SETPOINT = ("setpoint", 0.0)
+FAN_GROUPS_ALLOWED_TRACKED_DEVICE_CLASS = [
+    SensorDeviceClass.TEMPERATURE,
+    SensorDeviceClass.HUMIDITY,
+    SensorDeviceClass.CO,
+    SensorDeviceClass.CO2,
+    SensorDeviceClass.AQI,
+    SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS,
+    SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS_PARTS,
+    SensorDeviceClass.NITROGEN_DIOXIDE,
+    SensorDeviceClass.NITROGEN_MONOXIDE,
+    SensorDeviceClass.GAS,
+    SensorDeviceClass.OZONE,
+    SensorDeviceClass.PM1,
+    SensorDeviceClass.PM10,
+    SensorDeviceClass.PM25,
+    SensorDeviceClass.SULPHUR_DIOXIDE,
+]
 
 # Config Schema
 
@@ -681,6 +722,22 @@ CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
     extra=vol.REMOVE_EXTRA,
 )
 
+FAN_GROUP_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_FAN_GROUPS_REQUIRED_STATE, default=DEFAULT_FAN_GROUPS_REQUIRED_STATE
+        ): str,
+        vol.Optional(
+            CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+            default=DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        ): str,
+        vol.Optional(
+            CONF_FAN_GROUPS_SETPOINT, default=DEFAULT_FAN_GROUPS_SETPOINT
+        ): float,
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+
 LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_OVERHEAD_LIGHTS, default=[]): cv.entity_ids,
@@ -722,6 +779,7 @@ ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
 CONFIGURABLE_FEATURES = {
     CONF_FEATURE_LIGHT_GROUPS: LIGHT_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_CLIMATE_GROUPS: CLIMATE_GROUP_FEATURE_SCHEMA,
+    CONF_FEATURE_FAN_GROUPS: FAN_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_AGGREGATION: AGGREGATE_FEATURE_SCHEMA,
     CONF_FEATURE_HEALTH: HEALTH_FEATURE_SCHEMA,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA,
@@ -733,6 +791,7 @@ CONFIGURABLE_FEATURES = {
 NON_CONFIGURABLE_FEATURES_META = [
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_CLIMATE_GROUPS,
+    CONF_FEATURE_FAN_GROUPS,
 ]
 
 NON_CONFIGURABLE_FEATURES = {
@@ -985,6 +1044,16 @@ OPTIONS_WASP_IN_A_BOX = [
 
 OPTIONS_CLIMATE_GROUP = [
     (CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE, str),
+]
+
+OPTIONS_FAN_GROUP = [
+    (CONF_FAN_GROUPS_REQUIRED_STATE, DEFAULT_FAN_GROUPS_REQUIRED_STATE, str),
+    (
+        CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        str,
+    ),
+    (CONF_FAN_GROUPS_SETPOINT, DEFAULT_FAN_GROUPS_SETPOINT, float),
 ]
 
 OPTIONS_CLIMATE_GROUP_META = [
