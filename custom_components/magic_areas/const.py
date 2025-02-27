@@ -1,6 +1,6 @@
 """Constants for Magic Areas."""
 
-from enum import IntEnum, StrEnum
+from enum import IntEnum, StrEnum, auto
 from itertools import chain
 
 import voluptuous as vol
@@ -302,6 +302,13 @@ class MagicAreasEvents(StrEnum):
 
 
 EVENT_MAGICAREAS_AREA_STATE_CHANGED = "magicareas_area_state_changed"
+
+
+# SelectorTranslationKeys
+class SelectorTranslationKeys(StrEnum):
+    """Translation keys for config flow UI selectors."""
+
+    CLIMATE_PRESET_LIST = auto()
 
 
 ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]

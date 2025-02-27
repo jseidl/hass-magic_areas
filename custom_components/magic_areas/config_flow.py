@@ -20,9 +20,16 @@ from homeassistant.helpers.area_registry import async_get as areareg_async_get
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 from homeassistant.helpers.selector import (
+    BooleanSelector,
+    BooleanSelectorConfig,
     EntitySelector,
     EntitySelectorConfig,
-    selector,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
 )
 from homeassistant.util import slugify
 
@@ -103,6 +110,7 @@ from .const import (
     DATA_AREA_OBJECT,
     DISTRESS_SENSOR_CLASSES,
     DOMAIN,
+    EMPTY_STRING,
     LIGHT_GROUP_ACT_ON_OPTIONS,
     MAGICAREAS_UNIQUEID_PREFIX,
     META_AREA_BASIC_OPTIONS_SCHEMA,
@@ -129,6 +137,7 @@ from .const import (
     SECONDARY_STATES_SCHEMA,
     MagicConfigEntryVersion,
     MetaAreaType,
+    SelectorTranslationKeys,
 )
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.helpers.area import (
@@ -150,14 +159,22 @@ class ConfigBase:
     # Selector builder
     def _build_selector_boolean(self):
         """Build a boolean toggle selector."""
-        return selector({"boolean": {}})
+        return BooleanSelector(BooleanSelectorConfig())
 
-    def _build_selector_select(self, options=None, multiple=False):
+    def _build_selector_select(
+        self, options=None, multiple=False, translation_key=EMPTY_STRING
+    ):
         """Build a <select> selector."""
         if not options:
             options = []
-        return selector(
-            {"select": {"options": options, "multiple": multiple, "mode": "dropdown"}}
+
+        return SelectSelector(
+            SelectSelectorConfig(
+                options=options,
+                multiple=multiple,
+                mode=SelectSelectorMode.DROPDOWN,
+                translation_key=translation_key,
+            )
         )
 
     def _build_selector_entity_simple(
@@ -171,18 +188,20 @@ class ConfigBase:
         )
 
     def _build_selector_number(
-        self, min_value=0, max_value=9999, mode="box", unit_of_measurement="seconds"
+        self,
+        min_value: float = 0,
+        max_value: float = 9999,
+        mode: NumberSelectorMode = NumberSelectorMode.BOX,
+        unit_of_measurement: str = "seconds",
     ):
         """Build a number selector."""
-        return selector(
-            {
-                "number": {
-                    "min": min_value,
-                    "max": max_value,
-                    "mode": mode,
-                    "unit_of_measurement": unit_of_measurement,
-                }
-            }
+        return NumberSelector(
+            NumberSelectorConfig(
+                min=min_value,
+                max=max_value,
+                mode=mode,
+                unit_of_measurement=unit_of_measurement,
+            )
         )
 
     def _build_options_schema(
@@ -951,16 +970,20 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 all_climate_entities
             ),
             CONF_CLIMATE_CONTROL_PRESET_CLEAR: self._build_selector_select(
-                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS,
+                translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
             ),
             CONF_CLIMATE_CONTROL_PRESET_OCCUPIED: self._build_selector_select(
-                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS,
+                translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
             ),
             CONF_CLIMATE_CONTROL_PRESET_SLEEP: self._build_selector_select(
-                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS,
+                translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
             ),
             CONF_CLIMATE_CONTROL_PRESET_EXTENDED: self._build_selector_select(
-                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS
+                EMPTY_ENTRY + CLIMATE_CONTROL_AVAILABLE_PRESETS,
+                translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
             ),
         }
 

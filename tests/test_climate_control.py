@@ -174,6 +174,16 @@ async def test_climate_control_logic(
     climate_state = hass.states.get(MOCK_CLIMATE_ENTITY_ID)
     assert_attribute(climate_state, ATTR_PRESET_MODE, PRESET_ECO)
 
+    # @TODO test control off, ensure nothing happens
+
+    # Turn on climate control
+    await hass.services.async_call(
+        SWITCH_DOMAIN,
+        SERVICE_TURN_ON,
+        {ATTR_ENTITY_ID: CLIMATE_CONTROL_SWITCH_ENTITY_ID},
+    )
+    await hass.async_block_till_done()
+
     # Area occupied, preset should be PRESET_NONE
     hass.states.async_set(motion_sensor_entity_id, STATE_ON)
     await hass.async_block_till_done()

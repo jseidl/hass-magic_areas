@@ -217,7 +217,11 @@
   "entity": {
     "binary_sensor": {
       "area_state": {
-        "name": "Area State"
+        "name": "Area State",
+        "state": {
+          "off": "Clear",
+          "on": "Occupied"
+        }
       },
       "ble_tracker_monitor": {
         "name": "BLE Tracker Occupancy"
@@ -306,6 +310,13 @@
       },
       "climate_control": {
         "name": "Climate Control"
+      }
+    }
+  },
+  "selector": {
+    "climate_preset_list": {
+      "options": {
+        "": "Disabled"
       }
     }
   },

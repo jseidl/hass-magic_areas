@@ -86,6 +86,10 @@ class ClimateControlSwitch(SwitchBase):
     async def area_state_changed(self, area_id, states_tuple):
         """Handle area state change event."""
 
+        if not self.is_on:
+            self.logger.debug("%s: Control disabled. Skipping.", self.name)
+            return
+
         priority_states: list[str] = [
             AreaStates.SLEEP,
             AreaStates.EXTENDED,
