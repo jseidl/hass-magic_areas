@@ -1,41 +1,29 @@
 """Tests for the BLE Tracker feature."""
 
 from collections.abc import AsyncGenerator
+import logging
 from typing import Any
 
 import pytest
-import logging
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.climate.const import (
-    DOMAIN as CLIMATE_DOMAIN,
-    HVACMode,
     ATTR_PRESET_MODE,
-    PRESET_NONE,
-    PRESET_HOME,
-    PRESET_ECO,
-    PRESET_SLEEP,
+    DOMAIN as CLIMATE_DOMAIN,
     PRESET_AWAY,
+    PRESET_ECO,
+    PRESET_NONE,
     SERVICE_SET_PRESET_MODE,
+    HVACMode,
 )
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN
-from homeassistant.const import (
-    ATTR_ENTITY_ID,
-    STATE_OFF,
-    STATE_ON,
-    STATE_UNKNOWN,
-    SERVICE_TURN_ON,
-)
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_ON, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
 from custom_components.magic_areas.const import (
-    ATTR_PRESENCE_SENSORS,
-    CONF_BLE_TRACKER_ENTITIES,
     CONF_CLIMATE_CONTROL_ENTITY_ID,
     CONF_ENABLED_FEATURES,
-    CONF_FEATURE_BLE_TRACKERS,
     DOMAIN,
     MagicAreasFeatures,
 )
