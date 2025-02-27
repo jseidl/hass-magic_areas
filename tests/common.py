@@ -367,7 +367,7 @@ def assert_attribute(
     assert entity_state is not None
     assert hasattr(entity_state, "attributes")
     assert attribute_key in entity_state.attributes
-    assert entity_state.attributes[attribute_key] == expected_value
+    assert str(entity_state.attributes[attribute_key]) == expected_value
 
 
 def assert_in_attribute(

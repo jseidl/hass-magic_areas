@@ -135,6 +135,13 @@ DISTRESS_SENSOR_CLASSES = [
 ]  # @todo make configurable
 DISTRESS_STATES = [AlarmControlPanelState.TRIGGERED, STATE_ON, STATE_PROBLEM]
 
+# Wasp in a Box
+WASP_IN_A_BOX_DEVICE_CLASSES = [
+    BinarySensorDeviceClass.MOTION,
+    BinarySensorDeviceClass.OCCUPANCY,
+    BinarySensorDeviceClass.PRESENCE,
+]
+
 # Aggregates
 AGGREGATE_SENSOR_CLASSES = (
     SensorDeviceClass.CURRENT,
@@ -198,6 +205,14 @@ class MagicAreasFeatureInfoBLETrackers(MagicAreasFeatureInfo):
     id = "ble_trackers"
     translation_keys = {BINARY_SENSOR_DOMAIN: "ble_tracker_monitor"}
     icons = {BINARY_SENSOR_DOMAIN: "mdi:bluetooth"}
+
+
+class MagicAreasFeatureInfoWaspInABox(MagicAreasFeatureInfo):
+    """Feature information for feature: Wasp in a box."""
+
+    id = "wasp_in_a_box"
+    translation_keys = {BINARY_SENSOR_DOMAIN: "wasp_in_a_box"}
+    icons = {BINARY_SENSOR_DOMAIN: "mdi:bee"}
 
 
 class MagicAreasFeatureInfoAggregates(MagicAreasFeatureInfo):
@@ -544,6 +559,13 @@ CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES = (
     [],
 )  # cv.entity_ids
 
+
+CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = ("delay", 60)  # cv.positive_int
+CONF_WASP_IN_A_BOX_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES = (
+    "device_classes",
+    [BinarySensorDeviceClass.MOTION, BinarySensorDeviceClass.OCCUPANCY],
+)  # cv.ensure_list
+
 CONFIGURABLE_AREA_STATE_MAP = {
     AREA_STATE_SLEEP: CONF_SLEEP_ENTITY,
     AREA_STATE_DARK: CONF_DARK_ENTITY,
@@ -561,6 +583,7 @@ CONF_FEATURE_AGGREGATION = "aggregates"
 CONF_FEATURE_HEALTH = "health"
 CONF_FEATURE_PRESENCE_HOLD = "presence_hold"
 CONF_FEATURE_BLE_TRACKERS = "ble_trackers"
+CONF_FEATURE_WASP_IN_A_BOX = "wasp_in_a_box"
 
 CONF_FEATURE_LIST_META = [
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
@@ -576,6 +599,7 @@ CONF_FEATURE_LIST = CONF_FEATURE_LIST_META + [
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_FAN_GROUPS,
+    CONF_FEATURE_WASP_IN_A_BOX,
 ]
 
 CONF_FEATURE_LIST_GLOBAL = CONF_FEATURE_LIST_META
@@ -675,6 +699,19 @@ BLE_TRACKER_FEATURE_SCHEMA = vol.Schema(
     extra=vol.REMOVE_EXTRA,
 )
 
+WASP_IN_A_BOX_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_WASP_IN_A_BOX_DELAY, default=DEFAULT_WASP_IN_A_BOX_DELAY
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
+            default=DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES,
+        ): cv.ensure_list,
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+
 CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
     {
         vol.Optional(
@@ -748,6 +785,7 @@ CONFIGURABLE_FEATURES = {
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA,
     CONF_FEATURE_PRESENCE_HOLD: PRESENCE_HOLD_FEATURE_SCHEMA,
     CONF_FEATURE_BLE_TRACKERS: BLE_TRACKER_FEATURE_SCHEMA,
+    CONF_FEATURE_WASP_IN_A_BOX: WASP_IN_A_BOX_FEATURE_SCHEMA,
 }
 
 NON_CONFIGURABLE_FEATURES_META = [
@@ -993,6 +1031,15 @@ OPTIONS_PRESENCE_HOLD = [
 
 OPTIONS_BLE_TRACKERS = [
     (CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES, cv.entity_ids),
+]
+
+OPTIONS_WASP_IN_A_BOX = [
+    (CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY, cv.positive_int),
+    (
+        CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
+        DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES,
+        vol.In(WASP_IN_A_BOX_DEVICE_CLASSES),
+    ),
 ]
 
 OPTIONS_CLIMATE_GROUP = [
