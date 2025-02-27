@@ -38,6 +38,7 @@ async def async_setup_entry(
     if area.has_feature(MagicAreasFeatures.PRESENCE_HOLD):
         try:
             switch_entities.append(PresenceHoldSwitch(area))
+        # pylint: disable-next=broad-exception-caught
         except Exception as e:
             _LOGGER.error(
                 "%s: Error loading presence hold switch: %s", area.name, str(e)
@@ -46,6 +47,7 @@ async def async_setup_entry(
     if area.has_feature(MagicAreasFeatures.LIGHT_GROUPS):
         try:
             switch_entities.append(LightControlSwitch(area))
+        # pylint: disable-next=broad-exception-caught
         except Exception as e:
             _LOGGER.error(
                 "%s: Error loading light control switch: %s", area.name, str(e)
@@ -54,6 +56,7 @@ async def async_setup_entry(
     if area.has_feature(MagicAreasFeatures.MEDIA_PLAYER_GROUPS):
         try:
             switch_entities.append(MediaPlayerControlSwitch(area))
+        # pylint: disable-next=broad-exception-caught
         except Exception as e:
             _LOGGER.error(
                 "%s: Error loading media player control switch: %s", area.name, str(e)
@@ -62,6 +65,7 @@ async def async_setup_entry(
     if area.has_feature(MagicAreasFeatures.CLIMATE_CONTROL):
         try:
             switch_entities.append(ClimateControlSwitch(area))
+        # pylint: disable-next=broad-exception-caught
         except Exception as e:
             _LOGGER.error(
                 "%s: Error loading climate control switch: %s", area.name, str(e)

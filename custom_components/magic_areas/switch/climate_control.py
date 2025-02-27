@@ -121,5 +121,6 @@ class ClimateControlSwitch(SwitchBase):
                     ATTR_PRESET_MODE: selected_preset,
                 },
             )
+        # pylint: disable-next=broad-exception-caught
         except Exception as e:
             self.logger.error("%s: Error applying preset: %s", self.name, str(e))
