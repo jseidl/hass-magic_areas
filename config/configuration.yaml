@@ -92,6 +92,11 @@ climate:
     ac_mode: true
     target_sensor: sensor.lr_temperature
     unique_id: climate_fake
+    home_temp: 68
+    sleep_temp: 66
+    away_temp: 64
+    comfort_temp: 70
+
 
 light:
   - platform: template
