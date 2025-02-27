@@ -169,7 +169,6 @@
                     "presence_sensor_device_class": "Geräteklassen für Anwesenheitssensoren",
                     "presence_device_platforms": "Domänen zur Anwesenheitsverfolgung",
                     "keep_only_entities": "Bestätigende Entitäten",
-                    "update_interval": "Intervall zur Überprüfung verpasster Ereignisse",
                     "clear_timeout": "Zeitüberschreitung löschen"
                 },
                 "data_description": {

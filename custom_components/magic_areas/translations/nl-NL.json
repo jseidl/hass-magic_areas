@@ -169,7 +169,6 @@
                     "presence_sensor_device_class": "Apparaatklassen aanwezigheidssensoren",
                     "presence_device_platforms": "Platformen voor aanwezigheidsdetectie",
                     "keep_only_entities": "Entiteiten die alleen behouden mogen worden",
-                    "update_interval": "Interval voor het controleren van gemiste gebeurtenissen",
                     "clear_timeout": "Time-out wissen"
                 },
                 "data_description": {

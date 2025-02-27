@@ -39,7 +39,6 @@ from custom_components.magic_areas.const import (
     CONF_INCLUDE_ENTITIES,
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_TYPE,
-    CONF_UPDATE_INTERVAL,
     DEFAULT_PRESENCE_DEVICE_SENSOR_CLASS,
     DOMAIN,
 )
@@ -342,7 +341,6 @@ def get_basic_config_entry_data(area_id: MockAreaIds) -> dict[str, Any]:
         ATTR_NAME: area_id.title(),
         CONF_ID: area_id.value,
         CONF_CLEAR_TIMEOUT: 0,
-        CONF_UPDATE_INTERVAL: 60,
         CONF_EXTENDED_TIMEOUT: 5,
         CONF_TYPE: area_data[CONF_TYPE],
         CONF_EXCLUDE_ENTITIES: [],

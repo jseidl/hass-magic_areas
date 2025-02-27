@@ -94,9 +94,9 @@ class MagicArea:
         self.entities: dict[str, list[dict[str, str]]] = {}
         self.magic_entities: dict[str, list[dict[str, str]]] = {}
 
-        self.last_changed: int = datetime.now(UTC)  # type: ignore  # noqa: PGH003
+        self.last_changed: datetime = datetime.now(UTC)
 
-        self.states = []
+        self.states: list[str] = []
 
         self.loaded_platforms: list[str] = []
 

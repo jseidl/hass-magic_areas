@@ -193,7 +193,6 @@
           "presence_sensor_device_class": "Presence sensors device classes",
           "presence_device_platforms": "Platforms to be used for presence sensing",
           "keep_only_entities": "Keep-only entities",
-          "update_interval": "Interval for checking missed events",
           "clear_timeout": "Clear timeout"
         },
         "data_description": {

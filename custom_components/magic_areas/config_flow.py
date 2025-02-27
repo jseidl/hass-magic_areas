@@ -91,7 +91,6 @@ from .const import (
     CONF_TASK_LIGHTS_ACT_ON,
     CONF_TASK_LIGHTS_STATES,
     CONF_TYPE,
-    CONF_UPDATE_INTERVAL,
     CONF_WASP_IN_A_BOX_DELAY,
     CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
     CONFIG_FLOW_ENTITY_FILTER_BOOL,
@@ -700,9 +699,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             ),
             CONF_KEEP_ONLY_ENTITIES: self._build_selector_entity_simple(
                 sorted(self.area.get_presence_sensors()), multiple=True
-            ),
-            CONF_UPDATE_INTERVAL: self._build_selector_number(
-                unit_of_measurement="seconds"
             ),
             CONF_CLEAR_TIMEOUT: self._build_selector_number(
                 unit_of_measurement="minutes"

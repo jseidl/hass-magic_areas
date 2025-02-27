@@ -63,9 +63,9 @@ But wait, you won't wake up your kids! Magic areas allows you to specify states 
 
 _And that's just the coolest ones, for all the features Magic Areas provides, check out the [wiki](https://github.com/jseidl/hass-magic_areas/wiki/Features)._
 
-## Demo
+## Demo / How can Magic Areas help me?
 
-Video coming soon!
+Check out the wiki cookbook [Magic Areas in every room](https://github.com/jseidl/hass-magic_areas/wiki/Magic-Areas-in-every-room) to see how you can apply Magic Areas to make every room in your house, magic!
 
 ## Installation
 
