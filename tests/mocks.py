@@ -25,7 +25,7 @@ from homeassistant.components.climate.const import (
     HVACMode,
 )
 from homeassistant.components.cover import CoverEntity, CoverEntityFeature
-from homeassistant.components.fan import FanEntity
+from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.components.light import ColorMode, LightEntity
 from homeassistant.components.media_player import MediaPlayerEntity
 from homeassistant.components.media_player.const import MediaPlayerEntityFeature
@@ -443,6 +443,9 @@ class MockFan(MockEntity, FanEntity):
     """Mock Binary Sensor class."""
 
     _state = STATE_OFF
+    _attr_supported_features: FanEntityFeature = (
+        FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF
+    )
 
     @property
     def is_on(self) -> bool:

@@ -25,6 +25,7 @@ from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.components.device_tracker.const import (
     DOMAIN as DEVICE_TRACKER_DOMAIN,
 )
+from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
@@ -144,6 +145,13 @@ DISTRESS_SENSOR_CLASSES = [
 ]  # @todo make configurable
 DISTRESS_STATES = [AlarmControlPanelState.TRIGGERED, STATE_ON, STATE_PROBLEM]
 
+# Wasp in a Box
+WASP_IN_A_BOX_DEVICE_CLASSES = [
+    BinarySensorDeviceClass.MOTION,
+    BinarySensorDeviceClass.OCCUPANCY,
+    BinarySensorDeviceClass.PRESENCE,
+]
+
 # Aggregates
 AGGREGATE_SENSOR_CLASSES = (
     SensorDeviceClass.CURRENT,
@@ -209,6 +217,14 @@ class MagicAreasFeatureInfoBLETrackers(MagicAreasFeatureInfo):
     icons = {BINARY_SENSOR_DOMAIN: "mdi:bluetooth"}
 
 
+class MagicAreasFeatureInfoWaspInABox(MagicAreasFeatureInfo):
+    """Feature information for feature: Wasp in a box."""
+
+    id = "wasp_in_a_box"
+    translation_keys = {BINARY_SENSOR_DOMAIN: "wasp_in_a_box"}
+    icons = {BINARY_SENSOR_DOMAIN: "mdi:bee"}
+
+
 class MagicAreasFeatureInfoAggregates(MagicAreasFeatureInfo):
     """Feature information for feature: Aggregates."""
 
@@ -254,6 +270,17 @@ class MagicAreasFeatureInfoClimateControl(MagicAreasFeatureInfo):
     icons = {SWITCH_DOMAIN: "mdi:thermostat-auto"}
 
 
+class MagicAreasFeatureInfoFanGroups(MagicAreasFeatureInfo):
+    """Feature information for feature: Fan groups."""
+
+    id = "fan_groups"
+    translation_keys = {
+        FAN_DOMAIN: "fan_group",
+        SWITCH_DOMAIN: "fan_control",
+    }
+    icons = {SWITCH_DOMAIN: "mdi:fan-auto"}
+
+
 class MagicAreasFeatureInfoMediaPlayerGroups(MagicAreasFeatureInfo):
     """Feature information for feature: Media player groups."""
 
@@ -292,6 +319,7 @@ class MagicAreasFeatures(StrEnum):
     AGGREGATES = "aggregates"
     HEALTH = "health"
     THRESHOLD = "threshold"
+    FAN_GROUPS = "fan_groups"
 
 
 # Magic Areas Events
@@ -387,6 +415,7 @@ MAGIC_AREAS_COMPONENTS = [
     SWITCH_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
+    FAN_DOMAIN,
 ]
 
 MAGIC_AREAS_COMPONENTS_META = [
@@ -546,6 +575,13 @@ CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES = (
     [],
 )  # cv.entity_ids
 
+
+CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = ("delay", 60)  # cv.positive_int
+CONF_WASP_IN_A_BOX_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES = (
+    "device_classes",
+    [BinarySensorDeviceClass.MOTION, BinarySensorDeviceClass.OCCUPANCY],
+)  # cv.ensure_list
+
 CONFIGURABLE_AREA_STATE_MAP = {
     AREA_STATE_SLEEP: CONF_SLEEP_ENTITY,
     AREA_STATE_DARK: CONF_DARK_ENTITY,
@@ -554,6 +590,7 @@ CONFIGURABLE_AREA_STATE_MAP = {
 
 # features
 CONF_FEATURE_CLIMATE_CONTROL = "climate_control"
+CONF_FEATURE_FAN_GROUPS = "fan_groups"
 CONF_FEATURE_MEDIA_PLAYER_GROUPS = "media_player_groups"
 CONF_FEATURE_LIGHT_GROUPS = "light_groups"
 CONF_FEATURE_COVER_GROUPS = "cover_groups"
@@ -562,6 +599,7 @@ CONF_FEATURE_AGGREGATION = "aggregates"
 CONF_FEATURE_HEALTH = "health"
 CONF_FEATURE_PRESENCE_HOLD = "presence_hold"
 CONF_FEATURE_BLE_TRACKERS = "ble_trackers"
+CONF_FEATURE_WASP_IN_A_BOX = "wasp_in_a_box"
 
 CONF_FEATURE_LIST_META = [
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
@@ -576,6 +614,8 @@ CONF_FEATURE_LIST = CONF_FEATURE_LIST_META + [
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_FEATURE_BLE_TRACKERS,
+    CONF_FEATURE_FAN_GROUPS,
+    CONF_FEATURE_WASP_IN_A_BOX,
 ]
 
 CONF_FEATURE_LIST_GLOBAL = CONF_FEATURE_LIST_META
@@ -614,6 +654,34 @@ CONF_CLIMATE_CONTROL_PRESET_SLEEP, DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP = (
     "preset_sleep",
     PRESET_SLEEP,
 )
+
+# Fan Group options
+CONF_FAN_GROUPS_REQUIRED_STATE, DEFAULT_FAN_GROUPS_REQUIRED_STATE = (
+    "required_state",
+    AREA_STATE_EXTENDED,
+)
+CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS, DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS = (
+    "tracked_device_class",
+    SensorDeviceClass.TEMPERATURE,
+)
+CONF_FAN_GROUPS_SETPOINT, DEFAULT_FAN_GROUPS_SETPOINT = ("setpoint", 0.0)
+FAN_GROUPS_ALLOWED_TRACKED_DEVICE_CLASS = [
+    SensorDeviceClass.TEMPERATURE,
+    SensorDeviceClass.HUMIDITY,
+    SensorDeviceClass.CO,
+    SensorDeviceClass.CO2,
+    SensorDeviceClass.AQI,
+    SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS,
+    SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS_PARTS,
+    SensorDeviceClass.NITROGEN_DIOXIDE,
+    SensorDeviceClass.NITROGEN_MONOXIDE,
+    SensorDeviceClass.GAS,
+    SensorDeviceClass.OZONE,
+    SensorDeviceClass.PM1,
+    SensorDeviceClass.PM10,
+    SensorDeviceClass.PM25,
+    SensorDeviceClass.SULPHUR_DIOXIDE,
+]
 
 # Config Schema
 
@@ -670,6 +738,19 @@ BLE_TRACKER_FEATURE_SCHEMA = vol.Schema(
     extra=vol.REMOVE_EXTRA,
 )
 
+WASP_IN_A_BOX_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_WASP_IN_A_BOX_DELAY, default=DEFAULT_WASP_IN_A_BOX_DELAY
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
+            default=DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES,
+        ): cv.ensure_list,
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+
 CLIMATE_CONTROL_FEATURE_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_CLIMATE_CONTROL_ENTITY_ID): cv.entity_id,
@@ -693,6 +774,21 @@ CLIMATE_CONTROL_FEATURE_SCHEMA = vol.Schema(
     extra=vol.REMOVE_EXTRA,
 )
 
+FAN_GROUP_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_FAN_GROUPS_REQUIRED_STATE, default=DEFAULT_FAN_GROUPS_REQUIRED_STATE
+        ): str,
+        vol.Optional(
+            CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+            default=DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        ): str,
+        vol.Optional(
+            CONF_FAN_GROUPS_SETPOINT, default=DEFAULT_FAN_GROUPS_SETPOINT
+        ): float,
+    },
+    extra=vol.REMOVE_EXTRA,
+)
 
 LIGHT_GROUP_FEATURE_SCHEMA = vol.Schema(
     {
@@ -734,16 +830,19 @@ ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
 
 CONFIGURABLE_FEATURES = {
     CONF_FEATURE_LIGHT_GROUPS: LIGHT_GROUP_FEATURE_SCHEMA,
+    CONF_FEATURE_CLIMATE_CONTROL: CLIMATE_CONTROL_FEATURE_SCHEMA,
+    CONF_FEATURE_FAN_GROUPS: FAN_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_AGGREGATION: AGGREGATE_FEATURE_SCHEMA,
     CONF_FEATURE_HEALTH: HEALTH_FEATURE_SCHEMA,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA,
     CONF_FEATURE_PRESENCE_HOLD: PRESENCE_HOLD_FEATURE_SCHEMA,
     CONF_FEATURE_BLE_TRACKERS: BLE_TRACKER_FEATURE_SCHEMA,
-    CONF_FEATURE_CLIMATE_CONTROL: CLIMATE_CONTROL_FEATURE_SCHEMA,
+    CONF_FEATURE_WASP_IN_A_BOX: WASP_IN_A_BOX_FEATURE_SCHEMA,
 }
 
 NON_CONFIGURABLE_FEATURES_META = [
     CONF_FEATURE_LIGHT_GROUPS,
+    CONF_FEATURE_FAN_GROUPS,
 ]
 
 NON_CONFIGURABLE_FEATURES = {
@@ -985,6 +1084,15 @@ OPTIONS_BLE_TRACKERS = [
     (CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES, cv.entity_ids),
 ]
 
+OPTIONS_WASP_IN_A_BOX = [
+    (CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY, cv.positive_int),
+    (
+        CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
+        DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES,
+        vol.In(WASP_IN_A_BOX_DEVICE_CLASSES),
+    ),
+]
+
 OPTIONS_CLIMATE_CONTROL = [
     (CONF_CLIMATE_CONTROL_ENTITY_ID, None, cv.entity_id),
     (CONF_CLIMATE_CONTROL_PRESET_CLEAR, DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR, str),
@@ -1013,6 +1121,16 @@ OPTIONS_CLIMATE_CONTROL_META = [
         DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
         str,
     ),
+]
+
+OPTIONS_FAN_GROUP = [
+    (CONF_FAN_GROUPS_REQUIRED_STATE, DEFAULT_FAN_GROUPS_REQUIRED_STATE, str),
+    (
+        CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        str,
+    ),
+    (CONF_FAN_GROUPS_SETPOINT, DEFAULT_FAN_GROUPS_SETPOINT, float),
 ]
 
 OPTIONS_AREA_AWARE_MEDIA_PLAYER = [

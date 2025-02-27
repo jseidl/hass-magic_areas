@@ -17,6 +17,7 @@ from custom_components.magic_areas.const import (
 from custom_components.magic_areas.helpers.area import get_area_from_config_entry
 from custom_components.magic_areas.switch.base import SwitchBase
 from custom_components.magic_areas.switch.climate_control import ClimateControlSwitch
+from custom_components.magic_areas.switch.fan_control import FanControlSwitch
 from custom_components.magic_areas.switch.presence_hold import PresenceHoldSwitch
 from custom_components.magic_areas.util import cleanup_removed_entries
 
@@ -38,8 +39,7 @@ async def async_setup_entry(
     if area.has_feature(MagicAreasFeatures.PRESENCE_HOLD):
         try:
             switch_entities.append(PresenceHoldSwitch(area))
-        # pylint: disable-next=broad-exception-caught
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error(
                 "%s: Error loading presence hold switch: %s", area.name, str(e)
             )
@@ -47,8 +47,7 @@ async def async_setup_entry(
     if area.has_feature(MagicAreasFeatures.LIGHT_GROUPS):
         try:
             switch_entities.append(LightControlSwitch(area))
-        # pylint: disable-next=broad-exception-caught
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error(
                 "%s: Error loading light control switch: %s", area.name, str(e)
             )
@@ -56,17 +55,21 @@ async def async_setup_entry(
     if area.has_feature(MagicAreasFeatures.MEDIA_PLAYER_GROUPS):
         try:
             switch_entities.append(MediaPlayerControlSwitch(area))
-        # pylint: disable-next=broad-exception-caught
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error(
                 "%s: Error loading media player control switch: %s", area.name, str(e)
             )
 
+    if area.has_feature(MagicAreasFeatures.FAN_GROUPS):
+        try:
+            switch_entities.append(FanControlSwitch(area))
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.error("%s: Error loading fan control switch: %s", area.name, str(e))
+
     if area.has_feature(MagicAreasFeatures.CLIMATE_CONTROL):
         try:
             switch_entities.append(ClimateControlSwitch(area))
-        # pylint: disable-next=broad-exception-caught
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error(
                 "%s: Error loading climate control switch: %s", area.name, str(e)
             )

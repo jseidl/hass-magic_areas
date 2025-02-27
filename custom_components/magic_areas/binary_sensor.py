@@ -11,7 +11,13 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.components.group.binary_sensor import BinarySensorGroup
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, STATE_ON
-from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
+from homeassistant.core import (
+    Event,
+    EventStateChangedData,
+    HomeAssistant,
+    State,
+    callback,
+)
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
@@ -28,13 +34,19 @@ from custom_components.magic_areas.const import (
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_HEALTH,
+    CONF_FEATURE_WASP_IN_A_BOX,
     CONF_HEALTH_SENSOR_DEVICE_CLASSES,
+    CONF_WASP_IN_A_BOX_DELAY,
+    CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
     DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
     DEFAULT_HEALTH_SENSOR_DEVICE_CLASSES,
+    DEFAULT_WASP_IN_A_BOX_DELAY,
+    DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES,
     EMPTY_STRING,
     MagicAreasFeatureInfoAggregates,
     MagicAreasFeatureInfoBLETrackers,
     MagicAreasFeatureInfoHealth,
+    MagicAreasFeatureInfoWaspInABox,
 )
 from custom_components.magic_areas.helpers.area import get_area_from_config_entry
 from custom_components.magic_areas.threshold import create_illuminance_threshold
@@ -185,6 +197,144 @@ class AreaBLETrackerBinarySensor(MagicEntity, BinarySensorEntity):
         self.schedule_update_ha_state()
 
 
+ATTR_BOX = "box"
+ATTR_WASP = "wasp"
+
+
+class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
+    """Wasp In The Box logic tracking sensor for the area."""
+
+    feature_info = MagicAreasFeatureInfoWaspInABox()
+    _wasp_sensors: list[str] = []
+    _box_sensor: str
+    delay: int = 0
+    wasp: bool = False
+
+    def __init__(self, area: MagicArea) -> None:
+        """Initialize the area presence binary sensor."""
+
+        MagicEntity.__init__(self, area, domain=BINARY_SENSOR_DOMAIN)
+        BinarySensorEntity.__init__(self)
+
+        device_classes = self.area.feature_config(CONF_FEATURE_WASP_IN_A_BOX).get(
+            CONF_WASP_IN_A_BOX_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES
+        )
+
+        for device_class in device_classes:
+            dc_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_{device_class}"
+            self._wasp_sensors.append(dc_entity_id)
+
+        if not self._wasp_sensors:
+            raise RuntimeError(f"{self.area.name}: No valid wasp sensors defined.")
+
+        self._box_sensor = (
+            f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_door"
+        )
+
+        self.delay = self.area.feature_config(CONF_FEATURE_WASP_IN_A_BOX).get(
+            CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY
+        )
+
+        self._attr_device_class = BinarySensorDeviceClass.PRESENCE
+        self._attr_extra_state_attributes = {
+            ATTR_BOX: False,
+            ATTR_WASP: False,
+        }
+        self._attr_is_on: bool = False
+
+    async def async_added_to_hass(self) -> None:
+        """Call to add the system to hass."""
+        await super().async_added_to_hass()
+
+        # Setup the listeners
+        await self._setup_listeners()
+
+        _LOGGER.debug("%s: Wasp In A Box sensor initialized", self.area.name)
+
+    async def _setup_listeners(self) -> None:
+        """Attach state chagne listeners."""
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass, self._wasp_sensors, self._wasp_sensor_state_change
+            )
+        )
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass, [self._box_sensor], self._box_sensor_state_change
+            )
+        )
+
+    def _wasp_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
+        """Register wasp sensor state change event."""
+        self.wasp_in_a_box()
+
+    def _box_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
+        """Register box sensor state change event."""
+
+        new_state: State | None = None
+        if (new_state := event.data["new_state"]) is None:
+            _LOGGER.warning("%s: No new state info for box sensor.", self.name)
+            return
+
+        box_state: bool = new_state.state == STATE_ON
+
+        if self.delay:
+            self.wasp = False
+            self._attr_is_on = self.wasp
+            self._attr_extra_state_attributes[ATTR_BOX] = box_state
+            self._attr_extra_state_attributes[ATTR_WASP] = self.wasp
+            self.schedule_update_ha_state()
+            self.hass.loop.call_soon_threadsafe(
+                self.wasp_in_a_box_delayed, datetime.now(UTC)
+            )
+        else:
+            self.wasp_in_a_box()
+
+    @callback
+    def wasp_in_a_box_delayed(self, extra: datetime | None = None) -> None:
+        """Call Wasp In A Box Logic function after a delay."""
+        self.hass.loop.call_later(self.delay, self.wasp_in_a_box, extra)
+
+    def wasp_in_a_box(self, extra: datetime | None = None) -> None:
+        """Perform Wasp In A Box Logic."""
+        wasp_state = False
+        box_state = False
+
+        # Get Wasp State
+        for wasp_sensor in self._wasp_sensors:
+            wasp_sensor_state = self.hass.states.get(wasp_sensor)
+            if not wasp_sensor_state:
+                continue
+            if wasp_sensor_state.state == STATE_ON:
+                wasp_state = True
+                break
+
+        # Get Box State
+        box_sensor_state = self.hass.states.get(self._box_sensor)
+        if not box_sensor_state:
+            _LOGGER.warning(
+                "%s: Could not get state for box sensor %s.",
+                self.area.name,
+                self._box_sensor,
+            )
+            return
+
+        if box_sensor_state.state == STATE_ON:
+            box_state = True
+
+        # Main Logic
+        if wasp_state:
+            self.wasp = True
+        elif box_state:
+            self.wasp = False
+
+        self._attr_extra_state_attributes[ATTR_BOX] = box_state
+        self._attr_extra_state_attributes[ATTR_WASP] = wasp_state
+
+        self._attr_is_on = self.wasp
+        self.schedule_update_ha_state()
+
+
 # Setup
 
 
@@ -210,6 +360,10 @@ async def async_setup_entry(
         if illuminance_threshold_sensor:
             entities.append(illuminance_threshold_sensor)
 
+        # Wasp in a box
+        if area.has_feature(CONF_FEATURE_WASP_IN_A_BOX) and not area.is_meta():
+            entities.extend(create_wasp_in_a_box_sensor(area))
+
     if area.has_feature(CONF_FEATURE_HEALTH):
         entities.extend(create_health_sensors(area))
 
@@ -226,6 +380,27 @@ async def async_setup_entry(
         )
 
 
+def create_wasp_in_a_box_sensor(
+    area: MagicArea,
+) -> list[AreaWaspInABoxBinarySensor]:
+    """Add the Wasp in a box sensor for the area."""
+
+    if not area.has_feature(CONF_FEATURE_WASP_IN_A_BOX) or not area.has_feature(
+        CONF_FEATURE_AGGREGATION
+    ):
+        return []
+
+    try:
+        return [AreaWaspInABoxBinarySensor(area)]
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        _LOGGER.error(
+            "%s: Error creating wasp in a box sensor: %s",
+            area.slug,
+            str(e),
+        )
+        return []
+
+
 def create_ble_tracker_sensor(area: MagicArea) -> list[AreaBLETrackerBinarySensor]:
     """Add the BLE tracker sensor for the area."""
     if not area.has_feature(CONF_FEATURE_BLE_TRACKERS):
@@ -236,11 +411,19 @@ def create_ble_tracker_sensor(area: MagicArea) -> list[AreaBLETrackerBinarySenso
     ):
         return []
 
-    return [
-        AreaBLETrackerBinarySensor(
-            area,
+    try:
+        return [
+            AreaBLETrackerBinarySensor(
+                area,
+            )
+        ]
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        _LOGGER.error(
+            "%s: Error creating BLE tracker sensor: %s",
+            area.slug,
+            str(e),
         )
-    ]
+        return []
 
 
 def create_health_sensors(area: MagicArea) -> list[AreaHealthBinarySensor]:
@@ -279,15 +462,22 @@ def create_health_sensors(area: MagicArea) -> list[AreaHealthBinarySensor]:
         area.slug,
         str(distress_entities),
     )
-    entities = [
-        AreaHealthBinarySensor(
-            area,
-            device_class=BinarySensorDeviceClass.PROBLEM,
-            entity_ids=distress_entities,
-        )
-    ]
 
-    return entities
+    try:
+        return [
+            AreaHealthBinarySensor(
+                area,
+                device_class=BinarySensorDeviceClass.PROBLEM,
+                entity_ids=distress_entities,
+            )
+        ]
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        _LOGGER.error(
+            "%s: Error creating area health sensor: %s",
+            area.slug,
+            str(e),
+        )
+        return []
 
 
 def create_aggregate_sensors(area: MagicArea) -> list[Entity]:

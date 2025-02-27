@@ -69,16 +69,21 @@ from .const import (
     CONF_EXCLUDE_ENTITIES,
     CONF_EXTENDED_TIME,
     CONF_EXTENDED_TIMEOUT,
+    CONF_FAN_GROUPS_REQUIRED_STATE,
+    CONF_FAN_GROUPS_SETPOINT,
+    CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_CLIMATE_CONTROL,
+    CONF_FEATURE_FAN_GROUPS,
     CONF_FEATURE_HEALTH,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_LIST,
     CONF_FEATURE_LIST_GLOBAL,
     CONF_FEATURE_LIST_META,
     CONF_FEATURE_PRESENCE_HOLD,
+    CONF_FEATURE_WASP_IN_A_BOX,
     CONF_HEALTH_SENSOR_DEVICE_CLASSES,
     CONF_ID,
     CONF_IGNORE_DIAGNOSTIC_ENTITIES,
@@ -103,6 +108,8 @@ from .const import (
     CONF_TASK_LIGHTS_ACT_ON,
     CONF_TASK_LIGHTS_STATES,
     CONF_TYPE,
+    CONF_WASP_IN_A_BOX_DELAY,
+    CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
     CONFIG_FLOW_ENTITY_FILTER_BOOL,
     CONFIG_FLOW_ENTITY_FILTER_EXT,
     CONFIGURABLE_AREA_STATE_MAP,
@@ -111,6 +118,7 @@ from .const import (
     DISTRESS_SENSOR_CLASSES,
     DOMAIN,
     EMPTY_STRING,
+    FAN_GROUPS_ALLOWED_TRACKED_DEVICE_CLASS,
     LIGHT_GROUP_ACT_ON_OPTIONS,
     MAGICAREAS_UNIQUEID_PREFIX,
     META_AREA_BASIC_OPTIONS_SCHEMA,
@@ -126,16 +134,19 @@ from .const import (
     OPTIONS_BLE_TRACKERS,
     OPTIONS_CLIMATE_CONTROL,
     OPTIONS_CLIMATE_CONTROL_META,
+    OPTIONS_FAN_GROUP,
     OPTIONS_HEALTH_SENSOR,
     OPTIONS_LIGHT_GROUP,
     OPTIONS_PRESENCE_HOLD,
     OPTIONS_PRESENCE_TRACKING,
     OPTIONS_PRESENCE_TRACKING_META,
     OPTIONS_SECONDARY_STATES,
+    OPTIONS_WASP_IN_A_BOX,
     REGULAR_AREA_BASIC_OPTIONS_SCHEMA,
     REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
+    WASP_IN_A_BOX_DEVICE_CLASSES,
     MagicConfigEntryVersion,
     MetaAreaType,
     SelectorTranslationKeys,
@@ -190,9 +201,11 @@ class ConfigBase:
 
     def _build_selector_number(
         self,
+        *,
         min_value: float = 0,
         max_value: float = 9999,
         mode: NumberSelectorMode = NumberSelectorMode.BOX,
+        step: float = 1,
         unit_of_measurement: str = "seconds",
     ):
         """Build a number selector."""
@@ -201,6 +214,7 @@ class ConfigBase:
                 min=min_value,
                 max=max_value,
                 mode=mode,
+                step=step,
                 unit_of_measurement=unit_of_measurement,
             )
         )
@@ -954,6 +968,31 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             user_input=user_input,
         )
 
+    async def async_step_feature_conf_fan_groups(self, user_input=None):
+        """Configure the fan groups feature."""
+
+        available_states = [AREA_STATE_OCCUPIED, AREA_STATE_EXTENDED]
+
+        return await self.do_feature_config(
+            name=CONF_FEATURE_FAN_GROUPS,
+            options=(OPTIONS_FAN_GROUP),
+            dynamic_validators={
+                CONF_FAN_GROUPS_REQUIRED_STATE: vol.In(EMPTY_ENTRY + available_states),
+            },
+            selectors={
+                CONF_FAN_GROUPS_REQUIRED_STATE: self._build_selector_select(
+                    EMPTY_ENTRY + available_states
+                ),
+                CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS: self._build_selector_select(
+                    EMPTY_ENTRY + FAN_GROUPS_ALLOWED_TRACKED_DEVICE_CLASS
+                ),
+                CONF_FAN_GROUPS_SETPOINT: self._build_selector_number(
+                    unit_of_measurement=EMPTY_STRING, step=0.5
+                ),
+            },
+            user_input=user_input,
+        )
+
     async def async_step_feature_conf_climate_control(self, user_input=None):
         """Configure the climate control feature."""
 
@@ -1122,6 +1161,25 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         return await self.do_feature_config(
             name=CONF_FEATURE_BLE_TRACKERS,
             options=OPTIONS_BLE_TRACKERS,
+            selectors=selectors,
+            user_input=user_input,
+        )
+
+    async def async_step_feature_conf_wasp_in_a_box(self, user_input=None):
+        """Configure the sensor Wasp in a Box feature."""
+
+        selectors = {
+            CONF_WASP_IN_A_BOX_DELAY: self._build_selector_number(
+                min_value=0, unit_of_measurement="seconds"
+            ),
+            CONF_WASP_IN_A_BOX_DEVICE_CLASSES: self._build_selector_select(
+                sorted(WASP_IN_A_BOX_DEVICE_CLASSES), multiple=True
+            ),
+        }
+
+        return await self.do_feature_config(
+            name=CONF_FEATURE_WASP_IN_A_BOX,
+            options=OPTIONS_WASP_IN_A_BOX,
             selectors=selectors,
             user_input=user_input,
         )

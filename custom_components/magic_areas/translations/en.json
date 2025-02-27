@@ -23,6 +23,7 @@
         "description": "Select the features you want to enable for this area. A new menu option will show up for configuring the feature if there are configurations options for that feature.",
         "data": {
           "climate_groups": "Create climate groups",
+          "fan_groups": "Create fan groups",
           "climate_control": "Create climate controller",
           "media_player_groups": "Create media player groups",
           "light_groups": "Create light groups",
@@ -31,7 +32,8 @@
           "aggregates": "Create aggregate sensors",
           "health": "Create health sensors",
           "presence_hold": "Create presence hold switch",
-          "ble_trackers": "Monitor Bluetooth tracker sensors"
+          "ble_trackers": "Monitor Bluetooth tracker sensors",
+          "wasp_in_a_box": "Create a Wasp in a Box sensor"
         }
       },
       "show_menu": {
@@ -45,12 +47,14 @@
           "finish": "Save & Exit",
           "feature_conf_health": "Configure health sensor",
           "feature_conf_climate_groups": "Configure climate groups",
+          "feature_conf_fan_groups": "Configure fan groups",
           "feature_conf_climate_control": "Configure climate control",
           "feature_conf_light_groups": "Configure light groups",
           "feature_conf_area_aware_media_player": "Configure area-aware media player",
           "feature_conf_aggregates": "Configure aggregate sensors",
           "feature_conf_presence_hold": "Configure presence hold switch",
-          "feature_conf_ble_trackers": "Configure BLE Tracker monitoring"
+          "feature_conf_ble_trackers": "Configure BLE Tracker monitoring",
+          "feature_conf_wasp_in_a_box": "Configure Wasp in a Box"
         }
       },
       "feature_conf_health": {
@@ -131,6 +135,20 @@
           "turn_on_state": "Climate devices will be turned `on` on this state and turned off when the area is cleared."
         }
       },
+      "feature_conf_fan_groups": {
+        "title": "Feature: Fan Groups",
+        "description": "Group and control all fan entities in an area. This feature allows fan entities to be controlled automatically according to an area's state and wether the aggregate sensor value crosses a setpoint. Fan control requires the aggregates feature to be enable and corresponding device classses selected.",
+        "data": {
+          "required_state": "Required state.",
+          "tracked_device_class": "Tracked device class.",
+          "setpoint": "Setpoint."
+        },
+        "data_description": {
+          "required_state": "State the area has to have in order to consider turning on the fan group.",
+          "tracked_device_class": "Select which aggregate device class to track for value changes.",
+          "setpoint": "Number which the tracked aggregate sensor must be equal or greater in order to turn on the fan group."
+        }
+      },
       "feature_conf_climate_control": {
         "title": "Feature: Climate Control",
         "description": "Control a climate entity by mapping presets to the area state. `extended` state takes priority over `occupied` and `sleep` state takes priority over `extended` and `occupied`. Map a state to an empty preset to disable changing presets for that state.",
@@ -157,6 +175,18 @@
         },
         "data_description": {
           "ble_tracker_entities": "BLE Trackers such as [room-assistant](https://github.com/mKeRix/room-assistant), [Bermuda](https://github.com/agittins/bermuda) and [ESPresence](https://github.com/ESPresense/ESPresense) creates sensors which changes state to whatever area the device was closer to."
+        }
+      },
+      "feature_conf_wasp_in_a_box": {
+        "title": "Wasp in a Box",
+        "description": "If we see a wasp, then there is a wasp in the box. If we close the box while there is a wasp in the box, then the wasp remains in the box. If the box remains closed when there is a wasp in the box, and the wasp stops moving, we assume it's still in the box. If the box is opened, and the wasp is not moving, we assume that the wasp has escaped (there is no wasp in the box). This feature monitors your `door` aggregates as the box and your `motion` (default) aggregates as your wasp. A new `binary_sensor` will be created and automatically tracked for presence.",
+        "data": {
+          "delay": "Delay",
+          "device_classes": "Wasp sensor device classes"
+        },
+        "data_description": {
+          "delay": "Time to wait before checking for wasps after a box changing state.",
+          "device_classes": "If you wish other aggregates to be considered as wasps, please select from the list."
         }
       },
       "secondary_states": {
@@ -231,11 +261,23 @@
       },
       "threshold_light": {
         "name": "Light (Calculated)"
+      },
+      "wasp_in_a_box": {
+        "name": "Wasp in a Box",
+        "state": {
+          "off": "No Wasp",
+          "on": "Wasp"
+        }
       }
     },
     "climate": {
       "climate_group": {
         "name": "Thermostats"
+      }
+    },
+    "fan": {
+      "fan_group": {
+        "name": "Fans"
       }
     },
     "cover": {
@@ -310,6 +352,9 @@
       },
       "climate_control": {
         "name": "Climate Control"
+      },
+      "fan_control": {
+        "name": "Fan Control"
       }
     }
   },

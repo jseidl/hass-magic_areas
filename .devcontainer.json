@@ -30,6 +30,11 @@
                 "python.analysis.typeCheckingMode": "basic",
                 "python.analysis.autoImportCompletions": true,
                 "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.testing.pytestArgs": [
+                    "--rootdir",
+                    "${workspaceFolder}/tests"
+                ],
+                "python.testing.autoTestDiscoverOnSaveEnabled": true,
                 "[python]": {
                     "editor.defaultFormatter": "charliermarsh.ruff"
                 }
