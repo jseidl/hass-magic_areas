@@ -14,8 +14,6 @@ from custom_components.magic_areas.const import (
 )
 from custom_components.magic_areas.switch.base import SwitchBase
 
-from tests.const import DEFAULT_MOCK_AREA
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -32,7 +30,7 @@ class MediaPlayerControlSwitch(SwitchBase):
 
         SwitchBase.__init__(self, area)
 
-        self.media_player_group_id = f"{MEDIA_PLAYER_DOMAIN}.magic_areas_media_player_groups_{DEFAULT_MOCK_AREA}_media_player_group"
+        self.media_player_group_id = f"{MEDIA_PLAYER_DOMAIN}.magic_areas_media_player_groups_{self.area.slug}_media_player_group"
 
     async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""
