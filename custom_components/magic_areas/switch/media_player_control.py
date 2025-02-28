@@ -2,17 +2,18 @@
 
 import logging
 
-from homeassistant.const import ATTR_ENTITY_ID, EntityCategory, SERVICE_TURN_OFF
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
-from custom_components.magic_areas.base.magic import MagicArea
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, EntityCategory
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
+from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
     AreaStates,
     MagicAreasEvents,
     MagicAreasFeatureInfoMediaPlayerGroups,
 )
 from custom_components.magic_areas.switch.base import SwitchBase
+
 from tests.const import DEFAULT_MOCK_AREA
 
 _LOGGER = logging.getLogger(__name__)

@@ -140,4 +140,3 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
             unique_id=self._attr_unique_id,
             entities=entities,
         )
-        delattr(self, "_attr_name")
