@@ -11,13 +11,15 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
     MagicAreasFeatureInfoLightGroups,
-    MagicAreasFeatureInfoMediaPlayerGroups,
     MagicAreasFeatures,
 )
 from custom_components.magic_areas.helpers.area import get_area_from_config_entry
 from custom_components.magic_areas.switch.base import SwitchBase
 from custom_components.magic_areas.switch.climate_control import ClimateControlSwitch
 from custom_components.magic_areas.switch.fan_control import FanControlSwitch
+from custom_components.magic_areas.switch.media_player_control import (
+    MediaPlayerControlSwitch,
+)
 from custom_components.magic_areas.switch.presence_hold import PresenceHoldSwitch
 from custom_components.magic_areas.util import cleanup_removed_entries
 
@@ -87,11 +89,4 @@ class LightControlSwitch(SwitchBase):
     """Switch to enable/disable light control."""
 
     feature_info = MagicAreasFeatureInfoLightGroups()
-    _attr_entity_category = EntityCategory.CONFIG
-
-
-class MediaPlayerControlSwitch(SwitchBase):
-    """Switch to enable/disable media player control."""
-
-    feature_info = MagicAreasFeatureInfoMediaPlayerGroups()
     _attr_entity_category = EntityCategory.CONFIG
