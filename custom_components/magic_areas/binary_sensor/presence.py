@@ -586,7 +586,7 @@ class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
         self._attr_device_class = BinarySensorDeviceClass.OCCUPANCY
         self._attr_extra_state_attributes = {}
         self._attr_is_on: bool = False
-        self.logger.warn("icon %s", self.area.icon)
+
         self._attr_icon: str = self.area.icon or self.feature_info.icons.get(
             BINARY_SENSOR_DOMAIN, EMPTY_STRING
         )
