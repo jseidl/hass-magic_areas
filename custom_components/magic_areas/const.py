@@ -95,6 +95,14 @@ LIGHT_GROUP_ACT_ON = {
 }
 
 
+class CalculationMode(StrEnum):
+    """Modes for calculating values."""
+
+    ANY = auto()
+    ALL = auto()
+    AVERAGE = auto()
+
+
 class LightGroupCategory(StrEnum):
     """Categories of light groups."""
 
@@ -932,6 +940,22 @@ SECONDARY_STATES_SCHEMA = vol.Schema(
     extra=vol.REMOVE_EXTRA,
 )
 
+META_AREA_SECONDARY_STATES_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_EXTENDED_TIME, default=DEFAULT_EXTENDED_TIME
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_EXTENDED_TIMEOUT, default=DEFAULT_EXTENDED_TIMEOUT
+        ): cv.positive_int,
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+
+
 # Basic Area Options Schema
 REGULAR_AREA_BASIC_OPTIONS_SCHEMA = vol.Schema(
     {
@@ -1032,6 +1056,9 @@ META_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT_META
         ): cv.positive_int,
+        vol.Optional(
+            CONF_SECONDARY_STATES, default={}
+        ): META_AREA_SECONDARY_STATES_SCHEMA,
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -1079,6 +1106,12 @@ OPTIONS_SECONDARY_STATES = [
     (CONF_DARK_ENTITY, "", cv.entity_id),
     (CONF_ACCENT_ENTITY, "", cv.entity_id),
     (CONF_SLEEP_ENTITY, "", cv.entity_id),
+    (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
+    (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
+    (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),
+]
+
+OPTIONS_SECONDARY_STATES_META = [
     (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
     (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
     (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),

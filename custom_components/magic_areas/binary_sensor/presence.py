@@ -1,6 +1,7 @@
 """Main presence tracking entity for Magic Areas."""
 
 import asyncio
+from collections import Counter
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 import logging
@@ -21,7 +22,7 @@ from homeassistant.helpers.event import (
 )
 
 from custom_components.magic_areas.base.entities import MagicEntity
-from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.base.magic import MagicArea, MagicMetaArea
 from custom_components.magic_areas.const import (
     ATTR_ACTIVE_SENSORS,
     ATTR_AREAS,
@@ -48,6 +49,7 @@ from custom_components.magic_areas.const import (
     PRESENCE_SENSOR_VALID_ON_STATES,
     UPDATE_INTERVAL,
     AreaStates,
+    CalculationMode,
     MagicAreasEvents,
     MagicAreasFeatureInfo,
     MagicAreasFeatureInfoPresenceTracking,
@@ -66,7 +68,7 @@ class AreaStateTrackerEntity(MagicEntity):
 
         MagicEntity.__init__(self, area, domain=BINARY_SENSOR_DOMAIN)
 
-        self.area: MagicArea = area
+        self.area: MagicArea | MagicMetaArea = area
 
         self._state: bool = False
 
@@ -338,6 +340,7 @@ class AreaStateTrackerEntity(MagicEntity):
                 self.area.last_changed,
             )
 
+        # Extended state
         seconds_since_last_change = (
             datetime.now(UTC) - self.area.last_changed
         ).total_seconds()
@@ -351,6 +354,68 @@ class AreaStateTrackerEntity(MagicEntity):
             and (seconds_since_last_change / ONE_MINUTE) >= extended_time
         ):
             states.append(AreaStates.EXTENDED)
+
+        # Secondary state
+        if self.area.is_meta():
+            states.extend(self._infer_secondary_states())
+        else:
+            states.extend(self._get_secondary_states())
+
+        return states
+
+    def _infer_secondary_states(self) -> list[AreaStates]:
+        """Return secondary states for an area through calculation."""
+
+        states: list[AreaStates] = []
+        mode: CalculationMode = CalculationMode.ANY  # Hardcoded for now
+
+        child_areas: list[str] = self.area.get_child_areas()
+        states_list: list[AreaStates] = []
+
+        for area_slug in child_areas:
+            area_entity_id: str = (
+                f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{area_slug}_area_state"
+            )
+            area_state = self.hass.states.get(area_entity_id)
+
+            if not area_state:
+                continue
+            if ATTR_STATES not in area_state.attributes:
+                continue
+
+            states_list.extend(area_state.attributes[ATTR_STATES])
+
+        state_counter = Counter(states_list)
+        child_area_count: int = len(child_areas)
+
+        for secondary_state in CONFIGURABLE_AREA_STATE_MAP:
+            if secondary_state not in state_counter:
+                continue
+
+            amt_states = state_counter[AreaStates(secondary_state)]
+
+            if mode == CalculationMode.ANY and amt_states > 0:
+                states.append(AreaStates(secondary_state))
+                continue
+
+            if mode == CalculationMode.ALL and amt_states == child_area_count:
+                states.append(AreaStates(secondary_state))
+                continue
+
+            if mode == CalculationMode.AVERAGE and amt_states >= (child_area_count / 2):
+                states.append(AreaStates(secondary_state))
+                continue
+
+        # Meta-state bright
+        if AreaStates.DARK not in states:
+            states.append(AreaStates.BRIGHT)
+
+        return states
+
+    def _get_secondary_states(self) -> list[AreaStates]:
+        """Return secondary states for an area."""
+
+        states: list[AreaStates] = []
 
         configurable_states = self._get_configured_secondary_states()
 
@@ -396,7 +461,7 @@ class AreaStateTrackerEntity(MagicEntity):
                     entity.state.lower(),
                     configurable_state,
                 )
-                states.append(configurable_state)
+                states.append(AreaStates(configurable_state))
 
         # Meta-state bright
         if AreaStates.DARK in configurable_states and AreaStates.DARK not in states:
@@ -577,7 +642,7 @@ class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
 
     # Init & Teardown
 
-    def __init__(self, area: MagicArea) -> None:
+    def __init__(self, area: MagicArea | MagicMetaArea) -> None:
         """Initialize the area presence binary sensor."""
 
         AreaStateTrackerEntity.__init__(self, area)

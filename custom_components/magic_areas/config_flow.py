@@ -130,6 +130,7 @@ from .const import (
     META_AREA_GLOBAL,
     META_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
     META_AREA_SCHEMA,
+    META_AREA_SECONDARY_STATES_SCHEMA,
     MODULE_DATA,
     NON_CONFIGURABLE_FEATURES_META,
     OPTIONS_AGGREGATES,
@@ -147,6 +148,7 @@ from .const import (
     OPTIONS_PRESENCE_TRACKING,
     OPTIONS_PRESENCE_TRACKING_META,
     OPTIONS_SECONDARY_STATES,
+    OPTIONS_SECONDARY_STATES_META,
     OPTIONS_WASP_IN_A_BOX,
     REGULAR_AREA_BASIC_OPTIONS_SCHEMA,
     REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
@@ -588,11 +590,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         menu_options: list = [
             "area_config",
             "presence_tracking",
+            "secondary_states",
             "select_features",
         ]
-
-        if not self.area.is_meta():
-            menu_options.insert(1, "secondary_states")
 
         # Add entries for features
         menu_options_features = []
@@ -779,7 +779,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 self.area.name,
                 str(user_input),
             )
-            area_state_schema = SECONDARY_STATES_SCHEMA
+            area_state_schema = (
+                META_AREA_SECONDARY_STATES_SCHEMA
+                if self.area.is_meta()
+                else SECONDARY_STATES_SCHEMA
+            )
             try:
                 self.area_options[CONF_SECONDARY_STATES].update(
                     area_state_schema(user_input)
@@ -810,7 +814,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         return self.async_show_form(
             step_id="secondary_states",
             data_schema=self._build_options_schema(
-                options=(OPTIONS_SECONDARY_STATES),
+                options=(
+                    OPTIONS_SECONDARY_STATES_META
+                    if self.area.is_meta()
+                    else OPTIONS_SECONDARY_STATES
+                ),
                 saved_options=self.area_options.get(CONF_SECONDARY_STATES, {}),
                 dynamic_validators={
                     CONF_DARK_ENTITY: vol.In(
