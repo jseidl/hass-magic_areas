@@ -6,7 +6,10 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
+from homeassistant.components.sensor.const import (
+    DOMAIN as SENSOR_DOMAIN,
+    SensorDeviceClass,
+)
 from homeassistant.components.threshold.binary_sensor import ThresholdSensor
 from homeassistant.const import ATTR_DEVICE_CLASS
 from homeassistant.helpers.entity import Entity
@@ -21,6 +24,7 @@ from custom_components.magic_areas.const import (
     DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD,
     DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS,
     DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES,
+    EMPTY_STRING,
     MagicAreasFeatureInfoThrehsold,
 )
 
@@ -125,7 +129,7 @@ class AreaThresholdSensor(MagicEntity, ThresholdSensor):
         ThresholdSensor.__init__(
             self,
             entity_id=entity_id,
-            name=None,
+            name=EMPTY_STRING,
             unique_id=self.unique_id,
             lower=lower,
             upper=upper,
