@@ -140,7 +140,6 @@ from .const import (
     OPTIONS_BLE_TRACKERS,
     OPTIONS_CLIMATE_CONTROL,
     OPTIONS_CLIMATE_CONTROL_ENTITY_SELECT,
-    OPTIONS_CLIMATE_CONTROL_META,
     OPTIONS_FAN_GROUP,
     OPTIONS_HEALTH_SENSOR,
     OPTIONS_LIGHT_GROUP,
@@ -1114,16 +1113,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             ),
         }
 
-        selected_options_schema = (
-            OPTIONS_CLIMATE_CONTROL_META
-            if self.area.is_meta()
-            else OPTIONS_CLIMATE_CONTROL
-        )
-
         return await self.do_feature_config(
             name=CONF_FEATURE_CLIMATE_CONTROL,
             step_name="feature_conf_climate_control_select_presets",
-            options=selected_options_schema,
+            options=OPTIONS_CLIMATE_CONTROL,
             custom_schema=CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT,
             merge_options=True,
             dynamic_validators={
