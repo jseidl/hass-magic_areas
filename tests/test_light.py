@@ -11,17 +11,15 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
-from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON, SERVICE_TURN_ON
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_ON, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 
 from custom_components.magic_areas.const import (
     CONF_ENABLED_FEATURES,
     CONF_FEATURE_LIGHT_GROUPS,
-    CONF_FEATURE_PRESENCE_HOLD,
     CONF_OVERHEAD_LIGHTS,
     CONF_OVERHEAD_LIGHTS_ACT_ON,
     CONF_OVERHEAD_LIGHTS_STATES,
-    CONF_PRESENCE_HOLD_TIMEOUT,
     DOMAIN,
     LIGHT_GROUP_ACT_ON_OCCUPANCY_CHANGE,
     AreaStates,
