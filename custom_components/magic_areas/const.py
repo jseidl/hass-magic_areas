@@ -100,7 +100,7 @@ class CalculationMode(StrEnum):
 
     ANY = auto()
     ALL = auto()
-    AVERAGE = auto()
+    MAJORITY = auto()
 
 
 class LightGroupCategory(StrEnum):
@@ -340,6 +340,7 @@ class SelectorTranslationKeys(StrEnum):
     AREA_TYPE = auto()
     AREA_STATES = auto()
     CONTROL_ON = auto()
+    CALCULATION_MODE = auto()
 
 
 ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]
@@ -940,6 +941,11 @@ SECONDARY_STATES_SCHEMA = vol.Schema(
     extra=vol.REMOVE_EXTRA,
 )
 
+CONF_SECONDARY_STATES_CALCULATION_MODE, DEFAULT_SECONDARY_STATES_CALCULATION_MODE = (
+    "calculation_mode",
+    CalculationMode.MAJORITY,
+)
+
 META_AREA_SECONDARY_STATES_SCHEMA = vol.Schema(
     {
         vol.Optional(
@@ -951,6 +957,10 @@ META_AREA_SECONDARY_STATES_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_EXTENDED_TIMEOUT, default=DEFAULT_EXTENDED_TIMEOUT
         ): cv.positive_int,
+        vol.Optional(
+            CONF_SECONDARY_STATES_CALCULATION_MODE,
+            default=DEFAULT_SECONDARY_STATES_CALCULATION_MODE,
+        ): vol.In(CalculationMode),
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -1115,6 +1125,11 @@ OPTIONS_SECONDARY_STATES_META = [
     (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
     (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
     (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),
+    (
+        CONF_SECONDARY_STATES_CALCULATION_MODE,
+        DEFAULT_SECONDARY_STATES_CALCULATION_MODE,
+        str,
+    ),
 ]
 
 OPTIONS_LIGHT_GROUP = [

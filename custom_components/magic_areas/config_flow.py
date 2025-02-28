@@ -104,6 +104,7 @@ from .const import (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_RELOAD_ON_REGISTRY_CHANGE,
     CONF_SECONDARY_STATES,
+    CONF_SECONDARY_STATES_CALCULATION_MODE,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
     CONF_SLEEP_LIGHTS_ACT_ON,
@@ -154,6 +155,7 @@ from .const import (
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
     WASP_IN_A_BOX_DEVICE_CLASSES,
+    CalculationMode,
     MagicAreasFeatures,
     MagicConfigEntryVersion,
     MetaAreaType,
@@ -231,11 +233,10 @@ class ConfigBase:
         self,
         options,
         *,
-        saved_options=None,
+        saved_options: dict | None = None,
         dynamic_validators=None,
         selectors=None,
-        raw=False,
-    ):
+    ) -> vol.Schema:
         """Build schema for configuration options."""
         _LOGGER.debug(
             "ConfigFlow: Building schema from options: %s - dynamic_validators: %s",
@@ -249,7 +250,7 @@ class ConfigBase:
         if not selectors:
             selectors = {}
 
-        if saved_options is None:
+        if saved_options is None and self.config_entry:
             saved_options = self.config_entry.options
 
         _LOGGER.debug(
@@ -262,7 +263,7 @@ class ConfigBase:
                 description={
                     "suggested_value": (
                         saved_options.get(name)
-                        if saved_options.get(name) is not None
+                        if saved_options and saved_options.get(name) is not None
                         else default
                     )
                 },
@@ -277,9 +278,6 @@ class ConfigBase:
 
         _LOGGER.debug("ConfigFlow: Built schema: %s", str(schema))
 
-        if raw:
-            return schema
-
         return vol.Schema(schema)
 
 
@@ -292,7 +290,7 @@ class NullableEntitySelector(EntitySelector):
         if data in (None, ""):
             return data
 
-        return super().__call__(data)
+        return super().__call__(data)  # type: ignore
 
 
 class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
@@ -825,6 +823,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     ),
                     CONF_SLEEP_ENTITY: vol.In(EMPTY_ENTRY + self.all_binary_entities),
                     CONF_ACCENT_ENTITY: vol.In(EMPTY_ENTRY + self.all_binary_entities),
+                    CONF_SECONDARY_STATES_CALCULATION_MODE: vol.In(CalculationMode),
                 },
                 selectors={
                     CONF_DARK_ENTITY: self._build_selector_entity_simple(
@@ -844,6 +843,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     ),
                     CONF_EXTENDED_TIMEOUT: self._build_selector_number(
                         unit_of_measurement="minutes"
+                    ),
+                    CONF_SECONDARY_STATES_CALCULATION_MODE: self._build_selector_select(
+                        options=list(CalculationMode),
+                        translation_key=SelectorTranslationKeys.CALCULATION_MODE,
                     ),
                 },
             ),

@@ -36,12 +36,14 @@ from custom_components.magic_areas.const import (
     CONF_EXTENDED_TIMEOUT,
     CONF_KEEP_ONLY_ENTITIES,
     CONF_SECONDARY_STATES,
+    CONF_SECONDARY_STATES_CALCULATION_MODE,
     CONF_SLEEP_TIMEOUT,
     CONF_TYPE,
     CONFIGURABLE_AREA_STATE_MAP,
     DEFAULT_CLEAR_TIMEOUT,
     DEFAULT_EXTENDED_TIME,
     DEFAULT_EXTENDED_TIMEOUT,
+    DEFAULT_SECONDARY_STATES_CALCULATION_MODE,
     DEFAULT_SLEEP_TIMEOUT,
     EMPTY_STRING,
     INVALID_STATES,
@@ -690,7 +692,12 @@ class MetaAreaStateBinarySensor(AreaStateBinarySensor):
         """Return secondary states for an area through calculation."""
 
         states: list[AreaStates] = []
-        mode: CalculationMode = CalculationMode.ANY  # Hardcoded for now
+        mode: CalculationMode = CalculationMode(
+            self.area.config.get(CONF_SECONDARY_STATES, {}).get(
+                CONF_SECONDARY_STATES_CALCULATION_MODE,
+                DEFAULT_SECONDARY_STATES_CALCULATION_MODE,
+            )
+        )
 
         child_areas: list[str] = self.area.get_child_areas()
         states_list: list[AreaStates] = []
@@ -725,7 +732,9 @@ class MetaAreaStateBinarySensor(AreaStateBinarySensor):
                 states.append(AreaStates(secondary_state))
                 continue
 
-            if mode == CalculationMode.AVERAGE and amt_states >= (child_area_count / 2):
+            if mode == CalculationMode.MAJORITY and amt_states >= (
+                child_area_count / 2
+            ):
                 states.append(AreaStates(secondary_state))
                 continue
 

@@ -190,14 +190,21 @@
         "description": "You can enable [secondary states](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) for a Magic Area by assigning an entity to it. Secondary states are used by features for turning lights on only when it's dark or only turning on climate devices after an `extended` period of time or not sending notifications to an area if it's on `sleep`.",
         "data": {
           "dark_entity": "Area's light sensor",
+          "sleep_entity": "Sleep state entity",
+          "sleep_timeout": "Clear timeout (Sleep)",
+          "accent_entity": "Accented state entity",
+          "extended_time": "Extended state time required",
+          "extended_timeout": "Clear timeout (Extended)",
+          "calculation_mode": "Secondary state calculation mode"
+        },
+        "data_description": {
+          "dark_entity": "The area's light sensor will be used to track an area `bright`/`dark` status which is used by features such as Light groups to turn on/off your lights according to the room brightness state.\n\n**Avoid using a `light` sensor in the same area as it may cause a feedback loop.** It is recommended to use either `sun.sun` or an exterior `light` sensor that won't be affected by the lights being controlled.",
           "sleep_entity": "Entity used to track area sleep state",
           "sleep_timeout": "How long area will wait before clearing the state when on sleep state",
           "accent_entity": "Entity used to track area accented state",
           "extended_time": "Area will be marked as 'extended' after being occupied for this long",
-          "extended_timeout": "How long area will wait before clearing the state when on extended state"
-        },
-        "data_description": {
-          "dark_entity": "The area's light sensor will be used to track an area `bright`/`dark` status which is used by features such as Light groups to turn on/off your lights according to the room brightness state.\n\n**Avoid using a `light` sensor in the same area as it may cause a feedback loop.** It is recommended to use either `sun.sun` or an exterior `light` sensor that won't be affected by the lights being controlled."
+          "extended_timeout": "How long area will wait before clearing the state when on extended state",
+          "calculation_mode": "Mode of calculating the meta-area secondary states from their children. 'Any' means if any area has the state, 'All' means all areas have to have the state and 'Majority' means >50% of the areas have to have the state."
         }
       },
       "area_config": {
@@ -426,6 +433,13 @@
       "options": {
         "occupancy": "When area goes from clear to occupied",
         "state": "When secondary state changes"
+      }
+    },
+    "calculation_mode": {
+      "options": {
+        "any": "Any",
+        "all": "All",
+        "majority": "Majority"
       }
     }
   },
