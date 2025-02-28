@@ -1,5 +1,7 @@
 """Climate control feature switch."""
 
+import logging
+
 from homeassistant.components.climate.const import (
     ATTR_PRESET_MODE,
     DOMAIN as CLIMATE_DOMAIN,
@@ -25,6 +27,8 @@ from custom_components.magic_areas.const import (
     MagicAreasFeatures,
 )
 from custom_components.magic_areas.switch.base import SwitchBase
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class ClimateControlSwitch(SwitchBase):
@@ -88,6 +92,15 @@ class ClimateControlSwitch(SwitchBase):
 
         if not self.is_on:
             self.logger.debug("%s: Control disabled. Skipping.", self.name)
+            return
+
+        if area_id != self.area.id:
+            _LOGGER.debug(
+                "%s: Area state change event not for us. Skipping. (event: %s/self: %s)",
+                self.name,
+                area_id,
+                self.area.id,
+            )
             return
 
         priority_states: list[str] = [
