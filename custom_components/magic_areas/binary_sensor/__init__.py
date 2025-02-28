@@ -13,11 +13,11 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.magic_areas.base.magic import MagicArea
-from custom_components.magic_areas.base.presence import AreaStateBinarySensor
 from custom_components.magic_areas.binary_sensor.base import AreaSensorGroupBinarySensor
 from custom_components.magic_areas.binary_sensor.ble_tracker import (
     AreaBLETrackerBinarySensor,
 )
+from custom_components.magic_areas.binary_sensor.presence import AreaStateBinarySensor
 from custom_components.magic_areas.binary_sensor.wasp_in_a_box import (
     AreaWaspInABoxBinarySensor,
 )

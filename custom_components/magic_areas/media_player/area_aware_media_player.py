@@ -2,10 +2,8 @@
 
 import logging
 
-from homeassistant.components.media_player import (
-    MediaPlayerEntity,
-)
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.media_player import MediaPlayerEntity
 from homeassistant.components.media_player.const import (
     ATTR_MEDIA_CONTENT_ID,
     ATTR_MEDIA_CONTENT_TYPE,
@@ -13,17 +11,17 @@ from homeassistant.components.media_player.const import (
     SERVICE_PLAY_MEDIA,
     MediaPlayerEntityFeature,
 )
-from homeassistant.const import STATE_IDLE, STATE_ON, ATTR_ENTITY_ID
-from custom_components.magic_areas.base.entities import MagicEntity
+from homeassistant.const import ATTR_ENTITY_ID, STATE_IDLE, STATE_ON
 
+from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.const import (
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
     DEFAULT_NOTIFICATION_DEVICES,
     DEFAULT_NOTIFY_STATES,
+    AreaStates,
     MagicAreasFeatureInfoAreaAwareMediaPlayer,
     MagicAreasFeatures,
-    AreaStates,
 )
 
 _LOGGER = logging.getLogger(__name__)
