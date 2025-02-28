@@ -662,7 +662,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         all_selectors = {
             CONF_TYPE: self._build_selector_select(
-                sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR])
+                sorted([AREA_TYPE_INTERIOR, AREA_TYPE_EXTERIOR]),
+                translation_key=SelectorTranslationKeys.AREA_TYPE,
             ),
             CONF_INCLUDE_ENTITIES: self._build_selector_entity_simple(
                 self.all_entities, multiple=True
@@ -940,37 +941,53 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     self.all_lights, multiple=True
                 ),
                 CONF_OVERHEAD_LIGHTS_STATES: self._build_selector_select(
-                    available_states, multiple=True
+                    available_states,
+                    multiple=True,
+                    translation_key=SelectorTranslationKeys.AREA_STATES,
                 ),
                 CONF_OVERHEAD_LIGHTS_ACT_ON: self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                    LIGHT_GROUP_ACT_ON_OPTIONS,
+                    multiple=True,
+                    translation_key=SelectorTranslationKeys.CONTROL_ON,
                 ),
                 CONF_SLEEP_LIGHTS: self._build_selector_entity_simple(
                     self.all_lights, multiple=True
                 ),
                 CONF_SLEEP_LIGHTS_STATES: self._build_selector_select(
-                    available_states, multiple=True
+                    available_states,
+                    multiple=True,
+                    translation_key=SelectorTranslationKeys.AREA_STATES,
                 ),
                 CONF_SLEEP_LIGHTS_ACT_ON: self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                    LIGHT_GROUP_ACT_ON_OPTIONS,
+                    multiple=True,
+                    translation_key=SelectorTranslationKeys.CONTROL_ON,
                 ),
                 CONF_ACCENT_LIGHTS: self._build_selector_entity_simple(
                     self.all_lights, multiple=True
                 ),
                 CONF_ACCENT_LIGHTS_STATES: self._build_selector_select(
-                    available_states, multiple=True
+                    available_states,
+                    multiple=True,
+                    translation_key=SelectorTranslationKeys.AREA_STATES,
                 ),
                 CONF_ACCENT_LIGHTS_ACT_ON: self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                    LIGHT_GROUP_ACT_ON_OPTIONS,
+                    multiple=True,
+                    translation_key=SelectorTranslationKeys.CONTROL_ON,
                 ),
                 CONF_TASK_LIGHTS: self._build_selector_entity_simple(
                     self.all_lights, multiple=True
                 ),
                 CONF_TASK_LIGHTS_STATES: self._build_selector_select(
-                    available_states, multiple=True
+                    available_states,
+                    multiple=True,
+                    translation_key=SelectorTranslationKeys.AREA_STATES,
                 ),
                 CONF_TASK_LIGHTS_ACT_ON: self._build_selector_select(
-                    LIGHT_GROUP_ACT_ON_OPTIONS, multiple=True
+                    LIGHT_GROUP_ACT_ON_OPTIONS,
+                    multiple=True,
+                    translation_key=SelectorTranslationKeys.CONTROL_ON,
                 ),
             },
             user_input=user_input,
@@ -1155,7 +1172,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     self.all_media_players, multiple=True
                 ),
                 CONF_NOTIFY_STATES: self._build_selector_select(
-                    available_states, multiple=True
+                    available_states,
+                    multiple=True,
+                    translation_key=SelectorTranslationKeys.AREA_STATES,
                 ),
             },
             user_input=user_input,

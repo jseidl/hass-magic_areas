@@ -327,6 +327,9 @@ class SelectorTranslationKeys(StrEnum):
     """Translation keys for config flow UI selectors."""
 
     CLIMATE_PRESET_LIST = auto()
+    AREA_TYPE = auto()
+    AREA_STATES = auto()
+    CONTROL_ON = auto()
 
 
 ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]
