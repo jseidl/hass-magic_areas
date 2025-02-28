@@ -88,6 +88,15 @@ class FanControlSwitch(SwitchBase):
     async def area_state_changed(self, area_id, states_tuple):
         """Handle area state change event."""
 
+        if area_id != self.area.id:
+            _LOGGER.debug(
+                "%s: Area state change event not for us. Skipping. (event: %s/self: %s)",
+                self.name,
+                area_id,
+                self.area.id,
+            )
+            return
+
         # pylint: disable-next=unused-variable
         new_states, lost_states = states_tuple
         await self.run_logic(states=new_states)

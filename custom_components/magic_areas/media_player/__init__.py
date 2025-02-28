@@ -177,7 +177,7 @@ class AreaMediaPlayerGroup(MagicEntity, MediaPlayerGroup):
 
         if area_id != self.area.id:
             _LOGGER.debug(
-                "%s: Area state change event not for us. Skipping. (req: %s/self: %s)",
+                "%s: Area state change event not for us. Skipping. (event: %s/self: %s)",
                 self.name,
                 area_id,
                 self.area.id,
