@@ -10,17 +10,7 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
-from homeassistant.components.climate.const import (
-    DOMAIN as CLIMATE_DOMAIN,
-    PRESET_ACTIVITY,
-    PRESET_AWAY,
-    PRESET_BOOST,
-    PRESET_COMFORT,
-    PRESET_ECO,
-    PRESET_HOME,
-    PRESET_NONE,
-    PRESET_SLEEP,
-)
+from homeassistant.components.climate.const import DOMAIN as CLIMATE_DOMAIN
 from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.components.device_tracker.const import (
     DOMAIN as DEVICE_TRACKER_DOMAIN,
@@ -627,32 +617,22 @@ CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT = (
 )  # cv.int
 
 # Climate control options
-CLIMATE_CONTROL_AVAILABLE_PRESETS = [
-    PRESET_NONE,
-    PRESET_HOME,
-    PRESET_AWAY,
-    PRESET_ECO,
-    PRESET_COMFORT,
-    PRESET_ACTIVITY,
-    PRESET_BOOST,
-    PRESET_SLEEP,
-]
 CONF_CLIMATE_CONTROL_ENTITY_ID, DEFAULT_CLIMATE_CONTROL_ENTITY_ID = ("entity_id", None)
 CONF_CLIMATE_CONTROL_PRESET_CLEAR, DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR = (
     "preset_clear",
-    PRESET_AWAY,
+    EMPTY_STRING,
 )
 CONF_CLIMATE_CONTROL_PRESET_OCCUPIED, DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED = (
     "preset_occupied",
-    PRESET_NONE,
+    EMPTY_STRING,
 )
 CONF_CLIMATE_CONTROL_PRESET_EXTENDED, DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED = (
     "preset_extended",
-    PRESET_HOME,
+    EMPTY_STRING,
 )
 CONF_CLIMATE_CONTROL_PRESET_SLEEP, DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP = (
     "preset_sleep",
-    PRESET_SLEEP,
+    EMPTY_STRING,
 )
 
 # Fan Group options

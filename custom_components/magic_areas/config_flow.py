@@ -250,6 +250,7 @@ class ConfigBase:
 
         if saved_options is None:
             saved_options = self.config_entry.options
+
         _LOGGER.debug(
             "ConfigFlow: Data for pre-populating fields: %s", str(saved_options)
         )
@@ -1016,6 +1017,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             name=MagicAreasFeatures.CLIMATE_CONTROL,
             options=OPTIONS_CLIMATE_CONTROL_ENTITY_SELECT,
             custom_schema=CLIMATE_CONTROL_FEATURE_SCHEMA_ENTITY_SELECT,
+            merge_options=True,
             dynamic_validators={
                 CONF_CLIMATE_CONTROL_ENTITY_ID: vol.In(all_climate_entities),
             },
@@ -1061,7 +1063,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             return self.async_abort(reason="climate_no_preset_support")
 
         available_preset_modes = entity_object.capabilities[ATTR_PRESET_MODES]
-        _LOGGER.warning(
+        _LOGGER.debug(
             "OptionsFlow (%s): Available preset modes for %s: %s",
             self.area.name,
             climate_entity_id,
@@ -1098,6 +1100,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             step_name="feature_conf_climate_control_select_presets",
             options=selected_options_schema,
             custom_schema=CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT,
+            merge_options=True,
             dynamic_validators={
                 CONF_CLIMATE_CONTROL_PRESET_CLEAR: vol.In(
                     EMPTY_ENTRY + available_preset_modes
@@ -1257,7 +1260,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         user_input=None,
         custom_schema=None,
         return_to=None,
-        merge=True,
+        merge_options=False,
         step_name=None,
     ):
         """Execute step for a generic feature."""
@@ -1281,8 +1284,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     validated_input = custom_schema(user_input)
                 else:
                     if not CONFIGURABLE_FEATURES[name]:
-                        # raise ValueError(f"No schema found for {name}")
-                        _LOGGER.error("NO THING FOR %s", name)
+                        raise ValueError(f"No schema found for {name}")
                     validated_input = CONFIGURABLE_FEATURES[name](user_input)
             except vol.MultipleInvalid as validation:
                 errors = {
@@ -1302,8 +1304,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     self.area.name,
                     str(validated_input),
                 )
-                if merge:
-                    _LOGGER.warning("MERGE")
+                if merge_options:
                     if name not in self.area_options[CONF_ENABLED_FEATURES]:
                         self.area_options[CONF_ENABLED_FEATURES][name] = {}
 
@@ -1312,9 +1313,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     )
                 else:
                     self.area_options[CONF_ENABLED_FEATURES][name] = validated_input
-                    _LOGGER.warning("NO MERGE")
 
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "%s: Area options for %s: %s",
                     self.area.name,
                     name,

@@ -23,6 +23,8 @@ from homeassistant.core import HomeAssistant
 
 from custom_components.magic_areas.const import (
     CONF_CLIMATE_CONTROL_ENTITY_ID,
+    CONF_CLIMATE_CONTROL_PRESET_CLEAR,
+    CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
     CONF_ENABLED_FEATURES,
     DOMAIN,
     MagicAreasFeatures,
@@ -63,6 +65,8 @@ def mock_config_entry_climate_control() -> MockConfigEntry:
             CONF_ENABLED_FEATURES: {
                 MagicAreasFeatures.CLIMATE_CONTROL: {
                     CONF_CLIMATE_CONTROL_ENTITY_ID: MOCK_CLIMATE_ENTITY_ID,
+                    CONF_CLIMATE_CONTROL_PRESET_OCCUPIED: PRESET_NONE,
+                    CONF_CLIMATE_CONTROL_PRESET_CLEAR: PRESET_AWAY,
                 },
             }
         }
