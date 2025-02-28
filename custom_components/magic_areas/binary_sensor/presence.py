@@ -42,12 +42,14 @@ from custom_components.magic_areas.const import (
     DEFAULT_EXTENDED_TIME,
     DEFAULT_EXTENDED_TIMEOUT,
     DEFAULT_SLEEP_TIMEOUT,
+    EMPTY_STRING,
     INVALID_STATES,
     ONE_MINUTE,
     PRESENCE_SENSOR_VALID_ON_STATES,
     UPDATE_INTERVAL,
     AreaStates,
     MagicAreasEvents,
+    MagicAreasFeatureInfo,
     MagicAreasFeatureInfoPresenceTracking,
 )
 
@@ -571,7 +573,7 @@ class AreaStateTrackerEntity(MagicEntity):
 class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
     """Create an area presence presence sensor entity that tracks the current occupied state."""
 
-    feature_info = MagicAreasFeatureInfoPresenceTracking()
+    feature_info: MagicAreasFeatureInfo = MagicAreasFeatureInfoPresenceTracking()
 
     # Init & Teardown
 
@@ -584,6 +586,10 @@ class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
         self._attr_device_class = BinarySensorDeviceClass.OCCUPANCY
         self._attr_extra_state_attributes = {}
         self._attr_is_on: bool = False
+
+        self._attr_icon: str = self.area.icon or self.feature_info.icons.get(
+            BINARY_SENSOR_DOMAIN, EMPTY_STRING
+        )
 
     async def async_added_to_hass(self) -> None:
         """Call to add the system to hass."""
@@ -623,16 +629,6 @@ class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
             self._attr_extra_state_attributes = dict(last_state.attributes)
 
         self.schedule_update_ha_state()
-
-    # Binary sensor overrides
-
-    @property
-    def icon(self):
-        """Return the icon to be used for this entity."""
-        default_icon = None
-        if self.feature_info:
-            self.feature_info.icons.get(BINARY_SENSOR_DOMAIN, None)
-        return self.area.icon or default_icon
 
     # Helpers
 

@@ -77,7 +77,7 @@ class MagicArea:
         self.hass: HomeAssistant = hass
         self.name: str = area.name
         # Default to the icon for the area.
-        self.icon: str = area.icon or "mdi:room"
+        self.icon: str | None = area.icon
         self.id: str = area.id
         self.slug: str = slugify(self.name)
         self.hass_config: ConfigEntry = config
