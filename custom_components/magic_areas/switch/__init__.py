@@ -38,7 +38,7 @@ async def async_setup_entry(
 
     switch_entities = []
 
-    if area.has_feature(MagicAreasFeatures.PRESENCE_HOLD):
+    if area.has_feature(MagicAreasFeatures.PRESENCE_HOLD) and not area.is_meta():
         try:
             switch_entities.append(PresenceHoldSwitch(area))
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -46,7 +46,7 @@ async def async_setup_entry(
                 "%s: Error loading presence hold switch: %s", area.name, str(e)
             )
 
-    if area.has_feature(MagicAreasFeatures.LIGHT_GROUPS):
+    if area.has_feature(MagicAreasFeatures.LIGHT_GROUPS) and not area.is_meta():
         try:
             switch_entities.append(LightControlSwitch(area))
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -54,7 +54,7 @@ async def async_setup_entry(
                 "%s: Error loading light control switch: %s", area.name, str(e)
             )
 
-    if area.has_feature(MagicAreasFeatures.MEDIA_PLAYER_GROUPS):
+    if area.has_feature(MagicAreasFeatures.MEDIA_PLAYER_GROUPS) and not area.is_meta():
         try:
             switch_entities.append(MediaPlayerControlSwitch(area))
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -62,7 +62,7 @@ async def async_setup_entry(
                 "%s: Error loading media player control switch: %s", area.name, str(e)
             )
 
-    if area.has_feature(MagicAreasFeatures.FAN_GROUPS):
+    if area.has_feature(MagicAreasFeatures.FAN_GROUPS) and not area.is_meta():
         try:
             switch_entities.append(FanControlSwitch(area))
         except Exception as e:  # pylint: disable=broad-exception-caught
