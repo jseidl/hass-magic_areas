@@ -15,7 +15,15 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import ClimateEntityFeature, HVACMode
+from homeassistant.components.climate.const import (
+    PRESET_AWAY,
+    PRESET_ECO,
+    PRESET_HOME,
+    PRESET_NONE,
+    PRESET_SLEEP,
+    ClimateEntityFeature,
+    HVACMode,
+)
 from homeassistant.components.cover import CoverEntity, CoverEntityFeature
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.components.light import ColorMode, LightEntity
@@ -33,10 +41,12 @@ from homeassistant.const import (
     STATE_OPEN,
     STATE_OPENING,
     STATE_PLAYING,
+    EntityCategory,
+    UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry, DeviceInfo
-from homeassistant.helpers.entity import Entity, EntityCategory, ToggleEntity
+from homeassistant.helpers.entity import Entity, ToggleEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -619,12 +629,26 @@ class MockClimate(MockEntity, ClimateEntity):
     _attr_state = STATE_OFF
     _attr_hvac_mode = HVACMode.OFF
     _attr_hvac_modes = [HVACMode.AUTO, HVACMode.HEAT_COOL, HVACMode.OFF]
-    _attr_temperature_unit = "°C"
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature = 70
     _attr_current_temperature = 70
     _attr_supported_features = (
-        ClimateEntityFeature.TURN_OFF | ClimateEntityFeature.TURN_ON
+        ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.PRESET_MODE
     )
+    _attr_preset_modes = [
+        PRESET_NONE,
+        PRESET_HOME,
+        PRESET_AWAY,
+        PRESET_SLEEP,
+        PRESET_ECO,
+    ]
+    _attr_preset_mode = PRESET_NONE
+
+    def set_preset_mode(self, preset_mode: str) -> None:
+        """Set the preset mode."""
+        self._attr_preset_mode = preset_mode
 
     def turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""

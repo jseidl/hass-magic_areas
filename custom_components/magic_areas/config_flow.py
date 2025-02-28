@@ -10,18 +10,30 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
+from homeassistant.components.climate.const import (
+    ATTR_PRESET_MODES,
+    DOMAIN as CLIMATE_DOMAIN,
+)
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN
-from homeassistant.const import ATTR_DEVICE_CLASS, CONF_NAME
+from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.area_registry import async_get as areareg_async_get
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.entity_registry import async_get as entityreg_async_get
 from homeassistant.helpers.floor_registry import async_get as floorreg_async_get
 from homeassistant.helpers.selector import (
+    BooleanSelector,
+    BooleanSelectorConfig,
     EntitySelector,
     EntitySelectorConfig,
-    selector,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
 )
 from homeassistant.util import slugify
 
@@ -39,6 +51,8 @@ from .const import (
     AREA_TYPE_INTERIOR,
     AREA_TYPE_META,
     BUILTIN_AREA_STATES,
+    CLIMATE_CONTROL_FEATURE_SCHEMA_ENTITY_SELECT,
+    CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT,
     CONF_ACCENT_ENTITY,
     CONF_ACCENT_LIGHTS,
     CONF_ACCENT_LIGHTS_ACT_ON,
@@ -50,7 +64,11 @@ from .const import (
     CONF_AGGREGATES_SENSOR_DEVICE_CLASSES,
     CONF_BLE_TRACKER_ENTITIES,
     CONF_CLEAR_TIMEOUT,
-    CONF_CLIMATE_GROUPS_TURN_ON_STATE,
+    CONF_CLIMATE_CONTROL_ENTITY_ID,
+    CONF_CLIMATE_CONTROL_PRESET_CLEAR,
+    CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+    CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+    CONF_CLIMATE_CONTROL_PRESET_SLEEP,
     CONF_DARK_ENTITY,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
@@ -62,7 +80,7 @@ from .const import (
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_BLE_TRACKERS,
-    CONF_FEATURE_CLIMATE_GROUPS,
+    CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_FAN_GROUPS,
     CONF_FEATURE_HEALTH,
     CONF_FEATURE_LIGHT_GROUPS,
@@ -119,8 +137,9 @@ from .const import (
     OPTIONS_AREA_AWARE_MEDIA_PLAYER,
     OPTIONS_AREA_META,
     OPTIONS_BLE_TRACKERS,
-    OPTIONS_CLIMATE_GROUP,
-    OPTIONS_CLIMATE_GROUP_META,
+    OPTIONS_CLIMATE_CONTROL,
+    OPTIONS_CLIMATE_CONTROL_ENTITY_SELECT,
+    OPTIONS_CLIMATE_CONTROL_META,
     OPTIONS_FAN_GROUP,
     OPTIONS_HEALTH_SENSOR,
     OPTIONS_LIGHT_GROUP,
@@ -134,8 +153,10 @@ from .const import (
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
     WASP_IN_A_BOX_DEVICE_CLASSES,
+    MagicAreasFeatures,
     MagicConfigEntryVersion,
     MetaAreaType,
+    SelectorTranslationKeys,
 )
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.helpers.area import (
@@ -157,14 +178,22 @@ class ConfigBase:
     # Selector builder
     def _build_selector_boolean(self):
         """Build a boolean toggle selector."""
-        return selector({"boolean": {}})
+        return BooleanSelector(BooleanSelectorConfig())
 
-    def _build_selector_select(self, options=None, multiple=False):
+    def _build_selector_select(
+        self, options=None, multiple=False, translation_key=EMPTY_STRING
+    ):
         """Build a <select> selector."""
         if not options:
             options = []
-        return selector(
-            {"select": {"options": options, "multiple": multiple, "mode": "dropdown"}}
+
+        return SelectSelector(
+            SelectSelectorConfig(
+                options=options,
+                multiple=multiple,
+                mode=SelectSelectorMode.DROPDOWN,
+                translation_key=translation_key,
+            )
         )
 
     def _build_selector_entity_simple(
@@ -180,23 +209,21 @@ class ConfigBase:
     def _build_selector_number(
         self,
         *,
-        min_value: int | float = 0,
-        max_value: int | float = 9999,
-        mode="box",
-        step: int | float = 1,
-        unit_of_measurement="seconds",
+        min_value: float = 0,
+        max_value: float = 9999,
+        mode: NumberSelectorMode = NumberSelectorMode.BOX,
+        step: float = 1,
+        unit_of_measurement: str = "seconds",
     ):
         """Build a number selector."""
-        return selector(
-            {
-                "number": {
-                    "min": min_value,
-                    "max": max_value,
-                    "step": step,
-                    "mode": mode,
-                    "unit_of_measurement": unit_of_measurement,
-                }
-            }
+        return NumberSelector(
+            NumberSelectorConfig(
+                min=min_value,
+                max=max_value,
+                mode=mode,
+                step=step,
+                unit_of_measurement=unit_of_measurement,
+            )
         )
 
     def _build_options_schema(
@@ -223,6 +250,7 @@ class ConfigBase:
 
         if saved_options is None:
             saved_options = self.config_entry.options
+
         _LOGGER.debug(
             "ConfigFlow: Data for pre-populating fields: %s", str(saved_options)
         )
@@ -973,28 +1001,121 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             user_input=user_input,
         )
 
-    async def async_step_feature_conf_climate_groups(self, user_input=None):
-        """Configure the climate groups feature."""
+    async def async_step_feature_conf_climate_control(self, user_input=None):
+        """Configure the climate control feature."""
 
-        available_states = [AREA_STATE_OCCUPIED, AREA_STATE_EXTENDED]
+        all_climate_entities = [
+            entity_id
+            for entity_id in self.all_entities
+            if (
+                entity_id.split(".")[0] == CLIMATE_DOMAIN
+                and not entity_id.split(".")[1].startswith(MAGICAREAS_UNIQUEID_PREFIX)
+            )
+        ]
 
         return await self.do_feature_config(
-            name=CONF_FEATURE_CLIMATE_GROUPS,
-            options=(
-                OPTIONS_CLIMATE_GROUP
-                if not self.area.is_meta()
-                else OPTIONS_CLIMATE_GROUP_META
-            ),
+            name=MagicAreasFeatures.CLIMATE_CONTROL,
+            options=OPTIONS_CLIMATE_CONTROL_ENTITY_SELECT,
+            custom_schema=CLIMATE_CONTROL_FEATURE_SCHEMA_ENTITY_SELECT,
+            merge_options=True,
             dynamic_validators={
-                CONF_CLIMATE_GROUPS_TURN_ON_STATE: vol.In(
-                    EMPTY_ENTRY + available_states
-                ),
+                CONF_CLIMATE_CONTROL_ENTITY_ID: vol.In(all_climate_entities),
             },
             selectors={
-                CONF_CLIMATE_GROUPS_TURN_ON_STATE: self._build_selector_select(
-                    EMPTY_ENTRY + available_states
+                CONF_CLIMATE_CONTROL_ENTITY_ID: self._build_selector_entity_simple(
+                    all_climate_entities
                 )
             },
+            user_input=user_input,
+            return_to=self.async_step_feature_conf_climate_control_select_presets,
+        )
+
+    async def async_step_feature_conf_climate_control_select_presets(
+        self, user_input=None
+    ):
+        """Configure the climate control feature."""
+
+        climate_entity_id: str | None = None
+
+        if (
+            ATTR_ENTITY_ID
+            in self.area_options[CONF_ENABLED_FEATURES][
+                MagicAreasFeatures.CLIMATE_CONTROL
+            ]
+        ):
+            climate_entity_id = self.area_options[CONF_ENABLED_FEATURES][
+                MagicAreasFeatures.CLIMATE_CONTROL
+            ][ATTR_ENTITY_ID]
+
+        if not climate_entity_id:
+            return self.async_abort(reason="no_entity_selected")
+
+        entity_registry = entityreg_async_get(self.hass)
+        entity_object = entity_registry.async_get(climate_entity_id)
+
+        if not entity_object:
+            return self.async_abort(reason="invalid_entity")
+
+        if (
+            not entity_object.capabilities
+            or ATTR_PRESET_MODES not in entity_object.capabilities
+        ):
+            return self.async_abort(reason="climate_no_preset_support")
+
+        available_preset_modes = entity_object.capabilities[ATTR_PRESET_MODES]
+        _LOGGER.debug(
+            "OptionsFlow (%s): Available preset modes for %s: %s",
+            self.area.name,
+            climate_entity_id,
+            str(available_preset_modes),
+        )
+
+        selectors = {
+            CONF_CLIMATE_CONTROL_PRESET_CLEAR: self._build_selector_select(
+                EMPTY_ENTRY + available_preset_modes,
+                translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
+            ),
+            CONF_CLIMATE_CONTROL_PRESET_OCCUPIED: self._build_selector_select(
+                EMPTY_ENTRY + available_preset_modes,
+                translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
+            ),
+            CONF_CLIMATE_CONTROL_PRESET_SLEEP: self._build_selector_select(
+                EMPTY_ENTRY + available_preset_modes,
+                translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
+            ),
+            CONF_CLIMATE_CONTROL_PRESET_EXTENDED: self._build_selector_select(
+                EMPTY_ENTRY + available_preset_modes,
+                translation_key=SelectorTranslationKeys.CLIMATE_PRESET_LIST,
+            ),
+        }
+
+        selected_options_schema = (
+            OPTIONS_CLIMATE_CONTROL_META
+            if self.area.is_meta()
+            else OPTIONS_CLIMATE_CONTROL
+        )
+
+        return await self.do_feature_config(
+            name=CONF_FEATURE_CLIMATE_CONTROL,
+            step_name="feature_conf_climate_control_select_presets",
+            options=selected_options_schema,
+            custom_schema=CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT,
+            merge_options=True,
+            dynamic_validators={
+                CONF_CLIMATE_CONTROL_PRESET_CLEAR: vol.In(
+                    EMPTY_ENTRY + available_preset_modes
+                ),
+                CONF_CLIMATE_CONTROL_PRESET_OCCUPIED: vol.In(
+                    EMPTY_ENTRY + available_preset_modes
+                ),
+                CONF_CLIMATE_CONTROL_PRESET_SLEEP: vol.In(
+                    EMPTY_ENTRY + available_preset_modes
+                ),
+                CONF_CLIMATE_CONTROL_PRESET_EXTENDED: vol.In(
+                    EMPTY_ENTRY + available_preset_modes
+                ),
+            },
+            selectors=selectors,
             user_input=user_input,
         )
 
@@ -1130,7 +1251,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         )
 
     async def do_feature_config(
-        self, *, name, options, dynamic_validators=None, selectors=None, user_input=None
+        self,
+        *,
+        name,
+        options,
+        dynamic_validators=None,
+        selectors=None,
+        user_input=None,
+        custom_schema=None,
+        return_to=None,
+        merge_options=False,
+        step_name=None,
     ):
         """Execute step for a generic feature."""
         errors = {}
@@ -1149,7 +1280,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 str(user_input),
             )
             try:
-                validated_input = CONFIGURABLE_FEATURES[name](user_input)
+                if custom_schema:
+                    validated_input = custom_schema(user_input)
+                else:
+                    if not CONFIGURABLE_FEATURES[name]:
+                        raise ValueError(f"No schema found for {name}")
+                    validated_input = CONFIGURABLE_FEATURES[name](user_input)
             except vol.MultipleInvalid as validation:
                 errors = {
                     error.path[0]: "malformed_input" for error in validation.errors
@@ -1168,7 +1304,26 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     self.area.name,
                     str(validated_input),
                 )
-                self.area_options[CONF_ENABLED_FEATURES][name] = validated_input
+                if merge_options:
+                    if name not in self.area_options[CONF_ENABLED_FEATURES]:
+                        self.area_options[CONF_ENABLED_FEATURES][name] = {}
+
+                    self.area_options[CONF_ENABLED_FEATURES][name].update(
+                        validated_input
+                    )
+                else:
+                    self.area_options[CONF_ENABLED_FEATURES][name] = validated_input
+
+                _LOGGER.debug(
+                    "%s: Area options for %s: %s",
+                    self.area.name,
+                    name,
+                    self.area_options[CONF_ENABLED_FEATURES][name],
+                )
+
+                if return_to:
+                    return await return_to()
+
                 return await self.async_step_show_menu()
 
         _LOGGER.debug(
@@ -1179,8 +1334,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
         saved_options = self.area_options.get(CONF_ENABLED_FEATURES, {})
 
+        if not step_name:
+            step_name = f"feature_conf_{name}"
+
         return self.async_show_form(
-            step_id=f"feature_conf_{name}",
+            step_id=step_name,
             data_schema=self._build_options_schema(
                 options=options,
                 saved_options=saved_options.get(name, {}),

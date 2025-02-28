@@ -1,6 +1,6 @@
 """Constants for Magic Areas."""
 
-from enum import IntEnum, StrEnum
+from enum import IntEnum, StrEnum, auto
 from itertools import chain
 
 import voluptuous as vol
@@ -250,12 +250,11 @@ class MagicAreasFeatureInfoLightGroups(MagicAreasFeatureInfo):
     icons = {SWITCH_DOMAIN: "mdi:lightbulb-auto-outline"}
 
 
-class MagicAreasFeatureInfoClimateGroups(MagicAreasFeatureInfo):
-    """Feature information for feature: Climate groups."""
+class MagicAreasFeatureInfoClimateControl(MagicAreasFeatureInfo):
+    """Feature information for feature: Climate control."""
 
-    id = "climate_groups"
+    id = "climate_control"
     translation_keys = {
-        CLIMATE_DOMAIN: "climate_group",
         SWITCH_DOMAIN: "climate_control",
     }
     icons = {SWITCH_DOMAIN: "mdi:thermostat-auto"}
@@ -303,13 +302,14 @@ class MagicAreasFeatures(StrEnum):
     AREA = "area"  # Default feature
     PRESENCE_HOLD = "presence_hold"
     LIGHT_GROUPS = "light_groups"
-    CLIMATE_GROUPS = "climate_groups"
+    CLIMATE_CONTROL = "climate_control"
     COVER_GROUPS = "cover_groups"
     MEDIA_PLAYER_GROUPS = "media_player_groups"
     AREA_AWARE_MEDIA_PLAYER = "area_aware_media_player"
     AGGREGATES = "aggregates"
     HEALTH = "health"
     THRESHOLD = "threshold"
+    FAN_GROUPS = "fan_groups"
 
 
 # Magic Areas Events
@@ -320,6 +320,13 @@ class MagicAreasEvents(StrEnum):
 
 
 EVENT_MAGICAREAS_AREA_STATE_CHANGED = "magicareas_area_state_changed"
+
+
+# SelectorTranslationKeys
+class SelectorTranslationKeys(StrEnum):
+    """Translation keys for config flow UI selectors."""
+
+    CLIMATE_PRESET_LIST = auto()
 
 
 ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]
@@ -398,7 +405,6 @@ MAGIC_AREAS_COMPONENTS = [
     SWITCH_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
-    CLIMATE_DOMAIN,
     FAN_DOMAIN,
 ]
 
@@ -408,7 +414,7 @@ MAGIC_AREAS_COMPONENTS_META = [
     COVER_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
-    CLIMATE_DOMAIN,
+    SWITCH_DOMAIN,
 ]
 
 MAGIC_AREAS_COMPONENTS_GLOBAL = MAGIC_AREAS_COMPONENTS_META
@@ -573,7 +579,7 @@ CONFIGURABLE_AREA_STATE_MAP = {
 }
 
 # features
-CONF_FEATURE_CLIMATE_GROUPS = "climate_groups"
+CONF_FEATURE_CLIMATE_CONTROL = "climate_control"
 CONF_FEATURE_FAN_GROUPS = "fan_groups"
 CONF_FEATURE_MEDIA_PLAYER_GROUPS = "media_player_groups"
 CONF_FEATURE_LIGHT_GROUPS = "light_groups"
@@ -589,7 +595,7 @@ CONF_FEATURE_LIST_META = [
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_COVER_GROUPS,
-    CONF_FEATURE_CLIMATE_GROUPS,
+    CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
 ]
@@ -610,10 +616,23 @@ CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT = (
     0,
 )  # cv.int
 
-# Climate Group Options
-CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = (
-    "turn_on_state",
-    AREA_STATE_EXTENDED,
+# Climate control options
+CONF_CLIMATE_CONTROL_ENTITY_ID, DEFAULT_CLIMATE_CONTROL_ENTITY_ID = ("entity_id", None)
+CONF_CLIMATE_CONTROL_PRESET_CLEAR, DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR = (
+    "preset_clear",
+    EMPTY_STRING,
+)
+CONF_CLIMATE_CONTROL_PRESET_OCCUPIED, DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED = (
+    "preset_occupied",
+    EMPTY_STRING,
+)
+CONF_CLIMATE_CONTROL_PRESET_EXTENDED, DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED = (
+    "preset_extended",
+    EMPTY_STRING,
+)
+CONF_CLIMATE_CONTROL_PRESET_SLEEP, DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP = (
+    "preset_sleep",
+    EMPTY_STRING,
 )
 
 # Fan Group options
@@ -712,11 +731,50 @@ WASP_IN_A_BOX_FEATURE_SCHEMA = vol.Schema(
     extra=vol.REMOVE_EXTRA,
 )
 
-CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
+CLIMATE_CONTROL_FEATURE_SCHEMA_ENTITY_SELECT = vol.Schema(
+    {
+        vol.Required(CONF_CLIMATE_CONTROL_ENTITY_ID): cv.entity_id,
+    }
+)
+CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT = vol.Schema(
     {
         vol.Optional(
-            CONF_CLIMATE_GROUPS_TURN_ON_STATE,
-            default=DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
+            CONF_CLIMATE_CONTROL_PRESET_CLEAR,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_SLEEP,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
+        ): str,
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+CLIMATE_CONTROL_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_CLIMATE_CONTROL_ENTITY_ID): cv.entity_id,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_CLEAR,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_SLEEP,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
         ): str,
     },
     extra=vol.REMOVE_EXTRA,
@@ -778,7 +836,7 @@ ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
 
 CONFIGURABLE_FEATURES = {
     CONF_FEATURE_LIGHT_GROUPS: LIGHT_GROUP_FEATURE_SCHEMA,
-    CONF_FEATURE_CLIMATE_GROUPS: CLIMATE_GROUP_FEATURE_SCHEMA,
+    CONF_FEATURE_CLIMATE_CONTROL: CLIMATE_CONTROL_FEATURE_SCHEMA,
     CONF_FEATURE_FAN_GROUPS: FAN_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_AGGREGATION: AGGREGATE_FEATURE_SCHEMA,
     CONF_FEATURE_HEALTH: HEALTH_FEATURE_SCHEMA,
@@ -790,7 +848,6 @@ CONFIGURABLE_FEATURES = {
 
 NON_CONFIGURABLE_FEATURES_META = [
     CONF_FEATURE_LIGHT_GROUPS,
-    CONF_FEATURE_CLIMATE_GROUPS,
     CONF_FEATURE_FAN_GROUPS,
 ]
 
@@ -1041,9 +1098,35 @@ OPTIONS_WASP_IN_A_BOX = [
         vol.In(WASP_IN_A_BOX_DEVICE_CLASSES),
     ),
 ]
-
-OPTIONS_CLIMATE_GROUP = [
-    (CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE, str),
+OPTIONS_CLIMATE_CONTROL_ENTITY_SELECT = [
+    (CONF_CLIMATE_CONTROL_ENTITY_ID, None, cv.entity_id),
+]
+OPTIONS_CLIMATE_CONTROL = [
+    (CONF_CLIMATE_CONTROL_PRESET_CLEAR, DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR, str),
+    (
+        CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        str,
+    ),
+    (CONF_CLIMATE_CONTROL_PRESET_SLEEP, DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP, str),
+    (
+        CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+        DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
+        str,
+    ),
+]
+OPTIONS_CLIMATE_CONTROL_META = [
+    (CONF_CLIMATE_CONTROL_PRESET_CLEAR, DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR, str),
+    (
+        CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        str,
+    ),
+    (
+        CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+        DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
+        str,
+    ),
 ]
 
 OPTIONS_FAN_GROUP = [
@@ -1054,10 +1137,6 @@ OPTIONS_FAN_GROUP = [
         str,
     ),
     (CONF_FAN_GROUPS_SETPOINT, DEFAULT_FAN_GROUPS_SETPOINT, float),
-]
-
-OPTIONS_CLIMATE_GROUP_META = [
-    (CONF_CLIMATE_GROUPS_TURN_ON_STATE, None, str),
 ]
 
 OPTIONS_AREA_AWARE_MEDIA_PLAYER = [
