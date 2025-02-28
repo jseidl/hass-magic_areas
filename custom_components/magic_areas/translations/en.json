@@ -250,13 +250,52 @@
         "state": {
           "off": "Clear",
           "on": "Occupied"
+        },
+        "state_attributes": {
+          "areas": {
+            "name": "Areas"
+          },
+          "states": {
+            "name": "States",
+            "state": {
+              "clear": "Clear",
+              "occupied": "Occupied",
+              "extended": "Extended",
+              "sleep": "Sleep",
+              "dark": "Dark",
+              "bright": "Bright"
+            }
+          },
+          "active_sensors": {
+            "name": "Active sensors"
+          },
+          "last_active_sensors": {
+            "name": "Last active Sensors"
+          },
+          "presence_sensors": {
+            "name": "Presence sensors"
+          },
+          "type": {
+            "name": "Type",
+            "state": {
+              "interior": "Interior",
+              "exterior": "Exterior"
+            }
+          },
+          "clear_timeout": {
+            "name": "Clear timeout"
+          }
         }
       },
       "ble_tracker_monitor": {
         "name": "BLE Tracker Occupancy"
       },
       "health_problem": {
-        "name": "Area Health"
+        "name": "Area Health",
+        "state": {
+          "off": "Healthy",
+          "on": "Unhealthy"
+        }
       },
       "threshold_light": {
         "name": "Light (Calculated)"
@@ -266,12 +305,23 @@
         "state": {
           "off": "No Wasp",
           "on": "Wasp"
+        },
+        "state_attributes": {
+          "wasp": {
+            "name": "Wasp",
+            "state": {
+              "false": "Not seen",
+              "true": "Seen"
+            }
+          },
+          "box": {
+            "name": "Box",
+            "state": {
+              "false": "Closed",
+              "true": "Open"
+            }
+          }
         }
-      }
-    },
-    "climate": {
-      "climate_group": {
-        "name": "Thermostats"
       }
     },
     "fan": {
@@ -354,6 +404,28 @@
       },
       "fan_control": {
         "name": "Fan Control"
+      }
+    }
+  },
+  "selector": {
+    "area_type": {
+      "options": {
+        "interior": "Interior",
+        "exterior": "Exterior"
+      }
+    },
+    "area_states": {
+      "options": {
+        "clear": "Clear",
+        "occupied": "Occupied",
+        "extended": "Extended",
+        "sleep": "Sleep"
+      }
+    },
+    "control_on": {
+      "options": {
+        "occupancy": "When area goes from clear to occupied",
+        "state": "When secondary state changes"
       }
     }
   },
