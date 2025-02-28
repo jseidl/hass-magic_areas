@@ -355,14 +355,6 @@ class MagicArea:
 
         sensors: list[str] = []
 
-        if self.is_meta():
-            # MetaAreas track their children
-            child_areas = self.get_child_areas()  # pylint: disable=no-member
-            for child_area in child_areas:
-                entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{child_area}_area_state"
-                sensors.append(entity_id)
-            return sensors
-
         valid_presence_platforms = self.config.get(
             CONF_PRESENCE_DEVICE_PLATFORMS, DEFAULT_PRESENCE_DEVICE_PLATFORMS
         )
@@ -424,6 +416,18 @@ class MagicArea:
 
 class MagicMetaArea(MagicArea):
     """Magic Meta Area class."""
+
+    def get_presence_sensors(self) -> list[str]:
+        """Return list of entities used for presence tracking."""
+
+        sensors: list[str] = []
+
+        # MetaAreas track their children
+        child_areas = self.get_child_areas()  # pylint: disable=no-member
+        for child_area in child_areas:
+            entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{child_area}_area_state"
+            sensors.append(entity_id)
+        return sensors
 
     def get_active_areas(self):
         """Return areas that are occupied."""

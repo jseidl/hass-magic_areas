@@ -95,6 +95,14 @@ LIGHT_GROUP_ACT_ON = {
 }
 
 
+class CalculationMode(StrEnum):
+    """Modes for calculating values."""
+
+    ANY = auto()
+    ALL = auto()
+    MAJORITY = auto()
+
+
 class LightGroupCategory(StrEnum):
     """Categories of light groups."""
 
@@ -332,6 +340,7 @@ class SelectorTranslationKeys(StrEnum):
     AREA_TYPE = auto()
     AREA_STATES = auto()
     CONTROL_ON = auto()
+    CALCULATION_MODE = auto()
 
 
 ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]
@@ -932,6 +941,31 @@ SECONDARY_STATES_SCHEMA = vol.Schema(
     extra=vol.REMOVE_EXTRA,
 )
 
+CONF_SECONDARY_STATES_CALCULATION_MODE, DEFAULT_SECONDARY_STATES_CALCULATION_MODE = (
+    "calculation_mode",
+    CalculationMode.MAJORITY,
+)
+
+META_AREA_SECONDARY_STATES_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_EXTENDED_TIME, default=DEFAULT_EXTENDED_TIME
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_EXTENDED_TIMEOUT, default=DEFAULT_EXTENDED_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_SECONDARY_STATES_CALCULATION_MODE,
+            default=DEFAULT_SECONDARY_STATES_CALCULATION_MODE,
+        ): vol.In(CalculationMode),
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+
+
 # Basic Area Options Schema
 REGULAR_AREA_BASIC_OPTIONS_SCHEMA = vol.Schema(
     {
@@ -1032,6 +1066,9 @@ META_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT_META
         ): cv.positive_int,
+        vol.Optional(
+            CONF_SECONDARY_STATES, default={}
+        ): META_AREA_SECONDARY_STATES_SCHEMA,
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -1082,6 +1119,17 @@ OPTIONS_SECONDARY_STATES = [
     (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
     (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
     (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),
+]
+
+OPTIONS_SECONDARY_STATES_META = [
+    (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
+    (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
+    (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),
+    (
+        CONF_SECONDARY_STATES_CALCULATION_MODE,
+        DEFAULT_SECONDARY_STATES_CALCULATION_MODE,
+        str,
+    ),
 ]
 
 OPTIONS_LIGHT_GROUP = [
@@ -1164,19 +1212,7 @@ OPTIONS_CLIMATE_CONTROL = [
         str,
     ),
 ]
-OPTIONS_CLIMATE_CONTROL_META = [
-    (CONF_CLIMATE_CONTROL_PRESET_CLEAR, DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR, str),
-    (
-        CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
-        DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED,
-        str,
-    ),
-    (
-        CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
-        DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
-        str,
-    ),
-]
+
 
 OPTIONS_FAN_GROUP = [
     (CONF_FAN_GROUPS_REQUIRED_STATE, DEFAULT_FAN_GROUPS_REQUIRED_STATE, str),

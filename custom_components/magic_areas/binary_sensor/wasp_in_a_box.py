@@ -95,6 +95,14 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
 
     def _wasp_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
         """Register wasp sensor state change event."""
+
+        # Ignore state reports taht aren't really a state change
+        if (
+            event.data["old_state"]
+            and event.data["new_state"].state == event.data["old_state"].state
+        ):
+            return
+
         self.wasp_in_a_box()
 
     def _box_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:

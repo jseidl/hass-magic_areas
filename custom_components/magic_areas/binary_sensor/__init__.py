@@ -12,12 +12,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.magic_areas.base.magic import MagicArea
+from custom_components.magic_areas.base.magic import MagicArea, MagicMetaArea
 from custom_components.magic_areas.binary_sensor.base import AreaSensorGroupBinarySensor
 from custom_components.magic_areas.binary_sensor.ble_tracker import (
     AreaBLETrackerBinarySensor,
 )
-from custom_components.magic_areas.binary_sensor.presence import AreaStateBinarySensor
+from custom_components.magic_areas.binary_sensor.presence import (
+    AreaStateBinarySensor,
+    MetaAreaStateBinarySensor,
+)
 from custom_components.magic_areas.binary_sensor.wasp_in_a_box import (
     AreaWaspInABoxBinarySensor,
 )
@@ -66,13 +69,18 @@ async def async_setup_entry(
 ) -> None:
     """Set up the area binary sensor config entry."""
 
-    area: MagicArea | None = get_area_from_config_entry(hass, config_entry)
+    area: MagicArea | MagicMetaArea | None = get_area_from_config_entry(
+        hass, config_entry
+    )
     assert area is not None
 
     entities = []
 
     # Create main presence sensor
-    entities.append(AreaStateBinarySensor(area))
+    if area.is_meta() and isinstance(area, MagicMetaArea):
+        entities.append(MetaAreaStateBinarySensor(area))
+    else:
+        entities.append(AreaStateBinarySensor(area))
 
     # Create extra sensors
     if area.has_feature(CONF_FEATURE_AGGREGATION):

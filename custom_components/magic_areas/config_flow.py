@@ -104,6 +104,7 @@ from .const import (
     CONF_PRESENCE_SENSOR_DEVICE_CLASS,
     CONF_RELOAD_ON_REGISTRY_CHANGE,
     CONF_SECONDARY_STATES,
+    CONF_SECONDARY_STATES_CALCULATION_MODE,
     CONF_SLEEP_ENTITY,
     CONF_SLEEP_LIGHTS,
     CONF_SLEEP_LIGHTS_ACT_ON,
@@ -130,6 +131,7 @@ from .const import (
     META_AREA_GLOBAL,
     META_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
     META_AREA_SCHEMA,
+    META_AREA_SECONDARY_STATES_SCHEMA,
     MODULE_DATA,
     NON_CONFIGURABLE_FEATURES_META,
     OPTIONS_AGGREGATES,
@@ -139,7 +141,6 @@ from .const import (
     OPTIONS_BLE_TRACKERS,
     OPTIONS_CLIMATE_CONTROL,
     OPTIONS_CLIMATE_CONTROL_ENTITY_SELECT,
-    OPTIONS_CLIMATE_CONTROL_META,
     OPTIONS_FAN_GROUP,
     OPTIONS_HEALTH_SENSOR,
     OPTIONS_LIGHT_GROUP,
@@ -147,12 +148,14 @@ from .const import (
     OPTIONS_PRESENCE_TRACKING,
     OPTIONS_PRESENCE_TRACKING_META,
     OPTIONS_SECONDARY_STATES,
+    OPTIONS_SECONDARY_STATES_META,
     OPTIONS_WASP_IN_A_BOX,
     REGULAR_AREA_BASIC_OPTIONS_SCHEMA,
     REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
     WASP_IN_A_BOX_DEVICE_CLASSES,
+    CalculationMode,
     MagicAreasFeatures,
     MagicConfigEntryVersion,
     MetaAreaType,
@@ -230,11 +233,10 @@ class ConfigBase:
         self,
         options,
         *,
-        saved_options=None,
+        saved_options: dict | None = None,
         dynamic_validators=None,
         selectors=None,
-        raw=False,
-    ):
+    ) -> vol.Schema:
         """Build schema for configuration options."""
         _LOGGER.debug(
             "ConfigFlow: Building schema from options: %s - dynamic_validators: %s",
@@ -248,7 +250,7 @@ class ConfigBase:
         if not selectors:
             selectors = {}
 
-        if saved_options is None:
+        if saved_options is None and self.config_entry:
             saved_options = self.config_entry.options
 
         _LOGGER.debug(
@@ -261,7 +263,7 @@ class ConfigBase:
                 description={
                     "suggested_value": (
                         saved_options.get(name)
-                        if saved_options.get(name) is not None
+                        if saved_options and saved_options.get(name) is not None
                         else default
                     )
                 },
@@ -276,9 +278,6 @@ class ConfigBase:
 
         _LOGGER.debug("ConfigFlow: Built schema: %s", str(schema))
 
-        if raw:
-            return schema
-
         return vol.Schema(schema)
 
 
@@ -291,7 +290,7 @@ class NullableEntitySelector(EntitySelector):
         if data in (None, ""):
             return data
 
-        return super().__call__(data)
+        return super().__call__(data)  # type: ignore
 
 
 class ConfigFlow(config_entries.ConfigFlow, ConfigBase, domain=DOMAIN):
@@ -588,11 +587,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         menu_options: list = [
             "area_config",
             "presence_tracking",
+            "secondary_states",
             "select_features",
         ]
-
-        if not self.area.is_meta():
-            menu_options.insert(1, "secondary_states")
 
         # Add entries for features
         menu_options_features = []
@@ -779,7 +776,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 self.area.name,
                 str(user_input),
             )
-            area_state_schema = SECONDARY_STATES_SCHEMA
+            area_state_schema = (
+                META_AREA_SECONDARY_STATES_SCHEMA
+                if self.area.is_meta()
+                else SECONDARY_STATES_SCHEMA
+            )
             try:
                 self.area_options[CONF_SECONDARY_STATES].update(
                     area_state_schema(user_input)
@@ -810,7 +811,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         return self.async_show_form(
             step_id="secondary_states",
             data_schema=self._build_options_schema(
-                options=(OPTIONS_SECONDARY_STATES),
+                options=(
+                    OPTIONS_SECONDARY_STATES_META
+                    if self.area.is_meta()
+                    else OPTIONS_SECONDARY_STATES
+                ),
                 saved_options=self.area_options.get(CONF_SECONDARY_STATES, {}),
                 dynamic_validators={
                     CONF_DARK_ENTITY: vol.In(
@@ -818,6 +823,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     ),
                     CONF_SLEEP_ENTITY: vol.In(EMPTY_ENTRY + self.all_binary_entities),
                     CONF_ACCENT_ENTITY: vol.In(EMPTY_ENTRY + self.all_binary_entities),
+                    CONF_SECONDARY_STATES_CALCULATION_MODE: vol.In(CalculationMode),
                 },
                 selectors={
                     CONF_DARK_ENTITY: self._build_selector_entity_simple(
@@ -837,6 +843,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     ),
                     CONF_EXTENDED_TIMEOUT: self._build_selector_number(
                         unit_of_measurement="minutes"
+                    ),
+                    CONF_SECONDARY_STATES_CALCULATION_MODE: self._build_selector_select(
+                        options=list(CalculationMode),
+                        translation_key=SelectorTranslationKeys.CALCULATION_MODE,
                     ),
                 },
             ),
@@ -1106,16 +1116,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             ),
         }
 
-        selected_options_schema = (
-            OPTIONS_CLIMATE_CONTROL_META
-            if self.area.is_meta()
-            else OPTIONS_CLIMATE_CONTROL
-        )
-
         return await self.do_feature_config(
             name=CONF_FEATURE_CLIMATE_CONTROL,
             step_name="feature_conf_climate_control_select_presets",
-            options=selected_options_schema,
+            options=OPTIONS_CLIMATE_CONTROL,
             custom_schema=CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT,
             merge_options=True,
             dynamic_validators={
