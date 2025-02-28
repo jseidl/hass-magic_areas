@@ -310,6 +310,8 @@ class MagicAreasFeatures(StrEnum):
     HEALTH = "health"
     THRESHOLD = "threshold"
     FAN_GROUPS = "fan_groups"
+    WASP_IN_A_BOX = "wasp_in_a_box"
+    BLE_TRACKER = "ble_trackers"
 
 
 # Magic Areas Events

@@ -23,7 +23,10 @@ from .conftest import (
     shutdown_integration,
 )
 from .mocks import MockBinarySensor
-from custom_components.magic_areas.binary_sensor import ATTR_BOX, ATTR_WASP
+from custom_components.magic_areas.binary_sensor.wasp_in_a_box import (
+    ATTR_BOX,
+    ATTR_WASP,
+)
 from custom_components.magic_areas.const import (
     ATTR_ACTIVE_SENSORS,
     ATTR_PRESENCE_SENSORS,
