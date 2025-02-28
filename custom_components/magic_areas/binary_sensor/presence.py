@@ -630,16 +630,6 @@ class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
 
         self.schedule_update_ha_state()
 
-    # Binary sensor overrides
-
-    # @property
-    # def icon(self):
-    #     """Return the icon to be used for this entity."""
-    #     default_icon = None
-    #     if self.feature_info:
-    #         default_icon = self.feature_info.icons.get(BINARY_SENSOR_DOMAIN, None)
-    #     return self.area.icon or default_icon
-
     # Helpers
 
     async def _load_attributes(self) -> None:
