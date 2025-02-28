@@ -1,14 +1,13 @@
 """Base classes for binary sensor component."""
 
-from homeassistant.components.group.binary_sensor import BinarySensorGroup
-from custom_components.magic_areas.base.entities import MagicEntity
-from custom_components.magic_areas.base.magic import MagicArea
-
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
+from homeassistant.components.group.binary_sensor import BinarySensorGroup
 
+from custom_components.magic_areas.base.entities import MagicEntity
+from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import AGGREGATE_MODE_ALL, EMPTY_STRING
 
 

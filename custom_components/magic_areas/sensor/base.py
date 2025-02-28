@@ -12,11 +12,11 @@ from homeassistant.components.sensor.const import (
 from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
-    DEFAULT_SENSOR_PRECISION,
-    EMPTY_STRING,
     AGGREGATE_MODE_SUM,
     AGGREGATE_MODE_TOTAL_INCREASING_SENSOR,
     AGGREGATE_MODE_TOTAL_SENSOR,
+    DEFAULT_SENSOR_PRECISION,
+    EMPTY_STRING,
 )
 
 _LOGGER = logging.getLogger(__name__)

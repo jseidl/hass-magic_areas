@@ -8,9 +8,10 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.core import Event, EventStateChangedData, State, callback
 from homeassistant.const import STATE_ON
+from homeassistant.core import Event, EventStateChangedData, State, callback
+from homeassistant.helpers.event import async_track_state_change_event
+
 from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
