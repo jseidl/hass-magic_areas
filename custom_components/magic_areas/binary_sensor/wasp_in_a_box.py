@@ -8,8 +8,8 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.const import STATE_ON
-from homeassistant.core import Event, EventStateChangedData, State, callback
+from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.core import Event, EventStateChangedData, callback
 from homeassistant.helpers.event import async_track_state_change_event
 
 from custom_components.magic_areas.base.entities import MagicEntity
@@ -66,8 +66,8 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
 
         self._attr_device_class = BinarySensorDeviceClass.PRESENCE
         self._attr_extra_state_attributes = {
-            ATTR_BOX: False,
-            ATTR_WASP: False,
+            ATTR_BOX: STATE_OFF,
+            ATTR_WASP: STATE_OFF,
         }
         self._attr_is_on: bool = False
 
@@ -99,70 +99,89 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
         # Ignore state reports taht aren't really a state change
         if (
             event.data["old_state"]
+            and event.data["new_state"]
             and event.data["new_state"].state == event.data["old_state"].state
         ):
             return
 
-        self.wasp_in_a_box()
+        self.wasp_in_a_box(wasp_state=event.data["new_state"].state)
 
     def _box_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
         """Register box sensor state change event."""
 
-        new_state: State | None = None
-        if (new_state := event.data["new_state"]) is None:
-            _LOGGER.warning("%s: No new state info for box sensor.", self.name)
+        # Ignore state reports taht aren't really a state change
+        if (
+            event.data["old_state"]
+            and event.data["new_state"]
+            and event.data["new_state"].state == event.data["old_state"].state
+        ):
             return
-
-        box_state: bool = new_state.state == STATE_ON
 
         if self.delay:
             self.wasp = False
             self._attr_is_on = self.wasp
-            self._attr_extra_state_attributes[ATTR_BOX] = box_state
-            self._attr_extra_state_attributes[ATTR_WASP] = self.wasp
+            self._attr_extra_state_attributes[ATTR_BOX] = event.data["new_state"].state
+            self._attr_extra_state_attributes[ATTR_WASP] = STATE_OFF
             self.schedule_update_ha_state()
             self.hass.loop.call_soon_threadsafe(
-                self.wasp_in_a_box_delayed, datetime.now(UTC)
+                self.wasp_in_a_box_delayed,
+                None,
+                event.data["new_state"].state,
+                datetime.now(UTC),
             )
         else:
             self.wasp_in_a_box()
 
     @callback
-    def wasp_in_a_box_delayed(self, extra: datetime | None = None) -> None:
+    def wasp_in_a_box_delayed(
+        self,
+        *,
+        wasp_state: str | None = None,
+        box_state: str | None = None,
+        extra: datetime | None = None,
+    ) -> None:
         """Call Wasp In A Box Logic function after a delay."""
-        self.hass.loop.call_later(self.delay, self.wasp_in_a_box, extra)
+        self.hass.loop.call_later(
+            self.delay, self.wasp_in_a_box, wasp_state, box_state, extra
+        )
 
-    def wasp_in_a_box(self, extra: datetime | None = None) -> None:
+    def wasp_in_a_box(
+        self,
+        *,
+        wasp_state: str | None = None,
+        box_state: str | None = None,
+        extra: datetime | None = None,
+    ) -> None:
         """Perform Wasp In A Box Logic."""
-        wasp_state = False
-        box_state = False
 
-        # Get Wasp State
-        for wasp_sensor in self._wasp_sensors:
-            wasp_sensor_state = self.hass.states.get(wasp_sensor)
-            if not wasp_sensor_state:
-                continue
-            if wasp_sensor_state.state == STATE_ON:
-                wasp_state = True
-                break
+        if not wasp_state:
+            # Get Wasp State
+            wasp_state = STATE_OFF
+            for wasp_sensor in self._wasp_sensors:
+                wasp_sensor_state = self.hass.states.get(wasp_sensor)
+                if not wasp_sensor_state:
+                    continue
+                if wasp_sensor_state.state == STATE_ON:
+                    wasp_state = STATE_ON
+                    break
 
-        # Get Box State
-        box_sensor_state = self.hass.states.get(self._box_sensor)
-        if not box_sensor_state:
-            _LOGGER.warning(
-                "%s: Could not get state for box sensor %s.",
-                self.area.name,
-                self._box_sensor,
-            )
-            return
+        if not box_state:
+            # Get Box State
+            box_sensor_state = self.hass.states.get(self._box_sensor)
+            if not box_sensor_state:
+                _LOGGER.warning(
+                    "%s: Could not get state for box sensor %s.",
+                    self.area.name,
+                    self._box_sensor,
+                )
+                return
 
-        if box_sensor_state.state == STATE_ON:
-            box_state = True
+            box_state = box_sensor_state.state
 
         # Main Logic
-        if wasp_state:
+        if wasp_state == STATE_ON:
             self.wasp = True
-        elif box_state:
+        elif box_state == STATE_ON:
             self.wasp = False
 
         self._attr_extra_state_attributes[ATTR_BOX] = box_state
