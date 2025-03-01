@@ -310,22 +310,22 @@
       "wasp_in_a_box": {
         "name": "Wasp in a Box",
         "state": {
-          "off": "No Wasp",
-          "on": "Wasp"
+          "off": "No wasp in the box",
+          "on": "Wasp in the box"
         },
         "state_attributes": {
           "wasp": {
             "name": "Wasp",
             "state": {
-              "false": "Not seen",
-              "true": "Seen"
+              "off": "Not seen",
+              "on": "Seen"
             }
           },
           "box": {
             "name": "Box",
             "state": {
-              "false": "Closed",
-              "true": "Open"
+              "off": "Closed",
+              "on": "Open"
             }
           }
         }
