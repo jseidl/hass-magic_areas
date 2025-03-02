@@ -1,6 +1,5 @@
 """Wasp in a box binary sensor component."""
 
-from datetime import UTC, datetime
 import logging
 
 from homeassistant.components.binary_sensor import (
@@ -105,12 +104,10 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
     def _wasp_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
         """Register wasp sensor state change event."""
 
-        # Ignore state reports taht aren't really a state change
-        if (
-            event.data["old_state"]
-            and event.data["new_state"]
-            and event.data["new_state"].state == event.data["old_state"].state
-        ):
+        # Ignore state reports that aren't really a state change
+        if not event.data["new_state"] or not event.data["old_state"]:
+            return
+        if event.data["new_state"].state == event.data["old_state"].state:
             return
 
         self.wasp_in_a_box(wasp_state=event.data["new_state"].state)
@@ -118,12 +115,10 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
     def _box_sensor_state_change(self, event: Event[EventStateChangedData]) -> None:
         """Register box sensor state change event."""
 
-        # Ignore state reports taht aren't really a state change
-        if (
-            event.data["old_state"]
-            and event.data["new_state"]
-            and event.data["new_state"].state == event.data["old_state"].state
-        ):
+        # Ignore state reports that aren't really a state change
+        if not event.data["new_state"] or not event.data["old_state"]:
+            return
+        if event.data["new_state"].state == event.data["old_state"].state:
             return
 
         if self.delay:
@@ -136,8 +131,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
                 self.wasp_in_a_box_delayed,
                 None,
                 event.data["new_state"].state,
-                datetime.now(UTC),
-            )
+            )  # type: ignore
         else:
             self.wasp_in_a_box(box_state=event.data["new_state"].state)
 
@@ -147,19 +141,15 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
         *,
         wasp_state: str | None = None,
         box_state: str | None = None,
-        extra: datetime | None = None,
     ) -> None:
         """Call Wasp In A Box Logic function after a delay."""
-        self.hass.loop.call_later(
-            self.delay, self.wasp_in_a_box, wasp_state, box_state, extra
-        )
+        self.hass.loop.call_later(self.delay, self.wasp_in_a_box, wasp_state, box_state)  # type: ignore
 
     def wasp_in_a_box(
         self,
         *,
         wasp_state: str | None = None,
         box_state: str | None = None,
-        extra: datetime | None = None,
     ) -> None:
         """Perform Wasp In A Box Logic."""
 
