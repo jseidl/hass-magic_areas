@@ -144,10 +144,14 @@ DISTRESS_SENSOR_CLASSES = [
 DISTRESS_STATES = [AlarmControlPanelState.TRIGGERED, STATE_ON, STATE_PROBLEM]
 
 # Wasp in a Box
-WASP_IN_A_BOX_DEVICE_CLASSES = [
+WASP_IN_A_BOX_WASP_DEVICE_CLASSES = [
     BinarySensorDeviceClass.MOTION,
     BinarySensorDeviceClass.OCCUPANCY,
     BinarySensorDeviceClass.PRESENCE,
+]
+WASP_IN_A_BOX_BOX_DEVICE_CLASSES = [
+    BinarySensorDeviceClass.DOOR,
+    BinarySensorDeviceClass.GARAGE_DOOR,
 ]
 
 # Aggregates
@@ -623,10 +627,9 @@ CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES = (
     [],
 )  # cv.entity_ids
 
-
 CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = ("delay", 0)  # cv.positive_int
-CONF_WASP_IN_A_BOX_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES = (
-    "device_classes",
+CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES = (
+    "wasp_device_classes",
     [BinarySensorDeviceClass.MOTION, BinarySensorDeviceClass.OCCUPANCY],
 )  # cv.ensure_list
 
@@ -782,8 +785,8 @@ WASP_IN_A_BOX_FEATURE_SCHEMA = vol.Schema(
             CONF_WASP_IN_A_BOX_DELAY, default=DEFAULT_WASP_IN_A_BOX_DELAY
         ): cv.positive_int,
         vol.Optional(
-            CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
-            default=DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES,
+            CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+            default=DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
         ): cv.ensure_list,
     },
     extra=vol.REMOVE_EXTRA,
@@ -1190,9 +1193,9 @@ OPTIONS_BLE_TRACKERS = [
 OPTIONS_WASP_IN_A_BOX = [
     (CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY, cv.positive_int),
     (
-        CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
-        DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES,
-        vol.In(WASP_IN_A_BOX_DEVICE_CLASSES),
+        CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+        DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+        vol.In(WASP_IN_A_BOX_WASP_DEVICE_CLASSES),
     ),
 ]
 OPTIONS_CLIMATE_CONTROL_ENTITY_SELECT = [

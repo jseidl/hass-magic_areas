@@ -115,7 +115,7 @@ from .const import (
     CONF_TASK_LIGHTS_STATES,
     CONF_TYPE,
     CONF_WASP_IN_A_BOX_DELAY,
-    CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
+    CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
     CONFIG_FLOW_ENTITY_FILTER_BOOL,
     CONFIG_FLOW_ENTITY_FILTER_EXT,
     CONFIGURABLE_AREA_STATE_MAP,
@@ -154,7 +154,7 @@ from .const import (
     REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA,
     REGULAR_AREA_SCHEMA,
     SECONDARY_STATES_SCHEMA,
-    WASP_IN_A_BOX_DEVICE_CLASSES,
+    WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
     CalculationMode,
     MagicAreasFeatures,
     MagicConfigEntryVersion,
@@ -1261,8 +1261,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             CONF_WASP_IN_A_BOX_DELAY: self._build_selector_number(
                 min_value=0, unit_of_measurement="seconds"
             ),
-            CONF_WASP_IN_A_BOX_DEVICE_CLASSES: self._build_selector_select(
-                sorted(WASP_IN_A_BOX_DEVICE_CLASSES), multiple=True
+            CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES: self._build_selector_select(
+                sorted(WASP_IN_A_BOX_WASP_DEVICE_CLASSES), multiple=True
             ),
         }
 

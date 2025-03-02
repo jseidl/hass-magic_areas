@@ -16,9 +16,10 @@ from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
     CONF_WASP_IN_A_BOX_DELAY,
-    CONF_WASP_IN_A_BOX_DEVICE_CLASSES,
+    CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
     DEFAULT_WASP_IN_A_BOX_DELAY,
-    DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES,
+    DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+    WASP_IN_A_BOX_BOX_DEVICE_CLASSES,
     MagicAreasFeatureInfoWaspInABox,
     MagicAreasFeatures,
 )
@@ -35,7 +36,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
 
     feature_info = MagicAreasFeatureInfoWaspInABox()
     _wasp_sensors: list[str] = []
-    _box_sensor: str
+    _box_sensors: list[str] = []
     delay: int = 0
     wasp: bool = False
 
@@ -44,21 +45,6 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
 
         MagicEntity.__init__(self, area, domain=BINARY_SENSOR_DOMAIN)
         BinarySensorEntity.__init__(self)
-
-        device_classes = self.area.feature_config(MagicAreasFeatures.WASP_IN_A_BOX).get(
-            CONF_WASP_IN_A_BOX_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES
-        )
-
-        for device_class in device_classes:
-            dc_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_{device_class}"
-            self._wasp_sensors.append(dc_entity_id)
-
-        if not self._wasp_sensors:
-            raise RuntimeError(f"{self.area.name}: No valid wasp sensors defined.")
-
-        self._box_sensor = (
-            f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{area.slug}_aggregate_door"
-        )
 
         self.delay = self.area.feature_config(MagicAreasFeatures.WASP_IN_A_BOX).get(
             CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY
@@ -75,13 +61,36 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
         """Call to add the system to hass."""
         await super().async_added_to_hass()
 
-        # Setup the listeners
-        await self._setup_listeners()
+        # Check entities exist
+        wasp_device_classes = self.area.feature_config(
+            MagicAreasFeatures.WASP_IN_A_BOX
+        ).get(
+            CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+            DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+        )
 
-        _LOGGER.debug("%s: Wasp In A Box sensor initialized", self.area.name)
+        for device_class in wasp_device_classes:
+            dc_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{self.area.slug}_aggregate_{device_class}"
+            dc_state = self.hass.states.get(dc_entity_id)
+            if not dc_state:
+                continue
+            self._wasp_sensors.append(dc_entity_id)
 
-    async def _setup_listeners(self) -> None:
-        """Attach state chagne listeners."""
+        if not self._wasp_sensors:
+            raise RuntimeError(f"{self.area.name}: No valid wasp sensors defined.")
+
+        for device_class in WASP_IN_A_BOX_BOX_DEVICE_CLASSES:
+            dc_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{self.area.slug}_aggregate_{device_class}"
+            dc_state = self.hass.states.get(dc_entity_id)
+            if not dc_state:
+                continue
+            self._box_sensors.append(dc_entity_id)
+
+        if not self._box_sensors:
+            raise RuntimeError(f"{self.area.name}: No valid wasp sensors defined.")
+
+        # Add listeners
+
         self.async_on_remove(
             async_track_state_change_event(
                 self.hass, self._wasp_sensors, self._wasp_sensor_state_change
@@ -89,7 +98,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
         )
         self.async_on_remove(
             async_track_state_change_event(
-                self.hass, [self._box_sensor], self._box_sensor_state_change
+                self.hass, self._box_sensors, self._box_sensor_state_change
             )
         )
 
@@ -167,16 +176,14 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
 
         if not box_state:
             # Get Box State
-            box_sensor_state = self.hass.states.get(self._box_sensor)
-            if not box_sensor_state:
-                _LOGGER.warning(
-                    "%s: Could not get state for box sensor %s.",
-                    self.area.name,
-                    self._box_sensor,
-                )
-                return
-
-            box_state = box_sensor_state.state
+            box_state = STATE_OFF
+            for box_sensor in self._box_sensors:
+                box_sensor_state = self.hass.states.get(box_sensor)
+                if not box_sensor_state:
+                    continue
+                if box_sensor_state.state == STATE_ON:
+                    box_state = STATE_ON
+                    break
 
         # Main Logic
         if wasp_state == STATE_ON:
