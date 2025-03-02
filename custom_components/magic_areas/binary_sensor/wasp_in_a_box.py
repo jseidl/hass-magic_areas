@@ -130,7 +130,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
                 datetime.now(UTC),
             )
         else:
-            self.wasp_in_a_box()
+            self.wasp_in_a_box(box_state=event.data["new_state"].state)
 
     @callback
     def wasp_in_a_box_delayed(

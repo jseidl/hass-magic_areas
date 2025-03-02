@@ -181,7 +181,7 @@
           "device_classes": "Wasp sensor device classes"
         },
         "data_description": {
-          "delay": "Time to wait before checking for wasps after a box changing state.",
+          "delay": "Time to wait before checking for wasps after a box changing state. Set to 0 to disable.",
           "device_classes": "If you wish other aggregates to be considered as wasps, please select from the list."
         }
       },
