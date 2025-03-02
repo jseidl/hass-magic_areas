@@ -624,7 +624,7 @@ CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES = (
 )  # cv.entity_ids
 
 
-CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = ("delay", 60)  # cv.positive_int
+CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = ("delay", 0)  # cv.positive_int
 CONF_WASP_IN_A_BOX_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_DEVICE_CLASSES = (
     "device_classes",
     [BinarySensorDeviceClass.MOTION, BinarySensorDeviceClass.OCCUPANCY],
