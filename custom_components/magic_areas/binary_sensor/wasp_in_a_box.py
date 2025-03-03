@@ -34,10 +34,10 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
     """Wasp In The Box logic tracking sensor for the area."""
 
     feature_info = MagicAreasFeatureInfoWaspInABox()
-    _wasp_sensors: list[str] = []
-    _box_sensors: list[str] = []
-    delay: int = 0
-    wasp: bool = False
+    _wasp_sensors: list[str]
+    _box_sensors: list[str]
+    delay: int
+    wasp: bool
 
     def __init__(self, area: MagicArea) -> None:
         """Initialize the area presence binary sensor."""
@@ -54,7 +54,12 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
             ATTR_BOX: STATE_OFF,
             ATTR_WASP: STATE_OFF,
         }
+
+        self.wasp = False
         self._attr_is_on: bool = False
+
+        self._wasp_sensors = []
+        self._box_sensors = []
 
     async def async_added_to_hass(self) -> None:
         """Call to add the system to hass."""
