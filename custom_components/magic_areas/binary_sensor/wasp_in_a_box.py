@@ -136,23 +136,21 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
                 self.wasp_in_a_box_delayed,
                 None,
                 event.data["new_state"].state,
-            )  # type: ignore
+            )
         else:
             self.wasp_in_a_box(box_state=event.data["new_state"].state)
 
     @callback
     def wasp_in_a_box_delayed(
         self,
-        *,
         wasp_state: str | None = None,
         box_state: str | None = None,
     ) -> None:
         """Call Wasp In A Box Logic function after a delay."""
-        self.hass.loop.call_later(self.delay, self.wasp_in_a_box, wasp_state, box_state)  # type: ignore
+        self.hass.loop.call_later(self.delay, self.wasp_in_a_box, wasp_state, box_state)
 
     def wasp_in_a_box(
         self,
-        *,
         wasp_state: str | None = None,
         box_state: str | None = None,
     ) -> None:
