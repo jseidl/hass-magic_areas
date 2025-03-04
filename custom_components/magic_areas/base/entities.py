@@ -2,6 +2,7 @@
 
 import logging
 
+from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
@@ -36,6 +37,9 @@ class MagicEntity(RestoreEntity):
         # Avoiding using super() due multiple inheritance issues
         RestoreEntity.__init__(self)
 
+        if not self.feature_info:
+            raise NotImplementedError(f"{self.name}: Feature info not set.")
+
         self.logger = logging.getLogger(type(self).__module__)
         self.area = area
         self._extra_identifiers = []
@@ -69,7 +73,10 @@ class MagicEntity(RestoreEntity):
             self._attr_translation_key,
         )
 
-    def _generate_entity_id(self, domain: str):
+    def _generate_entity_id(self, domain: str) -> str:
+        if not self.feature_info:
+            raise NotImplementedError(f"{self.name}: Feature info not set.")
+
         entity_id_parts = [
             MAGICAREAS_UNIQUEID_PREFIX,
             self.feature_info.id,
@@ -91,6 +98,8 @@ class MagicEntity(RestoreEntity):
 
     def _generaete_unique_id(self, domain: str, extra_parts: list | None = None):
         # Format: magicareas_feature_domain_areaname_name
+        if not self.feature_info:
+            raise NotImplementedError(f"{self.name}: Feature info not set.")
 
         unique_id_parts = [
             MAGICAREAS_UNIQUEID_PREFIX,
@@ -108,7 +117,7 @@ class MagicEntity(RestoreEntity):
         return "_".join(unique_id_parts)
 
     @property
-    def should_poll(self) -> str:
+    def should_poll(self) -> bool:
         """If entity should be polled."""
         return False
 
@@ -129,3 +138,45 @@ class MagicEntity(RestoreEntity):
                 else None
             ),
         )
+
+    async def restore_state(self) -> None:
+        """Restore the state of the entity."""
+        last_state = await self.async_get_last_state()
+
+        if last_state is None:
+            _LOGGER.debug("%s: New entity created", self.name)
+            self._attr_state = STATE_OFF
+        else:
+            _LOGGER.debug(
+                "%s: entity restored [state=%s]",
+                self.name,
+                last_state.state,
+            )
+            self._attr_state = last_state.state
+            self._attr_extra_state_attributes = dict(last_state.attributes)
+
+        self.schedule_update_ha_state()
+
+
+class BinaryMagicEntity(MagicEntity):
+    """Class for Binary-based magic entities."""
+
+    _attr_is_on: bool
+
+    async def restore_state(self) -> None:
+        """Restore the state of the entity."""
+        last_state = await self.async_get_last_state()
+
+        if last_state is None:
+            _LOGGER.debug("%s: New entity created", self.name)
+            self._attr_is_on = False
+        else:
+            _LOGGER.debug(
+                "%s: entity restored [state=%s]",
+                self.name,
+                last_state.state,
+            )
+            self._attr_is_on = last_state.state == STATE_ON
+            self._attr_extra_state_attributes = dict(last_state.attributes)
+
+        self.schedule_update_ha_state()

@@ -4,8 +4,9 @@ import logging
 
 from homeassistant.components.cover import (
     DEVICE_CLASSES as COVER_DEVICE_CLASSES,
-    DOMAIN as COVER_DOMAIN,
+    CoverDeviceClass,
 )
+from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.components.group.cover import CoverGroup
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -15,6 +16,7 @@ from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.base.magic import MagicArea
 from custom_components.magic_areas.const import (
     CONF_FEATURE_COVER_GROUPS,
+    EMPTY_STRING,
     MagicAreasFeatureInfoCoverGroups,
 )
 from custom_components.magic_areas.helpers.area import get_area_from_config_entry
@@ -31,7 +33,7 @@ async def async_setup_entry(
 ):
     """Set up the area cover config entry."""
 
-    area: MagicArea = get_area_from_config_entry(hass, config_entry)
+    area: MagicArea | None = get_area_from_config_entry(hass, config_entry)
     assert area is not None
 
     # Check feature availability
@@ -82,7 +84,10 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
         MagicEntity.__init__(
             self, area, domain=COVER_DOMAIN, translation_key=device_class
         )
-        self._attr_device_class = device_class
+        sensor_device_class: CoverDeviceClass | None = (
+            CoverDeviceClass(device_class) if device_class else None
+        )
+        self._attr_device_class = sensor_device_class
         self._entities = [
             e
             for e in area.entities[COVER_DOMAIN]
@@ -91,7 +96,7 @@ class AreaCoverGroup(MagicEntity, CoverGroup):
         CoverGroup.__init__(
             self,
             entities=[e["entity_id"] for e in self._entities],
-            name=None,
+            name=EMPTY_STRING,
             unique_id=self._attr_unique_id,
         )
         delattr(self, "_attr_name")

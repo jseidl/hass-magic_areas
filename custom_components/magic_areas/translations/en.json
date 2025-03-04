@@ -22,7 +22,8 @@
         "title": "Feature selection",
         "description": "Select the features you want to enable for this area. A new menu option will show up for configuring the feature if there are configurations options for that feature.",
         "data": {
-          "climate_groups": "Create climate groups",
+          "fan_groups": "Create fan groups",
+          "climate_control": "Create climate controller",
           "media_player_groups": "Create media player groups",
           "light_groups": "Create light groups",
           "cover_groups": "Create cover groups",
@@ -30,7 +31,8 @@
           "aggregates": "Create aggregate sensors",
           "health": "Create health sensors",
           "presence_hold": "Create presence hold switch",
-          "ble_trackers": "Monitor Bluetooth tracker sensors"
+          "ble_trackers": "Monitor Bluetooth tracker sensors",
+          "wasp_in_a_box": "Create a Wasp in a Box sensor"
         }
       },
       "show_menu": {
@@ -43,12 +45,14 @@
           "select_features": "Feature selection",
           "finish": "Save & Exit",
           "feature_conf_health": "Configure health sensor",
-          "feature_conf_climate_groups": "Configure climate groups",
+          "feature_conf_fan_groups": "Configure fan groups",
+          "feature_conf_climate_control": "Configure climate control",
           "feature_conf_light_groups": "Configure light groups",
           "feature_conf_area_aware_media_player": "Configure area-aware media player",
           "feature_conf_aggregates": "Configure aggregate sensors",
           "feature_conf_presence_hold": "Configure presence hold switch",
-          "feature_conf_ble_trackers": "Configure BLE Tracker monitoring"
+          "feature_conf_ble_trackers": "Configure BLE Tracker monitoring",
+          "feature_conf_wasp_in_a_box": "Configure Wasp in a Box"
         }
       },
       "feature_conf_health": {
@@ -119,14 +123,44 @@
           "aggregates_illuminance_threshold_hysteresis": "[Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) defines how sensitive the sensor is to changes on its value. A value of zero will flip the sensor state whenever the illuminance crosses the threshold above. Positive values means that the sensor will only change state if the threshold is surpassed by a given amount, expressed in percentage of the threshold set above. Ramping up this value might be useful if you're trying to use this sensor as its own area's light sensor."
         }
       },
-      "feature_conf_climate_groups": {
-        "title": "Feature: Climate Groups",
-        "description": "Group and control all climate entities in an area. This feature allows climate entities to be controlled automatically according to an area's state.",
+      "feature_conf_fan_groups": {
+        "title": "Feature: Fan Groups",
+        "description": "Group and control all fan entities in an area. This feature allows fan entities to be controlled automatically according to an area's state and wether the aggregate sensor value crosses a setpoint. Fan control requires the aggregates feature to be enable and corresponding device classses selected.",
         "data": {
-          "turn_on_state": "State to turn on the climate group."
+          "required_state": "Required state.",
+          "tracked_device_class": "Tracked device class.",
+          "setpoint": "Setpoint."
         },
         "data_description": {
-          "turn_on_state": "Climate devices will be turned `on` on this state and turned off when the area is cleared."
+          "required_state": "State the area has to have in order to consider turning on the fan group.",
+          "tracked_device_class": "Select which aggregate device class to track for value changes.",
+          "setpoint": "Number which the tracked aggregate sensor must be equal or greater in order to turn on the fan group."
+        }
+      },
+      "feature_conf_climate_control": {
+        "title": "Feature: Climate Control > Entity Selection",
+        "description": "Select the climate entity that you would like to be controlled through area states.",
+        "data": {
+          "entity_id": "Climate entity"
+        },
+        "data_description": {
+          "entity_id": "Climate entity to be controlled."
+        }
+      },
+      "feature_conf_climate_control_select_presets": {
+        "title": "Feature: Climate Control > Preset Mapping",
+        "description": "Control a climate entity by mapping presets to the area state. `extended` state takes priority over `occupied` and `sleep` state takes priority over `extended` and `occupied`. Map a state to an empty preset to disable changing presets for that state.",
+        "data": {
+          "preset_clear": "Clear",
+          "preset_occupied": "Occupied",
+          "preset_sleep": "Sleep",
+          "preset_extended": "Extended"
+        },
+        "data_description": {
+          "preset_clear": "Preset to be changed when on `clear` state.",
+          "preset_occupied": "Preset to be changed when on `occupied` state.",
+          "preset_sleep": "Preset to be changed when on `sleep` state.",
+          "preset_extended": "Preset to be changed when on `extended` state."
         }
       },
       "feature_conf_ble_trackers": {
@@ -139,19 +173,38 @@
           "ble_tracker_entities": "BLE Trackers such as [room-assistant](https://github.com/mKeRix/room-assistant), [Bermuda](https://github.com/agittins/bermuda) and [ESPresence](https://github.com/ESPresense/ESPresense) creates sensors which changes state to whatever area the device was closer to."
         }
       },
+      "feature_conf_wasp_in_a_box": {
+        "title": "Wasp in a Box",
+        "description": "If we see a wasp, then there is a wasp in the box. If we close the box while there is a wasp in the box, then the wasp remains in the box. If the box remains closed when there is a wasp in the box, and the wasp stops moving, we assume it's still in the box. If the box is opened, and the wasp is not moving, we assume that the wasp has escaped (there is no wasp in the box). This feature monitors your `door` aggregates as the box and your `motion` (default) aggregates as your wasp. A new `binary_sensor` will be created and automatically tracked for presence.",
+        "data": {
+          "delay": "Delay",
+          "device_classes": "Wasp sensor device classes"
+        },
+        "data_description": {
+          "delay": "Time to wait before checking for wasps after a box changing state. Set to 0 to disable.",
+          "device_classes": "If you wish other aggregates to be considered as wasps, please select from the list."
+        }
+      },
       "secondary_states": {
         "title": "Advanced area state tracking",
         "description": "You can enable [secondary states](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) for a Magic Area by assigning an entity to it. Secondary states are used by features for turning lights on only when it's dark or only turning on climate devices after an `extended` period of time or not sending notifications to an area if it's on `sleep`.",
         "data": {
           "dark_entity": "Area's light sensor",
+          "sleep_entity": "Sleep state entity",
+          "sleep_timeout": "Clear timeout (Sleep)",
+          "accent_entity": "Accented state entity",
+          "extended_time": "Extended state time required",
+          "extended_timeout": "Clear timeout (Extended)",
+          "calculation_mode": "Secondary state calculation mode"
+        },
+        "data_description": {
+          "dark_entity": "The area's light sensor will be used to track an area `bright`/`dark` status which is used by features such as Light groups to turn on/off your lights according to the room brightness state.\n\n**Avoid using a `light` sensor in the same area as it may cause a feedback loop.** It is recommended to use either `sun.sun` or an exterior `light` sensor that won't be affected by the lights being controlled.",
           "sleep_entity": "Entity used to track area sleep state",
           "sleep_timeout": "How long area will wait before clearing the state when on sleep state",
           "accent_entity": "Entity used to track area accented state",
           "extended_time": "Area will be marked as 'extended' after being occupied for this long",
-          "extended_timeout": "How long area will wait before clearing the state when on extended state"
-        },
-        "data_description": {
-          "dark_entity": "The area's light sensor will be used to track an area `bright`/`dark` status which is used by features such as Light groups to turn on/off your lights according to the room brightness state.\n\n**Avoid using a `light` sensor in the same area as it may cause a feedback loop.** It is recommended to use either `sun.sun` or an exterior `light` sensor that won't be affected by the lights being controlled."
+          "extended_timeout": "How long area will wait before clearing the state when on extended state",
+          "calculation_mode": "Mode of calculating the meta-area secondary states from their children. 'Any' means if any area has the state, 'All' means all areas have to have the state and 'Majority' means >50% of the areas have to have the state."
         }
       },
       "area_config": {
@@ -179,7 +232,6 @@
           "presence_sensor_device_class": "Presence sensors device classes",
           "presence_device_platforms": "Platforms to be used for presence sensing",
           "keep_only_entities": "Keep-only entities",
-          "update_interval": "Interval for checking missed events",
           "clear_timeout": "Clear timeout"
         },
         "data_description": {
@@ -192,27 +244,96 @@
     },
     "error": {
       "option_error": "Invalid option",
-      "malformed_input": "This field is invalid:"
+      "malformed_input": "This field is invalid:",
+      "no_entity_selected": "No entity was selected",
+      "invalid_entity": "Invalid entity selected",
+      "climate_no_preset_support": "Climate entity does not support preset modes"
     }
   },
   "entity": {
     "binary_sensor": {
       "area_state": {
-        "name": "Area State"
+        "name": "Area State",
+        "state": {
+          "off": "Clear",
+          "on": "Occupied"
+        },
+        "state_attributes": {
+          "areas": {
+            "name": "Areas"
+          },
+          "states": {
+            "name": "States",
+            "state": {
+              "clear": "Clear",
+              "occupied": "Occupied",
+              "extended": "Extended",
+              "sleep": "Sleep",
+              "dark": "Dark",
+              "bright": "Bright"
+            }
+          },
+          "active_sensors": {
+            "name": "Active sensors"
+          },
+          "last_active_sensors": {
+            "name": "Last active sensors"
+          },
+          "presence_sensors": {
+            "name": "Presence sensors"
+          },
+          "type": {
+            "name": "Type",
+            "state": {
+              "interior": "Interior",
+              "exterior": "Exterior"
+            }
+          },
+          "clear_timeout": {
+            "name": "Clear timeout"
+          }
+        }
       },
       "ble_tracker_monitor": {
         "name": "BLE Tracker Occupancy"
       },
       "health_problem": {
-        "name": "Area Health"
+        "name": "Area Health",
+        "state": {
+          "off": "Healthy",
+          "on": "Unhealthy"
+        }
       },
       "threshold_light": {
         "name": "Light (Calculated)"
+      },
+      "wasp_in_a_box": {
+        "name": "Wasp in a Box",
+        "state": {
+          "off": "No wasp in the box",
+          "on": "Wasp in the box"
+        },
+        "state_attributes": {
+          "wasp": {
+            "name": "Wasp",
+            "state": {
+              "off": "Not seen",
+              "on": "Seen"
+            }
+          },
+          "box": {
+            "name": "Box",
+            "state": {
+              "off": "Closed",
+              "on": "Open"
+            }
+          }
+        }
       }
     },
-    "climate": {
-      "climate_group": {
-        "name": "Thermostats"
+    "fan": {
+      "fan_group": {
+        "name": "Fans"
       }
     },
     "cover": {
@@ -287,6 +408,38 @@
       },
       "climate_control": {
         "name": "Climate Control"
+      },
+      "fan_control": {
+        "name": "Fan Control"
+      }
+    }
+  },
+  "selector": {
+    "area_type": {
+      "options": {
+        "interior": "Interior",
+        "exterior": "Exterior"
+      }
+    },
+    "area_states": {
+      "options": {
+        "clear": "Clear",
+        "occupied": "Occupied",
+        "extended": "Extended",
+        "sleep": "Sleep"
+      }
+    },
+    "control_on": {
+      "options": {
+        "occupancy": "When area goes from clear to occupied",
+        "state": "When secondary state changes"
+      }
+    },
+    "calculation_mode": {
+      "options": {
+        "any": "Any",
+        "all": "All",
+        "majority": "Majority"
       }
     }
   },

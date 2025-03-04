@@ -3,6 +3,7 @@
 Small helper functions that are used more than once.
 """
 
+from collections.abc import Sequence
 import logging
 
 from homeassistant.const import ATTR_ENTITY_ID
@@ -14,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def cleanup_removed_entries(
-    hass: HomeAssistant, entity_list: list[Entity], old_ids: list[dict[str, str]]
+    hass: HomeAssistant, entity_list: Sequence[Entity], old_ids: list[dict[str, str]]
 ) -> None:
     """Clean up old magic entities."""
     new_ids = [entity.entity_id for entity in entity_list]

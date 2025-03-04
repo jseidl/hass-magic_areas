@@ -27,8 +27,10 @@ from custom_components.magic_areas.const import (
     AREA_TYPE_META,
     CONF_ENABLED_FEATURES,
     CONF_EXCLUDE_ENTITIES,
+    CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_BLE_TRACKERS,
     CONF_FEATURE_PRESENCE_HOLD,
+    CONF_FEATURE_WASP_IN_A_BOX,
     CONF_IGNORE_DIAGNOSTIC_ENTITIES,
     CONF_INCLUDE_ENTITIES,
     CONF_PRESENCE_DEVICE_PLATFORMS,
@@ -75,7 +77,7 @@ class MagicArea:
         self.hass: HomeAssistant = hass
         self.name: str = area.name
         # Default to the icon for the area.
-        self.icon: str = area.icon or "mdi:room"
+        self.icon: str | None = area.icon
         self.id: str = area.id
         self.slug: str = slugify(self.name)
         self.hass_config: ConfigEntry = config
@@ -92,9 +94,9 @@ class MagicArea:
         self.entities: dict[str, list[dict[str, str]]] = {}
         self.magic_entities: dict[str, list[dict[str, str]]] = {}
 
-        self.last_changed: int = datetime.now(UTC)  # type: ignore  # noqa: PGH003
+        self.last_changed: datetime = datetime.now(UTC)
 
-        self.states = []
+        self.states: list[str] = []
 
         self.loaded_platforms: list[str] = []
 
@@ -353,14 +355,6 @@ class MagicArea:
 
         sensors: list[str] = []
 
-        if self.is_meta():
-            # MetaAreas track their children
-            child_areas = self.get_child_areas()  # pylint: disable=no-member
-            for child_area in child_areas:
-                entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{child_area}_area_state"
-                sensors.append(entity_id)
-            return sensors
-
         valid_presence_platforms = self.config.get(
             CONF_PRESENCE_DEVICE_PLATFORMS, DEFAULT_PRESENCE_DEVICE_PLATFORMS
         )
@@ -396,6 +390,15 @@ class MagicArea:
             ble_tracker_sensor_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_ble_trackers_{self.slug}_ble_tracker_monitor"
             sensors.append(ble_tracker_sensor_id)
 
+        # Append Wasp In The Box sensor as presence monitor
+        if self.has_feature(CONF_FEATURE_AGGREGATION) and self.has_feature(
+            CONF_FEATURE_WASP_IN_A_BOX
+        ):
+            wasp_in_the_box_sensor_id = (
+                f"{BINARY_SENSOR_DOMAIN}.magic_areas_wasp_in_a_box_{self.slug}"
+            )
+            sensors.append(wasp_in_the_box_sensor_id)
+
         return sensors
 
     async def initialize(self, _=None) -> None:
@@ -413,6 +416,18 @@ class MagicArea:
 
 class MagicMetaArea(MagicArea):
     """Magic Meta Area class."""
+
+    def get_presence_sensors(self) -> list[str]:
+        """Return list of entities used for presence tracking."""
+
+        sensors: list[str] = []
+
+        # MetaAreas track their children
+        child_areas = self.get_child_areas()  # pylint: disable=no-member
+        for child_area in child_areas:
+            entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{child_area}_area_state"
+            sensors.append(entity_id)
+        return sensors
 
     def get_active_areas(self):
         """Return areas that are occupied."""

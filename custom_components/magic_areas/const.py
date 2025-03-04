@@ -1,6 +1,6 @@
 """Constants for Magic Areas."""
 
-from enum import IntEnum, StrEnum
+from enum import IntEnum, StrEnum, auto
 from itertools import chain
 
 import voluptuous as vol
@@ -15,6 +15,7 @@ from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.components.device_tracker.const import (
     DOMAIN as DEVICE_TRACKER_DOMAIN,
 )
+from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
@@ -43,6 +44,7 @@ MODULE_DATA = f"{DOMAIN}_data"
 
 ADDITIONAL_LIGHT_TRACKING_ENTITIES = ["sun.sun"]
 DEFAULT_SENSOR_PRECISION = 2
+UPDATE_INTERVAL = ONE_MINUTE
 
 # Light group options
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
@@ -93,6 +95,14 @@ LIGHT_GROUP_ACT_ON = {
 }
 
 
+class CalculationMode(StrEnum):
+    """Modes for calculating values."""
+
+    ANY = auto()
+    ALL = auto()
+    MAJORITY = auto()
+
+
 class LightGroupCategory(StrEnum):
     """Categories of light groups."""
 
@@ -132,6 +142,17 @@ DISTRESS_SENSOR_CLASSES = [
     BinarySensorDeviceClass.GAS,
 ]  # @todo make configurable
 DISTRESS_STATES = [AlarmControlPanelState.TRIGGERED, STATE_ON, STATE_PROBLEM]
+
+# Wasp in a Box
+WASP_IN_A_BOX_WASP_DEVICE_CLASSES = [
+    BinarySensorDeviceClass.MOTION,
+    BinarySensorDeviceClass.OCCUPANCY,
+    BinarySensorDeviceClass.PRESENCE,
+]
+WASP_IN_A_BOX_BOX_DEVICE_CLASSES = [
+    BinarySensorDeviceClass.DOOR,
+    BinarySensorDeviceClass.GARAGE_DOOR,
+]
 
 # Aggregates
 AGGREGATE_SENSOR_CLASSES = (
@@ -198,6 +219,14 @@ class MagicAreasFeatureInfoBLETrackers(MagicAreasFeatureInfo):
     icons = {BINARY_SENSOR_DOMAIN: "mdi:bluetooth"}
 
 
+class MagicAreasFeatureInfoWaspInABox(MagicAreasFeatureInfo):
+    """Feature information for feature: Wasp in a box."""
+
+    id = "wasp_in_a_box"
+    translation_keys = {BINARY_SENSOR_DOMAIN: "wasp_in_a_box"}
+    icons = {BINARY_SENSOR_DOMAIN: "mdi:bee"}
+
+
 class MagicAreasFeatureInfoAggregates(MagicAreasFeatureInfo):
     """Feature information for feature: Aggregates."""
 
@@ -233,15 +262,25 @@ class MagicAreasFeatureInfoLightGroups(MagicAreasFeatureInfo):
     icons = {SWITCH_DOMAIN: "mdi:lightbulb-auto-outline"}
 
 
-class MagicAreasFeatureInfoClimateGroups(MagicAreasFeatureInfo):
-    """Feature information for feature: Climate groups."""
+class MagicAreasFeatureInfoClimateControl(MagicAreasFeatureInfo):
+    """Feature information for feature: Climate control."""
 
-    id = "climate_groups"
+    id = "climate_control"
     translation_keys = {
-        CLIMATE_DOMAIN: "climate_group",
         SWITCH_DOMAIN: "climate_control",
     }
     icons = {SWITCH_DOMAIN: "mdi:thermostat-auto"}
+
+
+class MagicAreasFeatureInfoFanGroups(MagicAreasFeatureInfo):
+    """Feature information for feature: Fan groups."""
+
+    id = "fan_groups"
+    translation_keys = {
+        FAN_DOMAIN: "fan_group",
+        SWITCH_DOMAIN: "fan_control",
+    }
+    icons = {SWITCH_DOMAIN: "mdi:fan-auto"}
 
 
 class MagicAreasFeatureInfoMediaPlayerGroups(MagicAreasFeatureInfo):
@@ -275,13 +314,16 @@ class MagicAreasFeatures(StrEnum):
     AREA = "area"  # Default feature
     PRESENCE_HOLD = "presence_hold"
     LIGHT_GROUPS = "light_groups"
-    CLIMATE_GROUPS = "climate_groups"
+    CLIMATE_CONTROL = "climate_control"
     COVER_GROUPS = "cover_groups"
     MEDIA_PLAYER_GROUPS = "media_player_groups"
     AREA_AWARE_MEDIA_PLAYER = "area_aware_media_player"
     AGGREGATES = "aggregates"
     HEALTH = "health"
     THRESHOLD = "threshold"
+    FAN_GROUPS = "fan_groups"
+    WASP_IN_A_BOX = "wasp_in_a_box"
+    BLE_TRACKER = "ble_trackers"
 
 
 # Magic Areas Events
@@ -292,6 +334,17 @@ class MagicAreasEvents(StrEnum):
 
 
 EVENT_MAGICAREAS_AREA_STATE_CHANGED = "magicareas_area_state_changed"
+
+
+# SelectorTranslationKeys
+class SelectorTranslationKeys(StrEnum):
+    """Translation keys for config flow UI selectors."""
+
+    CLIMATE_PRESET_LIST = auto()
+    AREA_TYPE = auto()
+    AREA_STATES = auto()
+    CONTROL_ON = auto()
+    CALCULATION_MODE = auto()
 
 
 ALL_BINARY_SENSOR_DEVICE_CLASSES = [cls.value for cls in BinarySensorDeviceClass]
@@ -306,7 +359,6 @@ ATTR_STATES = "states"
 ATTR_AREAS = "areas"
 ATTR_ACTIVE_AREAS = "active_areas"
 ATTR_TYPE = "type"
-ATTR_UPDATE_INTERVAL = "update_interval"
 ATTR_CLEAR_TIMEOUT = "clear_timeout"
 ATTR_ACTIVE_SENSORS = "active_sensors"
 ATTR_LAST_ACTIVE_SENSORS = "last_active_sensors"
@@ -371,7 +423,7 @@ MAGIC_AREAS_COMPONENTS = [
     SWITCH_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
-    CLIMATE_DOMAIN,
+    FAN_DOMAIN,
 ]
 
 MAGIC_AREAS_COMPONENTS_META = [
@@ -380,7 +432,7 @@ MAGIC_AREAS_COMPONENTS_META = [
     COVER_DOMAIN,
     SENSOR_DOMAIN,
     LIGHT_DOMAIN,
-    CLIMATE_DOMAIN,
+    SWITCH_DOMAIN,
 ]
 
 MAGIC_AREAS_COMPONENTS_GLOBAL = MAGIC_AREAS_COMPONENTS_META
@@ -465,11 +517,55 @@ CONF_AGGREGATES_MIN_ENTITIES, DEFAULT_AGGREGATES_MIN_ENTITIES = (
     DEFAULT_AGGREGATES_BINARY_SENSOR_DEVICE_CLASSES,
 ) = (
     "aggregates_binary_sensor_device_classes",
-    ALL_BINARY_SENSOR_DEVICE_CLASSES,
+    [
+        BinarySensorDeviceClass.CONNECTIVITY,
+        BinarySensorDeviceClass.DOOR,
+        BinarySensorDeviceClass.GARAGE_DOOR,
+        BinarySensorDeviceClass.GAS,
+        BinarySensorDeviceClass.HEAT,
+        BinarySensorDeviceClass.LIGHT,
+        BinarySensorDeviceClass.LOCK,
+        BinarySensorDeviceClass.MOISTURE,
+        BinarySensorDeviceClass.MOTION,
+        BinarySensorDeviceClass.MOVING,
+        BinarySensorDeviceClass.OCCUPANCY,
+        BinarySensorDeviceClass.PRESENCE,
+        BinarySensorDeviceClass.PROBLEM,
+        BinarySensorDeviceClass.SAFETY,
+        BinarySensorDeviceClass.SMOKE,
+        BinarySensorDeviceClass.SOUND,
+        BinarySensorDeviceClass.TAMPER,
+        BinarySensorDeviceClass.UPDATE,
+        BinarySensorDeviceClass.VIBRATION,
+        BinarySensorDeviceClass.WINDOW,
+    ],
 )  # cv.ensure_list
 CONF_AGGREGATES_SENSOR_DEVICE_CLASSES, DEFAULT_AGGREGATES_SENSOR_DEVICE_CLASSES = (
     "aggregates_sensor_device_classes",
-    ALL_SENSOR_DEVICE_CLASSES,
+    [
+        SensorDeviceClass.AQI,
+        SensorDeviceClass.ATMOSPHERIC_PRESSURE,
+        SensorDeviceClass.CO,
+        SensorDeviceClass.CO2,
+        SensorDeviceClass.CURRENT,
+        SensorDeviceClass.ENERGY,
+        SensorDeviceClass.ENERGY_STORAGE,
+        SensorDeviceClass.GAS,
+        SensorDeviceClass.HUMIDITY,
+        SensorDeviceClass.ILLUMINANCE,
+        SensorDeviceClass.IRRADIANCE,
+        SensorDeviceClass.MOISTURE,
+        SensorDeviceClass.NITROGEN_DIOXIDE,
+        SensorDeviceClass.NITROGEN_MONOXIDE,
+        SensorDeviceClass.NITROUS_OXIDE,
+        SensorDeviceClass.OZONE,
+        SensorDeviceClass.POWER,
+        SensorDeviceClass.PRESSURE,
+        SensorDeviceClass.SULPHUR_DIOXIDE,
+        SensorDeviceClass.TEMPERATURE,
+        SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS,
+        SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS_PARTS,
+    ],
 )  # cv.ensure_list
 CONF_AGGREGATES_ILLUMINANCE_THRESHOLD, DEFAULT_AGGREGATES_ILLUMINANCE_THRESHOLD = (
     "aggregates_illuminance_threshold",
@@ -504,7 +600,6 @@ CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT_META = (
     1,
     0,
 )  # cv.positive_int
-CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL = "update_interval", 60  # cv.positive_int
 CONF_NOTIFICATION_DEVICES, DEFAULT_NOTIFICATION_DEVICES = (
     "notification_devices",
     [],
@@ -532,6 +627,12 @@ CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES = (
     [],
 )  # cv.entity_ids
 
+CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = ("delay", 0)  # cv.positive_int
+CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES = (
+    "wasp_device_classes",
+    [BinarySensorDeviceClass.MOTION, BinarySensorDeviceClass.OCCUPANCY],
+)  # cv.ensure_list
+
 CONFIGURABLE_AREA_STATE_MAP = {
     AREA_STATE_SLEEP: CONF_SLEEP_ENTITY,
     AREA_STATE_DARK: CONF_DARK_ENTITY,
@@ -539,8 +640,8 @@ CONFIGURABLE_AREA_STATE_MAP = {
 }
 
 # features
-CONF_FEATURE_CLIMATE_GROUPS = "climate_groups"
-
+CONF_FEATURE_CLIMATE_CONTROL = "climate_control"
+CONF_FEATURE_FAN_GROUPS = "fan_groups"
 CONF_FEATURE_MEDIA_PLAYER_GROUPS = "media_player_groups"
 CONF_FEATURE_LIGHT_GROUPS = "light_groups"
 CONF_FEATURE_COVER_GROUPS = "cover_groups"
@@ -549,12 +650,13 @@ CONF_FEATURE_AGGREGATION = "aggregates"
 CONF_FEATURE_HEALTH = "health"
 CONF_FEATURE_PRESENCE_HOLD = "presence_hold"
 CONF_FEATURE_BLE_TRACKERS = "ble_trackers"
+CONF_FEATURE_WASP_IN_A_BOX = "wasp_in_a_box"
 
 CONF_FEATURE_LIST_META = [
     CONF_FEATURE_MEDIA_PLAYER_GROUPS,
     CONF_FEATURE_LIGHT_GROUPS,
     CONF_FEATURE_COVER_GROUPS,
-    CONF_FEATURE_CLIMATE_GROUPS,
+    CONF_FEATURE_CLIMATE_CONTROL,
     CONF_FEATURE_AGGREGATION,
     CONF_FEATURE_HEALTH,
 ]
@@ -563,6 +665,8 @@ CONF_FEATURE_LIST = CONF_FEATURE_LIST_META + [
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER,
     CONF_FEATURE_PRESENCE_HOLD,
     CONF_FEATURE_BLE_TRACKERS,
+    CONF_FEATURE_FAN_GROUPS,
+    CONF_FEATURE_WASP_IN_A_BOX,
 ]
 
 CONF_FEATURE_LIST_GLOBAL = CONF_FEATURE_LIST_META
@@ -573,12 +677,52 @@ CONF_PRESENCE_HOLD_TIMEOUT, DEFAULT_PRESENCE_HOLD_TIMEOUT = (
     0,
 )  # cv.int
 
-# Climate Group Options
-CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE = (
-    "turn_on_state",
-    AREA_STATE_EXTENDED,
+# Climate control options
+CONF_CLIMATE_CONTROL_ENTITY_ID, DEFAULT_CLIMATE_CONTROL_ENTITY_ID = ("entity_id", None)
+CONF_CLIMATE_CONTROL_PRESET_CLEAR, DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR = (
+    "preset_clear",
+    EMPTY_STRING,
+)
+CONF_CLIMATE_CONTROL_PRESET_OCCUPIED, DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED = (
+    "preset_occupied",
+    EMPTY_STRING,
+)
+CONF_CLIMATE_CONTROL_PRESET_EXTENDED, DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED = (
+    "preset_extended",
+    EMPTY_STRING,
+)
+CONF_CLIMATE_CONTROL_PRESET_SLEEP, DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP = (
+    "preset_sleep",
+    EMPTY_STRING,
 )
 
+# Fan Group options
+CONF_FAN_GROUPS_REQUIRED_STATE, DEFAULT_FAN_GROUPS_REQUIRED_STATE = (
+    "required_state",
+    AREA_STATE_EXTENDED,
+)
+CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS, DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS = (
+    "tracked_device_class",
+    SensorDeviceClass.TEMPERATURE,
+)
+CONF_FAN_GROUPS_SETPOINT, DEFAULT_FAN_GROUPS_SETPOINT = ("setpoint", 0.0)
+FAN_GROUPS_ALLOWED_TRACKED_DEVICE_CLASS = [
+    SensorDeviceClass.TEMPERATURE,
+    SensorDeviceClass.HUMIDITY,
+    SensorDeviceClass.CO,
+    SensorDeviceClass.CO2,
+    SensorDeviceClass.AQI,
+    SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS,
+    SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS_PARTS,
+    SensorDeviceClass.NITROGEN_DIOXIDE,
+    SensorDeviceClass.NITROGEN_MONOXIDE,
+    SensorDeviceClass.GAS,
+    SensorDeviceClass.OZONE,
+    SensorDeviceClass.PM1,
+    SensorDeviceClass.PM10,
+    SensorDeviceClass.PM25,
+    SensorDeviceClass.SULPHUR_DIOXIDE,
+]
 
 # Config Schema
 
@@ -635,12 +779,80 @@ BLE_TRACKER_FEATURE_SCHEMA = vol.Schema(
     extra=vol.REMOVE_EXTRA,
 )
 
-CLIMATE_GROUP_FEATURE_SCHEMA = vol.Schema(
+WASP_IN_A_BOX_FEATURE_SCHEMA = vol.Schema(
     {
         vol.Optional(
-            CONF_CLIMATE_GROUPS_TURN_ON_STATE,
-            default=DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE,
+            CONF_WASP_IN_A_BOX_DELAY, default=DEFAULT_WASP_IN_A_BOX_DELAY
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+            default=DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+        ): cv.ensure_list,
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+
+CLIMATE_CONTROL_FEATURE_SCHEMA_ENTITY_SELECT = vol.Schema(
+    {
+        vol.Required(CONF_CLIMATE_CONTROL_ENTITY_ID): cv.entity_id,
+    }
+)
+CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT = vol.Schema(
+    {
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_CLEAR,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR,
         ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_SLEEP,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
+        ): str,
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+CLIMATE_CONTROL_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_CLIMATE_CONTROL_ENTITY_ID): cv.entity_id,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_CLEAR,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_SLEEP,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP,
+        ): str,
+        vol.Optional(
+            CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+            default=DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
+        ): str,
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+
+FAN_GROUP_FEATURE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_FAN_GROUPS_REQUIRED_STATE, default=DEFAULT_FAN_GROUPS_REQUIRED_STATE
+        ): str,
+        vol.Optional(
+            CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+            default=DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        ): str,
+        vol.Optional(
+            CONF_FAN_GROUPS_SETPOINT, default=DEFAULT_FAN_GROUPS_SETPOINT
+        ): float,
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -685,17 +897,19 @@ ALL_FEATURES = set(CONF_FEATURE_LIST) | set(CONF_FEATURE_LIST_GLOBAL)
 
 CONFIGURABLE_FEATURES = {
     CONF_FEATURE_LIGHT_GROUPS: LIGHT_GROUP_FEATURE_SCHEMA,
-    CONF_FEATURE_CLIMATE_GROUPS: CLIMATE_GROUP_FEATURE_SCHEMA,
+    CONF_FEATURE_CLIMATE_CONTROL: CLIMATE_CONTROL_FEATURE_SCHEMA,
+    CONF_FEATURE_FAN_GROUPS: FAN_GROUP_FEATURE_SCHEMA,
     CONF_FEATURE_AGGREGATION: AGGREGATE_FEATURE_SCHEMA,
     CONF_FEATURE_HEALTH: HEALTH_FEATURE_SCHEMA,
     CONF_FEATURE_AREA_AWARE_MEDIA_PLAYER: AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA,
     CONF_FEATURE_PRESENCE_HOLD: PRESENCE_HOLD_FEATURE_SCHEMA,
     CONF_FEATURE_BLE_TRACKERS: BLE_TRACKER_FEATURE_SCHEMA,
+    CONF_FEATURE_WASP_IN_A_BOX: WASP_IN_A_BOX_FEATURE_SCHEMA,
 }
 
 NON_CONFIGURABLE_FEATURES_META = [
     CONF_FEATURE_LIGHT_GROUPS,
-    CONF_FEATURE_CLIMATE_GROUPS,
+    CONF_FEATURE_FAN_GROUPS,
 ]
 
 NON_CONFIGURABLE_FEATURES = {
@@ -729,6 +943,31 @@ SECONDARY_STATES_SCHEMA = vol.Schema(
     },
     extra=vol.REMOVE_EXTRA,
 )
+
+CONF_SECONDARY_STATES_CALCULATION_MODE, DEFAULT_SECONDARY_STATES_CALCULATION_MODE = (
+    "calculation_mode",
+    CalculationMode.MAJORITY,
+)
+
+META_AREA_SECONDARY_STATES_SCHEMA = vol.Schema(
+    {
+        vol.Optional(
+            CONF_SLEEP_TIMEOUT, default=DEFAULT_SLEEP_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_EXTENDED_TIME, default=DEFAULT_EXTENDED_TIME
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_EXTENDED_TIMEOUT, default=DEFAULT_EXTENDED_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
+            CONF_SECONDARY_STATES_CALCULATION_MODE,
+            default=DEFAULT_SECONDARY_STATES_CALCULATION_MODE,
+        ): vol.In(CalculationMode),
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+
 
 # Basic Area Options Schema
 REGULAR_AREA_BASIC_OPTIONS_SCHEMA = vol.Schema(
@@ -774,9 +1013,6 @@ REGULAR_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
         ): cv.positive_int,
-        vol.Optional(
-            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
-        ): cv.positive_int,
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -785,9 +1021,6 @@ META_AREA_PRESENCE_TRACKING_OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT_META
-        ): cv.positive_int,
-        vol.Optional(
-            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
         ): cv.positive_int,
     },
     extra=vol.REMOVE_EXTRA,
@@ -819,9 +1052,6 @@ REGULAR_AREA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT
         ): cv.positive_int,
-        vol.Optional(
-            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
-        ): cv.positive_int,
         vol.Optional(CONF_ENABLED_FEATURES, default={}): FEATURES_SCHEMA,
         vol.Optional(CONF_SECONDARY_STATES, default={}): SECONDARY_STATES_SCHEMA,
     },
@@ -840,8 +1070,8 @@ META_AREA_SCHEMA = vol.Schema(
             CONF_CLEAR_TIMEOUT, default=DEFAULT_CLEAR_TIMEOUT_META
         ): cv.positive_int,
         vol.Optional(
-            CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
-        ): cv.positive_int,
+            CONF_SECONDARY_STATES, default={}
+        ): META_AREA_SECONDARY_STATES_SCHEMA,
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -875,7 +1105,6 @@ OPTIONS_PRESENCE_TRACKING = [
     ),
     (CONF_KEEP_ONLY_ENTITIES, [], cv.entity_ids),
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
-    (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
 ]
 
 OPTIONS_AREA_META = [
@@ -884,7 +1113,6 @@ OPTIONS_AREA_META = [
 ]
 OPTIONS_PRESENCE_TRACKING_META = [
     (CONF_CLEAR_TIMEOUT, DEFAULT_CLEAR_TIMEOUT, int),
-    (CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, int),
 ]
 
 OPTIONS_SECONDARY_STATES = [
@@ -894,6 +1122,17 @@ OPTIONS_SECONDARY_STATES = [
     (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
     (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
     (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),
+]
+
+OPTIONS_SECONDARY_STATES_META = [
+    (CONF_SLEEP_TIMEOUT, DEFAULT_SLEEP_TIMEOUT, int),
+    (CONF_EXTENDED_TIME, DEFAULT_EXTENDED_TIME, int),
+    (CONF_EXTENDED_TIMEOUT, DEFAULT_EXTENDED_TIMEOUT, int),
+    (
+        CONF_SECONDARY_STATES_CALCULATION_MODE,
+        DEFAULT_SECONDARY_STATES_CALCULATION_MODE,
+        str,
+    ),
 ]
 
 OPTIONS_LIGHT_GROUP = [
@@ -951,12 +1190,41 @@ OPTIONS_BLE_TRACKERS = [
     (CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES, cv.entity_ids),
 ]
 
-OPTIONS_CLIMATE_GROUP = [
-    (CONF_CLIMATE_GROUPS_TURN_ON_STATE, DEFAULT_CLIMATE_GROUPS_TURN_ON_STATE, str),
+OPTIONS_WASP_IN_A_BOX = [
+    (CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY, cv.positive_int),
+    (
+        CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+        DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+        vol.In(WASP_IN_A_BOX_WASP_DEVICE_CLASSES),
+    ),
+]
+OPTIONS_CLIMATE_CONTROL_ENTITY_SELECT = [
+    (CONF_CLIMATE_CONTROL_ENTITY_ID, None, cv.entity_id),
+]
+OPTIONS_CLIMATE_CONTROL = [
+    (CONF_CLIMATE_CONTROL_PRESET_CLEAR, DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR, str),
+    (
+        CONF_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        DEFAULT_CLIMATE_CONTROL_PRESET_OCCUPIED,
+        str,
+    ),
+    (CONF_CLIMATE_CONTROL_PRESET_SLEEP, DEFAULT_CLIMATE_CONTROL_PRESET_SLEEP, str),
+    (
+        CONF_CLIMATE_CONTROL_PRESET_EXTENDED,
+        DEFAULT_CLIMATE_CONTROL_PRESET_EXTENDED,
+        str,
+    ),
 ]
 
-OPTIONS_CLIMATE_GROUP_META = [
-    (CONF_CLIMATE_GROUPS_TURN_ON_STATE, None, str),
+
+OPTIONS_FAN_GROUP = [
+    (CONF_FAN_GROUPS_REQUIRED_STATE, DEFAULT_FAN_GROUPS_REQUIRED_STATE, str),
+    (
+        CONF_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        DEFAULT_FAN_GROUPS_TRACKED_DEVICE_CLASS,
+        str,
+    ),
+    (CONF_FAN_GROUPS_SETPOINT, DEFAULT_FAN_GROUPS_SETPOINT, float),
 ]
 
 OPTIONS_AREA_AWARE_MEDIA_PLAYER = [

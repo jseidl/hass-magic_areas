@@ -134,7 +134,7 @@ def get_magic_area_for_config_entry(
 
 def get_area_from_config_entry(
     hass: HomeAssistant, config_entry: ConfigEntry
-) -> MagicArea | None:
+) -> MagicArea | MagicMetaArea | None:
     """Return area object for given config entry."""
 
     if config_entry.entry_id not in hass.data[MODULE_DATA]:
