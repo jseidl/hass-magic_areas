@@ -181,7 +181,7 @@
           "device_classes": "Wasp sensor device classes"
         },
         "data_description": {
-          "delay": "Time to wait before checking for wasps after a box changing state.",
+          "delay": "Time to wait before checking for wasps after a box changing state. Set to 0 to disable.",
           "device_classes": "If you wish other aggregates to be considered as wasps, please select from the list."
         }
       },
@@ -277,7 +277,7 @@
             "name": "Active sensors"
           },
           "last_active_sensors": {
-            "name": "Last active Sensors"
+            "name": "Last active sensors"
           },
           "presence_sensors": {
             "name": "Presence sensors"
@@ -310,22 +310,22 @@
       "wasp_in_a_box": {
         "name": "Wasp in a Box",
         "state": {
-          "off": "No Wasp",
-          "on": "Wasp"
+          "off": "No wasp in the box",
+          "on": "Wasp in the box"
         },
         "state_attributes": {
           "wasp": {
             "name": "Wasp",
             "state": {
-              "false": "Not seen",
-              "true": "Seen"
+              "off": "Not seen",
+              "on": "Seen"
             }
           },
           "box": {
             "name": "Box",
             "state": {
-              "false": "Closed",
-              "true": "Open"
+              "off": "Closed",
+              "on": "Open"
             }
           }
         }
