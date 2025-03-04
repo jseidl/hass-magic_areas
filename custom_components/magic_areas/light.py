@@ -3,18 +3,23 @@
 import asyncio
 import logging
 
+import attr
 from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import (
-    ATTR_COLOR_TEMP,
     ATTR_HS_COLOR,
-    DOMAIN as LIGHT_DOMAIN,
-    SUPPORT_COLOR,
-    SUPPORT_COLOR_TEMP,
+    ATTR_SUPPORTED_COLOR_MODES,
+    ATTR_COLOR_TEMP_KELVIN,
+    ATTR_RGB_COLOR,
+    ATTR_RGBW_COLOR,
+    ATTR_RGBWW_COLOR,
+    ATTR_BRIGHTNESS,
+    ATTR_BRIGHTNESS_PCT,
+    ATTR_BRIGHTNESS_STEP_PCT,
 )
+from homeassistant.components.light.const import DOMAIN as LIGHT_DOMAIN, ColorMode
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
-    ATTR_SUPPORTED_FEATURES,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
     STATE_OFF,
@@ -177,20 +182,42 @@ class MagicLightGroup(MagicEntity, LightGroup):
             if not state:
                 continue
 
-            support = state.attributes.get(ATTR_SUPPORTED_FEATURES, 0)
+            supported_color_modes: list[ColorMode] = state.attributes.get(
+                ATTR_SUPPORTED_COLOR_MODES, []
+            )
 
             # Handle color temperature and color support
-            if support & SUPPORT_COLOR_TEMP and ATTR_COLOR_TEMP in service_data:
-                temp_k = color_util.color_temperature_mired_to_kelvin(
-                    service_data[ATTR_COLOR_TEMP]
-                )
+            if (
+                ColorMode.COLOR_TEMP in supported_color_modes
+                and ATTR_COLOR_TEMP_KELVIN in service_data
+            ):
+                temp_k = service_data[ATTR_COLOR_TEMP_KELVIN]
                 hs_color = color_util.color_temperature_to_hs(temp_k)
                 service_data[ATTR_HS_COLOR] = hs_color
-                del service_data[ATTR_COLOR_TEMP]
+                del service_data[ATTR_COLOR_TEMP_KELVIN]
 
-            if not support & SUPPORT_COLOR:
-                service_data.pop(ATTR_COLOR_TEMP, None)
+            if ColorMode.HS not in supported_color_modes:
+                service_data.pop(ATTR_COLOR_TEMP_KELVIN, None)
                 service_data.pop(ATTR_HS_COLOR, None)
+
+            color_modes: dict[ColorMode, list[str]] = {
+                ColorMode.RGB: [ATTR_RGB_COLOR],
+                ColorMode.RGBW: [ATTR_RGBW_COLOR],
+                ColorMode.RGBWW: [ATTR_RGBWW_COLOR],
+                ColorMode.COLOR_TEMP: [ATTR_COLOR_TEMP_KELVIN],
+                ColorMode.HS: [ATTR_HS_COLOR],
+                ColorMode.BRIGHTNESS: [
+                    ATTR_BRIGHTNESS,
+                    ATTR_BRIGHTNESS_PCT,
+                    ATTR_BRIGHTNESS_STEP_PCT,
+                ],
+            }
+
+            for color_mode, attribute_names in color_modes.items():
+                if color_mode not in supported_color_modes:
+                    for attribute_name in attribute_names:
+                        if attribute_name in service_data:
+                            service_data.pop(attribute_name, None)
 
             service_data[ATTR_ENTITY_ID] = entity_id
             service_calls.append(
