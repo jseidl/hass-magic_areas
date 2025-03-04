@@ -1,21 +1,9 @@
 """Platform file for Magic Area's light entities."""
 
-import asyncio
 import logging
 
-from homeassistant.components.group.light import LightGroup
-from homeassistant.components.light import (
-    ATTR_BRIGHTNESS,
-    ATTR_BRIGHTNESS_PCT,
-    ATTR_BRIGHTNESS_STEP_PCT,
-    ATTR_COLOR_TEMP_KELVIN,
-    ATTR_HS_COLOR,
-    ATTR_RGB_COLOR,
-    ATTR_RGBW_COLOR,
-    ATTR_RGBWW_COLOR,
-    ATTR_SUPPORTED_COLOR_MODES,
-)
-from homeassistant.components.light.const import DOMAIN as LIGHT_DOMAIN, ColorMode
+from homeassistant.components.group.light import FORWARDED_ATTRIBUTES, LightGroup
+from homeassistant.components.light.const import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
@@ -26,7 +14,6 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.util import color as color_util
 
 from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.base.magic import MagicArea
@@ -163,7 +150,10 @@ class MagicLightGroup(MagicEntity, LightGroup):
 
     async def async_turn_on(self, **kwargs) -> None:
         """Forward the turn_on command to all lights in the light group."""
-        data = kwargs.copy()
+
+        data = {
+            key: value for key, value in kwargs.items() if key in FORWARDED_ATTRIBUTES
+        }
 
         # Get active lights or default to all lights
         active_lights = self._get_active_lights() or self._entity_ids
@@ -173,64 +163,17 @@ class MagicLightGroup(MagicEntity, LightGroup):
             str(active_lights),
         )
 
-        service_calls = []
+        data[ATTR_ENTITY_ID] = active_lights
 
-        for entity_id in active_lights:
-            service_data = data.copy()
-            state = self.hass.states.get(entity_id)
-            if not state:
-                continue
+        _LOGGER.debug("%s: Forwarded turn_on command: %s", self.area.name, data)
 
-            supported_color_modes: list[ColorMode] = state.attributes.get(
-                ATTR_SUPPORTED_COLOR_MODES, []
-            )
-
-            # Handle color temperature and color support
-            if (
-                ColorMode.COLOR_TEMP in supported_color_modes
-                and ATTR_COLOR_TEMP_KELVIN in service_data
-            ):
-                temp_k = service_data[ATTR_COLOR_TEMP_KELVIN]
-                hs_color = color_util.color_temperature_to_hs(temp_k)
-                service_data[ATTR_HS_COLOR] = hs_color
-                del service_data[ATTR_COLOR_TEMP_KELVIN]
-
-            if ColorMode.HS not in supported_color_modes:
-                service_data.pop(ATTR_COLOR_TEMP_KELVIN, None)
-                service_data.pop(ATTR_HS_COLOR, None)
-
-            color_modes: dict[ColorMode, list[str]] = {
-                ColorMode.RGB: [ATTR_RGB_COLOR],
-                ColorMode.RGBW: [ATTR_RGBW_COLOR],
-                ColorMode.RGBWW: [ATTR_RGBWW_COLOR],
-                ColorMode.COLOR_TEMP: [ATTR_COLOR_TEMP_KELVIN],
-                ColorMode.HS: [ATTR_HS_COLOR],
-                ColorMode.BRIGHTNESS: [
-                    ATTR_BRIGHTNESS,
-                    ATTR_BRIGHTNESS_PCT,
-                    ATTR_BRIGHTNESS_STEP_PCT,
-                ],
-            }
-
-            for color_mode, attribute_names in color_modes.items():
-                if color_mode not in supported_color_modes:
-                    for attribute_name in attribute_names:
-                        if attribute_name in service_data:
-                            service_data.pop(attribute_name, None)
-
-            service_data[ATTR_ENTITY_ID] = entity_id
-            service_calls.append(
-                self.hass.services.async_call(
-                    LIGHT_DOMAIN,
-                    SERVICE_TURN_ON,
-                    service_data,
-                    blocking=True,
-                    context=self._context,
-                )
-            )
-
-        # Perform all service calls concurrently
-        await asyncio.gather(*service_calls)
+        await self.hass.services.async_call(
+            LIGHT_DOMAIN,
+            SERVICE_TURN_ON,
+            data,
+            blocking=True,
+            context=self._context,
+        )
 
 
 class AreaLightGroup(MagicLightGroup):
