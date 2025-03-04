@@ -3,18 +3,17 @@
 import asyncio
 import logging
 
-import attr
 from homeassistant.components.group.light import LightGroup
 from homeassistant.components.light import (
-    ATTR_HS_COLOR,
-    ATTR_SUPPORTED_COLOR_MODES,
-    ATTR_COLOR_TEMP_KELVIN,
-    ATTR_RGB_COLOR,
-    ATTR_RGBW_COLOR,
-    ATTR_RGBWW_COLOR,
     ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT,
     ATTR_BRIGHTNESS_STEP_PCT,
+    ATTR_COLOR_TEMP_KELVIN,
+    ATTR_HS_COLOR,
+    ATTR_RGB_COLOR,
+    ATTR_RGBW_COLOR,
+    ATTR_RGBWW_COLOR,
+    ATTR_SUPPORTED_COLOR_MODES,
 )
 from homeassistant.components.light.const import DOMAIN as LIGHT_DOMAIN, ColorMode
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
