@@ -331,6 +331,7 @@ class MagicAreasEvents(StrEnum):
     """Magic Areas events."""
 
     AREA_STATE_CHANGED = "magicareas_area_state_changed"
+    AREA_LOADED = "magicareas_area_loaded"
 
 
 EVENT_MAGICAREAS_AREA_STATE_CHANGED = "magicareas_area_state_changed"

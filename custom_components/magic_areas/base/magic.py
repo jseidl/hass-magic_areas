@@ -14,6 +14,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import async_get as devicereg_async_get
+from homeassistant.helpers.dispatcher import async_dispatcher_connect, dispatcher_send
 from homeassistant.helpers.entity_registry import (
     RegistryEntry,
     async_get as entityreg_async_get,
@@ -45,6 +46,8 @@ from custom_components.magic_areas.const import (
     MAGIC_AREAS_COMPONENTS_META,
     META_AREA_GLOBAL,
     MODULE_DATA,
+    AreaType,
+    MagicAreasEvents,
     MetaAreaType,
 )
 
@@ -107,6 +110,14 @@ class MagicArea:
         self.initialized = True
         self.logger.debug(
             "%s (%s) initialized.", self.name, "Meta-Area" if self.is_meta() else "Area"
+        )
+        # Announce area type loaded
+        dispatcher_send(
+            self.hass,
+            MagicAreasEvents.AREA_LOADED,
+            self.area_type,
+            self.floor_id,
+            self.id,
         )
 
     def is_occupied(self) -> bool:
@@ -538,3 +549,43 @@ class MagicMetaArea(MagicArea):
         self.logger.debug(
             "%s: Loaded entities for meta area: %s", self.name, str(self.entities)
         )
+
+    def finalize_init(self) -> None:
+        """Finalize Meta-Area initialization."""
+        async_dispatcher_connect(
+            self.hass, MagicAreasEvents.AREA_LOADED, self._handle_loaded_area
+        )
+
+    async def _handle_loaded_area(
+        self, area_type: str, floor_id: int | None, area_id: str
+    ) -> None:
+        """Handle area loaded signals."""
+
+        self.logger.debug(
+            "%s: Received area loaded signal (type=%s, floor_id=%s, area_id=%s)",
+            self.name,
+            area_type,
+            floor_id,
+            area_id,
+        )
+
+        # Handle Global
+        if self.slug == MetaAreaType.GLOBAL:
+            return await self.reload()
+
+        # Handle Floors
+        if self.floor_id and self.floor_id == floor_id:
+            return await self.reload()
+
+        # Ignore area types we're not expecting
+        if area_type not in [AreaType.EXTERIOR, AreaType.INTERIOR]:
+            return
+
+        # Handle Interior/Exterior metas
+        if self.slug == area_type:
+            return await self.reload()
+
+    async def reload(self) -> None:
+        """Reload current entry."""
+        self.logger.debug("%s: Reloading entry.", self.name)
+        await self.hass.config_entries.async_reload(self.hass_config.entry_id)
