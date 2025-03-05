@@ -115,13 +115,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     hass.data.setdefault(MODULE_DATA, {})
 
-    # Wait for Hass to have started before setting up.
-    if hass.is_running:
-        hass.create_task(_async_setup_integration())
-    else:
-        hass.bus.async_listen_once(
-            EVENT_HOMEASSISTANT_STARTED, _async_setup_integration
-        )
+    await _async_setup_integration()
 
     return True
 
@@ -133,13 +127,10 @@ async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -
     )
     await hass.config_entries.async_reload(config_entry.entry_id)
 
-    # @TODO Reload corresponding meta areas (floor+interior/exterior+global)
-
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Unload a config entry."""
 
-    platforms_unloaded = []
     if MODULE_DATA not in hass.data:
         _LOGGER.warning(
             "Module data object for Magic Areas not found, possibly already removed."
@@ -158,16 +149,12 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     area_data = data[config_entry.entry_id]
     area = area_data[DATA_AREA_OBJECT]
 
-    for platform in area.available_platforms():
-        unload_ok = await hass.config_entries.async_forward_entry_unload(
-            config_entry, platform
-        )
-        platforms_unloaded.append(unload_ok)
+    all_unloaded = await hass.config_entries.async_unload_platforms(
+        config_entry, area.available_platforms()
+    )
 
     for tracked_listener in area_data[DATA_TRACKED_LISTENERS]:
         tracked_listener()
-
-    all_unloaded = all(platforms_unloaded)
 
     if all_unloaded:
         data.pop(config_entry.entry_id)

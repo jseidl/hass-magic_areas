@@ -7,6 +7,7 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    EVENT_HOMEASSISTANT_STARTED,
     ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
     STATE_ON,
@@ -552,9 +553,20 @@ class MagicMetaArea(MagicArea):
 
     def finalize_init(self) -> None:
         """Finalize Meta-Area initialization."""
-        async_dispatcher_connect(
-            self.hass, MagicAreasEvents.AREA_LOADED, self._handle_loaded_area
-        )
+
+        async def _async_attach_listener(*args, **kwargs) -> None:
+            """Attach reload listener after Hass has finished starting."""
+            async_dispatcher_connect(
+                self.hass, MagicAreasEvents.AREA_LOADED, self._handle_loaded_area
+            )
+
+        # Wait for Hass to have started before setting up.
+        if self.hass.is_running:
+            self.hass.create_task(_async_attach_listener())
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, _async_attach_listener
+            )
 
     async def _handle_loaded_area(
         self, area_type: str, floor_id: int | None, area_id: str
@@ -571,11 +583,11 @@ class MagicMetaArea(MagicArea):
 
         # Handle Global
         if self.slug == MetaAreaType.GLOBAL:
-            return await self.reload()
+            return self.reload()
 
         # Handle Floors
         if self.floor_id and self.floor_id == floor_id:
-            return await self.reload()
+            return self.reload()
 
         # Ignore area types we're not expecting
         if area_type not in [AreaType.EXTERIOR, AreaType.INTERIOR]:
@@ -583,9 +595,9 @@ class MagicMetaArea(MagicArea):
 
         # Handle Interior/Exterior metas
         if self.slug == area_type:
-            return await self.reload()
+            return self.reload()
 
-    async def reload(self) -> None:
+    def reload(self) -> None:
         """Reload current entry."""
         self.logger.debug("%s: Reloading entry.", self.name)
-        await self.hass.config_entries.async_reload(self.hass_config.entry_id)
+        self.hass.config_entries.async_schedule_reload(self.hass_config.entry_id)
