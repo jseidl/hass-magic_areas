@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_NAME, EVENT_HOMEASSISTANT_STARTED
+from homeassistant.const import ATTR_NAME
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.device_registry import (
     EVENT_DEVICE_REGISTRY_UPDATED,

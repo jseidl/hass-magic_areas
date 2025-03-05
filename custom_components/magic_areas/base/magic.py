@@ -7,9 +7,9 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    EVENT_HOMEASSISTANT_STARTED,
     ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
+    EVENT_HOMEASSISTANT_STARTED,
     STATE_ON,
     EntityCategory,
 )
@@ -112,14 +112,25 @@ class MagicArea:
         self.logger.debug(
             "%s (%s) initialized.", self.name, "Meta-Area" if self.is_meta() else "Area"
         )
-        # Announce area type loaded
-        dispatcher_send(
-            self.hass,
-            MagicAreasEvents.AREA_LOADED,
-            self.area_type,
-            self.floor_id,
-            self.id,
-        )
+
+        async def _async_notify_load(*args, **kwargs) -> None:
+            """Notify that area is loaded."""
+            # Announce area type loaded
+            dispatcher_send(
+                self.hass,
+                MagicAreasEvents.AREA_LOADED,
+                self.area_type,
+                self.floor_id,
+                self.id,
+            )
+
+        # Wait for Hass to have started before announcing load events.
+        if self.hass.is_running:
+            self.hass.create_task(_async_notify_load())
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, _async_notify_load
+            )
 
     def is_occupied(self) -> bool:
         """Return if area is occupied."""
