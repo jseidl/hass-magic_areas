@@ -565,19 +565,9 @@ class MagicMetaArea(MagicArea):
     def finalize_init(self) -> None:
         """Finalize Meta-Area initialization."""
 
-        async def _async_attach_listener(*args, **kwargs) -> None:
-            """Attach reload listener after Hass has finished starting."""
-            async_dispatcher_connect(
-                self.hass, MagicAreasEvents.AREA_LOADED, self._handle_loaded_area
-            )
-
-        # Wait for Hass to have started before setting up.
-        if self.hass.is_running:
-            self.hass.create_task(_async_attach_listener())
-        else:
-            self.hass.bus.async_listen_once(
-                EVENT_HOMEASSISTANT_STARTED, _async_attach_listener
-            )
+        async_dispatcher_connect(
+            self.hass, MagicAreasEvents.AREA_LOADED, self._handle_loaded_area
+        )
 
     async def _handle_loaded_area(
         self, area_type: str, floor_id: int | None, area_id: str
@@ -591,6 +581,10 @@ class MagicMetaArea(MagicArea):
             floor_id,
             area_id,
         )
+
+        # Don't act while hass is not running
+        if not self.hass.is_running:
+            return
 
         # Handle Global
         if self.slug == MetaAreaType.GLOBAL:
