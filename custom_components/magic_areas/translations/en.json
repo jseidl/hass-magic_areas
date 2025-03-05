@@ -244,7 +244,7 @@
     },
     "error": {
       "option_error": "Invalid option",
-      "malformed_input": "This field is invalid:",
+      "malformed_input": "This field is invalid or required",
       "no_entity_selected": "No entity was selected",
       "invalid_entity": "Invalid entity selected",
       "climate_no_preset_support": "Climate entity does not support preset modes"

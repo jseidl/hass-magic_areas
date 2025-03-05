@@ -823,7 +823,7 @@ CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT = vol.Schema(
 )
 CLIMATE_CONTROL_FEATURE_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_CLIMATE_CONTROL_ENTITY_ID): cv.entity_id,
+        vol.Optional(CONF_CLIMATE_CONTROL_ENTITY_ID): cv.entity_id,
         vol.Optional(
             CONF_CLIMATE_CONTROL_PRESET_CLEAR,
             default=DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR,
