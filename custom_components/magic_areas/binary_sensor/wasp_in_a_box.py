@@ -91,7 +91,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
             self._box_sensors.append(dc_entity_id)
 
         if not self._box_sensors:
-            raise RuntimeError(f"{self.area.name}: No valid wasp sensors defined.")
+            raise RuntimeError(f"{self.area.name}: No valid box sensors defined.")
 
         # Add listeners
 
