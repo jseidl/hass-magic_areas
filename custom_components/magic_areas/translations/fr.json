@@ -1,9 +1,9 @@
 {
-    "title": "Pièces magiques",
+    "title": "Zones magiques",
     "config": {
         "step": {
             "user": {
-                "title": "Créer une Pièce Magique",
+                "title": "Créer une Zone magique",
                 "description": "Choisissez la pièce que vous souhaitez rendre magique !",
                 "data": {
                     "name": "Pièce"
@@ -30,7 +30,9 @@
                     "aggregates": "Créer des capteurs agrégés",
                     "health": "Créer des capteurs de santé",
                     "presence_hold": "Créer un interrupteur de maintien de présence",
-                    "ble_trackers": "Surveiller les capteurs de suivi Bluetooth"
+                    "ble_trackers": "Surveiller les capteurs de suivi Bluetooth",
+                    "fan_groups": "Créer groupes ventilateurs",
+                    "climate_control": "Créer contrôleur climat"
                 }
             },
             "show_menu": {
@@ -48,7 +50,9 @@
                     "feature_conf_area_aware_media_player": "Configurer le lecteur multimédia intelligent de la pièce",
                     "feature_conf_aggregates": "Configurer les capteurs agrégés",
                     "feature_conf_presence_hold": "Configurer l'interrupteur de maintien de présence",
-                    "feature_conf_ble_trackers": "Configurer la surveillance du tracker BLE"
+                    "feature_conf_ble_trackers": "Configurer la surveillance du tracker BLE",
+                    "feature_conf_fan_groups": "Configurer groupes ventilateurs",
+                    "feature_conf_climate_control": "Configurer contrôle climat"
                 }
             },
             "feature_conf_health": {
@@ -134,14 +138,21 @@
                 "description": "Vous pouvez activer les [états secondaires](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) pour une Pièce Magique en lui assignant une entité. Les états secondaires sont utilisés par les fonctionnalités pour allumer les lumières uniquement lorsqu'il fait sombre ou pour allumer uniquement les appareils de climatisation après une période `extended` ou pour ne pas envoyer de notifications à une pièce si elle est en mode `sleep`.",
                 "data": {
                     "dark_entity": "Capteur de luminosité de la pièce",
-                    "sleep_entity": "Entité utilisée pour suivre l'état de sommeil de la pièce",
-                    "sleep_timeout": "Durée pendant laquelle la pièce attendra avant de vider l'état lorsqu'elle est en mode sommeil",
-                    "accent_entity": "Entité utilisée pour suivre l'état accentué de la pièce",
-                    "extended_time": "La pièce sera marquée comme 'extended' après avoir été occupée pendant cette durée",
-                    "extended_timeout": "Durée pendant laquelle la pièce attendra avant de vider l'état lorsqu'elle est en mode étendu"
+                    "sleep_entity": "Entité d'état de sommeil",
+                    "sleep_timeout": "Réinitialiser le délai (Sommeil)",
+                    "accent_entity": "Entité d'état accentué",
+                    "extended_time": "Temps requis pour l'état étendu",
+                    "extended_timeout": "Réinitialiser le délai (Étendu)",
+                    "calculation_mode": "Mode de calcul de l'état secondaire"
                 },
                 "data_description": {
-                    "dark_entity": "Le capteur de luminosité de la pièce sera utilisé pour suivre l'état `clair`/`sombre` de la pièce, qui est utilisé par des fonctionnalités telles que les groupes de lumières pour allumer/éteindre vos lumières en fonction de la luminosité de la pièce.\n\n**Évitez d'utiliser un capteur `light` dans la même pièce, car cela peut entraîner une boucle de rétroaction.** Il est recommandé d'utiliser soit `sun.sun` soit un capteur de lumière extérieur qui ne sera pas affecté par les lumières contrôlées."
+                    "dark_entity": "Le capteur de luminosité de la pièce sera utilisé pour suivre l'état `clair`/`sombre` de la pièce, qui est utilisé par des fonctionnalités telles que les groupes de lumières pour allumer/éteindre vos lumières en fonction de la luminosité de la pièce.\n\n**Évitez d'utiliser un capteur `light` dans la même pièce, car cela peut entraîner une boucle de rétroaction.** Il est recommandé d'utiliser soit `sun.sun` soit un capteur de lumière extérieur qui ne sera pas affecté par les lumières contrôlées.",
+                    "sleep_timeout": "Durée pendant laquelle la zone attendra avant de réinitialiser l'état lorsqu'elle est en état de sommeil.",
+                    "extended_timeout": "Durée pendant laquelle la zone attendra avant de réinitialiser l'état lorsqu'elle est en état étendu.",
+                    "sleep_entity": "Entité utilisée pour suivre l'état de sommeil de la zone",
+                    "accent_entity": "Entité utilisée pour suivre l'état accentué de la zone",
+                    "extended_time": "La zone sera marquée comme « étendue » après avoir été occupée pendant cette durée.",
+                    "calculation_mode": "Mode de calcul des états secondaires de la méta-zone à partir de leurs enfants. « Any » signifie que si une zone a l'état, « All » signifie que toutes les zones doivent avoir l'état, et « Majority » signifie que plus de 50 % des zones doivent avoir l'état."
                 }
             },
             "area_config": {
@@ -187,26 +198,124 @@
                 "data_description": {
                     "ble_tracker_entities": "Les trackers BLE tels que [room-assistant](https://github.com/mKeRix/room-assistant), [Bermuda](https://github.com/agittins/bermuda) et [ESPresence](https://github.com/ESPresense/ESPresense) créent des capteurs qui changent d'état en fonction de la zone à laquelle l'appareil est le plus proche."
                 }
+            },
+            "feature_conf_fan_groups": {
+                "data_description": {
+                    "required_state": "État que doit avoir la zone pour envisager d'allumer le groupe de ventilateurs.",
+                    "setpoint": "Nombre que le capteur agrégé suivi doit atteindre ou dépasser pour allumer le groupe de ventilateurs.",
+                    "tracked_device_class": "Sélectionner la classe de dispositif agrégée à suivre pour les changements de valeur."
+                },
+                "data": {
+                    "setpoint": "Point de consigne.",
+                    "tracked_device_class": "Classe de dispositif suivie.",
+                    "required_state": "État requis."
+                },
+                "description": "Grouper et contrôler toutes les entités de ventilateurs dans une zone. Cette fonctionnalité permet de contrôler automatiquement les entités de ventilateurs en fonction de l'état de la zone et si la valeur du capteur agrégé dépasse un seuil défini. Le contrôle des ventilateurs nécessite que la fonctionnalité des agrégats soit activée et que les classes de dispositifs correspondantes soient sélectionnées.",
+                "title": "Fonctionnalité : Groupes de ventilateurs"
+            },
+            "feature_conf_climate_control": {
+                "title": "Fonctionnalité : Contrôle climatique > Sélection d'entité",
+                "data_description": {
+                    "entity_id": "Entité climatique à contrôler."
+                },
+                "description": "Sélectionner l'entité climatique que vous souhaitez contrôler en fonction des états de la zone.",
+                "data": {
+                    "entity_id": "Entité climatique"
+                }
+            },
+            "feature_conf_climate_control_select_presets": {
+                "title": "Fonctionnalité : Contrôle climatique > Mappage des préréglages",
+                "data": {
+                    "preset_clear": "Effacer",
+                    "preset_extended": "Étendu",
+                    "preset_occupied": "Occupé",
+                    "preset_sleep": "Sommeil"
+                },
+                "description": "Contrôler une entité climatique en mappant des préréglages à l'état de la zone. L'état `extended` a la priorité sur l'état `occupied` et l'état `sleep` a la priorité sur `extended` et `occupied`. Mapper un état à un préréglage vide désactive le changement de préréglages pour cet état.",
+                "data_description": {
+                    "preset_sleep": "Préréglage à changer lorsque l'état est `sleep`.",
+                    "preset_clear": "Préréglage à changer lorsque l'état est `clear`.",
+                    "preset_occupied": "Préréglage à changer lorsque l'état est `occupied`.",
+                    "preset_extended": "Préréglage à changer lorsque l'état est `extended`."
+                }
+            },
+            "feature_conf_wasp_in_a_box": {
+                "data": {
+                    "delay": "Délai"
+                }
             }
         },
         "error": {
             "option_error": "Option invalide",
-            "malformed_input": "Ce champ est invalide :"
+            "malformed_input": "Ce champ est invalide ou requis.",
+            "climate_no_preset_support": "L'entité climatique ne prend pas en charge les modes préréglés.",
+            "invalid_entity": "Entité sélectionnée invalide.",
+            "no_entity_selected": "Aucune entité n'a été sélectionnée."
         }
     },
     "entity": {
         "binary_sensor": {
             "area_state": {
-                "name": "État de la pièce"
+                "name": "État de la pièce",
+                "state_attributes": {
+                    "presence_sensors": {
+                        "name": "Capteurs de présence"
+                    },
+                    "states": {
+                        "state": {
+                            "extended": "Étendu",
+                            "clear": "Effacer",
+                            "sleep": "Sommeil",
+                            "occupied": "Occupé",
+                            "dark": "Sombre",
+                            "bright": "Lumineux"
+                        },
+                        "name": "États"
+                    },
+                    "type": {
+                        "state": {
+                            "exterior": "Extérieur"
+                        }
+                    },
+                    "last_active_sensors": {
+                        "name": "Derniers capteurs actifs"
+                    },
+                    "clear_timeout": {
+                        "name": "Réinitialiser le délai"
+                    },
+                    "active_sensors": {
+                        "name": "Capteurs actifs"
+                    },
+                    "areas": {
+                        "name": "Zones"
+                    }
+                },
+                "state": {
+                    "off": "Effacer",
+                    "on": "Occupé"
+                }
             },
             "health_problem": {
-                "name": "Santé de la pièce"
+                "name": "Santé de la pièce",
+                "state": {
+                    "off": "Sain"
+                }
             },
             "threshold_light": {
                 "name": "Lumière (Calculée)"
             },
             "ble_tracker_monitor": {
                 "name": "Suivi BLE Occupation"
+            },
+            "wasp_in_a_box": {
+                "state_attributes": {
+                    "box": {
+                        "name": "Boîte",
+                        "state": {
+                            "off": "Fermé"
+                        }
+                    }
+                }
             }
         },
         "climate": {
@@ -286,6 +395,14 @@
             },
             "climate_control": {
                 "name": "Contrôle de la climatisation"
+            },
+            "fan_control": {
+                "name": "Contrôle de ventilateur"
+            }
+        },
+        "fan": {
+            "fan_group": {
+                "name": "Ventilateurs"
             }
         }
     },
@@ -298,6 +415,25 @@
         },
         "exterior": {
             "name": "Extérieur"
+        }
+    },
+    "selector": {
+        "area_type": {
+            "options": {
+                "exterior": "Extérieur"
+            }
+        },
+        "area_states": {
+            "options": {
+                "clear": "Effacer",
+                "extended": "Étendu"
+            }
+        },
+        "calculation_mode": {
+            "options": {
+                "all": "Tout",
+                "any": "N'importe quel"
+            }
         }
     }
 }
