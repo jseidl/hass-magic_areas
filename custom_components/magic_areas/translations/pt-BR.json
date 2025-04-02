@@ -30,7 +30,10 @@
                     "aggregates": "Crie sensores agregados",
                     "health": "Crie sensores de saúde",
                     "presence_hold": "Criar interruptor de retenção de presença",
-                    "ble_trackers": "Monitorar sensores de rastreador Bluetooth"
+                    "ble_trackers": "Monitorar sensores de rastreador Bluetooth",
+                    "wasp_in_a_box": "Criar sensor de Vespa em uma Caixa",
+                    "climate_control": "Criar controlador climático",
+                    "fan_groups": "Criar grupo de ventiladores"
                 }
             },
             "show_menu": {
@@ -48,7 +51,10 @@
                     "feature_conf_area_aware_media_player": "Configurar reprodutor de mídia com reconhecimento de área",
                     "feature_conf_aggregates": "Configurar sensores agregados",
                     "feature_conf_presence_hold": "Configurar interruptor de retenção de presença",
-                    "feature_conf_ble_trackers": "Configurar monitoramento de rastreadores BLE"
+                    "feature_conf_ble_trackers": "Configurar monitoramento de rastreadores BLE",
+                    "feature_conf_fan_groups": "Configurar grupos de ventiladores",
+                    "feature_conf_wasp_in_a_box": "Configurar Vespa em uma caixa",
+                    "feature_conf_climate_control": "Configurar o controle climático"
                 }
             },
             "feature_conf_health": {
@@ -134,14 +140,21 @@
                 "description": "Você pode ativar [estados secundários](https://github.com/jseidl/hass-magic_areas/wiki/Area-State) para uma Área Mágica atribuindo uma entidade a ela. Os estados secundários são usados por recursos para acender as luzes somente quando está escuro ou apenas ligar dispositivos climáticos após um período de tempo “prolongado” ou não enviar notificações para uma área se ela estiver em “suspensão”.",
                 "data": {
                     "dark_entity": "Sensor de luz da área",
-                    "sleep_entity": "Entidade usada para rastrear o estado de suspensão da área",
-                    "sleep_timeout": "Quanto tempo a área irá esperar antes de limpar o estado quando estiver no estado de suspensão",
-                    "accent_entity": "Entidade usada para rastrear o estado acentuado da área",
-                    "extended_time": "A área será marcada como ‘estendida’ após ficar ocupada por tanto tempo",
-                    "extended_timeout": "Quanto tempo a área irá esperar antes de limpar o estado quando estiver no estado estendido"
+                    "sleep_entity": "Entidade do estado de dormir",
+                    "sleep_timeout": "Tempo limite para marcar como desocupado (Dormir)",
+                    "accent_entity": "Entidade de estado acentuado",
+                    "extended_time": "Tempo necessário para estado estendido",
+                    "extended_timeout": "Tempo limite para marcar como desocupado (estendido)",
+                    "calculation_mode": "Modo de cálculo de estado secundário"
                 },
                 "data_description": {
-                    "dark_entity": "O sensor de luz da área será usado para rastrear o status `claro`/`escuro` de uma área que é usado por recursos como grupos de luz para ligar/desligar suas luzes de acordo com o estado de brilho da sala.\n\n**Evite usar um sensor de `luz` na mesma área, pois pode causar um ciclo de feedback.** É recomendado usar `sun.sun` ou um sensor de `luz` externo que não será afetado pelas luzes sendo controlado."
+                    "dark_entity": "O sensor de luz da área será usado para rastrear o status `claro`/`escuro` de uma área que é usado por recursos como grupos de luz para ligar/desligar suas luzes de acordo com o estado de brilho da sala.\n\n**Evite usar um sensor de `luz` na mesma área, pois pode causar um ciclo de feedback.** É recomendado usar `sun.sun` ou um sensor de `luz` externo que não será afetado pelas luzes sendo controlado.",
+                    "extended_time": "A área será marcada como \"estendida\" após ser ocupada por tanto tempo",
+                    "accent_entity": "Entidade usada para rastrear estado acentuado de área",
+                    "sleep_entity": "Entidade usada para rastrear o estado de dormir da área",
+                    "extended_timeout": "Quanto tempo a área irá esperar antes de limpar o estado quando estiver em estado estendido",
+                    "sleep_timeout": "Quanto tempo a área irá esperar antes de limpar o estado quando estiver em estado de dormir",
+                    "calculation_mode": "Modo de calcular os estados secundários da meta-área a partir de seus filhos. 'Qualquer' significa se alguma área tem o estado, 'Todos' significa que todas as áreas têm que ter o estado e 'Maioria' significa que >50% das áreas têm que ter o estado."
                 }
             },
             "area_config": {
@@ -187,26 +200,147 @@
                     "ble_tracker_entities": "Entidades dos rastreadores BLE para rastrear."
                 },
                 "description": "Rastreia sensores de rastreadores BLE e cria um sensor binário de `ocupação` correspondente para a área que é ativado quando o sensor do rastreador BLE tem um estado igual ao nome ou ID da área. **Este recurso _NÃO_ executa o rastreamento BLE por si só.**"
+            },
+            "feature_conf_climate_control": {
+                "data": {
+                    "entity_id": "Entidade de clima"
+                },
+                "title": "Recurso: Controle de Clima > Seleção de Entidade",
+                "description": "Selecione a entidade climática que você gostaria de controlar por meio de estados de área.",
+                "data_description": {
+                    "entity_id": "Entidade climática a ser controlada."
+                }
+            },
+            "feature_conf_climate_control_select_presets": {
+                "data": {
+                    "preset_extended": "Estendido",
+                    "preset_occupied": "Ocupado",
+                    "preset_sleep": "Dormir",
+                    "preset_clear": "Desocupado"
+                },
+                "title": "Recurso: Controle de clima > Mapeamento de modos predefinidos",
+                "data_description": {
+                    "preset_clear": "Predefinição a ser alterada quando em estado `desocupado`.",
+                    "preset_extended": "Predefinição a ser alterada quando em estado `estendido`.",
+                    "preset_occupied": "Predefinição a ser alterada quando em estado `ocupado`.",
+                    "preset_sleep": "Predefinição a ser alterada quando em estado `dormir`."
+                },
+                "description": "Controle uma entidade climática mapeando modos predefinidos para o estado da área. O estado `estendido` tem prioridade sobre `ocupado` e o estado `dormir` tem prioridade sobre `estendido` e `ocupado`. Mapeie um estado para uma predefinição vazia para desabilitar a alteração de predefinições para esse estado."
+            },
+            "feature_conf_fan_groups": {
+                "title": "Recurso: Grupo de ventiladores",
+                "data_description": {
+                    "setpoint": "Número que o sensor agregado rastreado deve ser igual ou maior para ligar o grupo de ventiladores.",
+                    "tracked_device_class": "Selecione qual classe de dispositivo de sensores agregados para rastrear por alterações de valor.",
+                    "required_state": "Estado em que a área deve estar para considerar ligar o grupo de ventiladores."
+                },
+                "data": {
+                    "required_state": "Estado requerido.",
+                    "setpoint": "Ponto de ajuste.",
+                    "tracked_device_class": "Classe de dispositivo rastreado."
+                },
+                "description": "Agrupe e controle todas as entidades de ventilador em uma área. Este recurso permite que as entidades de ventilador sejam controladas automaticamente de acordo com o estado de uma área e se o valor do sensor agregado cruza um ponto de ajuste. O controle do ventilador requer que o recurso de agregados esteja habilitado e as classes de dispositivos correspondentes selecionadas."
+            },
+            "feature_conf_wasp_in_a_box": {
+                "data": {
+                    "delay": "Atraso",
+                    "wasp_device_classes": "Classes de dispositivos dos sensores de vespa"
+                },
+                "data_description": {
+                    "wasp_device_classes": "Se você deseja que outros agregados sejam considerados vespas, selecione na lista.",
+                    "delay": "Tempo para esperar antes de verificar se há vespas após uma caixa mudar de estado. Defina como 0 para desabilitar."
+                },
+                "title": "Vespa em uma Caixa",
+                "description": "Se vemos uma vespa, então há uma vespa na caixa. Se fecharmos a caixa enquanto há uma vespa na caixa, então a vespa permanece na caixa. Se a caixa permanecer fechada quando há uma vespa na caixa, e a vespa parar de se mover, assumimos que ela ainda está na caixa. Se a caixa for aberta, e a vespa não estiver se movendo, assumimos que a vespa escapou (não há vespa na caixa). Este recurso monitora seus agregados `door` como a caixa e seus agregados `motion` (padrão) como sua vespa. Um novo `binary_sensor` será criado e rastreado automaticamente para presença."
             }
         },
         "error": {
             "option_error": "Opção inválida",
-            "malformed_input": "Este campo é inválido:"
+            "malformed_input": "Este campo é inválido ou requerido",
+            "climate_no_preset_support": "A entidade climática não suporta modos predefinidos",
+            "invalid_entity": "Entidade inválida selecionada",
+            "no_entity_selected": "Nenhuma entidade foi selecionada"
         }
     },
     "entity": {
         "binary_sensor": {
             "area_state": {
-                "name": "Estado da área"
+                "name": "Estado da área",
+                "state_attributes": {
+                    "areas": {
+                        "name": "Área"
+                    },
+                    "states": {
+                        "state": {
+                            "bright": "Claro",
+                            "clear": "Desocupado",
+                            "dark": "Escuro",
+                            "extended": "Estendido",
+                            "sleep": "Dormir",
+                            "occupied": "Ocupado"
+                        },
+                        "name": "Estados"
+                    },
+                    "type": {
+                        "state": {
+                            "exterior": "Exterior",
+                            "interior": "Interior"
+                        },
+                        "name": "Tipo"
+                    },
+                    "last_active_sensors": {
+                        "name": "Últimos sensores ativos"
+                    },
+                    "presence_sensors": {
+                        "name": "Sensores de presença"
+                    },
+                    "active_sensors": {
+                        "name": "Sensores ativos"
+                    },
+                    "clear_timeout": {
+                        "name": "Tempo limite para marcar como desocupado"
+                    }
+                },
+                "state": {
+                    "off": "Desocupado",
+                    "on": "Ocupado"
+                }
             },
             "health_problem": {
-                "name": "Saúde da Área"
+                "name": "Saúde da Área",
+                "state": {
+                    "off": "Saudável",
+                    "on": "Não saudável"
+                }
             },
             "threshold_light": {
                 "name": "Leve (calculado)"
             },
             "ble_tracker_monitor": {
                 "name": "Ocupação (Rastreador BLE)"
+            },
+            "wasp_in_a_box": {
+                "state_attributes": {
+                    "box": {
+                        "name": "Caixa",
+                        "state": {
+                            "off": "Fechada",
+                            "on": "Aberta"
+                        }
+                    },
+                    "wasp": {
+                        "state": {
+                            "on": "Visto",
+                            "off": "Não visto"
+                        },
+                        "name": "Vespa"
+                    }
+                },
+                "state": {
+                    "off": "Nenhuma vespa na caixa",
+                    "on": "Vespa em uma Caixa"
+                },
+                "name": "Vespa em uma Caixa"
             }
         },
         "climate": {
@@ -286,6 +420,14 @@
             },
             "climate_control": {
                 "name": "Controle climático"
+            },
+            "fan_control": {
+                "name": "Controle de ventiladores"
+            }
+        },
+        "fan": {
+            "fan_group": {
+                "name": "Ventiladores"
             }
         }
     },
@@ -298,6 +440,35 @@
         },
         "exterior": {
             "name": "Exterior"
+        }
+    },
+    "selector": {
+        "calculation_mode": {
+            "options": {
+                "all": "Todos",
+                "majority": "Maioria",
+                "any": "Qualquer"
+            }
+        },
+        "area_states": {
+            "options": {
+                "clear": "Desocupado",
+                "extended": "Estendido",
+                "occupied": "Ocupado",
+                "sleep": "Dormir"
+            }
+        },
+        "area_type": {
+            "options": {
+                "exterior": "Exterior",
+                "interior": "Interior"
+            }
+        },
+        "control_on": {
+            "options": {
+                "state": "Quando o estado secundário muda",
+                "occupancy": "Quando a área passa de desocupada para ocupada"
+            }
         }
     }
 }
