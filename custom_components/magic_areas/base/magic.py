@@ -604,7 +604,7 @@ class MagicMetaArea(MagicArea):
         if self.slug == area_type:
             return self.reload()
 
-    @Throttle(min_time=timedelta(MetaAreaAutoReloadSettings.THROTTLE))
+    @Throttle(min_time=timedelta(seconds=MetaAreaAutoReloadSettings.THROTTLE))
     def reload(self) -> None:
         """Reload current entry."""
         self.logger.debug("%s: Reloading entry.", self.name)
