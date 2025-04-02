@@ -46,6 +46,14 @@ ADDITIONAL_LIGHT_TRACKING_ENTITIES = ["sun.sun"]
 DEFAULT_SENSOR_PRECISION = 2
 UPDATE_INTERVAL = ONE_MINUTE
 
+
+class MetaAreaAutoReloadSettings(IntEnum):
+    """Settings for Meta-Area Auto Reload functionality."""
+
+    DELAY = 3
+    THROTTLE = 5
+
+
 # Light group options
 CONF_OVERHEAD_LIGHTS = "overhead_lights"  # cv.entity_ids
 CONF_OVERHEAD_LIGHTS_STATES = "overhead_lights_states"  # cv.ensure_list

@@ -1,7 +1,8 @@
 """Classes for Magic Areas and Meta Areas."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import logging
+from time import sleep
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
@@ -20,7 +21,7 @@ from homeassistant.helpers.entity_registry import (
     RegistryEntry,
     async_get as entityreg_async_get,
 )
-from homeassistant.util import slugify
+from homeassistant.util import Throttle, slugify
 
 from custom_components.magic_areas.const import (
     AREA_STATE_OCCUPIED,
@@ -49,6 +50,7 @@ from custom_components.magic_areas.const import (
     MODULE_DATA,
     AreaType,
     MagicAreasEvents,
+    MetaAreaAutoReloadSettings,
     MetaAreaType,
 )
 
@@ -602,7 +604,12 @@ class MagicMetaArea(MagicArea):
         if self.slug == area_type:
             return self.reload()
 
+    @Throttle(min_time=timedelta(MetaAreaAutoReloadSettings.THROTTLE))
     def reload(self) -> None:
         """Reload current entry."""
         self.logger.debug("%s: Reloading entry.", self.name)
+
+        # Give some time for areas to finish loading
+        sleep(MetaAreaAutoReloadSettings.DELAY)
+
         self.hass.config_entries.async_schedule_reload(self.hass_config.entry_id)
