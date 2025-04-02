@@ -628,7 +628,10 @@ CONF_BLE_TRACKER_ENTITIES, DEFAULT_BLE_TRACKER_ENTITIES = (
     [],
 )  # cv.entity_ids
 
-CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = ("delay", 0)  # cv.positive_int
+CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = (
+    "delay",
+    90,
+)  # cv.positive_int
 CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES = (
     "wasp_device_classes",
     [BinarySensorDeviceClass.MOTION, BinarySensorDeviceClass.OCCUPANCY],
@@ -821,7 +824,7 @@ CLIMATE_CONTROL_FEATURE_SCHEMA_PRESET_SELECT = vol.Schema(
 )
 CLIMATE_CONTROL_FEATURE_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_CLIMATE_CONTROL_ENTITY_ID): cv.entity_id,
+        vol.Optional(CONF_CLIMATE_CONTROL_ENTITY_ID): cv.entity_id,
         vol.Optional(
             CONF_CLIMATE_CONTROL_PRESET_CLEAR,
             default=DEFAULT_CLIMATE_CONTROL_PRESET_CLEAR,

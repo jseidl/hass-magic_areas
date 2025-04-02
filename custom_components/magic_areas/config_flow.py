@@ -14,7 +14,7 @@ from homeassistant.components.climate.const import (
     ATTR_PRESET_MODES,
     DOMAIN as CLIMATE_DOMAIN,
 )
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.light.const import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_ENTITY_ID, CONF_NAME
@@ -619,7 +619,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
     async def async_step_area_config(self, user_input=None):
         """Gather basic settings for the area."""
-        errors = {}
+        errors: dict[str, str] = {}
         if user_input is not None:
             _LOGGER.debug(
                 "OptionsFlow: Validating area %s base config: %s",
@@ -634,7 +634,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             try:
                 self.area_options.update(options_schema(user_input))
             except vol.MultipleInvalid as validation:
-                errors = {error.path[0]: error.msg for error in validation.errors}
+                errors = {
+                    str(error.path[0]): str(error.msg) for error in validation.errors
+                }
                 _LOGGER.debug(
                     "OptionsFlow: Found the following errors for area %s: %s",
                     self.area.name,
@@ -692,7 +694,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
     async def async_step_presence_tracking(self, user_input=None):
         """Gather basic settings for the area."""
-        errors = {}
+        errors: dict[str, str] = {}
         if user_input is not None:
             _LOGGER.debug(
                 "OptionsFlow: Validating area %s presence tracking config: %s",
@@ -707,7 +709,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
             try:
                 self.area_options.update(options_schema(user_input))
             except vol.MultipleInvalid as validation:
-                errors = {error.path[0]: error.msg for error in validation.errors}
+                errors = {
+                    str(error.path[0]): str(error.msg) for error in validation.errors
+                }
                 _LOGGER.debug(
                     "OptionsFlow: Found the following errors for area %s: %s",
                     self.area.name,
@@ -769,7 +773,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
 
     async def async_step_secondary_states(self, user_input=None):
         """Gather secondary states settings for the area."""
-        errors = {}
+        errors: dict[str, str] = {}
         if user_input is not None:
             _LOGGER.debug(
                 "OptionsFlow: Validating area %s secondary states config: %s",
@@ -786,7 +790,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     area_state_schema(user_input)
                 )
             except vol.MultipleInvalid as validation:
-                errors = {error.path[0]: error.msg for error in validation.errors}
+                errors = {
+                    str(error.path[0]): str(error.msg) for error in validation.errors
+                }
                 _LOGGER.debug(
                     "OptionsFlow: Found the following errors for area %s: %s",
                     self.area.name,
@@ -1198,10 +1204,16 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                 sorted(ALL_SENSOR_DEVICE_CLASSES), multiple=True
             ),
             CONF_AGGREGATES_ILLUMINANCE_THRESHOLD: self._build_selector_number(
-                unit_of_measurement="lx", mode="slider", min_value=0, max_value=1000
+                unit_of_measurement="lx",
+                mode=NumberSelectorMode.SLIDER,
+                min_value=0,
+                max_value=1000,
             ),
             CONF_AGGREGATES_ILLUMINANCE_THRESHOLD_HYSTERESIS: self._build_selector_number(
-                unit_of_measurement="%", mode="slider", min_value=0, max_value=100
+                unit_of_measurement="%",
+                mode=NumberSelectorMode.SLIDER,
+                min_value=0,
+                max_value=100,
             ),
         }
 
@@ -1287,7 +1299,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         step_name=None,
     ):
         """Execute step for a generic feature."""
-        errors = {}
+        errors: dict[str, str] = {}
 
         if not dynamic_validators:
             dynamic_validators = {}
@@ -1311,7 +1323,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
                     validated_input = CONFIGURABLE_FEATURES[name](user_input)
             except vol.MultipleInvalid as validation:
                 errors = {
-                    error.path[0]: "malformed_input" for error in validation.errors
+                    str(error.path[0]): "malformed_input" for error in validation.errors
                 }
                 _LOGGER.debug("OptionsFlow: Found the following errors: %s", errors)
             except Exception as e:  # pylint: disable=broad-exception-caught
