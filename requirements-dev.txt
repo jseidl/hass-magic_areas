@@ -1,6 +1,6 @@
 -r requirements-test.txt
 black~=25.1
-packaging~=24.2
+packaging~=25.0
 pre-commit~=4.2
 PyGithub~=2.6
 pyupgrade~=3.19
