@@ -1,8 +1,8 @@
 """Classes for Magic Areas and Meta Areas."""
 
-from datetime import UTC, datetime, timedelta
+import asyncio
 import logging
-from time import sleep
+from datetime import UTC, datetime, timedelta
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
@@ -590,11 +590,11 @@ class MagicMetaArea(MagicArea):
 
         # Handle Global
         if self.slug == MetaAreaType.GLOBAL:
-            return self.reload()
+            return await self.reload()
 
         # Handle Floors
         if self.floor_id and self.floor_id == floor_id:
-            return self.reload()
+            return await self.reload()
 
         # Ignore area types we're not expecting
         if area_type not in [AreaType.EXTERIOR, AreaType.INTERIOR]:
@@ -602,14 +602,14 @@ class MagicMetaArea(MagicArea):
 
         # Handle Interior/Exterior metas
         if self.slug == area_type:
-            return self.reload()
+            return await self.reload()
 
     @Throttle(min_time=timedelta(seconds=MetaAreaAutoReloadSettings.THROTTLE))
-    def reload(self) -> None:
+    async def reload(self) -> None:
         """Reload current entry."""
         self.logger.debug("%s: Reloading entry.", self.name)
 
         # Give some time for areas to finish loading
-        sleep(MetaAreaAutoReloadSettings.DELAY)
+        await asyncio.sleep(MetaAreaAutoReloadSettings.DELAY)
 
-        self.hass.config_entries.async_schedule_reload(self.hass_config.entry_id)
+        await self.hass.config_entries.async_schedule_reload(self.hass_config.entry_id)
