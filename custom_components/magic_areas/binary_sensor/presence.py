@@ -620,7 +620,7 @@ class AreaStateBinarySensor(AreaStateTrackerEntity, BinarySensorEntity):
         _LOGGER.debug("%s: area presence binary sensor initialized", self.area.name)
 
     async def _setup_listeners(self) -> None:
-        # Setup state chagne listener
+        # Setup state change listener
         async_dispatcher_connect(
             self.hass, MagicAreasEvents.AREA_STATE_CHANGED, self._area_state_changed
         )
