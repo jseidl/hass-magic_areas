@@ -1,4 +1,4 @@
-name: "Test"
+name: Test on HA Stable and Beta
 
 on:
   push:
@@ -8,22 +8,39 @@ on:
     branches:
       - "main"
 
+permissions:
+  contents: read
+
 jobs:
-  ruff:
-    name: "PyTest"
-    runs-on: "ubuntu-latest"
+  test:
+    runs-on: ubuntu-latest
+
     steps:
-        - name: "Checkout the repository"
-          uses: "actions/checkout@v4.2.2"
+      - uses: actions/checkout@v4
 
-        - name: "Set up Python"
-          uses: actions/setup-python@v5.6.0
-          with:
-            python-version: "3.12"
-            cache: "pip"
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
 
-        - name: "Install requirements"
-          run: python3 -m pip install -r requirements-test.txt
+      - name: Install tox and jq
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+          sudo apt-get update && sudo apt-get install -y jq
 
-        - name: "Run"
-          run: pytest
+      - name: Get latest HA versions from PyPI
+        id: ha_versions
+        run: |
+          VERSIONS=$(curl -s https://pypi.org/pypi/homeassistant/json | jq -r '.releases | keys | .[]')
+          STABLE=$(echo "$VERSIONS" | grep -Ev '[a-zA-Z]' | sort -Vr | head -n1)
+          BETA=$(echo "$VERSIONS" | grep 'b' | sort -Vr | head -n1)
+
+          echo "HA_STABLE_VERSION=$STABLE" >> $GITHUB_ENV
+          echo "HA_BETA_VERSION=$BETA" >> $GITHUB_ENV
+
+      - name: Run tox for both versions
+        run: tox -e ha-stable,ha-beta
+        env:
+          HA_STABLE_VERSION: ${{ env.HA_STABLE_VERSION }}
+          HA_BETA_VERSION: ${{ env.HA_BETA_VERSION }}

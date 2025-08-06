@@ -1,6 +1,6 @@
 """Fixtures for tests."""
 
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 import logging
 from typing import Any
 
@@ -37,9 +37,9 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(
+async def auto_enable_custom_integrations(
     enable_custom_integrations: None,
-) -> Generator[None, None, None]:
+) -> AsyncGenerator[None, None]:
     """Enable custom integration."""
     _ = enable_custom_integrations  # unused
     yield
@@ -49,14 +49,14 @@ def auto_enable_custom_integrations(
 
 
 @pytest.fixture(name="basic_config_entry")
-def mock_config_entry() -> MockConfigEntry:
+async def mock_config_entry() -> MockConfigEntry:
     """Fixture for mock configuration entry."""
     data = get_basic_config_entry_data(DEFAULT_MOCK_AREA)
     return MockConfigEntry(domain=DOMAIN, data=data)
 
 
 @pytest.fixture(name="all_areas_with_meta_config_entry")
-def mock_config_entry_all_areas_with_meta_config_entry() -> list[MockConfigEntry]:
+async def mock_config_entry_all_areas_with_meta_config_entry() -> list[MockConfigEntry]:
     """Fixture for mock configuration entry."""
 
     config_entries: list[MockConfigEntry] = []
