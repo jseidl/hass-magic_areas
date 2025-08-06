@@ -13,3 +13,4 @@ pytest-homeassistant-custom-component
 pytest-asyncio>=0.20
 tzdata
 ruff~=0.12
+tox

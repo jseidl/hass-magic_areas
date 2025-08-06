@@ -1,6 +1,7 @@
 """Platform file for Magic Areas threhsold sensors."""
 
 import logging
+import inspect  # @TODO remove after 2025.8.0
 
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
@@ -129,15 +130,28 @@ class AreaThresholdSensor(MagicEntity, ThresholdSensor):
         MagicEntity.__init__(
             self, area, domain=BINARY_SENSOR_DOMAIN, translation_key=device_class
         )
-        ThresholdSensor.__init__(
-            self,
-            hass=hass,
-            entity_id=entity_id,
-            name=EMPTY_STRING,
-            unique_id=self.unique_id,
-            lower=lower,
-            upper=upper,
-            hysteresis=hysteresis,
-            device_class=device_class,
-        )
+        # @TODO remove after 2025.8.0
+        if "hass" in inspect.signature(ThresholdSensor.__init__).parameters:
+            ThresholdSensor.__init__(
+                self,
+                hass=hass,  # type: ignore
+                entity_id=entity_id,
+                name=EMPTY_STRING,
+                unique_id=self.unique_id,
+                lower=lower,
+                upper=upper,
+                hysteresis=hysteresis,
+                device_class=device_class,
+            )
+        else:
+            ThresholdSensor.__init__(
+                self,
+                entity_id=entity_id,
+                name=EMPTY_STRING,
+                unique_id=self.unique_id,
+                lower=lower,
+                upper=upper,
+                hysteresis=hysteresis,
+                device_class=device_class,
+            )
         delattr(self, "_attr_name")
