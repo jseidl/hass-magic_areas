@@ -12,6 +12,7 @@ from homeassistant.components.sensor.const import (
 )
 from homeassistant.components.threshold.binary_sensor import ThresholdSensor
 from homeassistant.const import ATTR_DEVICE_CLASS
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 
 from custom_components.magic_areas.base.entities import MagicEntity
@@ -31,7 +32,7 @@ from custom_components.magic_areas.const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def create_illuminance_threshold(area: MagicArea) -> Entity | None:
+def create_illuminance_threshold(hass: HomeAssistant, area: MagicArea) -> Entity | None:
     """Create threhsold light binary sensor based off illuminance aggregate."""
 
     if not area.has_feature(CONF_FEATURE_AGGREGATION):
@@ -91,6 +92,7 @@ def create_illuminance_threshold(area: MagicArea) -> Entity | None:
 
     try:
         return AreaThresholdSensor(
+            hass=hass,
             area=area,
             device_class=BinarySensorDeviceClass.LIGHT,
             entity_id=illuminance_aggregate_entity_id,
@@ -114,6 +116,7 @@ class AreaThresholdSensor(MagicEntity, ThresholdSensor):
     def __init__(
         self,
         *,
+        hass: HomeAssistant,
         area: MagicArea,
         device_class: BinarySensorDeviceClass,
         entity_id: str,
@@ -128,6 +131,7 @@ class AreaThresholdSensor(MagicEntity, ThresholdSensor):
         )
         ThresholdSensor.__init__(
             self,
+            hass=hass,
             entity_id=entity_id,
             name=EMPTY_STRING,
             unique_id=self.unique_id,
