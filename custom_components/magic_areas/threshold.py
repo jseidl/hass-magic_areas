@@ -1,7 +1,7 @@
 """Platform file for Magic Areas threhsold sensors."""
 
-import logging
 import inspect  # @TODO remove after 2025.8.0
+import logging
 
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
