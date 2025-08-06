@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   ruff:
-    name: "Ruff"
+    name: "Lint"
     runs-on: "ubuntu-latest"
     steps:
         - name: "Checkout the repository"
@@ -24,6 +24,11 @@ jobs:
           with:
             python-version: "3.13"
             cache: "pip"
+
+        - name: Install tox
+          run: |
+            python -m pip install --upgrade pip
+            pip install tox
 
         - name: "Run"
           run: tox pre-commit
