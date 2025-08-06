@@ -612,4 +612,4 @@ class MagicMetaArea(MagicArea):
         # Give some time for areas to finish loading
         await asyncio.sleep(MetaAreaAutoReloadSettings.DELAY)
 
-        await self.hass.config_entries.async_schedule_reload(self.hass_config.entry_id)
+        self.hass.config_entries.async_schedule_reload(self.hass_config.entry_id)
