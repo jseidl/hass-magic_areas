@@ -29,4 +29,4 @@ jobs:
           run: python3 -m pip install -r requirements-test.txt
 
         - name: "Run"
-          run: tox pre-commit
+          run: tox -e lint
