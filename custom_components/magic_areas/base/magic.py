@@ -1,8 +1,8 @@
 """Classes for Magic Areas and Meta Areas."""
 
 import asyncio
-import logging
 from datetime import UTC, datetime, timedelta
+import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
