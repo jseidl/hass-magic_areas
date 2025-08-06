@@ -4,5 +4,4 @@ set -e
 
 cd "$(dirname "$0")/.."
 
-coverage run -m pytest
-coverage report
+tox

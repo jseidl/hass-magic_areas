@@ -85,7 +85,7 @@ async def async_setup_entry(
     # Create extra sensors
     if area.has_feature(CONF_FEATURE_AGGREGATION):
         entities.extend(create_aggregate_sensors(area))
-        illuminance_threshold_sensor = create_illuminance_threshold(area)
+        illuminance_threshold_sensor = create_illuminance_threshold(hass, area)
         if illuminance_threshold_sensor:
             entities.append(illuminance_threshold_sensor)
 
