@@ -132,7 +132,7 @@ class AreaThresholdSensor(MagicEntity, ThresholdSensor):
         )
         # @TODO remove after 2025.8.0
         if "hass" in inspect.signature(ThresholdSensor.__init__).parameters:
-            ThresholdSensor.__init__(
+            ThresholdSensor.__init__(  # pylint: disable=unexpected-keyword-arg
                 self,
                 hass=hass,  # type: ignore
                 entity_id=entity_id,
