@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
-
-set -e
+set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-tox
+# Fetch latest HA stable + beta versions from PyPI
+VERSIONS=$(curl -s https://pypi.org/pypi/homeassistant/json | jq -r '.releases | keys | .[]')
+
+HA_STABLE_VERSION=$(echo "$VERSIONS" | grep -Ev '[a-zA-Z]' | sort -Vr | head -n1)
+HA_BETA_VERSION=$(echo "$VERSIONS" | grep 'b' | sort -Vr | head -n1)
+
+echo "Using Home Assistant stable: $HA_STABLE_VERSION"
+echo "Using Home Assistant beta:   $HA_BETA_VERSION"
+
+export HA_STABLE_VERSION
+export HA_BETA_VERSION
+
+# Run tox with both envs
+tox -e ha-stable,ha-beta

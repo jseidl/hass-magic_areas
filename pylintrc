@@ -6,6 +6,7 @@ jobs=2
 load-plugins=pylint_strict_informational
 persistent=no
 extension-pkg-whitelist=ciso8601
+init-hook='import sys; sys.path.append(".")'
 
 [BASIC]
 good-names=id,i,j,k,ex,Run,_,fp,T
