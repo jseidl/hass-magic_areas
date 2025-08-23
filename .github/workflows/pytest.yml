@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   test-stable:
+    name: "Test against stable release"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -40,6 +41,7 @@ jobs:
           HA_STABLE_VERSION: ${{ env.HA_STABLE_VERSION }}
 
   test-beta:
+    name: "Test against beta release"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
