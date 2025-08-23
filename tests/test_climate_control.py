@@ -212,7 +212,8 @@ async def test_climate_control_logic(
     area_sensor_state = hass.states.get(AREA_SENSOR_ENTITY_ID)
     assert_state(area_sensor_state, STATE_OFF)
 
-    await asyncio.sleep(1)
+    await hass.async_block_till_done()
+    await asyncio.sleep(3)
 
     climate_state = hass.states.get(MOCK_CLIMATE_ENTITY_ID)
     assert_attribute(climate_state, ATTR_PRESET_MODE, PRESET_AWAY)

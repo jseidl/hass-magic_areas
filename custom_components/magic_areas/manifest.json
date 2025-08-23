@@ -11,7 +11,11 @@
     "light",
     "media_player",
     "device_tracker",
-    "discovery"
+    "discovery",
+    "switch",
+    "mqtt",
+    "zwavejs",
+    "zigbee2mqtt"
   ],
   "codeowners": [
     "@jseidl"

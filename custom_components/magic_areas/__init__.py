@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_NAME
+from homeassistant.const import ATTR_NAME, EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.device_registry import (
     EVENT_DEVICE_REGISTRY_UPDATED,
@@ -35,7 +35,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Set up the component."""
 
     @callback
-    def _async_registry_updated(
+    async def _async_reload_entry(*args, **kwargs) -> None:
+        hass.config_entries.async_update_entry(
+            config_entry,
+            data={**config_entry.data, "entity_ts": datetime.now(UTC)},
+        )
+
+    @callback
+    async def _async_registry_updated(
         event: (
             Event[EventEntityRegistryUpdatedData]
             | Event[EventDeviceRegistryUpdatedData]
@@ -61,10 +68,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             "%s: Reloading entry due entity registry change",
             config_entry.data[ATTR_NAME],
         )
-        hass.config_entries.async_update_entry(
-            config_entry,
-            data={**config_entry.data, "entity_ts": datetime.now(UTC)},
-        )
+        await _async_reload_entry()
 
     async def _async_setup_integration(*args, **kwargs) -> None:
         """Load integration when Hass has finished starting."""
@@ -88,20 +92,23 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         tracked_listeners.append(config_entry.add_update_listener(async_update_options))
 
         # Watch for area changes.
-        tracked_listeners.append(
-            hass.bus.async_listen(
-                EVENT_ENTITY_REGISTRY_UPDATED,
-                _async_registry_updated,
-                _entity_registry_filter,
+        if not magic_area.is_meta():
+            tracked_listeners.append(
+                hass.bus.async_listen(
+                    EVENT_ENTITY_REGISTRY_UPDATED,
+                    _async_registry_updated,
+                    magic_area.make_entity_registry_filter(),
+                )
             )
-        )
-        tracked_listeners.append(
-            hass.bus.async_listen(
-                EVENT_DEVICE_REGISTRY_UPDATED,
-                _async_registry_updated,
-                _device_registry_filter,
+            tracked_listeners.append(
+                hass.bus.async_listen(
+                    EVENT_DEVICE_REGISTRY_UPDATED,
+                    _async_registry_updated,
+                    magic_area.make_device_registry_filter(),
+                )
             )
-        )
+            # Reload once Home Assistant has finished starting to make sure we have all entities.
+            hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _async_reload_entry)
 
         hass.data[MODULE_DATA][config_entry.entry_id] = {
             DATA_AREA_OBJECT: magic_area,
@@ -199,15 +206,3 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
     )
 
     return True
-
-
-@callback
-def _entity_registry_filter(event_data: EventEntityRegistryUpdatedData) -> bool:
-    """Filter entity registry events."""
-    return event_data["action"] == "update" and "area_id" in event_data["changes"]
-
-
-@callback
-def _device_registry_filter(event_data: EventDeviceRegistryUpdatedData) -> bool:
-    """Filter device registry events."""
-    return event_data["action"] == "update" and "area_id" in event_data["changes"]

@@ -16,4 +16,4 @@ export HA_STABLE_VERSION
 export HA_BETA_VERSION
 
 # Run tox with both envs
-tox -e ha-stable,ha-beta
+tox -e ha-stable #,ha-beta

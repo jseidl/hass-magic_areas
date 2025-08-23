@@ -14,10 +14,14 @@ from homeassistant.const import (
     STATE_ON,
     EntityCategory,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import async_get as devicereg_async_get
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.device_registry import (
+    EventDeviceRegistryUpdatedData,
+    async_get as devicereg_async_get,
+)
 from homeassistant.helpers.dispatcher import async_dispatcher_connect, dispatcher_send
 from homeassistant.helpers.entity_registry import (
+    EventEntityRegistryUpdatedData,
     RegistryEntry,
     async_get as entityreg_async_get,
 )
@@ -438,6 +442,56 @@ class MagicArea:
         """Check if area has entities."""
         return domain in self.entities
 
+    def make_entity_registry_filter(self):
+        """Create entity register filter for this area."""
+
+        @callback
+        def _entity_registry_filter(event_data: EventEntityRegistryUpdatedData) -> bool:
+            action = event_data["action"]
+
+            if (
+                action == "update"
+                and "changes" in event_data
+                and "area_id" in event_data["changes"]
+            ):
+                return True
+
+            if action in ("create", "remove"):
+                entity_registry = entityreg_async_get(self.hass)
+                entity_entry = entity_registry.async_get(event_data["entity_id"])
+                if entity_entry and entity_entry.area_id == self.id:
+                    return True
+
+            return False
+
+        return _entity_registry_filter
+
+    def make_device_registry_filter(self):
+        """Create device register filter for this area."""
+
+        @callback
+        def _device_registry_filter(event_data: EventDeviceRegistryUpdatedData) -> bool:
+            """Filter device registry events relevant to this area."""
+
+            action = event_data["action"]
+
+            if (
+                action == "update"
+                and "changes" in event_data
+                and "area_id" in event_data["changes"]
+            ):
+                return True
+
+            if action in ("create", "remove"):
+                device_registry = devicereg_async_get(self.hass)
+                device_entry = device_registry.async_get(event_data["device_id"])
+                if device_entry and device_entry.area_id == self.id:
+                    return True
+
+            return False
+
+        return _device_registry_filter
+
 
 class MagicMetaArea(MagicArea):
     """Magic Meta Area class."""
@@ -550,7 +604,7 @@ class MagicMetaArea(MagicArea):
 
                     entity_entry = entity_registry.async_get(entity[ATTR_ENTITY_ID])
                     if not entity_entry:
-                        self.logger.warning(
+                        self.logger.debug(
                             "%s: Magic Entity not found on Entity Registry: %s",
                             self.name,
                             entity[ATTR_ENTITY_ID],
