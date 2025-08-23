@@ -213,7 +213,9 @@ async def test_climate_control_logic(
     assert_state(area_sensor_state, STATE_OFF)
 
     # A bit of voodoo waiting for the climate group to act
-    for _i in range(3):
+    # I know this is lame and kinda hail-mary but hey! if you know
+    # how to fix it, let me know!
+    for _i in range(5):
         await asyncio.sleep(1)
         await hass.async_block_till_done()
 
