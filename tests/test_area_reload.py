@@ -133,6 +133,11 @@ async def test_meta_reload_from_single_reload(
         assert area_object
         assert area_object.timestamp != area_timestamp_map[area_name]
 
+    def _assert_has_not_reloaded(area_name: str):
+        area_object = get_entry_by_area_name(hass, area_name)
+        assert area_object
+        assert area_object.timestamp == area_timestamp_map[area_name]
+
     # Check corresponding area reloaded
     _assert_has_reloaded(MockAreaIds.KITCHEN.value)
 
@@ -140,3 +145,10 @@ async def test_meta_reload_from_single_reload(
     _assert_has_reloaded(MockAreaIds.INTERIOR.value)
     _assert_has_reloaded(MockAreaIds.GLOBAL.value)
     _assert_has_reloaded(MockAreaIds.FIRST_FLOOR.value)
+
+    # Check other areas didn't reload
+    _assert_has_not_reloaded(MockAreaIds.MASTER_BEDROOM.value)
+    _assert_has_not_reloaded(MockAreaIds.BACKYARD.value)
+    _assert_has_not_reloaded(MockAreaIds.EXTERIOR.value)
+    _assert_has_not_reloaded(MockAreaIds.SECOND_FLOOR.value)
+    _assert_has_not_reloaded(MockAreaIds.GROUND_LEVEL.value)
