@@ -1,17 +1,17 @@
 """Test for the logic on automatically reloading areas."""
 
-import logging
 from datetime import datetime
+import logging
 
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import (
     EVENT_ENTITY_REGISTRY_UPDATED,
-    _EventEntityRegistryUpdatedData_Update,
     _EventEntityRegistryUpdatedData_CreateRemove,
+    _EventEntityRegistryUpdatedData_Update,
 )
-from homeassistant.core import HomeAssistant
 
 from custom_components.magic_areas.base.magic import MagicArea
-from custom_components.magic_areas.const import MODULE_DATA, DATA_AREA_OBJECT
+from custom_components.magic_areas.const import DATA_AREA_OBJECT, MODULE_DATA
 
 from tests.const import MockAreaIds
 from tests.mocks import MockBinarySensor
