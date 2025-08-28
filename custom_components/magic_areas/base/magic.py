@@ -95,6 +95,9 @@ class MagicArea:
         self.floor_id: str | None = area.floor_id
         self.logger = logging.getLogger(__name__)
 
+        # Timestamp for initialization / reload tests
+        self.timestamp: datetime = datetime.now(UTC)
+
         # Merged options
         area_config = dict(config.data)
         if config.options:
