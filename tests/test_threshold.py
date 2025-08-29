@@ -26,7 +26,7 @@ from custom_components.magic_areas.const import (
     DOMAIN,
 )
 
-from tests.common import (
+from tests.helpers import (
     assert_state,
     get_basic_config_entry_data,
     init_integration,

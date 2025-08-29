@@ -22,7 +22,7 @@ from custom_components.magic_areas.const import (
     AreaType,
 )
 
-from tests.common import (
+from tests.helpers import (
     get_basic_config_entry_data,
     init_integration,
     setup_mock_entities,

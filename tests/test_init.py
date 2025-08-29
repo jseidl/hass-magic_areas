@@ -8,7 +8,7 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.const import STATE_OFF
 from homeassistant.core import HomeAssistant
 
-from tests.common import assert_state
+from tests.helpers import assert_state
 
 _LOGGER = logging.getLogger(__name__)
 

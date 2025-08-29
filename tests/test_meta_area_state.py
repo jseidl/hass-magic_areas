@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 
 from custom_components.magic_areas.const import AreaStates
 
-from tests.common import assert_state
+from tests.helpers import assert_state
 from tests.const import MockAreaIds
 from tests.mocks import MockBinarySensor
 

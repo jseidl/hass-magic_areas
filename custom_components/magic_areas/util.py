@@ -3,8 +3,9 @@
 Small helper functions that are used more than once.
 """
 
-from collections.abc import Sequence
 import logging
+
+from collections.abc import Sequence
 
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant

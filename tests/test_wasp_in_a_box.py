@@ -38,7 +38,7 @@ from custom_components.magic_areas.const import (
     DOMAIN,
 )
 
-from tests.common import assert_attribute, assert_in_attribute, assert_state
+from tests.helpers import assert_attribute, assert_in_attribute, assert_state
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -31,7 +31,7 @@ from custom_components.magic_areas.const import (
     MagicAreasFeatures,
 )
 
-from tests.common import (
+from tests.helpers import (
     assert_attribute,
     assert_state,
     get_basic_config_entry_data,
