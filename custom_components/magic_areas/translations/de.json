@@ -178,10 +178,12 @@
                 "description": "Wenn eine Wespe erkannt wird, ist sie in der Box. Wird die Box geschlossen, bleibt die Wespe darin. Bleibt die Box geschlossen und die Wespe bewegt sich nicht, wird angenommen, dass sie noch in der Box ist. Öffnet sich die Box und die Wespe bewegt sich nicht, gilt sie als entkommen (nicht mehr in der Box). Diese Funktion überwacht die `Tür`-Aggregatssensoren als Box und die `Bewegung`-Aggregatssensoren als Wespe. Ein neuer Binärsensor wird erstellt und automatisch auf Anwesenheit geprüft.",
                 "data": {
                     "delay": "Verzögerung",
+                    "wasp_timeout": "Inaktivitäts-Timeout",
                     "wasp_device_classes": "Gerätekategorien der Wespe"
                 },
                 "data_description": {
                     "delay": "Wartezeit, bevor nach einer Wespe gesucht wird, nachdem sich der Zustand der Box geändert hat. Auf 0 setzen, um die Funktion zu deaktivieren.",
+                    "wasp_timeout": "Wenn größer als 0, wird die Wespe nach dieser Zeitspanne der Inaktivität als abwesend betrachtet.",
                     "wasp_device_classes": "Wenn andere Aggregate als Wespe berücksichtigt werden sollen, bitte aus der Liste auswählen."
                 }
             },
