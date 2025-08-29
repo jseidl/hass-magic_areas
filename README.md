@@ -20,7 +20,7 @@ Works out of the box. Fully customizable if you want it.
 
 * Detects sensors in your areas automatically (motion, presence, BLE, etc.)
 * Tracks room presence with a smart `area_state` sensor
-* Adds secondary states like `dark`, `sleep`, and `extended`
+* Adds secondary states like `bright`/`dark`, `sleep`, and `extended`
 * Includes built-in, automation-like features: light control, fan groups, climate preset switching, and more
 * Fully configurable through the UI
 
@@ -32,35 +32,19 @@ Automatically groups your lights by purpose — overhead, task, accent, and slee
 
 ➡️ Group `light` entities like `Kitchen Overhead Lights`, `Bedroom Accent Lights`
 
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Light-Groups)
-
----
-
 ### 🌡️ Climate Control
 
 Map area states to climate device presets. For example: set your HVAC to `eco` when empty, and back to `comfort` when occupied or in sleep mode.
 
 ➡️ Works best in meta-areas like Interior or Floor
 
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Climate-Control)
-
----
-
 ### 🧠 Wasp in a Box
 
 Reliable presence sensing that accounts for people entering/leaving rooms with doors. Combines motion and door/garage sensors to prevent lights from turning off while you’re still inside.
 
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Wasp-in-a-Box)
-
----
-
 ### 🕰️ Smart Presence Timeouts
 
 Each area has a configurable timeout for clearing presence after the last motion. If motion is detected again within the timeout, it resets — no abrupt shutoffs.
-
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Timeout)
-
----
 
 ### 🕯️ Secondary States
 
@@ -71,17 +55,9 @@ Define subtle room states for more nuanced automations:
 * `extended`: When a room has been occupied beyond a set time
 * `accented`: Track presence based on entertainment like media players
 
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Secondary-States)
-
----
-
 ### 🔥 Fan Groups
 
 Auto-creates a `fan` group entity for each area and lets you control it using an aggregated value like temperature, humidity, or CO₂. Great for exhaust fans, ceiling fans, or air quality fans.
-
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Fan-Groups)
-
----
 
 ### 📶 Area-Aware Media Player
 
@@ -89,19 +65,11 @@ Play media (like TTS alerts) only in rooms that are currently occupied. Forward 
 
 ➡️ Configurable per area: pick devices, states, and behavior
 
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Area-Aware-Media-Player)
-
----
-
 ### 🧮 Sensor Aggregates
 
 Aggregates all `sensor` and `binary_sensor` entities in the area by `device_class` and `unit_of_measurement`. Great for dashboards, alerts, and logic.
 
 ➡️ Auto-generates `sensor.area_temperature` or `binary_sensor.area_motion` style entities
-
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Aggregates)
-
----
 
 ### 🚨 Health Sensors
 
@@ -111,49 +79,21 @@ Auto-aggregated binary sensors for safety-related device classes:
 
 ➡️ Works in all areas including meta-areas
 
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Health-Sensors)
-
----
-
 ### ✋ Presence Hold
 
-Creates a switch to manually override presence in an area. Useful if sensors aren’t fully reliable yet or for guests.
+Creates a switch to manually override presence in an area. Useful if sensors aren’t fully reliable yet or for guests. 📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Hold)
 
 ➡️ Optional timeout to reset the hold automatically
-
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Hold)
-
----
 
 ### 📡 BLE Tracker Integration
 
 Track text-based BLE sensors (like ESPresense, Bermuda, or Room Assistant) directly. Magic Areas will convert their values into usable presence sensors automatically.
 
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/BLE-Tracker-Sensor)
-
----
-
-### 🎮 Media Player Groups
-
-Creates `media_player` group entities automatically per area with all media players. Forwards all `play_media` actions to them.
-
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Media-Player-Groups)
-
----
-
-### 🪟 Cover Groups
-
-Groups covers (blinds, shades, garage doors) per area into `cover` groups.
-
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Cover-Groups)
-
----
-
-## 🏠 Meta-Areas and Hierarchies
+### 🏠 Meta-Areas and Hierarchies
 
 Tag areas as **interior**, **exterior**, or assign them to **floors**. Magic Areas will create meta-areas to track grouped presence (e.g., upstairs occupied). Presence logic and secondary states are inherited and calculated automatically.
 
-📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas)
+> 📖 Check out all the features on the [Magic Areas wiki](https://github.com/jseidl/hass-magic_areas/wiki/Features)!
 
 ## 🧙 Demo / How can Magic Areas help me?
 
@@ -206,7 +146,7 @@ If you would like to contribute to Magic Areas please read the [Contribution gui
 
 ---
 
-Enjoy smarter automations — and lights that finally understand you're still in the room ✨
+Enjoy smarter automations — and areas that finally understand you're still in the room ✨
 
 ***
 
