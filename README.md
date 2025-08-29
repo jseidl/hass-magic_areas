@@ -5,85 +5,109 @@
 
 ![ma-logo]
 
-# Your areas so smart it's almost magic! 🪄
+# Magic Areas for Home Assistant
+> Your areas so smart it's almost magic! 🪄
 
-Magic Areas is a custom component for [Home Assistant](https://www.home-assistant.io/) that magically makes sense of the devices and entities in your areas so you don't have to! Its main purpose is tracking presence in your Home Assistant's areas but in reality it's much, much more than that.
+Ever had your lights turn off while you're still in the room?
 
-<img align="right" width='450' src="assets/images/readme_combined_presence_sources.gif" style="margin-left: 30px; margin-top: 8px;">
+**Magic Areas** fixes that. It turns Home Assistant's built-in Areas into **intelligent, presence-aware zones**, automatically detecting when someone is in a room — and when they’ve left — using your existing motion, presence, or occupancy sensors.
 
-### Multiple sources of presence
+No more motion-only logic that fails when you sit still. Magic Areas intelligently tracks presence and adds powerful automations like light control, fan activation, and climate presets — all managed through a clean UI.
 
-Motion-activated lights are so 2000s. Magic Areas tracks multiple sources of presence in order to gauge an area's `occupancy` state, which you can use in automations but as you'll see, you might not even have to.
+Works out of the box. Fully customizable if you want it.
 
-Motion sensors, doors, media devices, device presence (`device_trackers`) are supported and you can use [Threshold](https://www.home-assistant.io/integrations/threshold/) and [Template](https://www.home-assistant.io/integrations/template/) binary sensors to track presence from power consumption and other entities' states!
+## How It Works
 
-In the demo on the left, the area gets cleared instantly for illustration purposes but in reality you can configure the timeout you want for an area to not receive any presence event before it gets marked as clear/not occupied.
+* Detects sensors in your areas automatically (motion, presence, BLE, etc.)
+* Tracks room presence with a smart `area_state` sensor
+* Adds secondary states like `bright`/`dark`, `sleep`, and `extended`
+* Includes built-in, automation-like features: light control, fan groups, climate preset switching, and more
+* Fully configurable through the UI
 
-The "Presence Hold" feature gives you a `switch` that is considered a source of presence and will let users hold an area `occupied` while the switch is `on`.
+## Features
 
-<img align="right" src="assets/images/upstairs-controls.png" style="margin-left: 30px; margin-top: 25px;">
+### 💡 Smart Light Groups
 
-### Meta-areas
+Automatically groups your lights by purpose — overhead, task, accent, and sleep — and controls them based on presence state. Lights can be set to trigger only in the dark or after extended occupancy.
 
-Magic Areas allows you to specify if an area is `interior` or `exterior` which allows it to create Meta-areas which groups all entities from said areas into their respective meta-areas.
+➡️ Group `light` entities like `Kitchen Overhead Lights`, `Bedroom Accent Lights`
 
-Since the addition of `floors` to Home Assistant, Magic Areas now supports `floor` meta-areas in the same way as it does for the `exterior` / `interior` ones!
+### 🌡️ Climate Control
 
-Some features (such as aggregation and groups) are available for meta-areas which allows you to control all your lights, media player devices, covers and climate devices of exterior areas, interior areas or whole floors in a single place.
+Map area states to climate device presets. For example: set your HVAC to `eco` when empty, and back to `comfort` when occupied or in sleep mode.
 
-Meta-areas simplify things by allowing you to use their aggregate sensors such as "Interior Motion" and "Exterior Door" in your alarm setups, "Exterior Light" as your area light sensors and much more!
+➡️ Works best in meta-areas like Interior or Floor
 
-<img align="right" width='450' src="assets/images/temperature-aggregate.png" style="margin-left: 30px; margin-top: 8px">
+### 🧠 Wasp in a Box
 
-### Aggregate sensors
+Reliable presence sensing that accounts for people entering/leaving rooms with doors. Combines motion and door/garage sensors to prevent lights from turning off while you’re still inside.
 
-Group and automatically convert different unit sensors of the same `device class` together!
+### 🕰️ Smart Presence Timeouts
 
-Aggregates are plain Home Assistant [Groups](https://www.home-assistant.io/integrations/group/) and behave the same. Sensors of the same `device class` but with different `units of measurement` will be normalized and converted according to your unit system.
+Each area has a configurable timeout for clearing presence after the last motion. If motion is detected again within the timeout, it resets — no abrupt shutoffs.
 
-Even if you only have one sensor of each `device class`, aggregates allows you to reference a single entity in your automations while considering all others of the same `device class` but also allowing you to add new devices/entities to an area and having them automatically be considered in your automations that reference their aggregates.
+### 🕯️ Secondary States
 
-### Light Groups
+Define subtle room states for more nuanced automations:
 
-Probably the most utilized feature of Magic Areas, allows you to automatically control your area's lights according an area's state. Would you like to have your overhead lights turned on when dark, but only your accent lights when watching TV unless you're sleeping then only a small light strip under your bed? Magic Areas has got you covered!
+* `dark` / `bright`: Based on light sensors or sun
+* `sleep`: Tracked by any entity
+* `extended`: When a room has been occupied beyond a set time
+* `accented`: Track presence based on entertainment like media players
 
-Our light groups are also smarter, meaning when you, for example, change brightness or color in a Magic Light Group, unlike regular Light Groups, it won't turn on other lights that are members of the same group that are off, effecively allowing changes in a light group to affect only lights that are currently on!
+### 🔥 Fan Groups
 
-When an area is clear or it gets bright, Magic Areas will take care of turning the lights off for you!
+Auto-creates a `fan` group entity for each area and lets you control it using an aggregated value like temperature, humidity, or CO₂. Great for exhaust fans, ceiling fans, or air quality fans.
 
-### Climate Groups
+### 📶 Area-Aware Media Player
 
-It (usually) doesn't make sense to have your fans running when you're not there, right? If you pair your fans with [Generic Thermostats](https://www.home-assistant.io/integrations/generic_thermostat), you can have Magic Areas turn your fans on (and off!) for you! A clever twist is that areas have an `extended` state and you can set your climate group to only turn on after you've been there for a while, to avoid them coming on when you're just passing by.
+Play media (like TTS alerts) only in rooms that are currently occupied. Forward notifications to the right areas — not empty ones.
 
-### Area-aware media player
+➡️ Configurable per area: pick devices, states, and behavior
 
-Sending Text-to-speech notifications to media players is awesome, but sending notifications where no-one will hear isn't very smart and not magical at all. Area-aware media player is a media player group that will only forward `play` events to configured notification devices (i.e. media players) in areas that are currently `occupied`.
+### 🧮 Sensor Aggregates
 
-But wait, you won't wake up your kids! Magic areas allows you to specify states in which an area must be in order to receive notifications. Since Magic Areas supports a `sleep` state, if you leave that state out, areas that are sleeping won't be notified!
+Aggregates all `sensor` and `binary_sensor` entities in the area by `device_class` and `unit_of_measurement`. Great for dashboards, alerts, and logic.
 
-_And that's just the coolest ones, for all the features Magic Areas provides, check out the [wiki](https://github.com/jseidl/hass-magic_areas/wiki/Features)._
+➡️ Auto-generates `sensor.area_temperature` or `binary_sensor.area_motion` style entities
 
-## Demo / How can Magic Areas help me?
+### 🚨 Health Sensors
+
+Auto-aggregated binary sensors for safety-related device classes:
+
+* `gas`, `smoke`, `moisture` (leaks), `problem`, `safety`
+
+➡️ Works in all areas including meta-areas
+
+### ✋ Presence Hold
+
+Creates a switch to manually override presence in an area. Useful if sensors aren’t fully reliable yet or for guests. 📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Hold)
+
+➡️ Optional timeout to reset the hold automatically
+
+### 📡 BLE Tracker Integration
+
+Track text-based BLE sensors (like ESPresense, Bermuda, or Room Assistant) directly. Magic Areas will convert their values into usable presence sensors automatically.
+
+### 🏠 Meta-Areas and Hierarchies
+
+Tag areas as **interior**, **exterior**, or assign them to **floors**. Magic Areas will create meta-areas to track grouped presence (e.g., upstairs occupied). Presence logic and secondary states are inherited and calculated automatically.
+
+> 📖 Check out all the features on the [Magic Areas wiki](https://github.com/jseidl/hass-magic_areas/wiki/Features)!
+
+## 🧙 Demo / How can Magic Areas help me?
 
 Check out the wiki cookbook [Magic Areas in every room](https://github.com/jseidl/hass-magic_areas/wiki/Magic-Areas-in-every-room) to see how you can apply Magic Areas to make every room in your house, magic!
 
-## Installation
+## 🚀 Getting Started
 
-_Magic Areas_ is available on [HACS](https://hacs.xyz/)! For installation instructions check the installation [wiki](https://github.com/jseidl/hass-magic_areas/wiki/Installation).
+1. Install via [HACS](https://hacs.xyz/) → Magic Areas
+2. Go to Settings → Devices & Services → Magic Areas
+3. Start adding your Areas and tweaking settings
 
-## Configuration
-Configuration options for `Magic Areas` are on a per-area basis.
+📖 Visit the [Wiki](https://github.com/jseidl/hass-magic_areas/wiki/Configuration) for complete guides, examples, and tips.
 
-> ⚠️ Before you start: Please make sure you understand all the **Concepts** on the [wiki](https://github.com/jseidl/hass-magic_areas/wiki).
-
-> 💡 Light Groups won't control any lights unless the `Light Control` switch for that area is turned `on`!
-
-Go to **Configuration** > **Integrations**. You will see the *Magic Areas* integration and configure each area (and [Meta-Areas](https://github.com/jseidl/hass-magic_areas/wiki/Meta-Areas)!).
-
-See all configuration options in the [wiki](https://github.com/jseidl/hass-magic_areas/wiki/Configuration).
-
-
-## Magic Areas in your language!
+## 🌐 Magic Areas in your language!
 
 Magic Areas has full translation support, meaning even your entities will be translated and is available in the following languages:
 
@@ -93,7 +117,7 @@ Magic Areas has full translation support, meaning even your entities will be tra
 
 Help to translate Magic Areas into your language from your web browser! We use [Hosted Weblate](https://hosted.weblate.org/engage/magic-areas/) so you don't need to fool around with pull requests nor JSON files!
 
-## Problems/bugs, questions, feature requests?
+## 🛠️ Problems/bugs, questions, feature requests?
 
 ### Questions?
 
@@ -116,10 +140,13 @@ As soon as the issue occurs capture the contents of the log (`/config/home-assis
 
 Please do not open issues for feature requests. Use the [Feature Request discussions area](https://github.com/jseidl/hass-magic_areas/discussions/categories/ideas-feature-requests) to contribute with your ideas!
 
-## Contributions are welcome!
+### Contributions are welcome!
 
 If you would like to contribute to Magic Areas please read the [Contribution guidelines](CONTRIBUTING.md).
 
+---
+
+Enjoy smarter automations — and areas that finally understand you're still in the room ✨
 
 ***
 
