@@ -85,18 +85,12 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
                 continue
             self._wasp_sensors.append(dc_entity_id)
 
-        if not self._wasp_sensors:
-            raise RuntimeError(f"{self.area.name}: No valid wasp sensors defined.")
-
         for device_class in WASP_IN_A_BOX_BOX_DEVICE_CLASSES:
             dc_entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_aggregates_{self.area.slug}_aggregate_{device_class}"
             dc_state = self.hass.states.get(dc_entity_id)
             if not dc_state:
                 continue
             self._box_sensors.append(dc_entity_id)
-
-        if not self._box_sensors:
-            raise RuntimeError(f"{self.area.name}: No valid wasp sensors defined.")
 
         # Initialize timer if timeout configured
         if self._wasp_timeout > 0:
@@ -112,17 +106,18 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
             )
 
         # Add listeners
-
-        self.async_on_remove(
-            async_track_state_change_event(
-                self.hass, self._wasp_sensors, self._async_wasp_sensor_state_change
+        if self._wasp_sensors:
+            self.async_on_remove(
+                async_track_state_change_event(
+                    self.hass, self._wasp_sensors, self._async_wasp_sensor_state_change
+                )
             )
-        )
-        self.async_on_remove(
-            async_track_state_change_event(
-                self.hass, self._box_sensors, self._async_box_sensor_state_change
+        if self._box_sensors:
+            self.async_on_remove(
+                async_track_state_change_event(
+                    self.hass, self._box_sensors, self._async_box_sensor_state_change
+                )
             )
-        )
 
     async def async_will_remove_from_hass(self) -> None:
         """Call to remove the entity to hass."""
