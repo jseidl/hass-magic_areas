@@ -640,6 +640,10 @@ CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = (
     "delay",
     90,
 )  # cv.positive_int
+CONF_WASP_IN_A_BOX_WASP_TIMEOUT, DEFAULT_WASP_IN_A_BOX_WASP_TIMEOUT = (
+    "wasp_timeout",
+    15,
+)  # cv.positive_int
 CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES = (
     "wasp_device_classes",
     [BinarySensorDeviceClass.MOTION, BinarySensorDeviceClass.OCCUPANCY],
