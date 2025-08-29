@@ -178,10 +178,12 @@
         "description": "If we see a wasp, then there is a wasp in the box. If we close the box while there is a wasp in the box, then the wasp remains in the box. If the box remains closed when there is a wasp in the box, and the wasp stops moving, we assume it's still in the box. If the box is opened, and the wasp is not moving, we assume that the wasp has escaped (there is no wasp in the box). This feature monitors your `door` aggregates as the box and your `motion` (default) aggregates as your wasp. A new `binary_sensor` will be created and automatically tracked for presence.",
         "data": {
           "delay": "Delay",
+          "wasp_timeout": "Wasp Timeout",
           "wasp_device_classes": "Wasp sensor device classes"
         },
         "data_description": {
           "delay": "Time to wait before checking for wasps after a box changing state. Set to 0 to disable.",
+          "wasp_timeout": "If greater than 0, wasp will be 'forgotten' after being inactive for this long.",
           "wasp_device_classes": "If you wish other aggregates to be considered as wasps, please select from the list."
         }
       },

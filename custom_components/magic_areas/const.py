@@ -642,7 +642,7 @@ CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY = (
 )  # cv.positive_int
 CONF_WASP_IN_A_BOX_WASP_TIMEOUT, DEFAULT_WASP_IN_A_BOX_WASP_TIMEOUT = (
     "wasp_timeout",
-    15,
+    0,  # 0 = disabled
 )  # cv.positive_int
 CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES, DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES = (
     "wasp_device_classes",
@@ -1208,6 +1208,11 @@ OPTIONS_BLE_TRACKERS = [
 
 OPTIONS_WASP_IN_A_BOX = [
     (CONF_WASP_IN_A_BOX_DELAY, DEFAULT_WASP_IN_A_BOX_DELAY, cv.positive_int),
+    (
+        CONF_WASP_IN_A_BOX_WASP_TIMEOUT,
+        DEFAULT_WASP_IN_A_BOX_WASP_TIMEOUT,
+        cv.positive_int,
+    ),
     (
         CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
         DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,

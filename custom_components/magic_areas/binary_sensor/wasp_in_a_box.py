@@ -98,16 +98,18 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
         if not self._box_sensors:
             raise RuntimeError(f"{self.area.name}: No valid wasp sensors defined.")
 
-        # Initialize timer
-        async def forget_wasp(now):
-            self.wasp = False
-            self._attr_extra_state_attributes[ATTR_WASP] = STATE_OFF
-            self._attr_is_on = self.wasp
-            self.schedule_update_ha_state()
+        # Initialize timer if timeout configured
+        if self._wasp_timeout > 0:
 
-        self._wasp_timer = ReusableTimer(
-            self.hass, self._wasp_timeout * ONE_MINUTE, forget_wasp
-        )
+            async def forget_wasp(now):
+                self.wasp = False
+                self._attr_extra_state_attributes[ATTR_WASP] = STATE_OFF
+                self._attr_is_on = self.wasp
+                self.schedule_update_ha_state()
+
+            self._wasp_timer = ReusableTimer(
+                self.hass, self._wasp_timeout * ONE_MINUTE, forget_wasp
+            )
 
         # Add listeners
 
