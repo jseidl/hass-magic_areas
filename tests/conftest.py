@@ -22,13 +22,13 @@ from custom_components.magic_areas.const import (
     AreaType,
 )
 
+from tests.const import DEFAULT_MOCK_AREA, MOCK_AREAS, MockAreaIds
 from tests.helpers import (
     get_basic_config_entry_data,
     init_integration,
     setup_mock_entities,
     shutdown_integration,
 )
-from tests.const import DEFAULT_MOCK_AREA, MOCK_AREAS, MockAreaIds
 from tests.mocks import MockBinarySensor
 
 _LOGGER = logging.getLogger(__name__)

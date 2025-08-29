@@ -31,6 +31,7 @@ from custom_components.magic_areas.const import (
     MagicAreasFeatures,
 )
 
+from tests.const import DEFAULT_MOCK_AREA
 from tests.helpers import (
     assert_attribute,
     assert_state,
@@ -39,7 +40,6 @@ from tests.helpers import (
     setup_mock_entities,
     shutdown_integration,
 )
-from tests.const import DEFAULT_MOCK_AREA
 from tests.mocks import MockBinarySensor, MockClimate
 
 _LOGGER = logging.getLogger(__name__)

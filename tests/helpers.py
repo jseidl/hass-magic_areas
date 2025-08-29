@@ -29,6 +29,7 @@ from homeassistant.helpers.entity_registry import async_get as async_get_er
 from homeassistant.helpers.floor_registry import async_get as async_get_fr
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.setup import async_setup_component
+from homeassistant.util.dt import utcnow
 
 from custom_components.magic_areas.const import (
     CONF_CLEAR_TIMEOUT,
@@ -386,3 +387,26 @@ def assert_in_attribute(
         assert expected_value not in entity_state.attributes[attribute_key]
     else:
         assert expected_value in entity_state.attributes[attribute_key]
+
+
+# Timer helper
+
+
+def immediate_call_factory(hass, callback_key="callback"):
+    """Return a side_effect function for patching async_call_later that fires immediately but respects cancel."""
+
+    def immediate_call(hass_arg, delay_arg, callback_arg):
+        canceled = False
+
+        def cancel():
+            nonlocal canceled
+            canceled = True
+
+        async def run_callback():
+            if not canceled:
+                await callback_arg(utcnow())
+
+        hass.loop.create_task(run_callback())
+        return cancel
+
+    return immediate_call

@@ -35,6 +35,7 @@ from custom_components.magic_areas.const import (
     AreaStates,
 )
 
+from tests.const import DEFAULT_MOCK_AREA, MockAreaIds
 from tests.helpers import (
     assert_in_attribute,
     assert_state,
@@ -43,7 +44,6 @@ from tests.helpers import (
     setup_mock_entities,
     shutdown_integration,
 )
-from tests.const import DEFAULT_MOCK_AREA, MockAreaIds
 from tests.mocks import MockBinarySensor, MockMediaPlayer
 
 _LOGGER = logging.getLogger(__name__)
