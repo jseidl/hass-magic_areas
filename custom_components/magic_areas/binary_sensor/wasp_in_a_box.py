@@ -168,24 +168,13 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
             self._attr_extra_state_attributes[ATTR_BOX] = new_state.state
             self._attr_extra_state_attributes[ATTR_WASP] = STATE_OFF
             self.schedule_update_ha_state()
-            self.hass.loop.call_soon_threadsafe(
-                self.wasp_in_a_box_delayed,
-                None,
-                new_state.state,
+            if self._wasp_timer:
+                self._wasp_timer.cancel()
+            self.hass.loop.call_later(
+                self._delay, self.wasp_in_a_box, None, new_state.state
             )
         else:
             self.wasp_in_a_box(box_state=new_state.state)
-
-    @callback
-    async def wasp_in_a_box_delayed(
-        self,
-        wasp_state: str | None = None,
-        box_state: str | None = None,
-    ) -> None:
-        """Call Wasp In A Box Logic function after a delay."""
-        self.hass.loop.call_later(
-            self._delay, self.wasp_in_a_box, wasp_state, box_state
-        )
 
     def wasp_in_a_box(
         self,
@@ -227,7 +216,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
                 self._wasp_timer.cancel()
         else:
             # Wasp is OFF and Box is OFF → start timer
-            if self._wasp_timer:
+            if self._wasp_timer and self.wasp:
                 self._wasp_timer.start()
 
         self._attr_extra_state_attributes[ATTR_BOX] = box_state

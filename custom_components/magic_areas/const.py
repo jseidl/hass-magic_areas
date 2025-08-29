@@ -801,6 +801,9 @@ WASP_IN_A_BOX_FEATURE_SCHEMA = vol.Schema(
             CONF_WASP_IN_A_BOX_DELAY, default=DEFAULT_WASP_IN_A_BOX_DELAY
         ): cv.positive_int,
         vol.Optional(
+            CONF_WASP_IN_A_BOX_WASP_TIMEOUT, default=DEFAULT_WASP_IN_A_BOX_WASP_TIMEOUT
+        ): cv.positive_int,
+        vol.Optional(
             CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
             default=DEFAULT_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
         ): cv.ensure_list,
