@@ -1,7 +1,35 @@
 #!/usr/bin/env bash
-
-set -e
+set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-tox
+# Which version(s) to run: default = stable
+CHOICE="${1:-stable}"
+
+# Fetch latest HA stable + beta versions from PyPI
+VERSIONS=$(curl -s https://pypi.org/pypi/homeassistant/json | jq -r '.releases | keys | .[]')
+
+HA_STABLE_VERSION=$(echo "$VERSIONS" | grep -Ev '[a-zA-Z]' | sort -Vr | head -n1)
+HA_BETA_VERSION=$(echo "$VERSIONS" | grep 'b' | sort -Vr | head -n1)
+
+export HA_STABLE_VERSION
+export HA_BETA_VERSION
+
+case "$CHOICE" in
+  stable)
+    echo "Running tests against Home Assistant stable: $HA_STABLE_VERSION"
+    tox -e ha-stable
+    ;;
+  beta)
+    echo "Running tests against Home Assistant beta: $HA_BETA_VERSION"
+    tox -e ha-beta
+    ;;
+  both)
+    echo "Running tests against both stable ($HA_STABLE_VERSION) and beta ($HA_BETA_VERSION)"
+    tox -e ha-stable,ha-beta
+    ;;
+  *)
+    echo "Usage: $0 [stable|beta|both]"
+    exit 1
+    ;;
+esac

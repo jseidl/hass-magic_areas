@@ -1,6 +1,7 @@
 """Classes for Magic Areas and Meta Areas."""
 
-from datetime import UTC, datetime
+import asyncio
+from datetime import UTC, datetime, timedelta
 import logging
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
@@ -9,16 +10,22 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
+    EVENT_HOMEASSISTANT_STARTED,
     STATE_ON,
     EntityCategory,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import async_get as devicereg_async_get
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.device_registry import (
+    EventDeviceRegistryUpdatedData,
+    async_get as devicereg_async_get,
+)
+from homeassistant.helpers.dispatcher import async_dispatcher_connect, dispatcher_send
 from homeassistant.helpers.entity_registry import (
+    EventEntityRegistryUpdatedData,
     RegistryEntry,
     async_get as entityreg_async_get,
 )
-from homeassistant.util import slugify
+from homeassistant.util import Throttle, slugify
 
 from custom_components.magic_areas.const import (
     AREA_STATE_OCCUPIED,
@@ -45,6 +52,9 @@ from custom_components.magic_areas.const import (
     MAGIC_AREAS_COMPONENTS_META,
     META_AREA_GLOBAL,
     MODULE_DATA,
+    AreaType,
+    MagicAreasEvents,
+    MetaAreaAutoReloadSettings,
     MetaAreaType,
 )
 
@@ -85,6 +95,9 @@ class MagicArea:
         self.floor_id: str | None = area.floor_id
         self.logger = logging.getLogger(__name__)
 
+        # Timestamp for initialization / reload tests
+        self.timestamp: datetime = datetime.now(UTC)
+
         # Merged options
         area_config = dict(config.data)
         if config.options:
@@ -108,6 +121,25 @@ class MagicArea:
         self.logger.debug(
             "%s (%s) initialized.", self.name, "Meta-Area" if self.is_meta() else "Area"
         )
+
+        async def _async_notify_load(*args, **kwargs) -> None:
+            """Notify that area is loaded."""
+            # Announce area type loaded
+            dispatcher_send(
+                self.hass,
+                MagicAreasEvents.AREA_LOADED,
+                self.area_type,
+                self.floor_id,
+                self.id,
+            )
+
+        # Wait for Hass to have started before announcing load events.
+        if self.hass.is_running:
+            self.hass.create_task(_async_notify_load())
+        else:
+            self.hass.bus.async_listen_once(
+                EVENT_HOMEASSISTANT_STARTED, _async_notify_load
+            )
 
     def is_occupied(self) -> bool:
         """Return if area is occupied."""
@@ -413,6 +445,56 @@ class MagicArea:
         """Check if area has entities."""
         return domain in self.entities
 
+    def make_entity_registry_filter(self):
+        """Create entity register filter for this area."""
+
+        @callback
+        def _entity_registry_filter(event_data: EventEntityRegistryUpdatedData) -> bool:
+            action = event_data["action"]
+
+            if (
+                action == "update"
+                and "changes" in event_data
+                and "area_id" in event_data["changes"]
+            ):
+                return True
+
+            if action in ("create", "remove"):
+                entity_registry = entityreg_async_get(self.hass)
+                entity_entry = entity_registry.async_get(event_data["entity_id"])
+                if entity_entry and entity_entry.area_id == self.id:
+                    return True
+
+            return False
+
+        return _entity_registry_filter
+
+    def make_device_registry_filter(self):
+        """Create device register filter for this area."""
+
+        @callback
+        def _device_registry_filter(event_data: EventDeviceRegistryUpdatedData) -> bool:
+            """Filter device registry events relevant to this area."""
+
+            action = event_data["action"]
+
+            if (
+                action == "update"
+                and "changes" in event_data
+                and "area_id" in event_data["changes"]
+            ):
+                return True
+
+            if action in ("create", "remove"):
+                device_registry = devicereg_async_get(self.hass)
+                device_entry = device_registry.async_get(event_data["device_id"])
+                if device_entry and device_entry.area_id == self.id:
+                    return True
+
+            return False
+
+        return _device_registry_filter
+
 
 class MagicMetaArea(MagicArea):
     """Magic Meta Area class."""
@@ -525,7 +607,7 @@ class MagicMetaArea(MagicArea):
 
                     entity_entry = entity_registry.async_get(entity[ATTR_ENTITY_ID])
                     if not entity_entry:
-                        self.logger.warning(
+                        self.logger.debug(
                             "%s: Magic Entity not found on Entity Registry: %s",
                             self.name,
                             entity[ATTR_ENTITY_ID],
@@ -538,3 +620,53 @@ class MagicMetaArea(MagicArea):
         self.logger.debug(
             "%s: Loaded entities for meta area: %s", self.name, str(self.entities)
         )
+
+    def finalize_init(self) -> None:
+        """Finalize Meta-Area initialization."""
+
+        async_dispatcher_connect(
+            self.hass, MagicAreasEvents.AREA_LOADED, self._handle_loaded_area
+        )
+
+    async def _handle_loaded_area(
+        self, area_type: str, floor_id: int | None, area_id: str
+    ) -> None:
+        """Handle area loaded signals."""
+
+        self.logger.debug(
+            "%s: Received area loaded signal (type=%s, floor_id=%s, area_id=%s)",
+            self.name,
+            area_type,
+            floor_id,
+            area_id,
+        )
+
+        # Don't act while hass is not running
+        if not self.hass.is_running:
+            return
+
+        # Handle Global
+        if self.slug == MetaAreaType.GLOBAL:
+            return await self.reload()
+
+        # Handle Floors
+        if self.floor_id and self.floor_id == floor_id:
+            return await self.reload()
+
+        # Ignore area types we're not expecting
+        if area_type not in [AreaType.EXTERIOR, AreaType.INTERIOR]:
+            return
+
+        # Handle Interior/Exterior metas
+        if self.slug == area_type:
+            return await self.reload()
+
+    @Throttle(min_time=timedelta(seconds=MetaAreaAutoReloadSettings.THROTTLE))
+    async def reload(self) -> None:
+        """Reload current entry."""
+        self.logger.debug("%s: Reloading entry.", self.name)
+
+        # Give some time for areas to finish loading
+        await asyncio.sleep(MetaAreaAutoReloadSettings.DELAY)
+
+        self.hass.config_entries.async_schedule_reload(self.hass_config.entry_id)

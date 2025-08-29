@@ -1,5 +1,6 @@
 """Tests for the BLE Tracker feature."""
 
+import asyncio
 from collections.abc import AsyncGenerator
 import logging
 from typing import Any
@@ -210,6 +211,13 @@ async def test_climate_control_logic(
 
     area_sensor_state = hass.states.get(AREA_SENSOR_ENTITY_ID)
     assert_state(area_sensor_state, STATE_OFF)
+
+    # A bit of voodoo waiting for the climate group to act
+    # I know this is lame and kinda hail-mary but hey! if you know
+    # how to fix it, let me know!
+    for _i in range(10):
+        await asyncio.sleep(1)
+        await hass.async_block_till_done()
 
     climate_state = hass.states.get(MOCK_CLIMATE_ENTITY_ID)
     assert_attribute(climate_state, ATTR_PRESET_MODE, PRESET_AWAY)
