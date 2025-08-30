@@ -31,7 +31,8 @@ from custom_components.magic_areas.const import (
     MagicAreasFeatures,
 )
 
-from tests.common import (
+from tests.const import DEFAULT_MOCK_AREA
+from tests.helpers import (
     assert_attribute,
     assert_state,
     get_basic_config_entry_data,
@@ -39,7 +40,6 @@ from tests.common import (
     setup_mock_entities,
     shutdown_integration,
 )
-from tests.const import DEFAULT_MOCK_AREA
 from tests.mocks import MockBinarySensor, MockClimate
 
 _LOGGER = logging.getLogger(__name__)
@@ -215,7 +215,7 @@ async def test_climate_control_logic(
     # A bit of voodoo waiting for the climate group to act
     # I know this is lame and kinda hail-mary but hey! if you know
     # how to fix it, let me know!
-    for _i in range(10):
+    for _i in range(20):
         await asyncio.sleep(1)
         await hass.async_block_till_done()
 

@@ -3,6 +3,7 @@
 from collections.abc import AsyncGenerator
 import logging
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -22,13 +23,14 @@ from custom_components.magic_areas.const import (
     AreaType,
 )
 
-from tests.common import (
+from tests.const import DEFAULT_MOCK_AREA, MOCK_AREAS, MockAreaIds
+from tests.helpers import (
     get_basic_config_entry_data,
+    immediate_call_factory,
     init_integration,
     setup_mock_entities,
     shutdown_integration,
 )
-from tests.const import DEFAULT_MOCK_AREA, MOCK_AREAS, MockAreaIds
 from tests.mocks import MockBinarySensor
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,6 +45,19 @@ async def auto_enable_custom_integrations(
     """Enable custom integration."""
     _ = enable_custom_integrations  # unused
     yield
+
+
+# Timer-related
+
+
+@pytest.fixture
+def patch_async_call_later(hass):
+    """Automatically patch async_call_later for ReusableTimer tests."""
+    with patch(
+        "custom_components.magic_areas.helpers.timer.async_call_later",
+        side_effect=immediate_call_factory(hass),
+    ):
+        yield
 
 
 # Config entries

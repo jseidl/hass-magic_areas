@@ -116,6 +116,7 @@ from .const import (
     CONF_TYPE,
     CONF_WASP_IN_A_BOX_DELAY,
     CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES,
+    CONF_WASP_IN_A_BOX_WASP_TIMEOUT,
     CONFIG_FLOW_ENTITY_FILTER_BOOL,
     CONFIG_FLOW_ENTITY_FILTER_EXT,
     CONFIGURABLE_AREA_STATE_MAP,
@@ -1272,6 +1273,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow, ConfigBase):
         selectors = {
             CONF_WASP_IN_A_BOX_DELAY: self._build_selector_number(
                 min_value=0, unit_of_measurement="seconds"
+            ),
+            CONF_WASP_IN_A_BOX_WASP_TIMEOUT: self._build_selector_number(
+                min_value=0, unit_of_measurement="minutes"
             ),
             CONF_WASP_IN_A_BOX_WASP_DEVICE_CLASSES: self._build_selector_select(
                 sorted(WASP_IN_A_BOX_WASP_DEVICE_CLASSES), multiple=True

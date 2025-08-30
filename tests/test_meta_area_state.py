@@ -8,8 +8,8 @@ from homeassistant.core import HomeAssistant
 
 from custom_components.magic_areas.const import AreaStates
 
-from tests.common import assert_state
 from tests.const import MockAreaIds
+from tests.helpers import assert_state
 from tests.mocks import MockBinarySensor
 
 _LOGGER = logging.getLogger(__name__)
