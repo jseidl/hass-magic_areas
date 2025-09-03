@@ -36,6 +36,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     @callback
     async def _async_reload_entry(*args, **kwargs) -> None:
+        # Prevent reloads if we're not fully loaded yet
+        if not hass.is_running:
+            return
+
         hass.config_entries.async_update_entry(
             config_entry,
             data={**config_entry.data, "entity_ts": datetime.now(UTC)},

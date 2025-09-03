@@ -50,6 +50,8 @@ from custom_components.magic_areas.const import (
     MAGIC_AREAS_COMPONENTS,
     MAGIC_AREAS_COMPONENTS_GLOBAL,
     MAGIC_AREAS_COMPONENTS_META,
+    MAGIC_DEVICE_ID_PREFIX,
+    MAGICAREAS_UNIQUEID_PREFIX,
     META_AREA_GLOBAL,
     MODULE_DATA,
     AreaType,
@@ -450,6 +452,14 @@ class MagicArea:
 
         @callback
         def _entity_registry_filter(event_data: EventEntityRegistryUpdatedData) -> bool:
+            """Filter entity registry events relevant to this area."""
+
+            # Ignore our own stuff
+            entity_id = event_data["entity_id"]
+            _, entity_part = entity_id.split(".")
+            if entity_part.startswith(MAGICAREAS_UNIQUEID_PREFIX):
+                return False
+
             action = event_data["action"]
 
             if (
@@ -461,7 +471,7 @@ class MagicArea:
 
             if action in ("create", "remove"):
                 entity_registry = entityreg_async_get(self.hass)
-                entity_entry = entity_registry.async_get(event_data["entity_id"])
+                entity_entry = entity_registry.async_get(entity_id)
                 if entity_entry and entity_entry.area_id == self.id:
                     return True
 
@@ -475,6 +485,10 @@ class MagicArea:
         @callback
         def _device_registry_filter(event_data: EventDeviceRegistryUpdatedData) -> bool:
             """Filter device registry events relevant to this area."""
+
+            # Ignore our own stuff
+            if event_data["device_id"].startswith(MAGIC_DEVICE_ID_PREFIX):
+                return False
 
             action = event_data["action"]
 
