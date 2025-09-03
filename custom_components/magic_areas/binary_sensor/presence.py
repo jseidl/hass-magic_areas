@@ -470,7 +470,7 @@ class AreaStateTrackerEntity(BinaryMagicEntity):
                 entity = self.hass.states.get(sensor)
 
                 if not entity:
-                    _LOGGER.info(
+                    _LOGGER.debug(
                         "%s: Could not get sensor state: '%s' entity not found, skipping",
                         self.area.name,
                         sensor,
@@ -703,9 +703,7 @@ class MetaAreaStateBinarySensor(AreaStateBinarySensor):
         states_list: list[AreaStates] = []
 
         for area_slug in child_areas:
-            area_entity_id: str = (
-                f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{area_slug}_area_state"
-            )
+            area_entity_id: str = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{area_slug}_area_state"
             area_state = self.hass.states.get(area_entity_id)
 
             if not area_state:

@@ -29,5 +29,5 @@ def cleanup_removed_entries(
         entity_id = entity_dict[ATTR_ENTITY_ID]
         if entity_id in new_ids:
             continue
-        _LOGGER.info("Cleaning up old entity %s", entity_id)
+        _LOGGER.debug("Cleaning up old entity %s", entity_id)
         entity_registry.async_remove(entity_id)
