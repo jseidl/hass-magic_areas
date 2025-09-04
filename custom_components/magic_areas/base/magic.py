@@ -97,6 +97,10 @@ class MagicArea:
         self.floor_id: str | None = area.floor_id
         self.logger = logging.getLogger(__name__)
 
+        # Faster lookup lists
+        self._area_entities: list[str] = []
+        self._area_devices: list[str] = []
+
         # Timestamp for initialization / reload tests
         self.timestamp: datetime = datetime.now(UTC)
 
@@ -279,6 +283,7 @@ class MagicArea:
                     if not self._should_exclude_entity(entity)
                 ]
             )
+            self._area_devices.append(device.id)
 
         # Add entities that are specifically set as this area but device is not or has no device.
         entities_in_area = entity_registry.entities.get_entries_for_area_id(self.id)
@@ -350,10 +355,8 @@ class MagicArea:
         """Populate entity list with loaded entities."""
         self.logger.debug("%s: Original entity list: %s", self.name, str(entity_list))
 
-        seen_entity_ids: list[str] = []
-
         for entity in entity_list:
-            if entity.entity_id in seen_entity_ids:
+            if entity.entity_id in self._area_entities:
                 continue
             self.logger.debug("%s: Loading entity: %s", self.name, entity.entity_id)
 
@@ -369,7 +372,8 @@ class MagicArea:
                     self.entities[entity.domain] = []
 
                 self.entities[entity.domain].append(updated_entity)
-                seen_entity_ids.append(entity.entity_id)
+
+                self._area_entities.append(entity.entity_id)
 
             # Adding pylint exception because this is a last-resort hail-mary catch-all
             # pylint: disable-next=broad-exception-caught
@@ -460,6 +464,12 @@ class MagicArea:
             if entity_part.startswith(MAGICAREAS_UNIQUEID_PREFIX):
                 return False
 
+            # Ignore if too soon
+            if datetime.now(UTC) - self.timestamp < timedelta(
+                seconds=MetaAreaAutoReloadSettings.THROTTLE
+            ):
+                return False
+
             action = event_data["action"]
 
             if (
@@ -467,7 +477,13 @@ class MagicArea:
                 and "changes" in event_data
                 and "area_id" in event_data["changes"]
             ):
-                return True
+                if (
+                    entity_id in self._area_entities
+                    or event_data["changes"]["area_id"] == self.id
+                ):
+                    return True
+
+                return False
 
             if action in ("create", "remove"):
                 entity_registry = entityreg_async_get(self.hass)
@@ -490,6 +506,12 @@ class MagicArea:
             if event_data["device_id"].startswith(MAGIC_DEVICE_ID_PREFIX):
                 return False
 
+            # Ignore if too soon
+            if datetime.now(UTC) - self.timestamp < timedelta(
+                seconds=MetaAreaAutoReloadSettings.THROTTLE
+            ):
+                return False
+
             action = event_data["action"]
 
             if (
@@ -497,7 +519,13 @@ class MagicArea:
                 and "changes" in event_data
                 and "area_id" in event_data["changes"]
             ):
-                return True
+                if (
+                    event_data["device_id"] in self._area_devices
+                    or event_data["changes"]["area_id"] == self.id
+                ):
+                    return True
+
+                return False
 
             if action in ("create", "remove"):
                 device_registry = devicereg_async_get(self.hass)
