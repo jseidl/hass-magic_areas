@@ -128,6 +128,7 @@ class MagicArea:
             "%s (%s) initialized.", self.name, "Meta-Area" if self.is_meta() else "Area"
         )
 
+        @callback
         async def _async_notify_load(*args, **kwargs) -> None:
             """Notify that area is loaded."""
             # Announce area type loaded
@@ -458,8 +459,9 @@ class MagicArea:
         def _entity_registry_filter(event_data: EventEntityRegistryUpdatedData) -> bool:
             """Filter entity registry events relevant to this area."""
 
-            # Ignore our own stuff
             entity_id = event_data["entity_id"]
+
+            # Ignore our own stuff
             _, entity_part = entity_id.split(".")
             if entity_part.startswith(MAGICAREAS_UNIQUEID_PREFIX):
                 return False
@@ -471,23 +473,26 @@ class MagicArea:
                 return False
 
             action = event_data["action"]
+            entity_registry = entityreg_async_get(self.hass)
+            entity_entry = entity_registry.async_get(entity_id)
 
             if (
                 action == "update"
                 and "changes" in event_data
                 and "area_id" in event_data["changes"]
             ):
-                if (
-                    entity_id in self._area_entities
-                    or event_data["changes"]["area_id"] == self.id
-                ):
+                # Removed from our area
+                if event_data["changes"]["area_id"] == self.id:
+                    return True
+
+                # Is from our area
+                if entity_entry and entity_entry.area_id == self.id:
                     return True
 
                 return False
 
             if action in ("create", "remove"):
-                entity_registry = entityreg_async_get(self.hass)
-                entity_entry = entity_registry.async_get(entity_id)
+                # Is from our area
                 if entity_entry and entity_entry.area_id == self.id:
                     return True
 
@@ -519,19 +524,20 @@ class MagicArea:
                 and "changes" in event_data
                 and "area_id" in event_data["changes"]
             ):
-                if (
-                    event_data["device_id"] in self._area_devices
-                    or event_data["changes"]["area_id"] == self.id
-                ):
+                # Removed from our area
+                if event_data["changes"]["area_id"] == self.id:
                     return True
 
-                return False
+            # Was from our area?
+            if event_data["device_id"] in self._area_devices:
+                return True
 
-            if action in ("create", "remove"):
-                device_registry = devicereg_async_get(self.hass)
-                device_entry = device_registry.async_get(event_data["device_id"])
-                if device_entry and device_entry.area_id == self.id:
-                    return True
+            device_registry = devicereg_async_get(self.hass)
+            device_entry = device_registry.async_get(event_data["device_id"])
+
+            # Is from our area
+            if device_entry and device_entry.area_id == self.id:
+                return True
 
             return False
 
@@ -670,6 +676,7 @@ class MagicMetaArea(MagicArea):
             self.hass, MagicAreasEvents.AREA_LOADED, self._handle_loaded_area
         )
 
+    @callback
     async def _handle_loaded_area(
         self, area_type: str, floor_id: int | None, area_id: str
     ) -> None:
