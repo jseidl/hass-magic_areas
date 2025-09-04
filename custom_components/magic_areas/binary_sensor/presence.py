@@ -470,7 +470,7 @@ class AreaStateTrackerEntity(BinaryMagicEntity):
                 entity = self.hass.states.get(sensor)
 
                 if not entity:
-                    _LOGGER.info(
+                    _LOGGER.debug(
                         "%s: Could not get sensor state: '%s' entity not found, skipping",
                         self.area.name,
                         sensor,

@@ -49,7 +49,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
             if entity_list:
                 self._tracked_entities.extend(entity_list)
 
-        _LOGGER.info("AreaAwareMediaPlayer loaded.")
+        _LOGGER.debug("AreaAwareMediaPlayer loaded.")
 
     def update_attributes(self):
         """Update entity attributes."""
@@ -170,7 +170,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
 
         # Fail early
         if not active_areas:
-            _LOGGER.info("No areas active. Ignoring.")
+            _LOGGER.debug("No areas active. Ignoring.")
             return
 
         # Gather media_player entities
@@ -179,7 +179,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
             media_players.extend(self.get_media_players_for_area(area))
 
         if not media_players:
-            _LOGGER.info(
+            _LOGGER.debug(
                 "%s: No media_player entities to forward. Ignoring.", self.name
             )
             return

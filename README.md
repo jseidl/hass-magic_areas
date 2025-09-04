@@ -81,7 +81,7 @@ Auto-aggregated binary sensors for safety-related device classes:
 
 ### ✋ Presence Hold
 
-Creates a switch to manually override presence in an area. Useful if sensors aren’t fully reliable yet or for guests. 📖 [Learn more](https://github.com/jseidl/hass-magic_areas/wiki/Presence-Hold)
+Creates a switch to manually override presence in an area. Useful if sensors aren’t fully reliable yet or for guests.
 
 ➡️ Optional timeout to reset the hold automatically
 

@@ -215,8 +215,8 @@ async def test_climate_control_logic(
     # A bit of voodoo waiting for the climate group to act
     # I know this is lame and kinda hail-mary but hey! if you know
     # how to fix it, let me know!
-    for _i in range(20):
-        await asyncio.sleep(1)
+    for _i in range(100):
+        await asyncio.sleep(0.1)
         await hass.async_block_till_done()
 
     climate_state = hass.states.get(MOCK_CLIMATE_ENTITY_ID)
