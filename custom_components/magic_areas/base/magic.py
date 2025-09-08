@@ -3,6 +3,7 @@
 import asyncio
 from datetime import UTC, datetime, timedelta
 import logging
+import random
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.switch.const import DOMAIN as SWITCH_DOMAIN
@@ -103,6 +104,7 @@ class MagicArea:
 
         # Timestamp for initialization / reload tests
         self.timestamp: datetime = datetime.now(UTC)
+        self.reloading: bool = False
 
         # Merged options
         area_config = dict(config.data)
@@ -611,7 +613,7 @@ class MagicMetaArea(MagicArea):
     async def initialize(self, _=None) -> None:
         """Initialize Meta area."""
         if self.initialized:
-            self.logger.warning("%s: Already initialized, ignoring.", self.name)
+            self.logger.debug("%s: Already initialized, ignoring.", self.name)
             return None
 
         self.logger.debug("%s: Initializing meta area...", self.name)
@@ -694,6 +696,10 @@ class MagicMetaArea(MagicArea):
         if not self.hass.is_running:
             return
 
+        # Ignore if already handling it
+        if self.reloading:
+            return
+
         # Handle Global
         if self.slug == MetaAreaType.GLOBAL:
             return await self.reload()
@@ -715,7 +721,15 @@ class MagicMetaArea(MagicArea):
         """Reload current entry."""
         self.logger.debug("%s: Reloading entry.", self.name)
 
-        # Give some time for areas to finish loading
-        await asyncio.sleep(MetaAreaAutoReloadSettings.DELAY)
+        # Give some time for areas to finish loading,
+        # randomize to prevent staggering the CPU with
+        # stacked reloads.
+        delay: float = random.uniform(
+            MetaAreaAutoReloadSettings.DELAY,
+            MetaAreaAutoReloadSettings.DELAY_MULTIPLIER
+            * MetaAreaAutoReloadSettings.DELAY,
+        )
+        self.reloading = True
+        await asyncio.sleep(delay)
 
         self.hass.config_entries.async_schedule_reload(self.hass_config.entry_id)

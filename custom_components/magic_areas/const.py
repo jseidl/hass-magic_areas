@@ -51,6 +51,7 @@ class MetaAreaAutoReloadSettings(IntEnum):
     """Settings for Meta-Area Auto Reload functionality."""
 
     DELAY = 3
+    DELAY_MULTIPLIER = 4
     THROTTLE = 5
 
 

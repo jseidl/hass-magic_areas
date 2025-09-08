@@ -72,6 +72,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             "%s: Reloading entry due entity registry change",
             config_entry.data[ATTR_NAME],
         )
+
         await _async_reload_entry()
 
     async def _async_setup_integration(*args, **kwargs) -> None:
