@@ -55,7 +55,6 @@ from custom_components.magic_areas.const import (
     MAGICAREAS_UNIQUEID_PREFIX,
     META_AREA_GLOBAL,
     MODULE_DATA,
-    AreaType,
     MagicAreasEvents,
     MetaAreaAutoReloadSettings,
     MetaAreaType,
@@ -549,6 +548,16 @@ class MagicArea:
 class MagicMetaArea(MagicArea):
     """Magic Meta Area class."""
 
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        area: BasicArea,
+        config: ConfigEntry,
+    ) -> None:
+        """Initialize the magic area with all the stuff."""
+        super().__init__(hass, area, config)
+        self.child_areas: list[str] = []
+
     def get_presence_sensors(self) -> list[str]:
         """Return list of entities used for presence tracking."""
 
@@ -619,6 +628,8 @@ class MagicMetaArea(MagicArea):
         self.logger.debug("%s: Initializing meta area...", self.name)
 
         await self.load_entities()
+
+        self.child_areas: list[str] = self.get_child_areas()
 
         self.finalize_init()
 
@@ -704,31 +715,38 @@ class MagicMetaArea(MagicArea):
         if self.slug == MetaAreaType.GLOBAL:
             return await self.reload()
 
-        # Handle Floors
-        if self.floor_id and self.floor_id == floor_id:
-            return await self.reload()
-
-        # Ignore area types we're not expecting
-        if area_type not in [AreaType.EXTERIOR, AreaType.INTERIOR]:
-            return
-
-        # Handle Interior/Exterior metas
-        if self.slug == area_type:
+        # Handle all non-Global meta-areas including floors
+        self.logger.warning(
+            "SS %s, AT %s, AI %s, CA: %s",
+            self.slug,
+            area_type,
+            area_id,
+            str(self.child_areas),
+        )
+        if area_type == self.slug or area_id in self.child_areas:
             return await self.reload()
 
     @Throttle(min_time=timedelta(seconds=MetaAreaAutoReloadSettings.THROTTLE))
     async def reload(self) -> None:
         """Reload current entry."""
-        self.logger.debug("%s: Reloading entry.", self.name)
+        self.logger.warning("%s: Reloading entry.", self.name)
 
         # Give some time for areas to finish loading,
         # randomize to prevent staggering the CPU with
         # stacked reloads.
+        max_delay: float = (
+            MetaAreaAutoReloadSettings.DELAY_MULTIPLIER
+            * MetaAreaAutoReloadSettings.DELAY
+        )
         delay: float = random.uniform(
             MetaAreaAutoReloadSettings.DELAY,
-            MetaAreaAutoReloadSettings.DELAY_MULTIPLIER
-            * MetaAreaAutoReloadSettings.DELAY,
+            max_delay,
         )
+
+        # Make Global load last
+        if self.slug == MetaAreaType.GLOBAL:
+            delay = max_delay
+
         self.reloading = True
         await asyncio.sleep(delay)
 
