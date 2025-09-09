@@ -554,9 +554,9 @@ class MagicMetaArea(MagicArea):
         area: BasicArea,
         config: ConfigEntry,
     ) -> None:
-        """Initialize the magic area with all the stuff."""
+        """Initialize the meta magic area with all the stuff."""
         super().__init__(hass, area, config)
-        self.child_areas: list[str] = []
+        self.child_areas: list[str] = self.get_child_areas()
 
     def get_presence_sensors(self) -> list[str]:
         """Return list of entities used for presence tracking."""
@@ -564,18 +564,17 @@ class MagicMetaArea(MagicArea):
         sensors: list[str] = []
 
         # MetaAreas track their children
-        child_areas = self.get_child_areas()  # pylint: disable=no-member
-        for child_area in child_areas:
+        for child_area in self.child_areas:
             entity_id = f"{BINARY_SENSOR_DOMAIN}.magic_areas_presence_tracking_{child_area}_area_state"
             sensors.append(entity_id)
         return sensors
 
     def get_active_areas(self):
         """Return areas that are occupied."""
-        areas = self.get_child_areas()
+
         active_areas = []
 
-        for area in areas:
+        for area in self.child_areas:
             try:
                 entity_id = f"binary_sensor.area_{area}"
                 entity = self.hass.states.get(entity_id)
@@ -629,8 +628,6 @@ class MagicMetaArea(MagicArea):
 
         await self.load_entities()
 
-        self.child_areas: list[str] = self.get_child_areas()
-
         self.finalize_init()
 
     async def load_entities(self) -> None:
@@ -638,13 +635,12 @@ class MagicMetaArea(MagicArea):
 
         entity_registry = entityreg_async_get(self.hass)
         entity_list: list[RegistryEntry] = []
-        child_areas = self.get_child_areas()
 
         data = self.hass.data[MODULE_DATA]
         for area_info in data.values():
             area: MagicArea = area_info[DATA_AREA_OBJECT]
 
-            if area.slug not in child_areas:
+            if area.slug not in self.child_areas:
                 continue
 
             # Force loading of magic entities
@@ -716,7 +712,7 @@ class MagicMetaArea(MagicArea):
             return await self.reload()
 
         # Handle all non-Global meta-areas including floors
-        self.logger.warning(
+        self.logger.info(
             "SS %s, AT %s, AI %s, CA: %s",
             self.slug,
             area_type,
@@ -729,7 +725,7 @@ class MagicMetaArea(MagicArea):
     @Throttle(min_time=timedelta(seconds=MetaAreaAutoReloadSettings.THROTTLE))
     async def reload(self) -> None:
         """Reload current entry."""
-        self.logger.warning("%s: Reloading entry.", self.name)
+        self.logger.info("%s: Reloading entry.", self.name)
 
         # Give some time for areas to finish loading,
         # randomize to prevent staggering the CPU with
