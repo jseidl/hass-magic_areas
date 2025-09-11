@@ -36,6 +36,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     @callback
     async def _async_reload_entry(*args, **kwargs) -> None:
+        # Prevent reloads if we're not fully loaded yet
+        if not hass.is_running:
+            return
+
         hass.config_entries.async_update_entry(
             config_entry,
             data={**config_entry.data, "entity_ts": datetime.now(UTC)},
@@ -68,6 +72,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             "%s: Reloading entry due entity registry change",
             config_entry.data[ATTR_NAME],
         )
+
         await _async_reload_entry()
 
     async def _async_setup_integration(*args, **kwargs) -> None:

@@ -11,6 +11,9 @@ __pycache__
 .vscode
 coverage.xml
 *.swp
+old/*
+tmp/*
+temp/*
 
 
 # Home Assistant configuration

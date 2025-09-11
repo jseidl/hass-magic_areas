@@ -1,5 +1,6 @@
 """Test for the logic on automatically reloading areas."""
 
+import asyncio
 from datetime import datetime
 import logging
 
@@ -11,7 +12,11 @@ from homeassistant.helpers.entity_registry import (
 )
 
 from custom_components.magic_areas.base.magic import MagicArea
-from custom_components.magic_areas.const import DATA_AREA_OBJECT, MODULE_DATA
+from custom_components.magic_areas.const import (
+    DATA_AREA_OBJECT,
+    MODULE_DATA,
+    MetaAreaAutoReloadSettings,
+)
 
 from tests.const import MockAreaIds
 from tests.mocks import MockBinarySensor
@@ -75,11 +80,11 @@ async def test_reload_on_entity_area_change(
     ],
     _setup_integration_all_areas_with_meta,
 ) -> None:
-    """Test that all areas reload when an entity changes state."""
+    """Test that only corresponding areas reload when an entity changes state."""
 
     # Check all areas' timestamp
     area_timestamp_map: dict[str, datetime] = {}
-    for area in ALL_AREAS:
+    for area in NORMAL_AREAS:
         area_object = get_entry_by_area_name(hass, area)
         assert area_object
         area_timestamp_map[area] = area_object.timestamp
@@ -88,16 +93,24 @@ async def test_reload_on_entity_area_change(
     event_data: _EventEntityRegistryUpdatedData_Update = {
         "action": "update",
         "entity_id": "sensor.test",
-        "changes": {"area_id": "living_room"},
+        "changes": {"area_id": MockAreaIds.KITCHEN.value},
     }
     hass.bus.async_fire(EVENT_ENTITY_REGISTRY_UPDATED, event_data)
     await hass.async_block_till_done()
 
+    # Sleep so we handle the reload delay
+    await asyncio.sleep(
+        MetaAreaAutoReloadSettings.DELAY * MetaAreaAutoReloadSettings.DELAY_MULTIPLIER
+    )
+
     # Check all areas' timestamp against the previous map
-    for area in ALL_AREAS:
+    for area in NORMAL_AREAS:
         area_object = get_entry_by_area_name(hass, area)
         assert area_object
-        assert area_timestamp_map[area] != area_object.timestamp
+        if area == MockAreaIds.KITCHEN.value:
+            assert area_timestamp_map[area] != area_object.timestamp
+        else:
+            assert area_timestamp_map[area] == area_object.timestamp
 
 
 async def test_meta_reload_from_single_reload(
@@ -137,6 +150,11 @@ async def test_meta_reload_from_single_reload(
         area_object = get_entry_by_area_name(hass, area_name)
         assert area_object
         assert area_object.timestamp == area_timestamp_map[area_name]
+
+    # Sleep so we handle the reload delay
+    await asyncio.sleep(
+        MetaAreaAutoReloadSettings.DELAY * MetaAreaAutoReloadSettings.DELAY_MULTIPLIER
+    )
 
     # Check corresponding area reloaded
     _assert_has_reloaded(MockAreaIds.KITCHEN.value)

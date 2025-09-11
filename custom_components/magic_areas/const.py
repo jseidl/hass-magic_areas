@@ -17,7 +17,7 @@ from homeassistant.components.device_tracker.const import (
 )
 from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
-from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
+from homeassistant.components.light.const import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
 from homeassistant.components.sensor.const import (
@@ -51,6 +51,7 @@ class MetaAreaAutoReloadSettings(IntEnum):
     """Settings for Meta-Area Auto Reload functionality."""
 
     DELAY = 3
+    DELAY_MULTIPLIER = 4
     THROTTLE = 5
 
 
