@@ -1,4 +1,4 @@
-# 📍 Concepts
+# 📍 Presence Sensing
 
 Magic Areas works by detecting presence within an area and triggering state changes or automations accordingly. It does this by monitoring presence-related events from specific Home Assistant entity types and interpreting their states to determine whether an area is occupied or clear.
 

@@ -1,6 +1,6 @@
 # Getting Started
 
-You’ve already [[installed|Installation]] Magic Areas—awesome! 🎉
+You’ve already [installed](installation.md) Magic Areas—awesome! 🎉
 Now let’s walk through how to set up your home with Magic Areas to make every room *magical*.
 
 ## 🏠 Step 1: Define Your Areas
@@ -17,7 +17,8 @@ After creating a Magic Area, go back to the **Integrations** page, find the Magi
 
 All options are available in the UI, and every setting includes a helpful description.
 
-> 💬 Not sure what a setting means? Join us on [Discord](https://discord.gg/3yu2F7bSaT)—we’d love to help!
+!!! question "Struggling to understand how a setting works?"
+    💬 Join us on [Discord](https://discord.gg/3yu2F7bSaT)—we’d love to help!
 
 ## 📥 Step 3: Include or Exclude Entities
 
@@ -33,7 +34,7 @@ However, not all entities can be assigned to areas (e.g., those without a `uniqu
 
 ## ✨ Step 4: Enable Features
 
-Magic Areas includes many powerful [[features|Features]]—from presence-based lighting to climate control and media routing.
+Magic Areas includes many powerful [features](../features/index.md)—from presence-based lighting to climate control and media routing.
 
 After the basic configuration, you’ll be prompted to select which features you want to enable for the area. The next screens will let you customize them in detail. Each setting includes descriptions to help you choose what fits best.
 
@@ -41,9 +42,9 @@ After the basic configuration, you’ll be prompted to select which features you
 
 No worries! Try the following:
 
-- Visit our [[Troubleshooting]] guide
+- Visit our [Troubleshooting](troubleshooting.md) guide
 - Join our [Discord server](https://discord.gg/3yu2F7bSaT) for real-time help
-- Or [open an issue](https://github.com/jseidl/hass-magic_areas/issues) on GitHub
+- Or [open an issue](https://github.com/jseidl/magic-areas/issues) on GitHub
 
 ---
 

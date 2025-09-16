@@ -6,7 +6,8 @@ theme:
     - navigation.tabs
     - navigation.sections
     - navigation.indexes
-    - toc.integrate
+    #- toc.integrate
+    - toc.follow
     - navigation.top
     - navigation.footer
     - search.suggest
@@ -29,7 +30,7 @@ theme:
         icon: material/toggle-switch
         name: Switch to light mode
   logo: https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/magic_areas/logo.png
-  favicon: https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/magic_areas/logo.png
+  favicon: https://brands.home-assistant.io/_/magic_areas/dark_icon.png
 extra:
   generator: false
 plugins:
@@ -37,6 +38,9 @@ plugins:
   - git-revision-date-localized:
       enable_creation_date: true
 markdown_extensions:
+  - toc:
+      permalink: true
+      title: On this page
   - admonition
   - pymdownx.superfences
   - pymdownx.tabbed:
