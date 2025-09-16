@@ -14,12 +14,14 @@ Instead of configuring each entity manually, Magic Areas leverages **areas**, **
 * Supports **secondary states** like `dark`, `sleep`, and `extended` for context-aware automation.
 * Provides **meta-areas** (e.g., *Interior*, *Exterior*, *Global*, *Floors*) to coordinate multiple areas at once.
 * Adds **advanced features** like:
-  * 📊 Aggregation sensors
-  * 🛡️ Area health monitoring
-  * 🎶 Area-aware media routing
-  * 🐝 Wasp-in-a-box logic
-  * ⏱️ Presence hold switches
-  * 🛰️ BLE tracker support
+    * 💡 Automatic Light Control
+    * 🌡️ Automatic Climate Control
+    * 📊 Aggregation sensors
+    * 🛡️ Area health monitoring
+    * 🎶 Area-aware media routing
+    * 🐝 Wasp-in-a-box logic
+    * ⏱️ Presence hold switches
+    * 🛰️ BLE tracker support
 
 ---
 
@@ -41,28 +43,12 @@ Step-by-step instructions to get started and troubleshoot:
 
 * [Installation](how-to/installation.md)
 * [Getting Started](how-to/getting-started.md)
+* [Implementation Ideas](how-to/implementation-ideas.md)
 * [Troubleshooting](how-to/troubleshooting.md)
 
 ### ⚡ Features
 
-Detailed documentation for each feature:
-
-* [Features Overview](features/index.md)
-* Smart Groups:
-  * [Light Groups](features/light-groups.md)
-  * [Fan Groups](features/fan-groups.md)
-  * [Climate Control](features/climate-control.md)
-* Simple Groups:
-  * [Cover Groups](features/cover-groups.md)
-  * [Media Player Groups](features/media-player-groups.md)
-* Sensors & Tracking:
-  * [Aggregation](features/aggregation.md)
-  * [Health Sensors](features/health-sensor.md)
-  * [BLE Tracker Sensors](features/ble-tracker-monitor.md)
-  * [Wasp in a Box](features/wasp-in-a-box.md)
-* Utilities:
-  * [Area-Aware Media Player](features/area-aware-media-player.md)
-  * [Presence Hold](features/presence-hold.md)
+Detailed documentation for each [feature](features/index.md).
 
 ---
 
@@ -72,6 +58,7 @@ Detailed documentation for each feature:
 2. Follow the [Getting Started](how-to/getting-started.md) guide to set up your first areas.
 3. Explore the [Features](features/index.md) to unlock the full potential of your smart home.
 
-💬 Need help? Join the [Magic Areas Discord](https://discord.gg/tvaS4BG5) or open an [issue on GitHub](https://github.com/jseidl/hass-magic_areas/issues).
+!!! question "Need help?"
+    💬 Join the [Magic Areas Discord](https://discord.gg/tvaS4BG5) or open an [issue on GitHub](https://github.com/jseidl/hass-magic_areas/issues).
 
 ---
