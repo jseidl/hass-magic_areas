@@ -1,6 +1,6 @@
 # Bluetooth & Bluetooth LE (BLE) Tracker Monitor
 
-The **BLE Tracker Monitor** feature streamlines presence detection using **text-based BLE sensors**, such as those from Bermuda, ESPresense, or Room Assistant.
+The **BLE Tracker Monitor** feature streamlines presence detection using **text-based BLE sensors**, such as those from [Bermuda](https://github.com/agittins/bermuda), [ESPresence](https://espresense.com/), or [Room Assistant](https://github.com/mKeRix/room-assistant).
 
 ## 📍 Why use it?
 

@@ -1,4 +1,4 @@
-# Area Health Sensors
+# Area Health Sensor
 
 The **Area Health** feature monitors the safety and integrity of an area by aggregating signals from critical sensor types—alerting you when something might be wrong.
 

@@ -20,11 +20,11 @@ theme:
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to dark mode
-      primary: indigo
-      accent: yellow
+      primary: deep-purple
+      accent: amber
     - scheme: slate
-      primary: indigo
-      accent: yellow
+      primary: deep-purple
+      accent: amber
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode
