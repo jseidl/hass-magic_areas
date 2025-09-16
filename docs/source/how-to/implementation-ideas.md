@@ -48,7 +48,7 @@ This is particularly useful for detecting workstation use through monitor power 
 This is an interesting concept where when movement is detected on a room with closed doors, presence is inferred to be kept until a door is open. This is ideal for rooms where you usually close the door when you're in, like bathrooms (if you to pee with the doors open, then that isn't for you), bedrooms at bedtime, garages, laundry rooms etc. I will re-mention Wasp in a box on appropriate rooms below.
 
 !!! warning
-    Wasp in a box track [[aggregates|Aggregation]] sensors and thus will consider ALL doors and motion sensors in an area.
+    Wasp in a box track [aggregates](../features/aggregation.md) sensors and thus will consider ALL doors and motion sensors in an area.
 
 ### BLE Trackers
 
@@ -175,7 +175,7 @@ Wasp in a box are very good at this, have a contact sensor at the door, a batter
     "Clear timeout" setting for bathrooms is an artform and you will have to fiddle with it a bit as it will depend on your presence sources and how well they work. If wasp in a box is working reliable for you, you may be able to set a low "clear timeout".
 
 !!! tip
-    If you have an exhaust fan in your bathroom, you may want to use a humidity sensor paired with the [[Fan Groups|Fan-Groups]] feature tracking `humidity` of the area. This will automatically control your bathroom exhaust as needed.
+    If you have an exhaust fan in your bathroom, you may want to use a humidity sensor paired with the [Fan Groups](../features/fan-groups.md) feature tracking `humidity` of the area. This will automatically control your bathroom exhaust as needed.
 
 ### Bedrooms
 
@@ -190,7 +190,7 @@ Wasp-in-a-box works well for bedrooms but only for bedtime when doors are actual
     If you have a TV on your bedroom, you can add it as a presence source the same way as in the Family Room.
 
 !!! tip
-    If you have fans in your bedroom, you can use [[Fan Groups|Fan-Groups]] to control them based off the area's temperature (you will need a temperature sensor in the area, evidently).
+    If you have fans in your bedroom, you can use [Fan Groups](../features/fan-groups.md) to control them based off the area's temperature (you will need a temperature sensor in the area, evidently).
 
 !!! tip
     On your own bedroom, you may get away from using an mmWave sensor if you have a BLE tracker and usually have your phone or smartwatch on you all the time.
@@ -228,7 +228,7 @@ This allows you to have things like:
 * Average illuminance of the exterior (to use as an "Area light sensor").
 * Control all lights in a floor at the same time.
 
-There are additional features that are exclusive to meta-areas such as the [[Area-aware media player|Area-aware-media-player]] and features that are not exclusive to meta-areas but makes more sense in meta-areas such as [[Climate control|Climate-control]].
+There are additional features that are exclusive to meta-areas such as the [Area-aware media player](../features/area-aware-media-player.md) and features that are not exclusive to meta-areas but makes more sense in meta-areas such as [Climate control](../features/climate-control.md).
 
 ### Exterior meta-area
 
@@ -236,4 +236,4 @@ I do recommend having illuminance sensors across your exterior areas for more ac
 
 ### Floor meta-areas
 
-I love those areas to tie my thermostat to the aggregate state of floors. Since I have a dual zone HVAC that exposes two climate entities to home assistant, I add [[Climate control|Climate-control]] to each floor pointing to each climate device. If you have a single zone HVAC in a two story house, you can use the Interior meta-area instead.
+I love those areas to tie my thermostat to the aggregate state of floors. Since I have a dual zone HVAC that exposes two climate entities to home assistant, I add [Climate control](../features/climate-control.md) to each floor pointing to each climate device. If you have a single zone HVAC in a two story house, you can use the Interior meta-area instead.
