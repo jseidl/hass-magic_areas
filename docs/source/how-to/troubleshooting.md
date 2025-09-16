@@ -1,0 +1,78 @@
+# Troubleshooting
+
+If you’ve followed our [[Installation]] and [[Getting Started|Getting-Started]] guides, things should be smooth sailing 🛶—but if something’s acting weird, this page will help you debug it.
+
+## 🧪 Step 1: Enable Logging
+
+The first step to troubleshooting is **turning on logging** so you can see what’s going on behind the scenes.
+
+> 🟡 Tip: Use `info` level for general debugging. Use `debug` only as a last resort—it’s very verbose.
+
+### 🔍 Basic Logging Setup
+
+Add this to your `configuration.yaml`:
+
+```yaml
+logger:
+  default: warning
+  logs:
+    custom_components.magic_areas: info
+```
+
+### 🎯 Debug a Specific Feature
+
+If you’re debugging a specific platform (like `media_player` for [[Media Player Groups|Media-Player-Groups]] or [[Area-Aware Media Player|Area-Aware-Media-Player]]), you can target that platform directly:
+
+```yaml
+logger:
+  default: warning
+  logs:
+    custom_components.magic_areas.media_player: debug
+```
+
+### 🧱 Debug Area Initialization / Load Issues
+
+To debug area loading and avoid noisy output from other features, you can enable debug globally for `magic_areas` while silencing the individual platforms:
+
+```yaml
+logger:
+  default: warn
+  logs:
+    custom_components.magic_areas: debug
+    custom_components.magic_areas.base: warn
+    custom_components.magic_areas.binary_sensor: warn
+    custom_components.magic_areas.light: warn
+    custom_components.magic_areas.climate: warn
+    custom_components.magic_areas.media_player: warn
+    custom_components.magic_areas.sensor: warn
+    custom_components.magic_areas.switch: warn
+    custom_components.magic_areas.cover: warn
+    custom_components.magic_areas.config_flow: warn
+```
+
+Once enabled, restart Home Assistant and check the **Logs** section under **Developer Tools**. Most errors are self-explanatory.
+
+## ❗ Common Issues
+
+### 🚫 Entity Not Being Added to an Area
+
+If an entity doesn’t seem to be included in a Magic Area:
+
+1. Go to **Developer Tools > States** or use the **Entity Filter** menu.
+2. Check that the entity:
+   - ✅ Belongs to a [[supported platform|Presence-Sensing#supported-presence-sources]]
+   - ✅ (If it’s a `binary_sensor`) Has a `device_class` that is [[supported for presence sensing|Presence-Sensing]]
+   - ✅ Is actually assigned to an area in Home Assistant
+
+If any of the above isn’t true, the entity may not be recognized by Magic Areas. Use `Include Entities` in the configuration to override it if needed.
+
+## 🆘 Still Stuck?
+
+No worries! You can:
+
+- Open a [GitHub issue](https://github.com/jseidl/hass-magic_areas/issues) with:
+  - A **clear description** of your setup and what’s going wrong
+  - A **log excerpt** showing the problem (please format it!)
+- Join our [Discord community](https://discord.gg/3yu2F7bSaT) for help from other Magic Area users
+
+We’re happy to help you get everything working! 💫
