@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -1158,7 +1156,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -1167,7 +1167,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1399,6 +1399,103 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧠 How It Works
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#delay-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⏱️ Delay Behavior
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wasp-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⏳ Wasp Timeout
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sensor-types-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      📦 Sensor Types Used
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📦 Sensor Types Used">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#wasp-sensors-configurable" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wasp Sensors 🐝 (Configurable)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#box-sensors-auto-detected" class="md-nav__link">
+    <span class="md-ellipsis">
+      Box Sensors 📦 (Auto-detected)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#presence-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Presence Integration
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1416,10 +1513,10 @@
   
 
 
-<h1 id="wasp-in-a-box-sensor">Wasp-in-a-Box Sensor</h1>
+<h1 id="wasp-in-a-box-sensor">Wasp-in-a-Box Sensor<a class="headerlink" href="#wasp-in-a-box-sensor" title="Permanent link">&para;</a></h1>
 <p>The <strong>Wasp in a Box</strong> 🐝📦 feature improves presence detection by adding <strong>contextual logic</strong> to motion-based sensors using an associated door or entry sensor.</p>
 <p>It’s based on a simple concept:</p>
-<h2 id="how-it-works">🧠 How It Works</h2>
+<h2 id="how-it-works">🧠 How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
 <ol>
 <li>If we <strong>see a wasp</strong>, there is a wasp in the box.</li>
 <li>If we <strong>close the box</strong> while the wasp is inside, the wasp stays inside.</li>
@@ -1435,7 +1532,7 @@
 <li>Automatically use it for presence tracking (replacing or supplementing your regular motion sensors).</li>
 <li>Use the area’s <strong>aggregated wasp and box sensors</strong> (see below).</li>
 </ul>
-<h2 id="delay-behavior">⏱️ Delay Behavior</h2>
+<h2 id="delay-behavior">⏱️ Delay Behavior<a class="headerlink" href="#delay-behavior" title="Permanent link">&para;</a></h2>
 <p>Wasp in a Box forces the sensor <strong>off</strong> during a "box event" (i.e., door/garage opens or closes), and only checks for wasps after a configurable <code>delay</code>.</p>
 <p>This ensures:</p>
 <ul>
@@ -1449,10 +1546,10 @@
 <p class="admonition-title">Warning</p>
 <p>To tune the delay, trigger your motion sensor and immediately leave, see how long it takes to clear. Repeat this test multiple times and average out the results. Add a few seconds to be safe.</p>
 </div>
-<h2 id="wasp-timeout">⏳ Wasp Timeout</h2>
+<h2 id="wasp-timeout">⏳ Wasp Timeout<a class="headerlink" href="#wasp-timeout" title="Permanent link">&para;</a></h2>
 <p>Motion sensors might flicker when doors are closed, causing a false-positive deadlock. Setting a Wasp timeout will force the wasp out of the box after a period (configurable) of inactivity.</p>
-<h2 id="sensor-types-used">📦 Sensor Types Used</h2>
-<h3 id="wasp-sensors-configurable">Wasp Sensors 🐝 (Configurable)</h3>
+<h2 id="sensor-types-used">📦 Sensor Types Used<a class="headerlink" href="#sensor-types-used" title="Permanent link">&para;</a></h2>
+<h3 id="wasp-sensors-configurable">Wasp Sensors 🐝 (Configurable)<a class="headerlink" href="#wasp-sensors-configurable" title="Permanent link">&para;</a></h3>
 <p>These indicate movement inside the area:</p>
 <ul>
 <li><code>motion</code> (default)</li>
@@ -1460,7 +1557,7 @@
 <li><code>presence</code></li>
 </ul>
 <p>You can configure which device classes to treat as wasps.</p>
-<h3 id="box-sensors-auto-detected">Box Sensors 📦 (Auto-detected)</h3>
+<h3 id="box-sensors-auto-detected">Box Sensors 📦 (Auto-detected)<a class="headerlink" href="#box-sensors-auto-detected" title="Permanent link">&para;</a></h3>
 <p>These indicate entry/exit points (the "box"):</p>
 <ul>
 <li><code>door</code></li>
@@ -1471,7 +1568,7 @@
 <p class="admonition-title">Failure</p>
 <p>If you have doors you use for presence sensing that are not room access doors (e.g. cabinet doors, fridge doors), those will not work with Wasp in a Box. Exclude this doors from the area and create template sensors of device class <code>presence</code> based on their state, then add those template sensors to the area.</p>
 </div>
-<h2 id="presence-integration">✅ Presence Integration</h2>
+<h2 id="presence-integration">✅ Presence Integration<a class="headerlink" href="#presence-integration" title="Permanent link">&para;</a></h2>
 <p>Once enabled, Magic Areas will:</p>
 <ul>
 <li>Automatically create a <code>binary_sensor.magic_areas_wiab_$area</code></li>
@@ -1613,7 +1710,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>

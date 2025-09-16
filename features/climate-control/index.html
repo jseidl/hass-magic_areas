@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -896,7 +894,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -905,7 +905,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1399,6 +1399,103 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⚙️ How it works
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧠 Usage Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🧠 Usage Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lower-temperature-at-night" class="md-nav__link">
+    <span class="md-ellipsis">
+      🛌 Lower temperature at night
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resume-comfort-in-the-morning" class="md-nav__link">
+    <span class="md-ellipsis">
+      🌅 Resume comfort in the morning
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delay-climate-change-until-extended-occupancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⏳ Delay climate change until extended occupancy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce-energy-use-when-no-ones-home" class="md-nav__link">
+    <span class="md-ellipsis">
+      🌇 Reduce energy use when no one’s home
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#floor-level-climate-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏠 Floor-level climate control
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1416,46 +1513,46 @@
   
 
 
-<h1 id="climate-control">Climate Control</h1>
+<h1 id="climate-control">Climate Control<a class="headerlink" href="#climate-control" title="Permanent link">&para;</a></h1>
 <p>Climate control allows you to map area states to climate device presets.</p>
 <p>When configuring Climate Control, you will first be asked to select a climate device which Magic Areas will then pull the available presets for mapping in the next screen.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>🧠 Climate control is best used in meta-areas such as Interior or Floor-meta areas. Meta-areas’ secondary states (such as sleep 🛌) are calculated from child areas. Secondary state calculation method for meta-areas is available in the UI.</p>
 </div>
-<h2 id="how-it-works">⚙️ How it works</h2>
+<h2 id="how-it-works">⚙️ How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
 <p>Pretty simple: when the state changes (either primary [<code>occupied</code>/<code>clear</code>] or secondary [<code>sleep</code> / <code>dark</code> / <code>extended</code>]), the configured climate device will be set to the mapped preset.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>If you leave a preset mapping blank, climate control will not change any presets.
 This is useful if you don’t want climate preset to change immediately, but only after being occupied for an <code>extended</code> time ⏳.</p>
 </div>
-<h2 id="usage-examples">🧠 Usage Examples</h2>
-<h3 id="lower-temperature-at-night">🛌 Lower temperature at night</h3>
+<h2 id="usage-examples">🧠 Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
+<h3 id="lower-temperature-at-night">🛌 Lower temperature at night<a class="headerlink" href="#lower-temperature-at-night" title="Permanent link">&para;</a></h3>
 <p>Map the <code>sleep</code> state to a cooler preset like <code>sleep</code> or <code>eco</code>.</p>
 <ul>
 <li><strong>Why</strong>: Many people sleep better at lower temperatures.</li>
 <li><strong>How</strong>: When the meta-area enters the <code>sleep</code> state, Magic Areas sets the climate to your <code>sleep</code> preset automatically.</li>
 </ul>
-<h3 id="resume-comfort-in-the-morning">🌅 Resume comfort in the morning</h3>
+<h3 id="resume-comfort-in-the-morning">🌅 Resume comfort in the morning<a class="headerlink" href="#resume-comfort-in-the-morning" title="Permanent link">&para;</a></h3>
 <p>Map the <code>occupied</code> state to a <code>home</code> or <code>comfort</code> preset.</p>
 <ul>
 <li><strong>Why</strong>: As the home becomes active in the morning, you want a warmer or cooler preset for comfort.</li>
 <li><strong>How</strong>: As soon as presence is detected (i.e., <code>occupied</code>), Magic Areas switches the climate back to the desired preset.</li>
 </ul>
-<h3 id="delay-climate-change-until-extended-occupancy">⏳ Delay climate change until extended occupancy</h3>
+<h3 id="delay-climate-change-until-extended-occupancy">⏳ Delay climate change until extended occupancy<a class="headerlink" href="#delay-climate-change-until-extended-occupancy" title="Permanent link">&para;</a></h3>
 <p>Leave the <code>occupied</code> state preset blank, but set a preset for <code>extended</code>.</p>
 <ul>
 <li><strong>Why</strong>: Avoid premature heating/cooling for brief visits in areas like a study or guest room.</li>
 <li><strong>How</strong>: The preset only changes after the area has been occupied for an extended period.</li>
 </ul>
-<h3 id="reduce-energy-use-when-no-ones-home">🌇 Reduce energy use when no one’s home</h3>
+<h3 id="reduce-energy-use-when-no-ones-home">🌇 Reduce energy use when no one’s home<a class="headerlink" href="#reduce-energy-use-when-no-ones-home" title="Permanent link">&para;</a></h3>
 <p>Map the <code>clear</code> state to an energy-saving preset like <code>away</code> or <code>eco</code>.</p>
 <ul>
 <li><strong>Why</strong>: No one's home, no need to run HVAC at full blast.</li>
 <li><strong>How</strong>: When the entire meta-area becomes <code>clear</code>, Magic Areas switches the climate system to a lower-energy mode.</li>
 </ul>
-<h3 id="floor-level-climate-control">🏠 Floor-level climate control</h3>
+<h3 id="floor-level-climate-control">🏠 Floor-level climate control<a class="headerlink" href="#floor-level-climate-control" title="Permanent link">&para;</a></h3>
 <p>Use climate control on a <code>floor</code> meta-area instead of per-room.</p>
 <ul>
 <li><strong>Why</strong>: Helps prevent conflicting presets if individual rooms are occupied while the floor as a whole is still considered <code>clear</code>.</li>
@@ -1588,7 +1685,7 @@ This is useful if you don’t want climate preset to change immediately, but onl
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>

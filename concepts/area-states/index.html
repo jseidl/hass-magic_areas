@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -523,7 +521,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -532,7 +532,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1343,6 +1343,61 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#presence-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      🟢 Presence State
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#secondary-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      🌙 Secondary States
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-secondary-states-are-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      💡 How Secondary States Are Used
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1360,9 +1415,9 @@
   
 
 
-<h1 id="area-states">🏠 Area States</h1>
+<h1 id="area-states">🏠 Area States<a class="headerlink" href="#area-states" title="Permanent link">&para;</a></h1>
 <p>Magic Areas’ primary goal is to understand and track an <strong>area’s presence state</strong> — that is, whether someone is currently there. But it doesn’t stop there: Magic Areas also monitors a set of <strong>secondary states</strong> that enrich how automations behave in each area.</p>
-<h2 id="presence-state">🟢 Presence State</h2>
+<h2 id="presence-state">🟢 Presence State<a class="headerlink" href="#presence-state" title="Permanent link">&para;</a></h2>
 <p>For each area you make it magic, Magic Areas does the following:</p>
 <ol>
 <li>Scans the area for all associated entities.</li>
@@ -1380,7 +1435,7 @@
 <p>Magic Areas automatically listen for area changes on entities.
 Changing an entity's area will cause Magic Areas to reload.</p>
 </div>
-<h2 id="secondary-states">🌙 Secondary States</h2>
+<h2 id="secondary-states">🌙 Secondary States<a class="headerlink" href="#secondary-states" title="Permanent link">&para;</a></h2>
 <p>In addition to presence, Magic Areas tracks a set of <strong>secondary states</strong> that provide context about the area. These are based on specific configurable entities:</p>
 <table>
 <thead>
@@ -1409,7 +1464,7 @@ Changing an entity's area will cause Magic Areas to reload.</p>
 </tbody>
 </table>
 <p>Secondary states are optional but very useful — especially when layering automations or refining behavior per room.</p>
-<h2 id="how-secondary-states-are-used">💡 How Secondary States Are Used</h2>
+<h2 id="how-secondary-states-are-used">💡 How Secondary States Are Used<a class="headerlink" href="#how-secondary-states-are-used" title="Permanent link">&para;</a></h2>
 <p>Several Magic Areas features take advantage of these secondary states to fine-tune their behavior:</p>
 <ul>
 <li>
@@ -1550,7 +1605,7 @@ Changing an entity's area will cause Magic Areas to reload.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>

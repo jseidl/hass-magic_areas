@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -1264,7 +1262,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -1273,7 +1273,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1357,6 +1357,61 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#timeout-option" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⏳ Timeout Option
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Cases
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1374,18 +1429,18 @@
   
 
 
-<h1 id="presence-hold">Presence Hold</h1>
+<h1 id="presence-hold">Presence Hold<a class="headerlink" href="#presence-hold" title="Permanent link">&para;</a></h1>
 <p>The <strong>Presence Hold</strong> 🔒 feature creates a dedicated <a href="https://www.home-assistant.io/integrations/switch/">switch</a> for an area that acts as a <strong>manual override presence sensor</strong>.</p>
 <p>This allows you to <strong>force the area’s presence state to <code>occupied</code></strong> by toggling the switch on, regardless of other presence detections.</p>
-<h2 id="timeout-option">⏳ Timeout Option</h2>
+<h2 id="timeout-option">⏳ Timeout Option<a class="headerlink" href="#timeout-option" title="Permanent link">&para;</a></h2>
 <p>You can configure an optional <strong>timeout (in seconds)</strong> after which the switch will automatically turn <code>off</code>, releasing the override and allowing presence detection to resume normally.</p>
-<h2 id="use-cases">Use Cases</h2>
+<h2 id="use-cases">Use Cases<a class="headerlink" href="#use-cases" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Manually mark a room as occupied even if presence sensors don’t detect anyone (e.g., pets, guests)</li>
 <li>Keep an area “occupied” temporarily for testing automations or events</li>
 <li>Override presence during unusual circumstances like maintenance or cleaning</li>
 </ul>
-<h2 id="how-it-works">How It Works</h2>
+<h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Turning the Presence Hold switch <strong><code>on</code></strong> forces the area presence to <code>occupied</code></li>
 <li>When <strong><code>off</code></strong>, presence detection behaves normally based on configured sensors and logic</li>
@@ -1516,7 +1571,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>

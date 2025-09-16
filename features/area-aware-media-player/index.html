@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -1241,7 +1239,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -1250,7 +1250,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1414,6 +1414,118 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎛️ Configuration Options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🎛️ Configuration Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notification-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔊 Notification Devices
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notify-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      🕒 Notify States
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 How It Works
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚀 How It Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#playback-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Playback Rules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-tts-notification" class="md-nav__link">
+    <span class="md-ellipsis">
+      📣 Example: TTS Notification
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-notify-tts-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      🗣️ Example: Notify TTS Integration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔗 Related
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1431,7 +1543,7 @@
   
 
 
-<h1 id="area-aware-media-player">Area-Aware Media Player</h1>
+<h1 id="area-aware-media-player">Area-Aware Media Player<a class="headerlink" href="#area-aware-media-player" title="Permanent link">&para;</a></h1>
 <p>The <strong>Area-Aware Media Player</strong> 🏠 is a virtual <code>media_player</code> entity that <strong>automatically routes <code>play_media</code> actions</strong> to actual <code>media_player</code> devices in <strong>occupied areas only</strong>.</p>
 <p>This is especially useful for:</p>
 <ul>
@@ -1444,18 +1556,18 @@
 <p class="admonition-title">Tip</p>
 <p>Works great with <a href="https://www.home-assistant.io/integrations/alert/">Home Assistant Alerts</a> and other notification automations.</p>
 </div>
-<h2 id="configuration-options">🎛️ Configuration Options</h2>
+<h2 id="configuration-options">🎛️ Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>This feature must be <strong>enabled per area</strong>. If an area has it disabled, it will not participate in media routing—even if it's occupied.</p>
 </div>
-<h3 id="notification-devices">🔊 Notification Devices</h3>
+<h3 id="notification-devices">🔊 Notification Devices<a class="headerlink" href="#notification-devices" title="Permanent link">&para;</a></h3>
 <p>Select which <code>media_player</code> entities in an area will be used for playback.</p>
 <ul>
 <li>Leave blank to include <strong>all media players in the area</strong> (default)</li>
 <li>Or choose specific ones (e.g., only cast devices or smart speakers)</li>
 </ul>
-<h3 id="notify-states">🕒 Notify States</h3>
+<h3 id="notify-states">🕒 Notify States<a class="headerlink" href="#notify-states" title="Permanent link">&para;</a></h3>
 <p>Define which area states allow notifications to be played in that area.</p>
 <ul>
 <li><strong>Default:</strong> <code>extended</code>
@@ -1468,19 +1580,19 @@
 <li>Or any custom-defined secondary state</li>
 </ul>
 <p>💡 <em>Use <code>occupied</code> for immediate feedback, or restrict to <code>extended</code> for less frequent areas like bedrooms.</em></p>
-<h2 id="how-it-works">🚀 How It Works</h2>
+<h2 id="how-it-works">🚀 How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
 <p>When you send a <code>play_media</code> command to <code>media_player.magic_areas_area_aware_media_player_global</code>, Magic Areas will:</p>
 <ol>
 <li><strong>Check each area</strong> to see if it's eligible (feature enabled, state allowed, devices available)</li>
 <li><strong>Send the media</strong> to all appropriate devices in those areas</li>
 </ol>
-<h3 id="playback-rules">✅ Playback Rules</h3>
+<h3 id="playback-rules">✅ Playback Rules<a class="headerlink" href="#playback-rules" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Only <strong>occupied areas</strong> matching the configured states will receive audio</li>
 <li>Media is <strong>duplicated</strong> across multiple areas if more than one qualifies</li>
 <li><strong>No playback</strong> occurs in sleeping, empty, or excluded areas</li>
 </ul>
-<h2 id="example-tts-notification">📣 Example: TTS Notification</h2>
+<h2 id="example-tts-notification">📣 Example: TTS Notification<a class="headerlink" href="#example-tts-notification" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nt">service</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">media_player.play_media</span>
 <span class="nt">target</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">entity_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">media_player.magic_areas_area_aware_media_player_global</span>
@@ -1489,7 +1601,7 @@
 <span class="w">  </span><span class="nt">media_content_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;media-source://tts/google_translate?message=The+garage+door+was+left+open&quot;</span>
 </code></pre></div>
 <p>This will play the message <strong>only in occupied areas</strong> using configured media players.</p>
-<h2 id="example-notify-tts-integration">🗣️ Example: Notify TTS Integration</h2>
+<h2 id="example-notify-tts-integration">🗣️ Example: Notify TTS Integration<a class="headerlink" href="#example-notify-tts-integration" title="Permanent link">&para;</a></h2>
 <p>You can use this feature as a <strong>TTS notification target</strong> by configuring a <code>notify</code> service in your <code>configuration.yaml</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">notify</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">platform</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tts</span>
@@ -1503,7 +1615,7 @@
 <span class="w">  </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;There&#39;s</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">problem</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">laundry</span><span class="nv"> </span><span class="s">room.&quot;</span>
 </code></pre></div>
 <p>This will speak the message <strong>only where people are present</strong>.</p>
-<h2 id="related">🔗 Related</h2>
+<h2 id="related">🔗 Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
 <ul>
 <li>See <a href="../health-sensor/">Area Health</a> for how you can combine this with intelligent alerting.</li>
 <li>Read more about <a href="https://www.home-assistant.io/integrations/notify.tts/">TTS notifications</a>.</li>
@@ -1631,7 +1743,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>

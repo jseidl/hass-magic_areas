@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -1274,6 +1272,61 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#presence-sensing" class="md-nav__link">
+    <span class="md-ellipsis">
+      📍 Presence Sensing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#area-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏠 Area States
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meta-areas" class="md-nav__link">
+    <span class="md-ellipsis">
+      🌍 Meta-Areas
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1291,20 +1344,20 @@
   
 
 
-<h1 id="concepts">🧠 Concepts</h1>
+<h1 id="concepts">🧠 Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h1>
 <p>Before diving into the features of Magic Areas, it’s important to understand the <strong>core concepts</strong>. These lay the groundwork for how the integration works and why it’s so powerful.</p>
 <p>Magic Areas extends Home Assistant’s built-in <strong>Areas</strong> model with advanced logic and automation. It does this by sensing <strong>presence</strong>, calculating <strong>states</strong>, and even creating <strong>meta-areas</strong> that combine multiple rooms or zones.</p>
 <hr />
-<h2 id="presence-sensing">📍 Presence Sensing</h2>
+<h2 id="presence-sensing">📍 Presence Sensing<a class="headerlink" href="#presence-sensing" title="Permanent link">&para;</a></h2>
 <p>Presence sensing is at the heart of Magic Areas.
 By monitoring entities such as motion sensors, device trackers, and media players, Magic Areas determines if an area is <strong>occupied</strong> or <strong>clear</strong>.</p>
 <p>➡️ Learn more: <a href="presence-sensing/">Presence Sensing</a></p>
 <hr />
-<h2 id="area-states">🏠 Area States</h2>
+<h2 id="area-states">🏠 Area States<a class="headerlink" href="#area-states" title="Permanent link">&para;</a></h2>
 <p>Beyond simple presence, Magic Areas tracks <strong>secondary states</strong> like <code>dark</code>, <code>sleep</code>, and <code>extended</code>. These states allow automations to adapt to context—for example, using different lighting at night versus during the day.</p>
 <p>➡️ Learn more: <a href="area-states/">Area States</a></p>
 <hr />
-<h2 id="meta-areas">🌍 Meta-Areas</h2>
+<h2 id="meta-areas">🌍 Meta-Areas<a class="headerlink" href="#meta-areas" title="Permanent link">&para;</a></h2>
 <p>Meta-Areas are <strong>virtual areas</strong> that represent collections of physical areas. Examples include:</p>
 <ul>
 <li><strong>Interior</strong> (all indoor areas)</li>
@@ -1439,7 +1492,7 @@ By monitoring entities such as motion sensors, device trackers, and media player
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>

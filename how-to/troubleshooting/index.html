@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -698,7 +696,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -707,7 +707,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1391,6 +1391,109 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-enable-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧪 Step 1: Enable Logging
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🧪 Step 1: Enable Logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-logging-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔍 Basic Logging Setup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-a-specific-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎯 Debug a Specific Feature
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-area-initialization-load-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧱 Debug Area Initialization / Load Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❗ Common Issues
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="❗ Common Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#entity-not-being-added-to-an-area" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚫 Entity Not Being Added to an Area
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#still-stuck" class="md-nav__link">
+    <span class="md-ellipsis">
+      🆘 Still Stuck?
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1408,28 +1511,28 @@
   
 
 
-<h1 id="troubleshooting">Troubleshooting</h1>
+<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
 <p>If you’ve followed our [[Installation]] and [[Getting Started|Getting-Started]] guides, things should be smooth sailing 🛶—but if something’s acting weird, this page will help you debug it.</p>
-<h2 id="step-1-enable-logging">🧪 Step 1: Enable Logging</h2>
+<h2 id="step-1-enable-logging">🧪 Step 1: Enable Logging<a class="headerlink" href="#step-1-enable-logging" title="Permanent link">&para;</a></h2>
 <p>The first step to troubleshooting is <strong>turning on logging</strong> so you can see what’s going on behind the scenes.</p>
 <blockquote>
 <p>🟡 Tip: Use <code>info</code> level for general debugging. Use <code>debug</code> only as a last resort—it’s very verbose.</p>
 </blockquote>
-<h3 id="basic-logging-setup">🔍 Basic Logging Setup</h3>
+<h3 id="basic-logging-setup">🔍 Basic Logging Setup<a class="headerlink" href="#basic-logging-setup" title="Permanent link">&para;</a></h3>
 <p>Add this to your <code>configuration.yaml</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">logger</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
 <span class="w">  </span><span class="nt">logs</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">custom_components.magic_areas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">info</span>
 </code></pre></div>
-<h3 id="debug-a-specific-feature">🎯 Debug a Specific Feature</h3>
+<h3 id="debug-a-specific-feature">🎯 Debug a Specific Feature<a class="headerlink" href="#debug-a-specific-feature" title="Permanent link">&para;</a></h3>
 <p>If you’re debugging a specific platform (like <code>media_player</code> for [[Media Player Groups|Media-Player-Groups]] or [[Area-Aware Media Player|Area-Aware-Media-Player]]), you can target that platform directly:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">logger</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
 <span class="w">  </span><span class="nt">logs</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">custom_components.magic_areas.media_player</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">debug</span>
 </code></pre></div>
-<h3 id="debug-area-initialization-load-issues">🧱 Debug Area Initialization / Load Issues</h3>
+<h3 id="debug-area-initialization-load-issues">🧱 Debug Area Initialization / Load Issues<a class="headerlink" href="#debug-area-initialization-load-issues" title="Permanent link">&para;</a></h3>
 <p>To debug area loading and avoid noisy output from other features, you can enable debug globally for <code>magic_areas</code> while silencing the individual platforms:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">logger</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warn</span>
@@ -1446,8 +1549,8 @@
 <span class="w">    </span><span class="nt">custom_components.magic_areas.config_flow</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warn</span>
 </code></pre></div>
 <p>Once enabled, restart Home Assistant and check the <strong>Logs</strong> section under <strong>Developer Tools</strong>. Most errors are self-explanatory.</p>
-<h2 id="common-issues">❗ Common Issues</h2>
-<h3 id="entity-not-being-added-to-an-area">🚫 Entity Not Being Added to an Area</h3>
+<h2 id="common-issues">❗ Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h2>
+<h3 id="entity-not-being-added-to-an-area">🚫 Entity Not Being Added to an Area<a class="headerlink" href="#entity-not-being-added-to-an-area" title="Permanent link">&para;</a></h3>
 <p>If an entity doesn’t seem to be included in a Magic Area:</p>
 <ol>
 <li>Go to <strong>Developer Tools &gt; States</strong> or use the <strong>Entity Filter</strong> menu.</li>
@@ -1457,7 +1560,7 @@
 <li>✅ Is actually assigned to an area in Home Assistant</li>
 </ol>
 <p>If any of the above isn’t true, the entity may not be recognized by Magic Areas. Use <code>Include Entities</code> in the configuration to override it if needed.</p>
-<h2 id="still-stuck">🆘 Still Stuck?</h2>
+<h2 id="still-stuck">🆘 Still Stuck?<a class="headerlink" href="#still-stuck" title="Permanent link">&para;</a></h2>
 <p>No worries! You can:</p>
 <ul>
 <li>Open a <a href="https://github.com/jseidl/hass-magic_areas/issues">GitHub issue</a> with:</li>
@@ -1589,7 +1692,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>

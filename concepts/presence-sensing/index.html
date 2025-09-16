@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -500,7 +498,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -509,7 +509,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1391,6 +1391,109 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#supported-presence-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      🛰️ Supported Presence Sources
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🛰️ Supported Presence Sources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#presence-logic-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Presence logic examples:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-presence-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧠 Default Presence States
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-binary_sensor-device-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      📡 Default binary_sensor Device Classes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⚠️ Known Limitations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="⚠️ Known Limitations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tips-for-custom-presence-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      💡 Tips for Custom Presence Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Example Use Cases:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1408,9 +1511,9 @@
   
 
 
-<h1 id="concepts">📍 Concepts</h1>
+<h1 id="concepts">📍 Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h1>
 <p>Magic Areas works by detecting presence within an area and triggering state changes or automations accordingly. It does this by monitoring presence-related events from specific Home Assistant entity types and interpreting their states to determine whether an area is occupied or clear.</p>
-<h2 id="supported-presence-sources">🛰️ Supported Presence Sources</h2>
+<h2 id="supported-presence-sources">🛰️ Supported Presence Sources<a class="headerlink" href="#supported-presence-sources" title="Permanent link">&para;</a></h2>
 <p>Magic Areas currently supports presence sensing from the following Home Assistant platforms:</p>
 <ul>
 <li><code>media_player</code> (and <code>remote</code>)</li>
@@ -1418,20 +1521,20 @@
 <li><code>device_tracker</code></li>
 </ul>
 <p>This may seem like a limited list, but it's intentional. Magic Areas relies on clear and predictable <code>states</code> and <code>device_class</code> values to automatically detect which entities can be used for presence sensing — with no manual configuration required in most cases.</p>
-<h3 id="presence-logic-examples">Presence logic examples:</h3>
+<h3 id="presence-logic-examples">Presence logic examples:<a class="headerlink" href="#presence-logic-examples" title="Permanent link">&para;</a></h3>
 <ul>
 <li>If a <code>media_player</code> is <strong>playing</strong> in an area → the area is considered <strong>occupied</strong>.</li>
 <li>If a <code>device_tracker</code> entity (e.g., your desktop computer) is <strong>home</strong> → the area is <strong>occupied</strong>.</li>
 <li>If a <code>binary_sensor</code> for motion or presence is <strong>on</strong> → the area is <strong>occupied</strong>.</li>
 </ul>
-<h2 id="default-presence-states">🧠 Default Presence States</h2>
+<h2 id="default-presence-states">🧠 Default Presence States<a class="headerlink" href="#default-presence-states" title="Permanent link">&para;</a></h2>
 <p>The following entity states are used by default to infer presence:</p>
 <ul>
 <li><code>on</code></li>
 <li><code>home</code></li>
 <li><code>playing</code></li>
 </ul>
-<h2 id="default-binary_sensor-device-classes">📡 Default <code>binary_sensor</code> Device Classes</h2>
+<h2 id="default-binary_sensor-device-classes">📡 Default <code>binary_sensor</code> Device Classes<a class="headerlink" href="#default-binary_sensor-device-classes" title="Permanent link">&para;</a></h2>
 <p>Magic Areas automatically uses the following <code>device_class</code> values for <code>binary_sensor</code> entities:</p>
 <ul>
 <li><code>motion</code></li>
@@ -1441,9 +1544,9 @@
 <p>These cover most sensors used for room occupancy detection.</p>
 <p>You can also <strong>extend this list</strong> in the UI if you use other sensors that make sense for your setup — for example, using a <code>door</code> sensor on a frequently used door like your garage entry.</p>
 <hr />
-<h2 id="known-limitations">⚠️ Known Limitations</h2>
+<h2 id="known-limitations">⚠️ Known Limitations<a class="headerlink" href="#known-limitations" title="Permanent link">&para;</a></h2>
 <p>Some Home Assistant entities — such as <code>switch</code> or general-purpose <code>sensor</code> — don’t reliably convey presence information by default. However, you can easily work around this using Home Assistant’s flexible templating tools.</p>
-<h3 id="tips-for-custom-presence-detection">💡 Tips for Custom Presence Detection</h3>
+<h3 id="tips-for-custom-presence-detection">💡 Tips for Custom Presence Detection<a class="headerlink" href="#tips-for-custom-presence-detection" title="Permanent link">&para;</a></h3>
 <p>You can create custom presence logic using these tools:</p>
 <ul>
 <li>
@@ -1455,7 +1558,7 @@
   Useful for converting smart plugs into presence sensors by modeling them as something else.</p>
 </li>
 </ul>
-<h3 id="example-use-cases">✅ Example Use Cases:</h3>
+<h3 id="example-use-cases">✅ Example Use Cases:<a class="headerlink" href="#example-use-cases" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Detect TV usage by monitoring power draw with a smart plug, then create a template binary sensor to represent presence.</li>
 <li>Use a door contact sensor (<code>device_class: door</code>) to indicate occupancy when a specific door opens.</li>
@@ -1586,7 +1689,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>

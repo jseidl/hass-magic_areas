@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -629,7 +627,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -638,7 +638,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1361,6 +1361,79 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installing-via-hacs-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 Installing via HACS (Recommended)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manual-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      🛠️ Manual Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-up-magic-areas" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⚙️ Setting Up Magic Areas
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-debug-logs-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      🐛 Enabling Debug Logs (Optional)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ What’s Next?
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1378,9 +1451,9 @@
   
 
 
-<h1 id="installation">Installation</h1>
+<h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
 <p>Magic Areas can be installed in two ways: through <a href="https://hacs.xyz">HACS</a> (recommended), or manually.</p>
-<h2 id="installing-via-hacs-recommended">🚀 Installing via HACS (Recommended)</h2>
+<h2 id="installing-via-hacs-recommended">🚀 Installing via HACS (Recommended)<a class="headerlink" href="#installing-via-hacs-recommended" title="Permanent link">&para;</a></h2>
 <p>Magic Areas is available in the <a href="https://hacs.xyz/">HACS default repository</a>. Just follow these steps:</p>
 <ol>
 <li>Open HACS in your Home Assistant interface.</li>
@@ -1390,7 +1463,7 @@
 <li>Click <strong>Download</strong> to install.</li>
 </ol>
 <p>Once downloaded, restart Home Assistant.</p>
-<h2 id="manual-installation">🛠️ Manual Installation</h2>
+<h2 id="manual-installation">🛠️ Manual Installation<a class="headerlink" href="#manual-installation" title="Permanent link">&para;</a></h2>
 <p>Prefer to install manually? Here's how:</p>
 <ol>
 <li>Download the <code>magic_areas</code> integration folder from the <a href="https://github.com/jseidl/hass-magic_areas">GitHub repository</a>.</li>
@@ -1401,7 +1474,7 @@
 <ol>
 <li>Restart Home Assistant.</li>
 </ol>
-<h2 id="setting-up-magic-areas">⚙️ Setting Up Magic Areas</h2>
+<h2 id="setting-up-magic-areas">⚙️ Setting Up Magic Areas<a class="headerlink" href="#setting-up-magic-areas" title="Permanent link">&para;</a></h2>
 <p>Once installed, setup is done entirely through the <strong>Integrations UI</strong>:</p>
 <ol>
 <li>Go to <strong>Settings &gt; Devices &amp; Services &gt; Integrations</strong></li>
@@ -1410,7 +1483,7 @@
 <li>Select the integration, choose an area to configure, and submit</li>
 </ol>
 <p>Magic Areas will now appear on your <strong>Integrations</strong> page. You can click <strong>Configure</strong> at any time to adjust its options. See each [[feature|Features]] for information on the configuration options for each.</p>
-<h2 id="enabling-debug-logs-optional">🐛 Enabling Debug Logs (Optional)</h2>
+<h2 id="enabling-debug-logs-optional">🐛 Enabling Debug Logs (Optional)<a class="headerlink" href="#enabling-debug-logs-optional" title="Permanent link">&para;</a></h2>
 <p>Having trouble or want to dive deeper? You can enable debug logs by adding the following to your <code>configuration.yaml</code>:
 <div class="highlight"><pre><span></span><code><span class="nt">logger</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
@@ -1418,7 +1491,7 @@
 <span class="w">    </span><span class="nt">custom_components.magic_areas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">debug</span>
 </code></pre></div></p>
 <p>Then restart Home Assistant. Debug messages will now appear in your logs.</p>
-<h2 id="whats-next">✅ What’s Next?</h2>
+<h2 id="whats-next">✅ What’s Next?<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <p>Once Magic Areas is installed and running, check out the [[Getting Started]] guide to learn how to make your first area magical!</p>
 
 
@@ -1543,7 +1616,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>

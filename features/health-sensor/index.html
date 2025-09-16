@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -1112,7 +1110,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -1121,7 +1121,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1372,6 +1372,76 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-tracks" class="md-nav__link">
+    <span class="md-ellipsis">
+      🩺 What it tracks
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sample-use-case-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔔 Sample Use Case: Notifications
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔔 Sample Use Case: Notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sample-automation" class="md-nav__link">
+    <span class="md-ellipsis">
+      🛠️ Sample Automation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-use-area-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      💡 Why use Area Health?
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1389,10 +1459,10 @@
   
 
 
-<h1 id="area-health-sensor">Area Health Sensor</h1>
+<h1 id="area-health-sensor">Area Health Sensor<a class="headerlink" href="#area-health-sensor" title="Permanent link">&para;</a></h1>
 <p>The <strong>Area Health</strong> feature monitors the safety and integrity of an area by aggregating signals from critical sensor types—alerting you when something might be wrong.</p>
 <p>These sensors work similarly to [[aggregate|Aggregation]] binary sensors but specifically target key <strong>health-related device classes</strong>.</p>
-<h2 id="what-it-tracks">🩺 What it tracks</h2>
+<h2 id="what-it-tracks">🩺 What it tracks<a class="headerlink" href="#what-it-tracks" title="Permanent link">&para;</a></h2>
 <p>The Area Health feature combines the following <code>binary_sensor.device_class</code> types into a single <code>binary_sensor.magic_areas_health_$area_health_problem</code> entity:</p>
 <ul>
 <li><code>gas</code> – Detects gas leaks (e.g., natural gas, propane)</li>
@@ -1406,9 +1476,9 @@
 <p>If you use the <code>moisture</code> device class for non-leak purposes, make sure to <strong>exclude</strong> those sensors manually to avoid false alarms.</p>
 </div>
 <p>These aggregated sensors are available per-area and supported in <strong>meta-areas</strong> like <code>Interior</code>, <code>Exterior</code>, or <code>Global</code>, giving you a comprehensive view of your home's status.</p>
-<h2 id="sample-use-case-notifications">🔔 Sample Use Case: Notifications</h2>
+<h2 id="sample-use-case-notifications">🔔 Sample Use Case: Notifications<a class="headerlink" href="#sample-use-case-notifications" title="Permanent link">&para;</a></h2>
 <p>Use the Area Health sensor to trigger automations that notify you if a problem is detected anywhere in your home.</p>
-<h3 id="sample-automation">🛠️ Sample Automation</h3>
+<h3 id="sample-automation">🛠️ Sample Automation<a class="headerlink" href="#sample-automation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nt">alias</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Notify on degraded area health</span>
 <span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
 <span class="nt">triggers</span><span class="p">:</span>
@@ -1451,7 +1521,7 @@
 <p class="admonition-title">Tip</p>
 <p>🗣️ If you’re using TTS notification service tied to an <a href="https://github.com/jseidl/hass-magic_areas/wiki/Area-Aware-Media-Player">Area-Aware Media Player</a>, you can add a <code>tts.notify_area_aware</code> service call in the <code>actions</code> block to <strong>speak the warning aloud</strong> in the appropriate area.</p>
 </div>
-<h2 id="why-use-area-health">💡 Why use Area Health?</h2>
+<h2 id="why-use-area-health">💡 Why use Area Health?<a class="headerlink" href="#why-use-area-health" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Get <strong>real-time alerts</strong> for important safety issues.</li>
 <li>Avoid manually checking dozens of sensors—let Magic Areas watch them for you.</li>
@@ -1584,7 +1654,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>

@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -1286,6 +1284,79 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#smart-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧠 Smart Groups
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simple-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧱 Simple Groups
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sensor-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 Sensor Features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔊 Notifications
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✋ Overrides
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1303,9 +1374,9 @@
   
 
 
-<h1 id="feature-list">✨ Feature List</h1>
+<h1 id="feature-list">✨ Feature List<a class="headerlink" href="#feature-list" title="Permanent link">&para;</a></h1>
 <p>Magic Areas can do a lot more than <a href="../concepts/presence-sensing/">presence sensing</a>! Below is a list of built-in features grouped by category.</p>
-<h2 id="smart-groups">🧠 Smart Groups</h2>
+<h2 id="smart-groups">🧠 Smart Groups<a class="headerlink" href="#smart-groups" title="Permanent link">&para;</a></h2>
 <p>Entities grouped with presence-aware automation logic.</p>
 <ul>
 <li>
@@ -1321,7 +1392,7 @@
   Automatically control climate devices and maps area states to climate presets.</p>
 </li>
 </ul>
-<h2 id="simple-groups">🧱 Simple Groups</h2>
+<h2 id="simple-groups">🧱 Simple Groups<a class="headerlink" href="#simple-groups" title="Permanent link">&para;</a></h2>
 <p>Passive entity grouping for easier control.</p>
 <ul>
 <li>
@@ -1333,7 +1404,7 @@
   Groups all <code>media_player</code> entities using <a href="https://www.home-assistant.io/integrations/media_player.group/"><code>media_player.group</code></a>.</p>
 </li>
 </ul>
-<h2 id="sensor-features">📊 Sensor Features</h2>
+<h2 id="sensor-features">📊 Sensor Features<a class="headerlink" href="#sensor-features" title="Permanent link">&para;</a></h2>
 <p>Sensor logic, tracking, and hazard detection.</p>
 <ul>
 <li>
@@ -1353,12 +1424,12 @@
   Adds intelligent presence logic using motion + door sensors to infer room occupancy even when closed.</p>
 </li>
 </ul>
-<h2 id="notifications">🔊 Notifications</h2>
+<h2 id="notifications">🔊 Notifications<a class="headerlink" href="#notifications" title="Permanent link">&para;</a></h2>
 <ul>
 <li>🔉 <a href="area-aware-media-player/">Area-Aware Media Player</a>
   A smart proxy <code>media_player</code> that plays TTS only in <strong>occupied</strong> areas. Great for room-aware voice alerts.</li>
 </ul>
-<h2 id="overrides">✋ Overrides</h2>
+<h2 id="overrides">✋ Overrides<a class="headerlink" href="#overrides" title="Permanent link">&para;</a></h2>
 <ul>
 <li>⏸️ <a href="presence-hold/">Presence Hold</a>
   Adds a manual <code>switch</code> to override presence state to <code>occupied</code>, with optional auto-reset timer.</li>
@@ -1385,7 +1456,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 16, 2025 05:36:09 UTC">September 16, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 16, 2025 08:01:59 UTC">September 16, 2025</span>
   </span>
 
     
@@ -1486,7 +1557,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>

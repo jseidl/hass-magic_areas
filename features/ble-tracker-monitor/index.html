@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -1135,7 +1133,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -1144,7 +1144,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1375,6 +1375,79 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      📍 Why use it?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⚙️ How it works
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧠 Compatibility
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flappy-sensors-read-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⚠️ Flappy Sensors? Read This
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-use-case" class="md-nav__link">
+    <span class="md-ellipsis">
+      💡 Example Use Case
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1392,12 +1465,12 @@
   
 
 
-<h1 id="bluetooth-bluetooth-le-ble-tracker-monitor">Bluetooth &amp; Bluetooth LE (BLE) Tracker Monitor</h1>
+<h1 id="bluetooth-bluetooth-le-ble-tracker-monitor">Bluetooth &amp; Bluetooth LE (BLE) Tracker Monitor<a class="headerlink" href="#bluetooth-bluetooth-le-ble-tracker-monitor" title="Permanent link">&para;</a></h1>
 <p>The <strong>BLE Tracker Monitor</strong> feature streamlines presence detection using <strong>text-based BLE sensors</strong>, such as those from <a href="https://github.com/agittins/bermuda">Bermuda</a>, <a href="https://espresense.com/">ESPresence</a>, or <a href="https://github.com/mKeRix/room-assistant">Room Assistant</a>.</p>
-<h2 id="why-use-it">📍 Why use it?</h2>
+<h2 id="why-use-it">📍 Why use it?<a class="headerlink" href="#why-use-it" title="Permanent link">&para;</a></h2>
 <p>Normally, you’d need to manually create multiple <a href="https://www.home-assistant.io/integrations/template/">template binary sensors</a>—one per area—to convert each tracker’s text state (e.g., <code>kitchen</code>, <code>bedroom</code>) into a usable <code>on</code>/<code>off</code> signal for presence detection.</p>
 <p>Magic Areas eliminates this hassle by doing it automatically.</p>
-<h2 id="how-it-works">⚙️ How it works</h2>
+<h2 id="how-it-works">⚙️ How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
 <p>When you reference a BLE tracker sensor in the area config, Magic Areas will:</p>
 <ul>
 <li>Automatically create a binary presence sensor.</li>
@@ -1412,7 +1485,7 @@
 <blockquote>
 <p>✅ Any text-based sensor that reports an area name, ID, or slug can be used with this feature—not just BLE trackers.</p>
 </blockquote>
-<h2 id="compatibility">🧠 Compatibility</h2>
+<h2 id="compatibility">🧠 Compatibility<a class="headerlink" href="#compatibility" title="Permanent link">&para;</a></h2>
 <p>This feature is known to work with:</p>
 <ul>
 <li><a href="https://github.com/agittins/bermuda">Bermuda</a> ✅</li>
@@ -1422,14 +1495,14 @@
 <blockquote>
 <p>💬 Have another system that reports presence as area names or IDs? It’ll likely work too.</p>
 </blockquote>
-<h2 id="flappy-sensors-read-this">⚠️ Flappy Sensors? Read This</h2>
+<h2 id="flappy-sensors-read-this">⚠️ Flappy Sensors? Read This<a class="headerlink" href="#flappy-sensors-read-this" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>BLE trackers can be <strong>flappy</strong>—reporting incorrect or outdated values momentarily.
 To prevent incorrect <code>clear</code> states, it’s highly recommended to add them to the <strong>"keep only sensors"</strong> list in your area config.</p>
 </div>
 <p>This ensures their presence signal is only <em>added</em> to detection logic and not used as the sole decider.</p>
-<h2 id="example-use-case">💡 Example Use Case</h2>
+<h2 id="example-use-case">💡 Example Use Case<a class="headerlink" href="#example-use-case" title="Permanent link">&para;</a></h2>
 <p>Let’s say your Bermuda tracker reports <code>"living_room"</code> when it detects a person in the Living Room.</p>
 <p>Magic Areas will:</p>
 <ul>
@@ -1560,7 +1633,7 @@ To prevent incorrect <code>clear</code> states, it’s highly recommended to add
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>

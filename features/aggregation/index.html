@@ -340,9 +340,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Magic Areas" class="md-nav__button md-logo" aria-label="Magic Areas" data-md-component="logo">
       
@@ -1089,7 +1087,9 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -1098,7 +1098,7 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
@@ -1390,6 +1390,94 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#aggregation-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 Aggregation methods
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example use cases
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example use cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#temperature-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔥 Temperature management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#air-quality-ventilation" class="md-nav__link">
+    <span class="md-ellipsis">
+      💨 Air quality &amp; ventilation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#power-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⚡ Power monitoring
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simplified-automations" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧠 Simplified automations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -1407,7 +1495,7 @@
   
 
 
-<h1 id="aggregation">Aggregation</h1>
+<h1 id="aggregation">Aggregation<a class="headerlink" href="#aggregation" title="Permanent link">&para;</a></h1>
 <p>This feature creates aggregates for all <code>sensor</code> and <code>binary_sensor</code> in a given area according to their <code>device_class</code> and <code>unit_of_measurement</code> tuple.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1415,31 +1503,31 @@
 </div>
 <p>The feature has an <code>Aggregate Min Entities</code> parameter (defaulted to <code>2</code>) which will only create aggregate entities if the entity count for a given tuple is greater than this number. If you want aggregates to be always created, set this value to <code>1</code>.</p>
 <p><strong>This feature requires <code>unit_of_measurement</code> to be set for all entities to be aggregated</strong></p>
-<h2 id="aggregation-methods">📊 Aggregation methods</h2>
+<h2 id="aggregation-methods">📊 Aggregation methods<a class="headerlink" href="#aggregation-methods" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Binary Sensor: If one of the entities is <code>on</code>, then the aggregate is <code>on</code>. Aggregate will be <code>off</code> if all entities are <code>off</code>.</li>
 <li>Sensor: All values will be mean averages, except for <code>power</code>, <code>current</code> and <code>energy</code> which will be sums.</li>
 </ul>
-<h2 id="example-use-cases">Example use cases</h2>
-<h3 id="temperature-management">🔥 Temperature management</h3>
+<h2 id="example-use-cases">Example use cases<a class="headerlink" href="#example-use-cases" title="Permanent link">&para;</a></h2>
+<h3 id="temperature-management">🔥 Temperature management<a class="headerlink" href="#temperature-management" title="Permanent link">&para;</a></h3>
 <p>Instead of referencing individual temperature sensors in each room, use <code>sensor.magic_areas_aggregates_{area}_aggregate_temperature</code> to get the average temperature of an entire area. This is especially useful in:</p>
 <ul>
 <li>Automating climate systems based on a whole area's average temperature</li>
 <li>Comparing average temperatures across floors or wings of a building</li>
 </ul>
-<h3 id="air-quality-ventilation">💨 Air quality &amp; ventilation</h3>
+<h3 id="air-quality-ventilation">💨 Air quality &amp; ventilation<a class="headerlink" href="#air-quality-ventilation" title="Permanent link">&para;</a></h3>
 <p>Aggregate <code>co2</code>, <code>humidity</code>, or <code>voc</code> levels into one sensor like <code>sensor.magic_areas_aggregates_{area}_aggregate_humidity</code> to:</p>
 <ul>
 <li>Trigger fans or dehumidifiers when humidity is too high</li>
 <li>Monitor and act on air quality trends over time without manually aggregating data</li>
 </ul>
-<h3 id="power-monitoring">⚡ Power monitoring</h3>
+<h3 id="power-monitoring">⚡ Power monitoring<a class="headerlink" href="#power-monitoring" title="Permanent link">&para;</a></h3>
 <p>Use <code>sensor.magic_areas_aggregates_{area}_aggregate_power</code> to monitor combined power consumption for all devices in an area:</p>
 <ul>
 <li>Automatically turn off non-essential devices when usage spikes</li>
 <li>Create dashboards that show power consumption per area (e.g., Kitchen vs. Living Room)</li>
 </ul>
-<h3 id="simplified-automations">🧠 Simplified automations</h3>
+<h3 id="simplified-automations">🧠 Simplified automations<a class="headerlink" href="#simplified-automations" title="Permanent link">&para;</a></h3>
 <p>Using aggregates makes automation logic cleaner and more resilient:</p>
 <div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alias</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Turn off humidifier when area unoccupied</span>
 <span class="w">  </span><span class="nt">trigger</span><span class="p">:</span>
@@ -1576,7 +1664,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.integrate", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "toc.follow", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
