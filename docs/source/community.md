@@ -20,7 +20,7 @@ Everyone is welcome! From newcomers to advanced users, you’ll find helpful and
 
 There are many ways to contribute to Magic Areas:
 
-1. **Development** Help improve the integration by submitting pull requests or reporting bugs on [GitHub](https://github.com/jseidl/hass-magic_areas/issues).
+1. **Development** Help improve the integration by submitting pull requests or reporting bugs on [GitHub](https://github.com/jseidl/magic-areas/issues).
 2. **Testing** Try out new releases, beta features, or experimental automations and provide feedback.
 3. **Translation** Help make Magic Areas accessible worldwide by contributing translations for documentation and the integration.
 4. **Ideas & Feedback** Suggest new features, improvements, or share your automation setups. Every bit helps the community grow!

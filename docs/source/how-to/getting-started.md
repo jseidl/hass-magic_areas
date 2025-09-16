@@ -44,7 +44,7 @@ No worries! Try the following:
 
 - Visit our [Troubleshooting](troubleshooting.md) guide
 - Join our [Discord server](https://discord.gg/3yu2F7bSaT) for real-time help
-- Or [open an issue](https://github.com/jseidl/hass-magic_areas/issues) on GitHub
+- Or [open an issue](https://github.com/jseidl/magic-areas/issues) on GitHub
 
 ---
 

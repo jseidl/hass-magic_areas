@@ -2,7 +2,7 @@
 
 The **Area Health** feature monitors the safety and integrity of an area by aggregating signals from critical sensor types—alerting you when something might be wrong.
 
-These sensors work similarly to [[aggregate|Aggregation]] binary sensors but specifically target key **health-related device classes**.
+These sensors work similarly to [aggregate](aggregation.md) binary sensors but specifically target key **health-related device classes**.
 
 ## 🩺 What it tracks
 
@@ -66,7 +66,7 @@ This automation:
 - Lists each affected area and the specific triggered sensors in the message.
 
 !!! tip
-    🗣️ If you’re using TTS notification service tied to an [Area-Aware Media Player](https://github.com/jseidl/hass-magic_areas/wiki/Area-Aware-Media-Player), you can add a `tts.notify_area_aware` service call in the `actions` block to **speak the warning aloud** in the appropriate area.
+    🗣️ If you’re using TTS notification service tied to an [Area-Aware Media Player](area-aware-media-player.md), you can add a `tts.notify_area_aware` service call in the `actions` block to **speak the warning aloud** in the appropriate area.
 
 ## 💡 Why use Area Health?
 

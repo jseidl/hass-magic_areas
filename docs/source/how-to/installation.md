@@ -18,7 +18,7 @@ Once downloaded, restart Home Assistant.
 
 Prefer to install manually? Here's how:
 
-1. Download the `magic_areas` integration folder from the [GitHub repository](https://github.com/jseidl/hass-magic_areas).
+1. Download the `magic_areas` integration folder from the [GitHub repository](https://github.com/jseidl/magic-areas).
 2. Copy the entire `magic_areas` folder into your Home Assistant's `custom_components/` directory:
 
 ```
@@ -36,7 +36,7 @@ Once installed, setup is done entirely through the **Integrations UI**:
 3. Search for `Magic Areas`
 4. Select the integration, choose an area to configure, and submit
 
-Magic Areas will now appear on your **Integrations** page. You can click **Configure** at any time to adjust its options. See each [[feature|Features]] for information on the configuration options for each.
+Magic Areas will now appear on your **Integrations** page. You can click **Configure** at any time to adjust its options. See each [feature](../features/index.md) for information on the configuration options for each.
 
 ## 🐛 Enabling Debug Logs (Optional)
 
@@ -51,4 +51,4 @@ logger:
 Then restart Home Assistant. Debug messages will now appear in your logs.
 
 ## ✅ What’s Next?
-Once Magic Areas is installed and running, check out the [[Getting Started]] guide to learn how to make your first area magical!
+Once Magic Areas is installed and running, check out the [Getting Started](getting-started.md) guide to learn how to make your first area magical and our [Implementation Ideas](implementation-ideas.md) to learn how to make every other area in your home just as magical!

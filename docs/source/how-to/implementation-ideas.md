@@ -1,6 +1,6 @@
 # Implementation Ideas
 
-This is the "meta" cookbook which condenses the multiple features and tricks of [Magic Areas](https://github.com/jseidl/hass-magic_areas) to magically and accurately (YMMV) track presence in every room of your house!
+This is the "meta" cookbook which condenses the multiple features and tricks of [Magic Areas](https://github.com/jseidl/magic-areas) to magically and accurately (YMMV) track presence in every room of your house!
 
 !!! warning
     Magic Areas strength is on stacking multiple somewhat-reliable sources of presence into a nice solid and reliable presence tracking system. You will likely need to use multiple sources of presence that will be good at one situation (static vs moving, for example) but bad at others until you cover all the situations. Magic Areas has features (such as "Keep-only sensors") that allow you to use even flappy or slow sensors.

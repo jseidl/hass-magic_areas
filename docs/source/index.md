@@ -59,6 +59,6 @@ Detailed documentation for each [feature](features/index.md).
 3. Explore the [Features](features/index.md) to unlock the full potential of your smart home.
 
 !!! question "Need help?"
-    💬 Join the [Magic Areas Discord](https://discord.gg/tvaS4BG5) or open an [issue on GitHub](https://github.com/jseidl/hass-magic_areas/issues).
+    💬 Join the [Magic Areas Discord](https://discord.gg/tvaS4BG5) or open an [issue on GitHub](https://github.com/jseidl/magic-areas/issues).
 
 ---
