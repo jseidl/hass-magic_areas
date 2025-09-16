@@ -1512,12 +1512,13 @@
 
 
 <h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
-<p>If you’ve followed our [[Installation]] and [[Getting Started|Getting-Started]] guides, things should be smooth sailing 🛶—but if something’s acting weird, this page will help you debug it.</p>
+<p>If you’ve followed our <a href="../installation/">Installation</a> and <a href="../getting-started/">Getting Started</a> guides, things should be smooth sailing 🛶—but if something’s acting weird, this page will help you debug it.</p>
 <h2 id="step-1-enable-logging">🧪 Step 1: Enable Logging<a class="headerlink" href="#step-1-enable-logging" title="Permanent link">&para;</a></h2>
 <p>The first step to troubleshooting is <strong>turning on logging</strong> so you can see what’s going on behind the scenes.</p>
-<blockquote>
-<p>🟡 Tip: Use <code>info</code> level for general debugging. Use <code>debug</code> only as a last resort—it’s very verbose.</p>
-</blockquote>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Use <code>info</code> level for general debugging. Use <code>debug</code> only as a last resort — it’s very verbose.</p>
+</div>
 <h3 id="basic-logging-setup">🔍 Basic Logging Setup<a class="headerlink" href="#basic-logging-setup" title="Permanent link">&para;</a></h3>
 <p>Add this to your <code>configuration.yaml</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">logger</span><span class="p">:</span>
@@ -1526,7 +1527,7 @@
 <span class="w">    </span><span class="nt">custom_components.magic_areas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">info</span>
 </code></pre></div>
 <h3 id="debug-a-specific-feature">🎯 Debug a Specific Feature<a class="headerlink" href="#debug-a-specific-feature" title="Permanent link">&para;</a></h3>
-<p>If you’re debugging a specific platform (like <code>media_player</code> for [[Media Player Groups|Media-Player-Groups]] or [[Area-Aware Media Player|Area-Aware-Media-Player]]), you can target that platform directly:</p>
+<p>If you’re debugging a specific platform (like <code>media_player</code> for <a href="../../features/media-player-groups/">Media Player Groups</a> or <a href="../../features/area-aware-media-player/">Area-Aware Media Player</a>), you can target that platform directly:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">logger</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
 <span class="w">  </span><span class="nt">logs</span><span class="p">:</span>
@@ -1554,18 +1555,22 @@
 <p>If an entity doesn’t seem to be included in a Magic Area:</p>
 <ol>
 <li>Go to <strong>Developer Tools &gt; States</strong> or use the <strong>Entity Filter</strong> menu.</li>
-<li>Check that the entity:</li>
-<li>✅ Belongs to a [[supported platform|Presence-Sensing#supported-presence-sources]]</li>
-<li>✅ (If it’s a <code>binary_sensor</code>) Has a <code>device_class</code> that is [[supported for presence sensing|Presence-Sensing]]</li>
+<li>Check that the entity:<ul>
+<li>✅ Belongs to a <a href="../../concepts/presence-sensing/#supported-presence-sources">supported platform</a></li>
+<li>✅ (If it’s a <code>binary_sensor</code>) Has a <code>device_class</code> that is <a href="../../concepts/presence-sensing/#default-binary_sensor-device-classes">supported for presence sensing</a></li>
 <li>✅ Is actually assigned to an area in Home Assistant</li>
+</ul>
+</li>
 </ol>
 <p>If any of the above isn’t true, the entity may not be recognized by Magic Areas. Use <code>Include Entities</code> in the configuration to override it if needed.</p>
 <h2 id="still-stuck">🆘 Still Stuck?<a class="headerlink" href="#still-stuck" title="Permanent link">&para;</a></h2>
 <p>No worries! You can:</p>
 <ul>
-<li>Open a <a href="https://github.com/jseidl/hass-magic_areas/issues">GitHub issue</a> with:</li>
+<li>Open a <a href="https://github.com/jseidl/magic-areas/issues">GitHub issue</a> with:<ul>
 <li>A <strong>clear description</strong> of your setup and what’s going wrong</li>
 <li>A <strong>log excerpt</strong> showing the problem (please format it!)</li>
+</ul>
+</li>
 <li>Join our <a href="https://discord.gg/3yu2F7bSaT">Discord community</a> for help from other Magic Area users</li>
 </ul>
 <p>We’re happy to help you get everything working! 💫</p>
@@ -1591,7 +1596,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 16, 2025 05:36:09 UTC">September 16, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 16, 2025 08:35:27 UTC">September 16, 2025</span>
   </span>
 
     
