@@ -69,6 +69,7 @@ class AreaWaspInABoxBinarySensor(MagicEntity, BinarySensorEntity):
     async def async_added_to_hass(self) -> None:
         """Call to add the entity to hass."""
         await super().async_added_to_hass()
+        await self.restore_state()
 
         # Check entities exist
         wasp_device_classes = self.area.feature_config(
