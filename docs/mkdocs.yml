@@ -30,7 +30,7 @@ theme:
         icon: material/toggle-switch
         name: Switch to light mode
   logo: https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/magic_areas/logo.png
-  favicon: https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/magic_areas/logo.png
+  favicon: https://brands.home-assistant.io/_/magic_areas/dark_icon.png
 extra:
   generator: false
 plugins:
