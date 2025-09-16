@@ -33,25 +33,25 @@ Smart areas that just works, everytime, out of the box. Fully customizable if yo
 ## Features
 
 ### Presence
-* 🕰️ Smart Presence Timeouts: Each area has a configurable timeout for clearing presence after the last motion. If motion is detected again within the timeout, it resets — no abrupt shutoffs.
-* 🕯️ Secondary States: Define subtle room states for more nuanced automations:
+* **🕰️ Smart Presence Timeouts:** Each area has a configurable timeout for clearing presence after the last motion. If motion is detected again within the timeout, it resets — no abrupt shutoffs.
+* **✋ Presence Hold:** Creates a switch to manually override presence in an area. Useful if sensors aren’t fully reliable yet or for guests.
+* **🕯️ Secondary States:** Define subtle room states for more nuanced automations:
     * `dark` / `bright`: Based on light sensors or sun
     * `sleep`: Tracked by any entity
     * `extended`: When a room has been occupied beyond a set time
     * `accented`: Track presence based on entertainment like media players
-* 🏠 Meta-Areas and Hierarchies: Set areas as **interior**, **exterior** and assign them to **floors**. Magic Areas will create meta-areas to track grouped presence (e.g., upstairs occupied). Presence logic and secondary states are inherited and calculated automatically.
+* **🏠 Meta-Areas and Hierarchies:** Set areas as **interior**, **exterior** and assign them to **floors**. Magic Areas will create meta-areas to track grouped presence (e.g., upstairs occupied). Presence logic and secondary states are inherited and calculated automatically.
 
 ### Smart Control
 * **💡 Smart Light Groups**: Automatically groups your lights by purpose — overhead, task, accent, and sleep — and controls them based on presence state. Lights can be set to trigger only in the dark or after extended occupancy.
-* 🌡️ Climate Control: Map area states to climate device presets. For example: set your HVAC to `eco` when empty, and back to `comfort` when occupied or in sleep mode.
-* 🧠 Wasp in a Box: Reliable presence sensing that accounts for people entering/leaving rooms with doors. Combines motion and door/garage sensors to prevent lights from turning off while you’re still inside.
-* 🔥 Fan Groups: Auto-creates a `fan` group entity for each area and lets you control it using an aggregated value like temperature, humidity, or CO₂. Great for exhaust fans, ceiling fans, or air quality fans.
-* 📶 Area-Aware Media Player: Play media (like TTS alerts) only in rooms that are currently occupied. Forward notifications to the right areas — not empty ones.
-* 🧮 Sensor Aggregates: Aggregates all `sensor` and `binary_sensor` entities in the area by `device_class` and `unit_of_measurement`. Great for dashboards, alerts, and logic.
-* 🚨 Health Sensor: Auto-aggregated binary sensors for safety-related device classes:
+* **🌡️ Climate Control:** Map area states to climate device presets. For example: set your HVAC to `eco` when empty, and back to `comfort` when occupied or in sleep mode.
+* **🧠 Wasp in a Box:** Reliable presence sensing that accounts for people entering/leaving rooms with doors. Combines motion and door/garage sensors to prevent lights from turning off while you’re still inside.
+* **🔥 Fan Groups:** Auto-creates a `fan` group entity for each area and lets you control it using an aggregated value like temperature, humidity, or CO₂. Great for exhaust fans, ceiling fans, or air quality fans.
+* **📶 Area-Aware Media Player:** Play media (like TTS alerts) only in rooms that are currently occupied. Forward notifications to the right areas — not empty ones.
+* **🧮 Sensor Aggregates:** Aggregates all `sensor` and `binary_sensor` entities in the area by `device_class` and `unit_of_measurement`. Great for dashboards, alerts, and logic.
+* **🚨 Health Sensor:** Auto-aggregated binary sensors for safety-related device classes:
     * `gas`, `smoke`, `moisture` (leaks), `problem`, `safety`
-* ✋ Presence Hold: Creates a switch to manually override presence in an area. Useful if sensors aren’t fully reliable yet or for guests.
-* 📡 BLE Tracker Integration: Track text-based BLE sensors (like ESPresense, Bermuda, or Room Assistant) directly. Magic Areas will convert their values into usable presence sensors automatically.
+* **📡 BLE Tracker Integration:** Track text-based BLE sensors (like ESPresense, Bermuda, or Room Assistant) directly. Magic Areas will convert their values into usable presence sensors automatically.
 
 > [!TIP]
 > Learn more about all features on [our documentation](https://magicareas.io/features/).
