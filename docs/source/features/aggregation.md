@@ -1,4 +1,4 @@
-# Aggregastion
+# Aggregation
 
 This feature creates aggregates for all `sensor` and `binary_sensor` in a given area according to their `device_class` and `unit_of_measurement` tuple.
 
