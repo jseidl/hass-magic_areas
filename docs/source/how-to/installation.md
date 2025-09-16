@@ -52,4 +52,3 @@ Then restart Home Assistant. Debug messages will now appear in your logs.
 
 ## ✅ What’s Next?
 Once Magic Areas is installed and running, check out the [[Getting Started]] guide to learn how to make your first area magical!
-
