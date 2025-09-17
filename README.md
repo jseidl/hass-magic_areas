@@ -7,15 +7,21 @@
 
 ![ma-logo]
 
-Magic Areas is a Home Assistant custom integration that brings context-aware, state-driven automation to your smart home.
+Magic Areas is a Home Assistant custom integration that makes your smart home think for itself through rock-solid presence tracking — the foundation for a truly smart home.
 
-Instead of configuring each entity manually, Magic Areas leverages **areas**, **meta-areas**, and **presence sensing** to create smart groups and advanced automations. It turns Home Assistant's built-in Areas into **intelligent, presence-aware zones**, automatically detecting when someone is in a room — and when they’ve left — using your existing motion, presence, or occupancy sensors.
+Magic Areas knows when a room is occupied (and when it’s not) and reacts automatically. It turns Home Assistant’s Areas into dependable, presence-aware zones so your home feels alive without you lifting a finger. Instead of building dozens of manual automations, let Magic Areas control your lights, climate, and other devices so that they do just right thing, at the right time.
 
-Magic Areas intelligently tracks presence and adds powerful automations like light control, fan activation, and climate presets — all managed through a clean UI.
+### What this means for you:
+
+- 🏠 Areas that know when they’re occupied (and when they’re clear)
+- 💡 Lights that only turn on when (and where) they’re needed
+- 🌡 Climate that adapts to your presence and routines
+- 🌀 Fans that respond automatically to heat, humidity, or CO₂
+- 🎶 Media and alerts routed only to occupied spaces
 
 Smart areas that just works, everytime, out of the box. Fully customizable if you want it.
 
-### Download and install through [HACS (Home Assistant Community Store)](https://hacs.xyz/):
+#### Download and install through [HACS (Home Assistant Community Store)](https://hacs.xyz/):
 
 [![Open your Home Assistant instance and open the Adaptive Lighting integration inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jseidl&repository=magic-areas&category=integration)
 
