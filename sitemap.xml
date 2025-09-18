@@ -73,11 +73,11 @@
          <lastmod>2025-09-18</lastmod>
     </url>
     <url>
-         <loc>https://magicareas.io/how-to/getting-started/</loc>
+         <loc>https://magicareas.io/how-to/configuration/</loc>
          <lastmod>2025-09-18</lastmod>
     </url>
     <url>
-         <loc>https://magicareas.io/how-to/implementation-ideas/</loc>
+         <loc>https://magicareas.io/how-to/getting-started/</loc>
          <lastmod>2025-09-18</lastmod>
     </url>
     <url>
@@ -86,6 +86,22 @@
     </url>
     <url>
          <loc>https://magicareas.io/how-to/troubleshooting/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://magicareas.io/how-to/library/automatic-light-brightness-control/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://magicareas.io/how-to/library/energy-aggregates/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://magicareas.io/how-to/library/implementation-ideas-for-every-room/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://magicareas.io/how-to/library/perfecting-climate-comfort/</loc>
          <lastmod>2025-09-18</lastmod>
     </url>
 </urlset>
