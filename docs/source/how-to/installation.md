@@ -4,6 +4,12 @@ Magic Areas can be installed in two ways: through [HACS](https://hacs.xyz) (reco
 
 ## 🚀 Installing via HACS (Recommended)
 
+Download and install through [HACS (Home Assistant Community Store)](https://hacs.xyz/):
+
+[![Open your Home Assistant instance and open the Adaptive Lighting integration inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jseidl&repository=magic-areas&category=integration)
+
+### Don't like clicking links? No problem!
+
 Magic Areas is available in the [HACS default repository](https://hacs.xyz/). Just follow these steps:
 
 1. Open HACS in your Home Assistant interface.
@@ -12,7 +18,7 @@ Magic Areas is available in the [HACS default repository](https://hacs.xyz/). Ju
 4. Search for `Magic Areas`.
 5. Click **Download** to install.
 
-Once downloaded, restart Home Assistant.
+Once downloaded and installed, restart Home Assistant.
 
 ## 🛠️ Manual Installation
 
@@ -51,4 +57,4 @@ logger:
 Then restart Home Assistant. Debug messages will now appear in your logs.
 
 ## ✅ What’s Next?
-Once Magic Areas is installed and running, check out the [Getting Started](getting-started.md) guide to learn how to make your first area magical and our [Implementation Ideas](implementation-ideas.md) to learn how to make every other area in your home just as magical!
+Once Magic Areas is installed and running, check out the [Getting Started](getting-started.md) guide to learn how to make your first area magical and our [Implementation Ideas](library/implementation-ideas-for-every-room.md) to learn how to make every other area in your home just as magical!

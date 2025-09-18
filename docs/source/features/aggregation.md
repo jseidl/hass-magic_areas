@@ -11,8 +11,6 @@ The **Aggregation** feature creates aggregate sensors for all `sensor` and `bina
 
 This is especially useful for simplifying automations and dashboards, since you can reference a single "aggregate" instead of many individual sensors.
 
----
-
 ## ⚙️ Configuration Options
 
 | Option                  | Type    | Default | Description |
@@ -23,14 +21,10 @@ This is especially useful for simplifying automations and dashboards, since you 
 | **Illuminance threshold**  | Integer | `0` (disabled)     | Magic Areas can automatically create a [threshold](https://www.home-assistant.io/integrations/threshold/) sensor of device class `light` that tracks the aggregated `illuminance` sensor. This is useful for using as an [Area light sensor](../concepts/area-states.md#secondary-states). |
 | **Threshold sensor hysteresis**  | Integer | `0`     | [Hysteresis](https://www.home-assistant.io/integrations/threshold/#hysteresis) for the light threshold sensor (percentage of the threshold value). |
 
----
-
 ## 📊 Aggregation Methods
 
 - **Binary Sensor** → Aggregate is `on` if any entity is `on`.
 - **Sensor** → Values are averaged, except for `power`, `current`, and `energy`, which are summed.
-
----
 
 ## 💡 Example Use Cases
 
@@ -52,7 +46,7 @@ Use `sensor.magic_areas_aggregates_{area}_aggregate_power` to track power consum
 ### 🧠 Simplified Automations
 Aggregates make automation logic cleaner:
 
-```
+```yaml
 - alias: Turn off humidifier when area unoccupied
   trigger:
     - platform: state

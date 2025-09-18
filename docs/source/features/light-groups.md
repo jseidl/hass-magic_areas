@@ -11,7 +11,7 @@ At its simplest, this feature automatically creates a Home Assistant light group
 
 ## 🌈 Available Light Groups
 
-You can classify your lights into **secondary groups** for specific purposes:
+You can classify your lights into **predefined groups** for specific purposes:
 
 - **Overhead Lights** – Main ceiling lights for general illumination.
 - **Accent Lights** – Decorative or highlight lighting (e.g., under cabinets, wall sconces).

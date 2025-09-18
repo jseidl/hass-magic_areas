@@ -6,7 +6,7 @@ theme:
     - navigation.tabs
     - navigation.sections
     - navigation.indexes
-    #- toc.integrate
+    - toc.integrate
     - toc.follow
     - navigation.top
     - navigation.footer
@@ -42,10 +42,16 @@ markdown_extensions:
       permalink: true
       title: On this page
   - admonition
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - attr_list
+  - md_in_html
+  - pymdownx.blocks.caption
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
@@ -59,14 +65,15 @@ nav:
   - How-To:
       - Installation: how-to/installation.md
       - Getting Started: how-to/getting-started.md
+      - Configuration: how-to/configuration.md
       - Troubleshooting: how-to/troubleshooting.md
       - Library:
-        - Overview: how-to/library/index.md
-        - Making every room magic: how-to/library/making-every-room-magic.md
-        - Using energy aggregates on the energy dashboard: how-to/library/energy-aggregates.md
+        #- Overview: how-to/library/index.md
+        - Implementation ideas for every room: how-to/library/implementation-ideas-for-every-room.md
         - Automatic lights brightness control: how-to/library/automatic-light-brightness-control.md
-        - Set-and-forget home alarm with Alarmo: how-to/library/integrating-with-alarmo.md
-        - Perfecting climate comfort with Climate Control: how-to/library/perfecting-climate-comfort.md
+        - Perfecting climate comfort: how-to/library/perfecting-climate-comfort.md
+        - Using energy aggregates on the energy dashboard: how-to/library/energy-aggregates.md
+        #- Set-and-forget home alarm with Alarmo: how-to/library/integrating-with-alarmo.md
   - Features:
       - Overview: features/index.md
       - Smart Groups:

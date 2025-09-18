@@ -8,6 +8,8 @@ Magic Areas intelligently tracks presence and adds powerful automations like lig
 
 Smart areas that just works, everytime, out of the box. Fully customizable if you want it.
 
+[![Open your Home Assistant instance and open the Adaptive Lighting integration inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jseidl&repository=magic-areas&category=integration)
+
 ## ✨ What Magic Areas Does
 
 * Detects presence in each area using multiple sources (motion sensors, media players, device trackers, BLE beacons, and more).
@@ -39,10 +41,9 @@ Step-by-step instructions to get started and troubleshoot:
 
 And also a library of implementation examples:
 
-* [Making every room magic](how-to/library/making-every-room-magic.md)
+* [Making every room magic](how-to/library/implementation-ideas-for-every-room.md)
 * [Using energy aggregates on the energy dashboard](how-to/library/energy-aggregates.md)
 * [Automatic lights brightness control](how-to/library/automatic-light-brightness-control.md)
-* [Set-and-forget home alarm with Alarmo](how-to/library/integrating-with-alarmo.md)
 * [Perfecting climate comfort with Climate Control](how-to/library/perfecting-climate-comfort.md)
 
 ... and others!
@@ -51,19 +52,11 @@ And also a library of implementation examples:
 
 Detailed documentation for each [feature](features/index.md).
 
----
-
-## 🚀 Next Steps
+## 🚀 How to get into magic?
 
 1. [Install Magic Areas](how-to/installation.md) via HACS or manually.
 2. Follow the [Getting Started](how-to/getting-started.md) guide to set up your first areas.
 3. Explore the [Features](features/index.md) to unlock the full potential of your smart home.
 
-### Download and install through [HACS (Home Assistant Community Store)](https://hacs.xyz/):
-
-[![Open your Home Assistant instance and open the Adaptive Lighting integration inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jseidl&repository=magic-areas&category=integration)
-
 !!! question "Need help?"
     💬 Join the [Magic Areas Discord](https://discord.gg/tvaS4BG5) or open an [issue on GitHub](https://github.com/jseidl/magic-areas/issues).
-
----
