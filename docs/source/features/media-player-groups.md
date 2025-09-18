@@ -1,3 +1,5 @@
+# 🔊 Media Player Groups
+
 This feature automatically creates [media player groups](https://www.home-assistant.io/integrations/media_player.group/) for an area with all the `media_player` entities for that area.
 
 !!! warning

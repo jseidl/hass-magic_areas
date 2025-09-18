@@ -7,7 +7,7 @@
 
 ![ma-logo]
 
-Magic Areas is a Home Assistant custom integration that brings context-aware, state-driven automation to your smart home.
+Magic Areas is a [Home Assistant](https://www.home-assistant.io/) custom integration that brings context-aware, state-driven automation to your smart home.
 
 Instead of configuring each entity manually, Magic Areas leverages **areas**, **meta-areas**, and **presence sensing** to create smart groups and advanced automations. It turns Home Assistant's built-in Areas into **intelligent, presence-aware zones**, automatically detecting when someone is in a room — and when they’ve left — using your existing motion, presence, or occupancy sensors.
 

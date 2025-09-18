@@ -4,7 +4,7 @@ The **Wasp in a Box** 🐝📦 feature improves presence detection by adding **c
 
 It’s based on a simple concept:
 
-## 🧠 How It Works
+## 🚀 How It Works
 
 1. If we **see a wasp**, there is a wasp in the box.
 2. If we **close the box** while the wasp is inside, the wasp stays inside.
@@ -36,6 +36,14 @@ This ensures:
 ## ⏳ Wasp Timeout
 
 Motion sensors might flicker when doors are closed, causing a false-positive deadlock. Setting a Wasp timeout will force the wasp out of the box after a period (configurable) of inactivity.
+
+## ⚙️ Configuration Options
+
+| Option                | Type    | Default | Description                                                                 |
+|-----------------------|--------|---------|-----------------------------------------------------------------------------|
+| Delay | Integer   | `90`     | Time to wait before checking for wasps again (set to `0` to disable). |
+| Wasp timeout | Integer   | `0` (disabled)     | Wasp will be forgotten if not seen after this time (minutes). |
+| Wasp sensor device classes | list(str)   | `motion`,`occupancy`     | Device classes of the [aggregate](aggregation.md) sensors to track as wasps. |
 
 ## 📦 Sensor Types Used
 

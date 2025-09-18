@@ -59,8 +59,14 @@ nav:
   - How-To:
       - Installation: how-to/installation.md
       - Getting Started: how-to/getting-started.md
-      - Implementation Ideas: how-to/implementation-ideas.md
       - Troubleshooting: how-to/troubleshooting.md
+      - Library:
+        - Overview: how-to/library/index.md
+        - Making every room magic: how-to/library/making-every-room-magic.md
+        - Using energy aggregates on the energy dashboard: how-to/library/energy-aggregates.md
+        - Automatic lights brightness control: how-to/library/automatic-light-brightness-control.md
+        - Set-and-forget home alarm with Alarmo: how-to/library/integrating-with-alarmo.md
+        - Perfecting climate comfort with Climate Control: how-to/library/perfecting-climate-comfort.md
   - Features:
       - Overview: features/index.md
       - Smart Groups:
