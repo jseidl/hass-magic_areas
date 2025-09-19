@@ -20,7 +20,6 @@ from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAI
 from homeassistant.components.light.const import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
 from homeassistant.components.remote import DOMAIN as REMOTE_DOMAIN
-from homeassistant.components.assist_satellite import DOMAIN as ASSIST_SATELLITE_DOMAIN
 from homeassistant.components.sensor.const import (
     DOMAIN as SENSOR_DOMAIN,
     SensorDeviceClass,
@@ -916,7 +915,10 @@ AREA_AWARE_MEDIA_PLAYER_FEATURE_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_NOTIFICATION_DEVICES, default=[]): cv.entity_ids,
         vol.Optional(CONF_NOTIFY_STATES, default=DEFAULT_NOTIFY_STATES): cv.ensure_list,
-        vol.Optional(CONF_ROUTE_NOTIFICATIONS_TO_SATELLITES, default=DEFAULT_ROUTE_NOTIFICATIONS_TO_SATELLITES): cv.boolean,
+        vol.Optional(
+            CONF_ROUTE_NOTIFICATIONS_TO_SATELLITES,
+            default=DEFAULT_ROUTE_NOTIFICATIONS_TO_SATELLITES,
+        ): cv.boolean,
     },
     extra=vol.REMOVE_EXTRA,
 )
@@ -1263,7 +1265,11 @@ OPTIONS_FAN_GROUP = [
 OPTIONS_AREA_AWARE_MEDIA_PLAYER = [
     (CONF_NOTIFICATION_DEVICES, [], cv.entity_ids),
     (CONF_NOTIFY_STATES, DEFAULT_NOTIFY_STATES, cv.ensure_list),
-    (CONF_ROUTE_NOTIFICATIONS_TO_SATELLITES, DEFAULT_ROUTE_NOTIFICATIONS_TO_SATELLITES, cv.boolean),
+    (
+        CONF_ROUTE_NOTIFICATIONS_TO_SATELLITES,
+        DEFAULT_ROUTE_NOTIFICATIONS_TO_SATELLITES,
+        cv.boolean,
+    ),
 ]
 
 # Config Flow filters

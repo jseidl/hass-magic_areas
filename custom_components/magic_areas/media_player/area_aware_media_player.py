@@ -88,9 +88,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
         entity_ids = []
 
         # Get all assist_satellite entities in Home Assistant
-        all_assist_satellites = [
-            entity for entity in self.hass.states.async_all(ASSIST_SATELLITE_DOMAIN)
-        ]
+        all_assist_satellites = list(self.hass.states.async_all(ASSIST_SATELLITE_DOMAIN))
 
         for satellite in all_assist_satellites:
             satellite_area = satellite.attributes.get("area_id")
@@ -102,19 +100,26 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
 
     def should_route_notifications_to_satellites(self, area):
         """Check if notifications should be routed to satellites for this area."""
-        return area.feature_config(
-            MagicAreasFeatures.AREA_AWARE_MEDIA_PLAYER
-        ).get(CONF_ROUTE_NOTIFICATIONS_TO_SATELLITES, DEFAULT_ROUTE_NOTIFICATIONS_TO_SATELLITES)
+        return area.feature_config(MagicAreasFeatures.AREA_AWARE_MEDIA_PLAYER).get(
+            CONF_ROUTE_NOTIFICATIONS_TO_SATELLITES,
+            DEFAULT_ROUTE_NOTIFICATIONS_TO_SATELLITES,
+        )
 
     def get_target_devices_for_content(self, area, content_type="media"):
         """Get target devices based on content type and satellite routing setting."""
-        route_notifications_to_satellites = self.should_route_notifications_to_satellites(area)
+        route_notifications_to_satellites = (
+            self.should_route_notifications_to_satellites(area)
+        )
         media_players = self.get_media_players_for_area(area)
         assist_satellites = self.get_assist_satellites_for_area(area)
 
         _LOGGER.debug(
             "%s: Route notifications to satellites='%s', content_type='%s', media_players=%s, satellites=%s",
-            area.name, route_notifications_to_satellites, content_type, media_players, assist_satellites
+            area.name,
+            route_notifications_to_satellites,
+            content_type,
+            media_players,
+            assist_satellites,
         )
 
         # Simple routing logic
@@ -219,17 +224,21 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
             return
 
         # Determine content type for routing decisions
-        content_type = "notification" if self._is_notification_content(media_type, media_id) else "media"
-        
+        content_type = (
+            "notification"
+            if self._is_notification_content(media_type, media_id)
+            else "media"
+        )
+
         # Gather target devices based on routing strategy
         target_devices = []
         assist_satellites = []
         media_players = []
-        
+
         for area in active_areas:
             devices = self.get_target_devices_for_content(area, content_type)
             target_devices.extend(devices)
-            
+
             # Separate satellites from media players for appropriate service calls
             for device in devices:
                 if device.startswith(ASSIST_SATELLITE_DOMAIN):
@@ -239,8 +248,9 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
 
         if not target_devices:
             _LOGGER.debug(
-                "%s: No target devices found for content_type='%s'. Ignoring.", 
-                self.name, content_type
+                "%s: No target devices found for content_type='%s'. Ignoring.",
+                self.name,
+                content_type,
             )
             return
 
@@ -248,7 +258,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
         if assist_satellites:
             # Use assist_satellite announcement service
             await self._announce_to_satellites(assist_satellites, media_id, **kwargs)
-            
+
         if media_players:
             # Use traditional media_player service
             data = {
@@ -268,13 +278,13 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
         # Check media_type patterns first
         notification_media_types = [
             "tts",
-            "announcement", 
+            "announcement",
             "alert",
         ]
-        
+
         if any(ntype in media_type.lower() for ntype in notification_media_types):
             return True
-        
+
         # Check content patterns in media_id
         notification_indicators = [
             "tts",
@@ -285,47 +295,57 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
             "warning",
             "emergency",
         ]
-        
-        return any(indicator in media_id.lower() for indicator in notification_indicators)
+
+        return any(
+            indicator in media_id.lower() for indicator in notification_indicators
+        )
 
     async def _announce_to_satellites(self, satellites, message, **kwargs):
         """Announce message to assist satellites with improved error handling."""
         successful_announcements = 0
-        
+
         try:
             # Use the assist_satellite announce service if available
             if self.hass.services.has_service("assist_satellite", "announce"):
                 for satellite in satellites:
                     try:
                         await self.hass.services.async_call(
-                            "assist_satellite", 
-                            "announce", 
-                            {
-                                ATTR_ENTITY_ID: satellite,
-                                "message": message,
-                                **kwargs
-                            }
+                            "assist_satellite",
+                            "announce",
+                            {ATTR_ENTITY_ID: satellite, "message": message, **kwargs},
                         )
                         successful_announcements += 1
-                        _LOGGER.debug("%s: Successfully announced to satellite %s", self.name, satellite)
+                        _LOGGER.debug(
+                            "%s: Successfully announced to satellite %s",
+                            self.name,
+                            satellite,
+                        )
                     except Exception as e:
-                        _LOGGER.error("%s: Failed to announce to satellite %s: %s", self.name, satellite, e)
+                        _LOGGER.error(
+                            "%s: Failed to announce to satellite %s: %s",
+                            self.name,
+                            satellite,
+                            e,
+                        )
             else:
                 # Fallback to TTS service
-                _LOGGER.debug("%s: assist_satellite.announce not available, using TTS fallback", self.name)
+                _LOGGER.debug(
+                    "%s: assist_satellite.announce not available, using TTS fallback",
+                    self.name,
+                )
                 await self.hass.services.async_call(
-                    "tts", 
-                    "speak", 
-                    {
-                        ATTR_ENTITY_ID: satellites,
-                        "message": message,
-                        **kwargs
-                    }
+                    "tts",
+                    "speak",
+                    {ATTR_ENTITY_ID: satellites, "message": message, **kwargs},
                 )
                 successful_announcements = len(satellites)
-                
+
         except Exception as e:
             _LOGGER.error("%s: Failed to announce to satellites: %s", self.name, e)
-            
-        _LOGGER.debug("%s: Announced to %d/%d satellites successfully", 
-                     self.name, successful_announcements, len(satellites))
+
+        _LOGGER.debug(
+            "%s: Announced to %d/%d satellites successfully",
+            self.name,
+            successful_announcements,
+            len(satellites),
+        )
