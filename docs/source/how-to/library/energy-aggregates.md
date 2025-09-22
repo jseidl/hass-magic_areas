@@ -29,6 +29,9 @@ Your dashboard stays up to date on its own.
 
 From this point on, any new energy-reporting device you add to an area is included automatically.
 
+!!! tip
+   You can still individually track devices, just select the Magic Area energy sensor as the `Upstream device` for those sensors in the energy configuration. This will visually let you know if you have untracked devices as Magic Areas' energy sensor will automatically start counting them and will show up on your dashboard as "untracked consumption".
+
 ## 👀 Things to keep in mind
 
 - Devices must report compatible energy sensors (e.g. kWh or Wh).
