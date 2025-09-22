@@ -85,15 +85,12 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
 
     def get_assist_satellites_for_area(self, area):
         """Return assist satellites for a given area."""
-        entity_ids = []
+        if not area.has_entities(ASSIST_SATELLITE_DOMAIN):
+            return set()
 
-        # Get all assist_satellite entities in Home Assistant
-        all_assist_satellites = list(self.hass.states.async_all(ASSIST_SATELLITE_DOMAIN))
-
-        for satellite in all_assist_satellites:
-            satellite_area = satellite.attributes.get("area_id")
-            if satellite_area and satellite_area == area.id:
-                entity_ids.append(satellite.entity_id)
+        entity_ids = [
+            entity["entity_id"] for entity in area.entities[ASSIST_SATELLITE_DOMAIN]
+        ]
 
         _LOGGER.debug("%s: Found assist satellites: %s", area.name, entity_ids)
         return set(entity_ids)
