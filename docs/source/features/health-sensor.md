@@ -1,20 +1,26 @@
-# Area Health Sensor
+# 🩺 Area Health Sensor
 
 The **Area Health** feature monitors the safety and integrity of an area by aggregating signals from critical sensor types—alerting you when something might be wrong.
 
-These sensors work similarly to [aggregate](aggregation.md) binary sensors but specifically target key **health-related device classes**.
+These sensors work similarly to [aggregate sensors](aggregation.md) but specifically target key **health-related device classes**.
 
-## 🩺 What it tracks
+## ⚙️ Configuration Options
 
-The Area Health feature combines the following `binary_sensor.device_class` types into a single `binary_sensor.magic_areas_health_$area_health_problem` entity:
+| Option                | Type    | Default | Description                                                                 |
+|-----------------------|--------|---------|-----------------------------------------------------------------------------|
+| Device classes to track | list   | n/a     | Choose which health-related device classes to monitor (e.g., `gas`, `moisture`, `problem`, `safety`, `smoke`). |
 
-- `gas` – Detects gas leaks (e.g., natural gas, propane)
+## 🚀 How it Works
+
+The Area Health feature combines the following `binary_sensor.device_class` types into a single entity: `binary_sensor.magic_areas_health_$area_health_problem`
+
+- `gas` – Detects gas leaks (natural gas, propane, etc.)
 - `smoke` – Detects smoke or fire
 - `moisture` – Detects water leaks
 - `problem` – Generic problem indicators (e.g., device errors)
 - `safety` – General safety-related sensors
 
-!!! failure
+!!! warning
     If you use the `moisture` device class for non-leak purposes, make sure to **exclude** those sensors manually to avoid false alarms.
 
 These aggregated sensors are available per-area and supported in **meta-areas** like `Interior`, `Exterior`, or `Global`, giving you a comprehensive view of your home's status.

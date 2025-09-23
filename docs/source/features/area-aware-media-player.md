@@ -1,44 +1,29 @@
-# Area-Aware Media Player
+# 🎶 Area-Aware Media Player
 
-The **Area-Aware Media Player** 🏠 is a virtual `media_player` entity that **automatically routes `play_media` actions** to actual `media_player` devices in **occupied areas only**.
+The **Area-Aware Media Player** is a virtual `media_player` entity that **automatically routes `play_media` actions** to real `media_player` devices in **occupied areas only**.
 
-This is especially useful for:
+This ensures messages and notifications are **only played where someone is present**, instead of broadcasting audio throughout the whole house.
+
+✨ Perfect for:
 
 - 📢 **TTS notifications** ([Text-to-Speech](https://www.home-assistant.io/integrations/notify.tts/))
 - 🔔 **Context-aware alerts**
 - 🧘 Preventing disruptions in quiet or empty rooms
 
-Instead of broadcasting audio throughout your home, this feature ensures messages are **only played where someone is present**.
-
 !!! tip
     Works great with [Home Assistant Alerts](https://www.home-assistant.io/integrations/alert/) and other notification automations.
 
-## 🎛️ Configuration Options
+## ⚙️ Configuration Options
 
 !!! warning
-    This feature must be **enabled per area**. If an area has it disabled, it will not participate in media routing—even if it's occupied.
+    This feature must be **enabled per area**. If an area has it disabled, it will not participate in media routing—even if it’s occupied.
 
-### 🔊 Notification Devices
+| Option | Description | Default |
+|--------|-------------|---------|
+| **Notification Devices** | `media_player` entities in this area that can be used for playback. Leave blank to include all devices in the area. | All media players in the area |
+| **Notify States** | Area states where playback is allowed. | `extended` (avoids triggering on transient occupancy like someone walking by) |
 
-Select which `media_player` entities in an area will be used for playback.
-
-- Leave blank to include **all media players in the area** (default)
-- Or choose specific ones (e.g., only cast devices or smart speakers)
-
-### 🕒 Notify States
-
-Define which area states allow notifications to be played in that area.
-
-- **Default:** `extended`
-  (Only plays in areas that have been occupied for a while)
-- You may include any of the following:
-  - `occupied`
-  - `accented`
-  - `extended`
-  - `sleep` *(use with caution)*
-  - Or any custom-defined secondary state
-
-💡 *Use `occupied` for immediate feedback, or restrict to `extended` for less frequent areas like bedrooms.*
+💡 *Use `occupied` for immediate feedback, or stick to `extended` for less noisy results in places like bedrooms.*
 
 ## 🚀 How It Works
 
@@ -93,4 +78,4 @@ This will speak the message **only where people are present**.
 ## 🔗 Related
 
 - See [Area Health](health-sensor.md) for how you can combine this with intelligent alerting.
-- Read more about [TTS notifications](https://www.home-assistant.io/integrations/notify.tts/).
+- Learn more about [TTS notifications](https://www.home-assistant.io/integrations/notify.tts/).
