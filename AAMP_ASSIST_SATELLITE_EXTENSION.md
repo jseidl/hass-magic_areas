@@ -13,6 +13,7 @@ The AAMP extension adds intelligent routing between traditional media players an
 - No manual entity configuration required - satellites are found by their `area_id` attribute
 - Dynamically updates when satellites are added, removed, or reassigned
 
+
 ### 2. Per-Area Satellite Routing
 Simple checkbox configuration per area:
 
@@ -27,6 +28,7 @@ Automatically detects notification vs. media content based on:
 - If satellites unavailable, automatically falls back to media players
 - If multiple satellites in area, continues with others if one fails
 - Graceful degradation ensures announcements always reach some device
+
 
 ## Implementation Details
 
@@ -72,6 +74,7 @@ def get_assist_satellites_for_area(self, area):
 
 ### Routing Decision Matrix
 
+
 | Configuration | Notification Content | Media Content |
 |---------------|---------------------|---------------|
 | Checkbox Disabled (Default) | Media Players | Media Players |
@@ -94,6 +97,7 @@ route_notifications_to_satellites: true
 
 **Living Room - Everything to media players:**
 ```yaml
+
 route_notifications_to_satellites: false  # Default
 ```
 
