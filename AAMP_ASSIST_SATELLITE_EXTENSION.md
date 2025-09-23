@@ -13,13 +13,11 @@ The AAMP extension adds intelligent routing between traditional media players an
 - No manual entity configuration required - satellites are found by their `area_id` attribute
 - Dynamically updates when satellites are added, removed, or reassigned
 
-### 2. Per-Area Audio Routing Strategies
-Four routing strategies available per area:
 
-- **Media Players Only** (Default): Traditional behavior, routes everything to media players
-- **Satellites for Notifications**: Routes notifications to satellites, media to media players
-- **Satellites Preferred**: Routes everything to satellites first, falls back to media players
-- **Auto Detect**: Uses satellites if available in the area, otherwise uses media players
+### 2. Per-Area Satellite Routing
+Simple checkbox configuration per area:
+
+- **Route notifications through area satellites**: When enabled, notifications (TTS, announcements, alerts) are sent to assist satellites in the area. Media playback continues to use media players. Automatically falls back to media players if no satellites are available.
 
 ### 3. Content-Type Detection
 Automatically detects notification vs. media content based on:
@@ -27,9 +25,10 @@ Automatically detects notification vs. media content based on:
 - Common TTS/notification keywords: "tts", "announce", "notification", "alert", "reminder"
 
 ### 4. Intelligent Fallback
-- If preferred device type unavailable, automatically falls back to alternative
+- If satellites unavailable, automatically falls back to media players
+- If multiple satellites in area, continues with others if one fails
 - Graceful degradation ensures announcements always reach some device
-- Service discovery for appropriate assist satellite announcement methods
+
 
 ## Implementation Details
 
@@ -75,41 +74,36 @@ def get_assist_satellites_for_area(self, area):
 
 ### Routing Decision Matrix
 
-| Strategy | Notification Content | Media Content |
-|----------|---------------------|---------------|
-| Media Players Only | Media Players | Media Players |
-| Satellites for Notifications | Satellites → Media Players | Media Players |
-| Satellites Preferred | Satellites → Media Players | Satellites → Media Players |
-| Auto Detect | Auto (Satellites if available) | Auto (Satellites if available) |
+
+| Configuration | Notification Content | Media Content |
+|---------------|---------------------|---------------|
+| Checkbox Disabled (Default) | Media Players | Media Players |
+| Checkbox Enabled | Satellites → Media Players (fallback) | Media Players |
 
 ## Usage Examples
 
 ### Setup Process
 1. Assign assist satellites to areas in Home Assistant
 2. Enable AAMP feature in Magic Areas
-3. Configure audio routing strategy per area
+3. Check "Route notifications through area satellites" for desired areas
 4. AAMP automatically discovers and routes to appropriate devices
 
 ### Example Configurations
 
 **Kitchen - Notifications to satellite, music to speakers:**
 ```yaml
-audio_routing_strategy: "satellites_for_notifications"
+route_notifications_to_satellites: true
 ```
 
 **Living Room - Everything to media players:**
 ```yaml
-audio_routing_strategy: "media_players_only"  
+
+route_notifications_to_satellites: false  # Default
 ```
 
-**Office - Prefer satellite, fallback to computer speakers:**
+**Office - Notifications to satellite, fallback to computer speakers:**
 ```yaml
-audio_routing_strategy: "satellites_preferred"
-```
-
-**Bedroom - Auto-detect based on available devices:**
-```yaml
-audio_routing_strategy: "auto_detect"
+route_notifications_to_satellites: true
 ```
 
 ### Service Calls

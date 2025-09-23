@@ -19,12 +19,12 @@ Magic Areas' Area-Aware Media Player (AAMP) now supports intelligent routing to 
 ### 📱 **Per-Area Configuration**
 - Simple checkbox per area: "Route notifications through area satellites"
 - Disabled by default - preserves existing behavior
-- Configure different routing strategies for each room
+- Enable per area as needed for intelligent routing
 
 ### 🛡️ **Robust Fallback**
 - Graceful degradation if satellites unavailable
-- Individual satellite error handling
-- Maintains announcements even if some devices fail
+- If multiple satellites in area, continues with others if one fails
+- Falls back to media players if all satellites fail or are offline
 
 ## Configuration
 
