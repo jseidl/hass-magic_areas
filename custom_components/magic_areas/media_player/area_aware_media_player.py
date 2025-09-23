@@ -2,6 +2,9 @@
 
 import logging
 
+from homeassistant.components.assist_satellite.const import (
+    DOMAIN as ASSIST_SATELLITE_DOMAIN,
+)
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.media_player import MediaPlayerEntity
 from homeassistant.components.media_player.const import (
@@ -15,7 +18,6 @@ from homeassistant.const import ATTR_ENTITY_ID, STATE_IDLE, STATE_ON
 
 from custom_components.magic_areas.base.entities import MagicEntity
 from custom_components.magic_areas.const import (
-    ASSIST_SATELLITE_DOMAIN,
     CONF_NOTIFICATION_DEVICES,
     CONF_NOTIFY_STATES,
     CONF_ROUTE_NOTIFICATIONS_TO_SATELLITES,
@@ -123,9 +125,9 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
         if route_notifications_to_satellites and content_type == "notification":
             # Route notifications to satellites, fallback to media players
             return assist_satellites or media_players
-        else:
-            # Route everything else to media players
-            return media_players
+
+        # Route everything else to media players
+        return media_players
 
     async def async_added_to_hass(self):
         """Call when entity about to be added to hass."""
@@ -267,7 +269,11 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
                 data.update(kwargs)
 
             await self.hass.services.async_call(
-                MEDIA_PLAYER_DOMAIN, SERVICE_PLAY_MEDIA, data
+                MEDIA_PLAYER_DOMAIN,
+                SERVICE_PLAY_MEDIA,
+                data,
+                blocking=True,
+                return_response=True,
             )
 
     def _is_notification_content(self, media_type, media_id):
@@ -317,7 +323,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
                             self.name,
                             satellite,
                         )
-                    except Exception as e:
+                    except Exception as e:  # pylint: disable=broad-exception-caught
                         _LOGGER.error(
                             "%s: Failed to announce to satellite %s: %s",
                             self.name,
@@ -337,7 +343,7 @@ class AreaAwareMediaPlayer(MagicEntity, MediaPlayerEntity):
                 )
                 successful_announcements = len(satellites)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("%s: Failed to announce to satellites: %s", self.name, e)
 
         _LOGGER.debug(

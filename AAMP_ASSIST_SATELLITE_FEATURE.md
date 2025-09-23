@@ -8,7 +8,7 @@ Magic Areas' Area-Aware Media Player (AAMP) now supports intelligent routing to 
 
 ### 🎯 **Intelligent Content Routing**
 - **Notifications** (TTS, announcements, alerts) → Assist satellites
-- **Media** (music, podcasts) → Traditional media players  
+- **Media** (music, podcasts) → Traditional media players
 - **Auto-detection** of content type based on media patterns
 
 ### 🔍 **Auto-Discovery**
@@ -30,7 +30,7 @@ Magic Areas' Area-Aware Media Player (AAMP) now supports intelligent routing to 
 
 ### 1. Setup Assist Satellites
 Assign your assist satellites to areas in Home Assistant:
-- Go to **Settings → Devices & Services** 
+- Go to **Settings → Devices & Services**
 - Find your assist satellite device
 - Edit device → **Assign to area**
 
@@ -56,7 +56,7 @@ route_notifications_to_satellites: true
 - *"Dinner is ready!"* → Kitchen assist satellite 🔊
 - *Spotify cooking playlist* → Kitchen smart speakers 🎵
 
-### Living Room Setup  
+### Living Room Setup
 ```yaml
 # Living room configuration
 route_notifications_to_satellites: false
@@ -67,7 +67,7 @@ route_notifications_to_satellites: false
 
 ### Office Setup
 ```yaml
-# Office configuration  
+# Office configuration
 route_notifications_to_satellites: true
 ```
 
@@ -92,7 +92,7 @@ data:
 
 ### Music Playback
 ```yaml
-service: media_player.play_media  
+service: media_player.play_media
 target:
   entity_id: media_player.magic_areas_area_aware_media_player_global
 data:
@@ -117,7 +117,7 @@ The system automatically detects notification content:
 - Music continues uninterrupted on quality speakers
 - Clear separation of notification vs. entertainment audio
 
-### ⚙️ **Simple Configuration**  
+### ⚙️ **Simple Configuration**
 - Single checkbox per area
 - Auto-discovery eliminates manual setup
 - Backward compatible - disabled by default
@@ -157,7 +157,7 @@ logger:
 ### Fallback Behavior
 The system automatically falls back to media players when:
 - No satellites found in area
-- Satellites are offline/unavailable  
+- Satellites are offline/unavailable
 - Satellite service calls fail
 
 This ensures announcements always reach users through available devices.

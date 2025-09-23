@@ -15,9 +15,6 @@ from homeassistant.components.cover.const import DOMAIN as COVER_DOMAIN
 from homeassistant.components.device_tracker.const import (
     DOMAIN as DEVICE_TRACKER_DOMAIN,
 )
-from homeassistant.components.assist_satellite.const import (
-    DOMAIN as ASSIST_SATELLITE_DOMAIN,
-)
 from homeassistant.components.fan import DOMAIN as FAN_DOMAIN
 from homeassistant.components.input_boolean import DOMAIN as INPUT_BOOLEAN_DOMAIN
 from homeassistant.components.light.const import DOMAIN as LIGHT_DOMAIN

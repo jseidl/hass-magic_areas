@@ -68,7 +68,7 @@ audio_routing_strategy: "satellites_for_notifications"  # Per-area setting
 def get_assist_satellites_for_area(self, area):
     """Auto-discover satellites by area assignment."""
     all_satellites = self.hass.states.async_all(ASSIST_SATELLITE_DOMAIN)
-    return [s.entity_id for s in all_satellites 
+    return [s.entity_id for s in all_satellites
             if s.attributes.get("area_id") == area.id]
 ```
 
@@ -119,7 +119,7 @@ data:
   media_content_type: "tts"
   media_content_id: "Meeting in 30 minutes"
 
-# Music playback - routed per area strategy  
+# Music playback - routed per area strategy
 service: media_player.play_media
 target:
   entity_id: media_player.magic_areas_area_aware_media_player_global
@@ -155,7 +155,7 @@ Potential future improvements:
 
 The implementation includes:
 - Content type detection validation
-- Routing strategy logic verification  
+- Routing strategy logic verification
 - Fallback mechanism testing
 - Service discovery validation
 - Area assignment change handling
